@@ -1,0 +1,22 @@
+####################################################################
+E-mail Um:
+
+Enviado :  sexta-feira, 19 de dezembro de 2003 00:52:51 
+####################################################################
+
+
+
+Elumar, estou te passando um zip contendo alguns arquivos entre eles, o arquivo txt contedo a lista com as tarefas (TO DO List) a serem cumpridas. A ideia eh que, por enquanto, nao teremos datas e tempos para cada tarefa. Ela serah simplesmente uma lista de tarefas que deve ser consumida de cima para baixo (ja que eu coloquei as tarefas na ordem da prioridade) em qq tempo. Depois com o passar do tempo, qd eu tiver ideia de qt tempo eu e vc estamos levando para cumprir determinadas tarefas a gente monta uma lista de tarefas com deadlines. Sendo assim, a ideia eh ir consumindo a lista de tarefas e conforme elas forem sendo cumpridas elas passam para a aquela parte de cima para guardar um historico do q foi feito, quando e qt tempo demorou. 
+
+Os outros arquivos atachados sao os htmls com os layouts de tela. Vc vai precisar deles. 
+
+Num projeto grande estes arquivos todos ficariam num repositorio, tipo cvs ou sourcesafe, mas como nao podemos nos dar este luxo, vamos fazer assim, por enquanto vc vai me passando o que vc ja fez por email e eu mantenho o controle das versoes aqui...vamos ver se isso funciona. 
+
+Acho que talvez vc precise das folhas com os meus rabiscos, entao eu levo na sua casa ate sabado ok? Qq coisa vamos manter contato. Bem-vindo ao time... ;-) 
+
+valeu 
+
+
+
+
+

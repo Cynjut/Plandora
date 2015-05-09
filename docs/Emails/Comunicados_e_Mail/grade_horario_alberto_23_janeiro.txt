@@ -1,0 +1,30 @@
+Horas analisadas de 05 a 23 de janeiro.
+
+=> Instalação do Tom Cat e Ambiente de Desenvolvimento Java.  
+      5 horas (com testes de funcionamento e exemplos básicos).
+
+=> Análise de mudanças do lay out usando CSS e HTML.  
+      25 horas.
+
+=> Busca de documentação Struts, Servlets, Java e Tom Cat.  
+      16 horas (leituras na web e listas de discussões).
+
+=> Exercícios usando exemplos do funcionamento de Servlets.  
+      5 horas (colhido de apostilas Web).
+
+=> Ajustes na especificação dos casos de uso.  
+      5 horas.
+
+=> Leitura do livro Engenharia de Software.  
+      6 horas (.
+
+
+
+
+
+
+
+OBS: Estou fazendo um acervo dos materiais que tenho, contendo também um documento com mensagens
+     que leio na internet em fóruns e listas. Depois eu coloco tudo no NetIPonto (FTP).
+
+

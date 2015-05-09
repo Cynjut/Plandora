@@ -1,0 +1,19 @@
+Additional Open Source License Terms
+The FlexPaper Free version is released under the GNU GENERAL PUBLIC
+LICENSE Version 3 (GPL).
+The GPL requires that you not remove the FlexPaper copyright notices
+from the user interface. See section 5.d in GPL Version 3.
+Commercial licenses are available. The commercial viewer version does
+not require any FlexPaper notices or texts.
+• The requirement that those that convey the program and assume
+contractual liability must indemnify Devaldi is allowed by section 7.f.
+• The exclusion of a grant of trademark rights except as expressly
+granted in the additional terms is allowed by section 7.e.
+• Requiring those that modify the program to mark the program in a
+particular way is allowed by section 7.b which allows "requiring
+preservation of specified reasonable legal notice or author attributions
+. . . " and 7.c which allows both prohibition of misrepresentation of the
+origin of the material and allows a requirement that such material "be
+marked in reasonable ways as different from the original version".
+The Additional Terms to the GPL 3.0 license added by FlexPaper are
+consistent with terms allowed under section 7 of the GPL 3.0

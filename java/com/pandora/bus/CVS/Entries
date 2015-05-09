@@ -1,0 +1,54 @@
+/AreaBUS.java/1.7/Tue Jan 18 16:51:37 2011//
+/AttachmentBUS.java/1.5/Sat Jun 21 22:14:51 2008//
+/CalendarSyncInterface.java/1.2/Sat Jan 30 23:35:58 2010//
+/CategoryBUS.java/1.8/Thu Dec  2 20:06:26 2010//
+/ConnectorBUS.java/1.3/Thu Dec  3 20:04:01 2009//
+/CostBUS.java/1.7/Tue Jan 18 13:07:45 2011//
+/CostStatusBUS.java/1.3/Mon Dec 13 20:10:33 2010//
+/CustomerFunctionBUS.java/1.1/Tue Jul 21 21:37:39 2009//
+/DbQueryBUS.java/1.9/Fri Jan 21 12:25:15 2011//
+/DepartmentBUS.java/1.3/Tue Jan 18 16:51:37 2011//
+/DiscussionBUS.java/1.2/Wed Jul  8 21:35:18 2009//
+/DiscussionTopicBUS.java/1.4/Thu Nov 18 20:02:24 2010//
+/EventBUS.java/1.1/Sat Oct 27 14:02:14 2007//
+/ExpenseBUS.java/1.5/Fri Jan 21 12:25:15 2011//
+/FunctionBUS.java/1.3/Tue Jan 18 16:51:37 2011//
+/GeneralBusiness.java/1.1/Mon Aug 16 23:35:52 2004//
+/GeneralTimer.java/1.17/Tue Jan 18 16:51:37 2011//
+/GenericPlugin.java/1.1/Thu Jan 24 00:16:14 2008//
+/InvoiceBUS.java/1.5/Wed Dec 29 23:20:35 2010//
+/InvoiceStatusBUS.java/1.2/Wed Mar 31 13:51:04 2010//
+/MetaFieldBUS.java/1.7/Tue Jan 18 20:44:18 2011//
+/MetaFormBUS.java/1.7/Tue Jan 18 20:44:18 2011//
+/PasswordEncrypt.java/1.3/Mon Jan  5 12:04:08 2009//
+/PlanningBUS.java/1.8/Tue Jan 25 20:12:20 2011//
+/PlanningRelationBUS.java/1.2/Sun Aug 30 01:28:33 2009//
+/PreferenceBUS.java/1.4/Fri Dec 24 16:16:19 2010//
+/ProjectBUS.java/1.62/Tue Jan 25 20:12:20 2011//
+/ProjectStatusBUS.java/1.4/Fri Nov 12 20:53:01 2010//
+/ReportBUS.java/1.34/Wed Dec 15 20:30:48 2010//
+/RequirementBUS.java/1.43/Wed Dec  1 20:07:04 2010//
+/RequirementHistoryBUS.java/1.3/Tue Jun 22 20:50:58 2010//
+/RequirementStatusBUS.java/1.3/Mon Sep 14 00:51:01 2009//
+/ResourceCategoryBUS.java/1.2/Wed Dec  1 20:07:04 2010//
+/ResourceTaskAllocBUS.java/1.2/Wed Nov 17 20:04:33 2010//
+/ResourceTaskBUS.java/1.86/Tue Dec 14 21:05:33 2010//
+/RiskBUS.java/1.9/Fri Dec 24 16:16:19 2010//
+/RiskStatusBUS.java/1.2/Mon Mar 30 13:59:38 2009//
+/SurveyBUS.java/1.12/Mon Jun  7 19:10:39 2010//
+/SystemSingleton.java/1.1/Tue Jan 18 16:51:37 2011//
+/TaskBUS.java/1.66/Thu Dec  9 00:12:33 2010//
+/TaskHistoryBUS.java/1.1/Mon May 10 14:49:27 2010//
+/TaskNodeTemplateBUS.java/1.29/Sat Jul 10 16:15:11 2010//
+/TaskStatusBUS.java/1.8/Wed Nov 17 20:04:33 2010//
+/TaskTemplateBUS.java/1.4/Tue Jan 19 00:43:34 2010//
+/UserBUS.java/1.53/Tue Jan 18 16:51:37 2011//
+D/alert////
+D/artifact////
+D/auth////
+D/convert////
+D/gadget////
+D/kb////
+D/occurrence////
+D/repository////
+D/snip////

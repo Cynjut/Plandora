@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="projectTaskDurationActualTime" pageWidth="535" pageHeight="842" columnWidth="535" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0">
+	<property name="ireport.scriptlethandling" value="0"/>
+	<property name="ireport.encoding" value="UTF-8"/>
+	<import value="java.util.*"/>
+	<import value="net.sf.jasperreports.engine.*"/>
+	<import value="net.sf.jasperreports.engine.data.*"/>
+	<parameter name="PROJECT_ID" class="java.lang.String" isForPrompting="false">
+		<defaultValueExpression><![CDATA["2"]]></defaultValueExpression>
+	</parameter>
+	<queryString>
+		<![CDATA[select u.username, sum(rt.actual_time)/60 actual_time
+from resource_task rt, tool_user u
+where rt.resource_id = u.id
+and rt.project_id = $P{PROJECT_ID}
+and rt.actual_time is not null
+group by u.username]]>
+	</queryString>
+	<field name="username" class="java.lang.String"/>
+	<field name="actual_time" class="java.lang.Double"/>
+	<group name="GROUP">
+		<groupExpression><![CDATA[null]]></groupExpression>
+		<groupHeader>
+			<band height="21">
+				<rectangle>
+					<reportElement key="rectangle-1" mode="Transparent" x="1" y="6" width="183" height="14" forecolor="#000000"/>
+				</rectangle>
+				<staticText>
+					<reportElement key="staticText-1" x="5" y="8" width="177" height="11"/>
+					<box>
+						<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+						<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+						<bottomPen lineWidth="0.0" lineColor="#000000"/>
+						<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					</box>
+					<textElement>
+						<font fontName="Tahoma" size="8"/>
+					</textElement>
+					<text><![CDATA[Resources Task Effort]]></text>
+				</staticText>
+			</band>
+		</groupHeader>
+		<groupFooter>
+			<band height="88">
+				<pieChart>
+					<chart isShowLegend="false" hyperlinkType="None">
+						<reportElement key="element-1" x="5" y="3" width="179" height="85"/>
+						<box>
+							<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+							<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+							<bottomPen lineWidth="0.0" lineColor="#000000"/>
+							<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+						</box>
+						<chartTitle/>
+						<chartSubtitle/>
+						<chartLegend>
+							<font fontName="Tahoma" size="8"/>
+						</chartLegend>
+					</chart>
+					<pieDataset>
+						<keyExpression><![CDATA[$F{username}]]></keyExpression>
+						<valueExpression><![CDATA[$F{actual_time}]]></valueExpression>
+						<sectionHyperlink hyperlinkType="None"/>
+					</pieDataset>
+					<piePlot isCircular="true">
+						<plot orientation="Horizontal">
+							<seriesColor seriesOrder="0" color="#CCCCFF"/>
+							<seriesColor seriesOrder="1" color="#9999FF"/>
+							<seriesColor seriesOrder="2" color="#3333FF"/>
+							<seriesColor seriesOrder="3" color="#6600FF"/>
+							<seriesColor seriesOrder="4" color="#000099"/>
+						</plot>
+					</piePlot>
+				</pieChart>
+			</band>
+		</groupFooter>
+	</group>
+	<background>
+		<band/>
+	</background>
+	<title>
+		<band/>
+	</title>
+	<pageHeader>
+		<band/>
+	</pageHeader>
+	<columnHeader>
+		<band/>
+	</columnHeader>
+	<detail>
+		<band height="1"/>
+	</detail>
+	<columnFooter>
+		<band/>
+	</columnFooter>
+	<pageFooter>
+		<band/>
+	</pageFooter>
+	<summary>
+		<band/>
+	</summary>
+</jasperReport>

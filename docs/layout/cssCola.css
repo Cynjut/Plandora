@@ -1,0 +1,376 @@
+<style type="text/css">
+
+body, p, td {font: 8pt tahoma, arial, helvetica, sans-serif;
+	text-decoration: none;
+	font-style: none;
+	font-weight: none;
+	color:#004080;
+	align: justify;
+}
+
+ul {font: 8pt tahoma, arial, helvetica, sans-serif;
+	text-decoration: none;
+	font-style: none;
+	font-weight: none;
+	color:#004080;}
+
+li {font: 8pt tahoma, arial, helvetica, sans-serif;
+	margin-top: 4pt;
+	color:#004080;}
+
+font {font: 8pt tahoma, arial, helvetica, sans-serif;
+      text-decoration: none;
+      font-style: none;
+      font-weight: none;
+      color:#004080;}	
+
+
+.tbl-gridheader {font: 11pt tahoma, arial, helvetica, sans-serif;
+	text-decoration: none;
+	font-style: none;
+	font-weight: bold;
+	background-color: #3F76AB;
+	color:#FFFFFF;	
+	line-height: 20pt;}
+
+.tbl-label {font: 8pt tahoma, arial, helvetica, sans-serif;
+	text-decoration: none;
+	font-style: none;
+	font-weight: none;
+	background-color: #c8e3ff;
+	color:#004080;	
+	line-height: 10pt;}
+
+.paging {font: 7pt tahoma, arial, helvetica, sans-serif;
+	text-decoration: none;
+	font-style: none;
+	font-weight: bold;
+	color:#FFFFFF;	
+	line-height: 8pt;}
+
+
+
+
+
+
+font.headline {font: 8pt tahoma, arial, helvetica, sans-serif;
+	text-decoration: none;
+	font-style: none;
+	font-weight: none;
+	color:#000000;}	
+
+
+.tbl-title {font: 9pt tahoma, arial, helvetica, sans-serif;
+	text-decoration: none;
+	font-style: none;
+	font-weight: bold;
+	background-color: #3F76AB;
+	color:#FFFFFF;	
+	line-height: 17pt;}
+
+.tbl-subtitle {font: 8pt tahoma, arial, helvetica, sans-serif;
+	text-decoration: none;
+	font-style: none;
+	font-weight: bold;
+	background-color: #c8e3ff;
+	color:#004080;	
+	line-height: 10pt;}
+
+
+.tbl-subbody {font: 8pt tahoma, arial, helvetica, sans-serif;
+	text-decoration: none;
+	font-style: none;
+	font-weight: none;
+	background-color: #FFFFFF;
+	color:#004080;	
+	line-height: 16pt;}
+
+/* background color of all screens */
+.backform {background-color=#e6e6e6;}
+
+/* used in sitemap submenu styles */
+font.submenu {font: 9pt tahoma, arial, helvetica, sans-serif;
+	text-decoration: none;
+	font-weight: bold;
+	color: #004080;}
+
+/***************************************************************************
+HREF
+***************************************************************************/
+		
+a {font: 8pt tahoma, arial, helvetica, sans-serif;
+	text-decoration: underline;
+	color: #cc6600;}
+
+a:visited {font: 8pt tahoma, arial, helvetica, sans-serif;
+	text-decoration: underline;
+	color: #cc6600;}
+
+a:hover {font: 8pt tahoma, arial, helvetica, sans-serif;
+	text-decoration: underline;
+	color: #ff9900;}
+
+a.top-navigation {font: 8pt tahoma, arial, helvetica, sans-serif;
+	text-decoration: none;
+	font-style: none;
+	font-weight: bold;
+	color:#ffffff;}
+
+a.top-navigation:visited {font: 8pt tahoma, arial, helvetica, sans-serif;
+	text-decoration: none;
+	font-style: none;
+	font-weight: bold;
+	color:#ffffff;}
+		
+a.top-navigation:hover {font: 8pt tahoma, arial, helvetica, sans-serif;
+	text-decoration: none;
+	font-style: none;
+	font-weight: bold;
+	color:#c8e3ff;}
+
+
+/***************************************************************************
+Generic GRID 
+***************************************************************************/
+
+
+/* Cabeçalho de um grid genérico */
+
+/* linha de detalhe de um grid genérico */
+.tbl-gridregular {font: 8pt tahoma, arial, helvetica, sans-serif;
+	text-decoration: none;
+	font-style: none;
+	font-weight: none;
+	background-color: #c8e3ff;
+	color:#000000;	
+	line-height: 13pt;}
+
+/* rodapé de um grid genérico */
+.tbl-gridfooter {font: 8pt tahoma, arial, helvetica, sans-serif;
+	text-decoration: none;
+	font-style: none;
+	font-weight: bold;
+	background-color: #3F76AB;
+	color:#FFFFFF;	
+	line-height: 15pt;}
+
+/* titulo do relatorio genérico*/
+.tbl-title-printer {font: 8pt tahoma, arial, helvetica, sans-serif;
+	text-decoration: none;
+	font-style: none;
+	font-weight: bold;
+	color:#000000;	
+	line-height: 15pt;}
+
+/* Cabeçalho de um grid para impressão genérico*/
+.tbl-gridheader-printer {font: 6pt tahoma, arial, helvetica, sans-serif;
+	text-decoration: none;
+	font-style: none;
+	font-weight: bold;
+	background-color: #D0D0D0;
+	color:#000000;	
+	line-height: 13pt;}
+
+/* linha de detalhe de um grid para impressão genérico*/
+.tbl-gridregular-printer-1 {font: 6pt tahoma, arial, helvetica, sans-serif;
+	text-decoration: none;
+	font-style: none;
+	font-weight: none;
+	color:#000000;	
+	line-height: 12pt;}
+
+/* linha de detalhe 'zebrada' de um grid para impressão genérico*/
+.tbl-gridregular-printer-2 {font: 6pt tahoma, arial, helvetica, sans-serif;
+	text-decoration: none;
+	font-style: none;
+	font-weight: none;
+	background-color: #E0E0E0;
+	color:#000000;	
+	line-height: 12pt;}
+
+/* rodapé de um grid para impressão genérico*/
+.tbl-gridfooter-printer {font: 6pt tahoma, arial, helvetica, sans-serif;
+	text-decoration: none;
+	font-style: none;
+	font-weight: bold;
+	background-color: #D0D0D0;
+	color:#000000;	
+	line-height: 13pt;}
+
+
+/* barra abaixo do rodapé do grid genérico, que contem os botões com as ações possíveis */
+.tbl-navigBar {font: 8pt tahoma, arial, helvetica, sans-serif;
+	text-decoration: none;
+	font-style: none;
+	font-weight: none;
+	background-color: #3F76AB;
+	color:#FFFFFF;	
+	line-height: 10pt;}
+
+a.gridlink {font: 8pt tahoma, arial, helvetica, sans-serif;
+	text-decoration: none;
+	color: #cc6600;}
+
+a.gridlink:visited {font: 8pt tahoma, arial, helvetica, sans-serif;
+	text-decoration: none;
+	color: #cc6600;}
+
+a.gridlink:hover {font: 8pt tahoma, arial, helvetica, sans-serif;
+	text-decoration: none;
+	color: #ff9900;}
+
+
+a.titlelink {font: 9pt tahoma, arial, helvetica, sans-serif;
+	text-decoration: none;
+	font-style: none;
+	font-weight: bold;
+	color:#FFFFFF;
+	line-height: 17pt;}
+
+a.titlelink:visited {font: 9pt tahoma, arial, helvetica, sans-serif;
+	text-decoration: none;
+	font-style: none;
+	font-weight: bold;
+	color:#FFFFFF;
+	line-height: 17pt;}
+
+a.titlelink:hover {font: 9pt tahoma, arial, helvetica, sans-serif;
+	text-decoration: underline;
+	font-style: none;
+	font-weight: bold;
+	color:#FFFFFF;
+	line-height: 17pt;}
+
+/***************************************************************************
+FORM
+***************************************************************************/
+
+select {font: 8pt tahoma, arial, helvetica, sans-serif;
+	background-color: #ffffff;
+	color: #333333;
+	cursor: arrow; border-width: 1px; }
+
+
+input {font: 8pt tahoma, arial, helvetica, sans-serif;
+	background-color: ;
+	color: #333333; border-width: 2px; }
+
+.inputDisabled {font: 8pt tahoma, arial, helvetica, sans-serif;
+	background-color: #e6e6e6;
+	color: #333333; border-width: 2px; }
+
+.inputPaging {font: 7pt tahoma, arial, helvetica, sans-serif;
+	background-color: #e6e6e6;
+	color: #333333; border-width: 1px; }
+
+radio {font: 8pt tahoma, arial, helvetica, sans-serif;
+	background-color: #ffffff;
+	color: #333333;
+	cursor: hand;
+	font-size: 7pt; border-width: 1px; }
+
+.radioDisabled {font: 8pt tahoma, arial, helvetica, sans-serif;
+	background-color:;
+	color: #333333;
+	font-size: 7pt; border-width: 1px; }
+
+checkbox {font: 8pt tahoma, arial, helvetica, sans-serif;
+	background-color: #ffffff;
+	color: #333333;
+	cursor: hand;
+	font-size: 7pt; border-width: 1px; }
+	
+textarea {font: 8pt tahoma, arial, helvetica, sans-serif;
+	background-color: #ffffff;
+	color: #333333;
+	cursor: text;}
+
+.button {
+	 background: #004080;
+	 color: #ffffff;
+	 cursor: hand;
+	 font-family: Verdana, Tahoma, Arial;
+	 font-size: 7pt;
+	 font-weight: bold;
+	 border-width: 1px}
+
+.buttonDisabled {
+	 background: #c8c8c8;
+	 color: #000000;
+	 font-family: Verdana, Tahoma, Arial;
+	 font-size: 7pt;
+	 font-weight: bold;
+	 border-width: 1px;}
+
+.buttonPaging {
+	 background: #c8c8c8;
+	 color: #000000;
+	 font-family: Verdana, Tahoma, Arial;
+	 font-size: 6pt;
+	 font-weight: bold;
+	 border-width: 1px;}
+
+/***************************************************************************
+MENU
+***************************************************************************/
+.mh {color : #FFFFFF;
+    font : 8pt tahoma, arial, helvetica, sans-serif;
+	font-weight : bold;
+	text-decoration : none;
+	font-style : none;
+	padding : 2px 5px 3px 4px;
+	vertical-align : center;
+	background : #3F76AB; 
+	display : block; }
+
+.base {background : #3F76AB;
+	padding : 3px 5px 3px 4px;
+	position : absolute;
+	align : center;
+	z-index : 100; 
+	color : #FFFFFF;}
+	
+.mn {background : #3F76AB;
+	padding : 1px;
+	position : absolute;
+	z-index : 100;
+	border: 2px outset #FFFFFF; }
+
+.mn a{ color : #FFFFFF;
+	display : block;
+	font: 8pt tahoma, arial, helvetica, sans-serif;
+	padding : 2px 5px 3px 4px;
+	text-decoration : none;
+	vertical-align : center;
+	background : #3F76AB; }
+
+.mn a:visited { background : #3F76AB;
+	text-decoration : none;
+    color : #FFFFFF; }
+    
+.mn a:hover { background : #004080;
+	text-decoration : none;
+    color : #FFFFFF; }
+
+.sp { border-bottom : #FFFFFF 1px solid;
+	border-top : #FFFFFF 0px solid;
+	margin : 2px 2px; }
+
+.md {color : #c8c8c8;
+        font : 8pt tahoma, arial, helvetica, sans-serif;
+        text-decoration : none;
+	font-style : none;
+	padding : 2px 5px 3px 4px;
+	vertical-align : center;
+	background : #3F76AB; 
+	display : block; }
+
+.top-navigation {font: 8pt tahoma, arial, helvetica, sans-serif;
+	text-decoration: none;
+	font-style: none;
+	font-weight: bold;
+	color:#c8c8c8;}
+
+
+-->
+</style>

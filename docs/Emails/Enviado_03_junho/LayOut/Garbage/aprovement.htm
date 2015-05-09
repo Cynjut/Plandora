@@ -1,0 +1,201 @@
+<html>
+<head>
+<title>Aprova&ccedil;&atilde;o da Solicita&ccedil;&atilde;o</title>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+<link href="styleDefault.css" id="style" TYPE="text/css" rel="STYLESHEET">
+</head>
+
+<body bgcolor="#FFFFFF">
+<form method="post" action="" name="projeto">
+  <table width="100%" border="0" cellspacing="0" cellpadding="0">
+    <tr class="formLabel"> 
+      <td width="2%">&nbsp;</td>
+      <td width="59%">Aprova&ccedil;&atilde;o da Solicita&ccedil;&atilde;o</td>
+      <td width="26%">&nbsp;</td>
+      <td width="13%">&nbsp;</td>
+    </tr>
+  </table>
+  <table width="100%" border="0" cellspacing="0" cellpadding="0">
+    <tr class="paging"> 
+      <td width="16%" height="8">&nbsp;</td>
+      <td width="25%" height="8">&nbsp;</td>
+      <td width="18%" height="8">&nbsp;</td>
+      <td width="41%" height="8">&nbsp;</td>
+    </tr>
+    <tr> 
+      <td width="16%" class="formTitle">&nbsp;</td>
+      <td width="25%" class="formBody"><b>Cadastro Tarefa</b></td>
+      <td width="18%" class="formTitle">&nbsp;</td>
+      <td width="41%" class="formBody">&nbsp;</td>
+    </tr>
+    <tr> 
+      <td width="16%" class="formTitle">ID tarefa:&nbsp;</td>
+      <td width="25%" class="formBody"> 
+        <input type="text" name="idTarefa" maxlength="6" size="6" class="textBoxDisable">
+      </td>
+      <td width="18%" class="formTitle">&nbsp;</td>
+      <td width="41%" class="formBody">&nbsp;</td>
+    </tr>
+    <tr> 
+      <td width="16%" class="formTitle">Projeto:&nbsp;</td>
+      <td width="25%" class="formBody">
+        <select name="project" class="selectBox">
+          <option>Projeto XPTO</option>
+        </select>
+      </td>
+      <td width="18%" class="formTitle">Data Execu&ccedil;&atilde;o:&nbsp;</td>
+      <td width="41%" class="formBody"> 
+        <input type="text" name="dtExecution" maxlength="10" size="10" class="textBox">
+      </td>
+    </tr>
+    <tr> 
+      <td width="16%" class="formTitle">Nome:&nbsp;</td>
+      <td width="25%" class="formBody"> 
+        <input type="text" name="name" maxlength="30" size="25" class="textBox">
+      </td>
+      <td width="18%" class="formTitle">Categoria:&nbsp;</td>
+      <td width="41%" class="formBody"> 
+        <select name="category" class="selectBox">
+          <option>Analise</option>
+          <option>Desenvolvimento</option>
+          <option>Manutencao</option>
+          <option>Testes</option>
+          <option>Negocio</option>
+        </select>
+      </td>
+    </tr>
+    <tr> 
+      <td width="16%" class="formTitle">Descri&ccedil;&atilde;o:&nbsp;</td>
+      <td class="formBody" colspan="3"> 
+        <textarea name="description" rows="3" cols="80" class="textBox"></textarea>
+      </td>
+    </tr>
+    <tr> 
+      <td width="16%" class="formTitle">&nbsp;</td>
+      <td width="25%" class="formBody"><b>Aloca&ccedil;&atilde;o Recurso(s)</b></td>
+      <td width="18%" class="formTitle">&nbsp;</td>
+      <td width="41%" class="formBody">&nbsp;</td>
+    </tr>
+    <tr> 
+      <td width="16%" class="formTitle">Recurso:&nbsp;</td>
+      <td width="25%" class="formBody"> 
+        <select name="resource" class="selectBox">
+          <option>Fulano da Silva de Souza</option>
+          <option>Beltrano da Silva</option>
+          <option>Sicrano de Souza</option>
+        </select>
+      </td>
+      <td width="18%" class="formTitle">Tempo Estimado:&nbsp;</td>
+      <td width="41%" class="formBody"> 
+        <input type="text" name="estimated" size="3" maxlength="3" class="textBox">
+      </td>
+    </tr>
+    <tr> 
+      <td width="16%" class="formTitle">&nbsp;</td>
+      <td width="25%" class="formBody">
+        <input type="submit" name="Submit" value="adiciona" class="button">
+        <input type="submit" name="Submit2" value="remove" class="button">
+      </td>
+      <td width="18%" class="formTitle">&nbsp; </td>
+      <td width="41%" class="formBody">&nbsp; </td>
+    </tr>
+    <tr> 
+      <td width="16%" class="formTitle">&nbsp;</td>
+      <td class="formBody" colspan="2"> 
+        <select name="listResource" size="4" class="selectBox">
+          <option>Fulano da Silva de Souza - 20h</option>
+        </select>
+      </td>
+      <td width="41%" class="formBody">&nbsp; </td>
+    </tr>
+    <tr> 
+      <td width="16%" class="formTitle" height="11">&nbsp;</td>
+      <td width="25%" class="formBody" height="11">&nbsp; </td>
+      <td width="18%" class="formTitle" height="11">&nbsp;</td>
+      <td width="41%" class="formBody" height="11">&nbsp; </td>
+    </tr>
+  </table>
+<table width="100%" border="0" cellspacing="0" cellpadding="0">
+    <tr class="paging"> 
+      <td width="2%">&nbsp;</td>
+      <td width="29%">&nbsp;</td>
+      <td width="56%">&nbsp;</td>
+      <td width="13%">&nbsp;</td>
+    </tr>
+    <tr class="formLabel"> 
+      <td width="2%">&nbsp;</td>
+      <td width="29%"> 
+        <input type="submit" name="storeTask" value="  Salvar  " class="button">
+      </td>
+      <td width="56%">&nbsp;</td>
+      <td width="13%">&nbsp;</td>
+    </tr>
+    <tr class="paging"> 
+      <td width="2%">&nbsp;</td>
+      <td width="29%">&nbsp;</td>
+      <td width="56%">&nbsp;</td>
+      <td width="13%">&nbsp;</td>
+    </tr>
+  </table>
+  <table width="100%" border="0" cellspacing="0" cellpadding="0">
+    <tr class="formLabel"> 
+      <td width="2%">&nbsp;</td>
+      <td width="29%">Tarefas da Solicita&ccedil;&atilde;o</td>
+      <td width="56%">&nbsp;</td>
+      <td width="13%">&nbsp;</td>
+    </tr>
+    <tr class="paging"> 
+      <td width="2%">&nbsp;</td>
+      <td width="29%">&nbsp;</td>
+      <td width="56%">&nbsp;</td>
+      <td width="13%">&nbsp;</td>
+    </tr>
+  </table>
+  <table width="100%" border="0" cellspacing="1" cellpadding="0">
+    <tr> 
+      <td width="16" class="formTitle">&nbsp;</td>
+      <td width="619" class="formBody">Coletar dados do Banco de dados</td>
+      <td width="151" class="formTitle"> 
+        <div align="center">Fulano da Silva</div>
+      </td>
+      <td width="25" class="formBody"> 
+        <div align="center"><img src="edit.gif" width="14" height="13"></div>
+      </td>
+      <td width="33" class="formBody"> 
+        <div align="center"><img src="remove.gif" width="14" height="13"></div>
+      </td>
+    </tr>
+    <tr> 
+      <td width="16" class="formTitle">&nbsp;</td>
+      <td width="619" class="formBody">Formatar Valores do relatorio</td>
+      <td width="151" class="formTitle"> 
+        <div align="center">Beltrano/Sicrano</div>
+      </td>
+      <td width="25" class="formBody"> 
+        <div align="center"><img src="edit.gif" width="14" height="13"></div>
+      </td>
+      <td width="33" class="formBody"> 
+        <div align="center"><img src="remove.gif" width="14" height="13"></div>
+      </td>
+    </tr>
+  </table>
+<table width="100%" border="0" cellspacing="0" cellpadding="0">
+    <tr class="paging"> 
+      <td width="2%">&nbsp;</td>
+      <td width="29%">&nbsp;</td>
+      <td width="56%">&nbsp;</td>
+      <td width="13%">&nbsp;</td>
+    </tr>
+    <tr class="formLabel"> 
+      <td width="2%">&nbsp;</td>
+      <td width="29%">
+        <input type="submit" name="refresh" value="Atualizar" class="button">
+      </td>
+      <td width="56%">&nbsp;</td>
+      <td width="13%">&nbsp;</td>
+    </tr>
+  </table>
+  </form>
+<p>&nbsp;</p>
+</body>
+</html>

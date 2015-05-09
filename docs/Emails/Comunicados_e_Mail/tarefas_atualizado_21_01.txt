@@ -1,0 +1,110 @@
+Tarefas:
+--------
+
+antes de 8/12/2003
+Alberto
+	- tarefas diversas de design de telas, prototipos html, diagrama de: classe, caso de uso e sequencia (15h)
+
+8/12/2003
+Alberto
+	- listagem das tarefas do projeto (1h)
+
+07/01/2004
+Alberto
+	- estudo do blueprint Sun sobre arquitetura MVC - 2h
+	- reuniao para alinhamento das tarefas e discussao tecnica sobre heranca, modelo MVC, etc - 2h
+Elumar
+	- reuniao para alinhamento das tarefas e discussao tecnica sobre heranca, modelo MVC, etc - 2h
+
+08/01/2004
+Alberto
+	- estudo do blueprint Sun sobre arquitetura MVC - 1h
+
+
+15/01/2004
+Alberto
+	- criacao do documento UseCaseSpecification - 1,5h
+
+
+
+***********************************************************************************************************
+
+05/01/2003
+
+Elumar
+	- melhorar padrao do css das paginas atuais (não definida)
+
+
+08/01/2003
+
+Elumar
+	- leituras de fóruns e listas de discussão sobre Struts (não definida)
+
+
+
+09/01/2003
+
+Elumar
+	- leitura da documentação sobre Tom Cat e Struts (4 h)
+
+
+11/01/2003
+
+Elumar
+	- instalação do Tom Cat (1 h)
+
+
+11/01/2003
+
+Elumar
+	- instalação do j2SDK (1 h)
+
+
+
+??/??/2003
+Alberto
+	- ??? (?h)
+Elumar
+	- ??? (?h)
+
+
+
+
+TO DO List 1a Fase:
+-------------------
+E  - melhorar padrao do css das paginas atuais
+E  - baixar J2SDK e Tomcat e instala-los
+E  - criar um servlet do zero, e faze-lo funcionar dentro do Tomcat
+E  - continuar documento de Especificação de Casos de Uso
+A  - auxiliar Elumar na confeccao do UCS
+E  - fazer o prototipo de tela (html puro) para as telas abaixo segundo layout feito no papel:
+	- cabecalho (menu, se necessario), rodape, laterais, etc
+	- cadastro/lista usuarios
+	- tela principal (que contem: lista de Meus Projetos, lista de Minhas Tarefas, etc).
+A  - fazer o layout no papel para as telas de:
+	- tela de atualizacao de status de tarefa pelo recurso
+	- tela de pesquisa de problemas (knowledge base)
+E  - fazer o prototipo de tela (html puro) para as telas abaixo segundo layout feito no papel:
+	- tela de atualizacao de status de tarefa pelo recurso
+	- tela de pesquisa de problemas (knowledge base)
+E/A- fazer casamento do diagrama de Caso de Uso atual com todos os layouts de tela e comparar se tudo esta contemplado/coerente
+E  - colocar o diagrama de Caso de Uso no Rose
+E/A- rever os diagramas de sequencia ja feitos em virtude das possiveis mudancas nos Casos de Uso
+E/A- remodelar diagrama de Classes
+A  - listar os relatorios que serao feitos na primeira fase
+E/A- criar os diagramas de sequencia contemplando a lista de relatorios da primeira fase
+E/A- fazer tagLibrary ou JSP generico para exibir um popup de calendario (para os campos data dos formularios). Verificar se isso jah nao existe nas libs do struts.
+
+
+TO DO List 2a Fase:
+-------------------
+- fazer o prototipo de tela (html puro) para as telas abaixo segundo layout feito no papel:
+	- tela de Abertura de um forum de discussao
+	- alteracao da tela principal para suportar entrada de mais uma lista: Meus Foruns
+	- criacao de tela para leitura/exclusao(se permitido)/insercao de topicos
+	- telas de cadastros das tabelas basicas (Categoria, Status de Projeto, Status de Tarefa, etc)
+- fazer diagrama de caso de uso do Gantt
+- rever diagrama de classes do Gantt
+- rever diagrama de sequencia do Gantt
+- listar os relatorios que serao feitos na segunda fase
+- criar os diagramas de Sequencia contemplando a lista de relatorios da segunda fase (e corrigir o de Caso de Uso se necessario)

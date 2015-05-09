@@ -1,0 +1,102 @@
+<HTML>
+<HEAD><TITLE>Gantt Chart</TITLE></HEAD>
+<BODY BGCOLOR="AFAFAF">
+<CENTER>
+<APPLET	code="com.pandora.gui.gantt.Gantt.class" archive="gantt.jar" width="960" height="580">
+
+	<param name="TIMEUNIT" value="60000" />
+	<param name="SLOTSIZE" value="1440" />
+	<param name="PARENTSLOTSIZE" value="10080" />
+
+	<param name="NWMARKCOLOR" value="EFEFEF" />
+	<param name="EDITABLE" value="TRUE" />		
+
+	<param name="HZOOM" value="10" />
+	<param name="VZOOM" value="10" />
+
+	<param name="ROWHEIGHT" value="18" />
+	<param name="SLOTWIDTH" value="15" />	
+
+	<param name="INITIALDATE" value="27/07/05" />
+	<param name="SLOTS" value="130" />
+	<param name="LANGUAGE" value="pt" />
+	<param name="COUNTRY" value="BR" /" />
+
+	<param name="RESNUM" value="6">
+	<param name="RES_1" value="res1|Fulano|Description Fulano| |1" />
+	<param name="RES_2" value="res2|Sicrano|Description Sicrano| |1" />
+	<param name="RES_3" value="res3|Beltrano|Description Beltrano| |1" />
+	<param name="RES_4" value="res4|Albert Camus|Description Albert Camus| |4" />
+	<param name="RES_5" value="res5|Franz Kafka|Description Franz Kafka| |4" />
+	<param name="RES_6" value="res6|Friedrich Nietzsche|Description Friedrich Nietzsche| |4" />
+
+	<param name="LAYERNUM" value="4">
+	<param name="LAYER_1" value="lay1|1|Project 1|Project 1 Description|7CFFFF|480" />
+	<param name="LAYER_2" value="lay2|2|Project 2|Project 2 Description|EEEE7C|480" />
+	<param name="LAYER_3" value="lay3|3|Project 3|Project 3 Description|FFC7FF|480" />
+	<param name="LAYER_4" value="lay4|4|Project 4|Project 4 Description|1010FF|480" />
+
+	<param name="JOBNUM" value="16">
+	<param name="JOB_1" value="job1|res1|Job 1|Description|lay1|0" />
+	<param name="JOB_2" value="job2|res2|Job 2|Description|lay1|0" />
+	<param name="JOB_3" value="job3|res3|Job 3|Description|lay1|0" />
+	<param name="JOB_4" value="job4|res2|Job 4|Description|lay2|0" />
+	<param name="JOB_5" value="job5|res4|Job 5|Description|lay1|0" />
+	<param name="JOB_6" value="job6|res4|Job 6|Description|lay2|0" />
+	<param name="JOB_7" value="job7|res4|Job 7|Description|lay3|0" />
+	<param name="JOB_8" value="job8|res4|Job 8|Description|lay4|0" />
+	<param name="JOB_9" value="job9|res5|Job 9|Description|lay1|0" />
+	<param name="JOB_10" value="job10|res5|Job 10|Description|lay2|0" />
+	<param name="JOB_11" value="job11|res5|Job 11|Description|lay3|0" />
+	<param name="JOB_12" value="job12|res5|Job 12|Description|lay4|0" />
+	<param name="JOB_13" value="job13|res6|Job 13|Description|lay1|0" />
+	<param name="JOB_14" value="job14|res6|Job 14|Description|lay2|0" />
+	<param name="JOB_15" value="job15|res6|Job 15|Description|lay3|0" />
+	<param name="JOB_16" value="job16|res6|Job 16|Description|lay4|0" />
+
+	<param name="AUNITNUM" value="19">
+	<param name="AUNIT_1" value="job1|res1|10|3|3|0" />
+	<param name="AUNIT_2" value="job1|res1|13|4|4|0" />
+	<param name="AUNIT_3" value="job2|res2|20|2|2|0" />
+	<param name="AUNIT_4" value="job3|res3|30|5|42|0" />
+	<param name="AUNIT_5" value="job4|res2|40|13|13|0" />
+	<param name="AUNIT_6" value="job1|res1|13|5|50|0" />
+	<param name="AUNIT_7" value="job5|res4|15|3|10|0" />
+	<param name="AUNIT_8" value="job6|res4|15|20|23|0" />
+	<param name="AUNIT_9" value="job7|res4|15|22|26|0" />
+	<param name="AUNIT_10" value="job8|res4|15|29|31|0" />
+	<param name="AUNIT_11" value="job9|res5|15|36|40|0" />
+	<param name="AUNIT_12" value="job10|res5|15|40|50|0" />
+	<param name="AUNIT_13" value="job11|res5|15|45|52|0" />
+	<param name="AUNIT_14" value="job12|res5|15|46|51|0" />
+	<param name="AUNIT_15" value="job13|res6|15|49|60|0" />
+	<param name="AUNIT_16" value="job14|res6|15|50|67|0" />
+	<param name="AUNIT_17" value="job15|res6|15|53|65|0" />
+	<param name="AUNIT_18" value="job16|res6|15|50|69|0" />
+	<param name="AUNIT_19" value="job16|res6|15|73|75|0" />
+
+	<param name="DEPNUM" value="3">
+	<param name="DEP_1" value="job3|res3|job2|res2|1" />
+	<param name="DEP_2" value="job5|res4|job2|res2|1" />
+	<param name="DEP_3" value="job4|res2|job2|res2|1" />
+
+	<param name="MENUNUM" value="8">
+	<param name="MENU_1" value="GANTT_AREA|Create a new Task|target1|" />
+	<param name="MENU_2" value="RESOURCE_AREA|Create a new Resource|INSERT_RES_TARGET|" />
+	<param name="MENU_3" value="RESOURCE_AREA|SEPARATOR|SEPARATOR|" />
+	<param name="MENU_4" value="RESOURCE_AREA|Up Position|UP_RES_TARGET|" />
+	<param name="MENU_5" value="RESOURCE_AREA|Down Position|DOWN_RES_TARGET|" />
+	<param name="MENU_6" value="JOB_AREA|Remove|REMOVE_JOB_TARGET|" />
+	<param name="MENU_7" value="JOB_AREA|SEPARATOR|SEPARATOR|" />
+	<param name="MENU_8" value="JOB_AREA|Alloc Resource to...|ALLOC_LAYER_TARGET|" />
+
+	<param name="BUTTONNUM" value="4">
+	<param name="BUTTON_1" value="Zoom In|ZOOM_IN_BUTTON|target|TRUE|zoom-in.gif" />
+	<param name="BUTTON_2" value="Zoom Out|ZOOM_OUT_BUTTON|target|trUe|zoom-out.gif" />
+	<param name="BUTTON_3" value="Up Position|UP_RES_TARGET|target|trUe|up.gif" />" />
+	<param name="BUTTON_4" value="Down Position|DOWN_RES_TARGET|target|trUe|down.gif" />" />
+
+</APPLET>
+</CENTER>
+</BODY>
+</HTML>

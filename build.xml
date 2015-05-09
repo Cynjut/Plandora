@@ -1,0 +1,133 @@
+<project name="pandora" default="war" basedir=".">
+
+  	<!-- 
+  		 NOTE: Remember to set the tomcat_home and my_source properties into eclipse, through the following path:
+  		 NOTA: Nao esquecer de ajustar a propriedade tomcat_home e my_source no seu eclipse, atraves de:
+  		 eclise -> window -> preference -> ant -> runtime -> (aba) properties
+  	-->
+	
+   <!-- definicao de propriedades -->	
+   <property name="src" value="${my_source}" />
+   <property name="dist" value="${my_source}/dist" />
+   <property name="build" value="${my_source}/build" />
+   <property name="lib" value="${my_source}/lib" />
+
+   <property name="application" value="pandora" />
+	
+   <property name="web-tree" value="${src}/web" />
+   <property name="src-tree" value="${src}/java" />
+   <property name="tomcat_deploy_dir" value="${tomcat_home}/webapps"/>	
+	
+    <!-- cria as pastas dist e build -->
+   	<target name="resetdir">
+    	<delete dir="${dist}" />
+       	<delete dir="${build}" />
+   		<delete file="${tomcat_deploy_dir}/${application}.war"/>
+   		<delete dir="${tomcat_deploy_dir}/${application}"/>
+       	<mkdir dir="${dist}" />
+       	<mkdir dir="${build}"/>
+	</target>
+
+    <!-- compila projeto -->
+	<target name="compile" depends="resetdir">
+    	<echo message="Compiling classes..."></echo>
+
+		<javac srcdir="${src}/java" destdir="${build}" debug="true" deprecation="true">
+  			<classpath>
+    			<!-- include all jar files  -->
+       			<fileset dir="${lib}">
+           			<include name="**/*.jar"/>
+       			</fileset>
+  			</classpath>
+			<!-- compilerarg value="-Xlint" -->			
+ 		</javac>
+		<copy file="${src}/ApplicationResources_pt_BR.properties" overwrite="true" tofile="${build}/ApplicationResources_pt_BR.properties"/>
+		<copy file="${src}/ApplicationResources_en_US.properties" overwrite="true" tofile="${build}/ApplicationResources_en_US.properties"/>
+		<copy file="${src}/ApplicationResources_en_US.properties" overwrite="true" tofile="${build}/ApplicationResources.properties"/>		
+		<copy file="${src}/ApplicationResources_es.properties" overwrite="true" tofile="${build}/ApplicationResources_es.properties"/>
+		<copy file="${src}/ApplicationResources_ru_RU.properties" overwrite="true" tofile="${build}/ApplicationResources_ru_RU.properties"/>
+		<copy file="${src}/ApplicationResources_ru_RU.properties" overwrite="true" tofile="${build}/ApplicationResources_ru.properties"/>
+		<copy file="${src}/log4j.properties" overwrite="true" tofile="${build}/log4j.properties"/>
+		<copy todir="${build}">
+   			<fileset dir="${src}">
+       			<include name="**/*.jasper"/>
+   			</fileset>			
+		</copy>
+ 	</target>	
+
+	<!-- gera arquivo JAR do gantt -->
+	<target name="gantt" depends="compile">   
+		<echo message="Criando arquivos jar (gantt, flowchart e intefaces)..."/>
+		<jar jarfile="${dist}/gantt.jar" basedir="${build}"
+			excludes="**/lib/**, **/pandora/exception/**, **/delegate/**, **/org/**, **/tests/**, **/bus/**, **/taglib/**, **/dao/**, **/struts/**, **/helper/SessionHelper.class, **/helper/LogHelper.class, **/helper/HtmlHelper.class, **/helper/XmlDomParse.class, **/imp/**, **/acceptanceTest/**, **/pandora/*.class, **/*.jasper, **/flowchart/**, **/gui/client/**" >
+		</jar>
+		<copy file="${src}/java/GanttFake.htm" overwrite="true" tofile="${dist}/GanttFake.htm"/>
+		<copy file="${dist}/gantt.jar" overwrite="true" tofile="${web-tree}/jsp/gantt.jar"/>
+		
+		<jar jarfile="${dist}/plandoraInterface.jar" basedir="${build}"
+			excludes="**/lib/**, **/pandora/gui/**, **/org/**, **/tests/**, **/taglib/**, **/dao/*DAO*, **/struts/**, **/helper/SessionHelper.class, **/helper/LogHelper.class, **/helper/HtmlHelper.class, **/helper/XmlDomParse.class, **/*.jasper, **/*.properties , **/bus/GeneralTimer.class, **/bus/A*BUS.class, **/bus/C*BUS.class, **/bus/D*BUS.class, **/bus/E*BUS.class, **/bus/F*BUS.class, **/bus/M*BUS.class, **/bus/P*.class, **/bus/R*BUS.class, **/bus/T*BUS.class, **/bus/U*BUS.class, **/acceptanceTest/**" >
+		</jar>
+		
+		<jar jarfile="${dist}/flowchart.jar" basedir="${build}"
+			excludes="**/lib/**, **/pandora/exception/**, **/delegate/**, **/org/**, **/tests/**, **/bus/**, **/taglib/**, **/dao/**, **/struts/**, **/helper/SessionHelper.class, **/helper/LogHelper.class, **/helper/HtmlHelper.class, **/helper/XmlDomParse.class, **/imp/**, **/acceptanceTest/**, **/pandora/B*.class, **/pandora/E*.class, **/pandora/F*.class, **/pandora/G*.class, **/pandora/L*.class, **/pandora/M*.class, **/pandora/U*.class, **/pandora/R*.class, **/pandora/C*.class, **/pandora/P*.class, **/pandora/O*.class, **/pandora/Q*.class, **/pandora/S*.class, **/pandora/A*.class, **/*.jasper, **/gantt/**, **/gui/client/**" >
+		</jar>
+		<copy file="${dist}/flowchart.jar" overwrite="true" tofile="${web-tree}/jsp/flowchart.jar"/>
+		<copy file="${src}/java/FlowChartFake.htm" overwrite="true" tofile="${dist}/FlowChartFake.htm"/>		
+
+		<copy file="${web-tree}/images/newTask.gif" overwrite="true" tofile="${build}/newTask.gif"/>
+		<jar jarfile="${dist}/thinclient.jar" basedir="${build}"
+			excludes="**/lib/**, **/pandora/exception/**, **/delegate/**, **/org/**, **/tests/**, **/bus/**, **/taglib/**, **/dao/**, **/struts/**, **/helper/SessionHelper.class, **/helper/LogHelper.class, **/helper/HtmlHelper.class, **/helper/XmlDomParse.class, **/imp/**, **/acceptanceTest/**, **/pandora/*TO.class, **/*.jasper, **/gantt/**, **/flowchart/**" >
+		    <manifest>
+		    	<attribute name="Main-Class" value="com.pandora.gui.client.ThinClient" />
+		    	<attribute name="Class-Path" value="" />
+		    </manifest>			
+			
+		</jar>
+		<copy file="${dist}/thinclient.jar" overwrite="true" tofile="${web-tree}/jsp/thinclient.jar"/>
+
+	</target>
+	
+	<!-- gera arquivo WAR -->
+   	<target name="war" depends="gantt">
+		<echo message="Criando arquivo pandora.war..."/>
+  	
+		<copy file="${src}/application.xml" overwrite="true" tofile="${build}/application.xml"/>			
+		<replace file="${build}/application.xml" token="pandora" value="${application}"/>
+   		
+		<war destfile="${dist}/${application}.war" webxml="${src}/web.xml" >						
+			<zipfileset dir="${web-tree}/jsp" prefix="jsp">
+				<include name="**/*.jsp" />
+				<include name="**/*.swf" />
+				<include name="**/*.gif" />
+				<include name="**/*.jpg" />
+				<include name="**/*.jar" />				
+			</zipfileset>
+			<zipfileset dir="${web-tree}/images" prefix="images">
+				<include name="**/*.*" />
+			</zipfileset>
+			<zipfileset dir="${web-tree}/css" prefix="css">
+				<include name="**/*.*" />
+			</zipfileset>
+			<zipfileset dir="${web-tree}/jscript" prefix="jscript">
+				<include name="**/*.*" />
+			</zipfileset>
+				
+           	<classes dir="${build}">
+           		<exclude name="**/gui/gantt/**" />
+           	</classes>
+ 			<zipfileset dir="${src}" prefix="WEB-INF" excludes="**/build.xml, **/application.xml">
+ 				<include name="**/*.xml"/>
+ 			</zipfileset>
+ 			<zipfileset dir="${build}" prefix="META-INF">
+ 				<include name="**/application.xml"/>
+ 			</zipfileset>
+  			<lib dir="${lib}">
+	  			<exclude name="**/servlet.jar"/>
+			</lib>		
+       	</war>
+   		
+		<echo message="Copiando ${dist}/${application}.war ${tomcat_deploy_dir}..."/>
+		<copy file="${dist}/${application}.war" overwrite="true" tofile="${tomcat_deploy_dir}/${application}.war"/>
+	</target>
+
+</project>

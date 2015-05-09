@@ -1,0 +1,86 @@
+fio, alem da lista de alteracoes que concluimos da McReuniao Tecnica de hoje, li
+o documento que vc imprimiu e listei mais alguns apontamentos, caso vc nao
+descorde, vamos manter o follow-up deste email pra terminar este doc o mais
+rapido blz?
+abraco
+
+
+R5: - acho que vc escreveu este requisto pensando numa tela que funcionaria
+naquele esquema de escreve todos os campos, dai o sistema mostra uma tela de
+resumo p/ o cliente confirmar e so depois e submetido. Isto eh interessante mas
+soh para inforacoes criticas como por exemplo compras on-line etc.
+      No caso de entrada de requests, temos que montar uma interface que seja
+menos burocratica possivel, o cliente coloca alguns dados bem superficiais e ja
+vai pra conta. Mesmo pq isso vai passar pelo crivo do Lider, que avaliara e tal,
+entao acho que este requisito eh desnecessario. o q vc acha?
+
+R6: - este requisito esta em duplicidade com o R11. Verifique isso, se vc
+concordar remova o R6.
+
+R7: - "numero total de OS"...nao eh o numero de Os e sim a lista de OS certo?
+
+R15: - parte deste requisito esta duplicado com o R11. A unica parte nao
+duplicada eh a parte que fala da ordenacao. Poderia ser algo como: "A
+apresentacao das requisitos do cliente devem ser apresentadas em ordem crescente
+de data.
+
+R18: - vejo dois requisitos em um. "O sistema permitirah q o recurso inicie um
+forum de discussao" e outro "Para criacao de um forum de discussao Serao
+necessarios os dados...".
+     - Alem disso, para este segundo request falta dizer um outro dado
+necessario para a criacao: pode-se vincular (opcionalmente) uma tarefa ou
+projeto. Eh legal isso, pois da pra criar discussoes paralelas acerca de um
+projeto ou tarefa especifica.
+
+R19: - mude a expressao: "devera especificar um.." para "devera eleger um", ja
+que ele vai escolher de uma lista de usuarios pre-cadastrada
+     - "...admistrador e moderador.": É isso mesmo? qual a diferenca entre
+admistrador de forum e moderador. Compensa o sistema gerenciar os dois papeis?
+     - "...em questao e nome do administrador": Nome nao eh necessario pois esta
+informacao ja existe.
+
+R21 - nao entendi
+
+R22 - isso nao estah contido no R18?
+
+R23 - remova a parte "...pertinentes as suas duvidas": Nao faz diferenca para o
+sistema o porque do usuario estar num forum de discussao.
+
+R24 e 25 - embora um esteja falando de imagem e outro de doc, nao eh a mesma
+coisa? a ideia nao eh permitir que o sistema possibilite uploads nos foruns?
+	- Talvez entao mudar o 25 para uma outra coisa...pois eu lembrei que uma coisa
+que esta faltando eh permitir q o sistema faca uploads vinculados nao apenas a
+foruns como tmb a projetos. Isso eh otimo para vincular documentos tecnicos,
+diagramas, planilhas, etc a um deterinado projeto
+
+R30 - "..., area, ": Area nao precisa certo? ela e um atributo ligado a recurso
+e nao a projeto.
+    - "produtos gerados."; o que seria isso?
+
+R?? (mais um requisito q eu lembrei depois): "No cadastro de projetos deve ser
+possivel criar referencia a um projeto pai, isto eh, projeto de projetos."
+
+R31 - "...nome da area, sigla, responsavel": nao sei se responsavel eh
+necessario. Isso seria mais uma informacao organizacional, e que nao seria usada
+pelo sistema pra nada certo? Sei la, pode ate deixar se quiser. Eh que acho que
+poderiamos aproveitar melhor esta informacao numa segunda fase do projeto.
+
+R33 - "nome da area", "sigla": remova estes dois, pra excluir so id mesmo
+
+R37 - "nome de tecnico, deparamento": substitua por: nome do tipo, descricao
+
+R38 - "tipos de tecnicos": substitua por "tipos de recurso".
+
+R39 - todos os "tipos de tecnicos": substitua por "tipos de recurso".
+
+R40, R41 e R42: É necessario mesmo "funcao de recurso"? qual a diferenca entre
+R39 - todos os "tipos de tecnicos": substitua por "tipos de recurso" e "funcao
+de recurso"?
+
+R43: - Coloque cada um dos reports (os que estao separados por bullets) num
+requisito separado.
+     - Produtos gerados do projeto: O que eh isso?
+     - "Tecnicos do projeto" e "...tecnico responsavel", substitua por "Recursos
+do projeto" e "recurso responsavel".
+
+

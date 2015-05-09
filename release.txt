@@ -1,0 +1,693 @@
+plandora-v0.5.2 (10/05/2005)
+- build do dia 02/05/2005 (...com 1/3 dos requisitos cumpridos) alem de:
+- implementacao da funcionalidade de ajustes nas solicitacoes pelo lider
+- correcao de bug na tela home de recurso/lider que nao estava dando refresh apos rejeitar uma solicitacao (reportado pelo Beto)
+- correcao no form de criacao de tarefas (problemas ao criar tarefas em hierarquia, problemas ao substituir recursos alocados)
+- criacao de novas validacoes na tela de solicitacao referente as datas que nao podem ser menores que a data corrente
+
+plandora-v0.5.3 (16/05/2005)
+- hint das imagens na GUI estava funcionando apenas para IExplorer ("alt"), foi criada uma classe HtmlHelper com um metodo getHint que devolve os hints de IE e FireFox ("title") e todos os decorators foram ajustados
+- inclusao de coluna de data de entrega Estimada na lista de Todas as Solicitacoes
+- alteracao de form de Projetos com a edicao dos checkbox de "selfAllocation" e campo texto para entrada do valor H/h (homem/hora) do recurso no projeto
+- Implementacao da Funcionalidade de vincular custos ao Recurso X projeto
+- Implementacao da Funcionalidade de auto-alocacao de solicitacoes
+- Implementacao da Funcionalidade de Report BSC (Balanced ScoreCard)
+- Correcao de bug: existia um bug na mudanca de estado da tarefa que estava fazendo uma checagem errada e nao estava fechando a solicitacao quando deveria.
+
+*************** CONGELAMENTO DA VERSAO PARA O SOURCE-FORGE ********************
+
+plandora-v0.6.0
+- Correcao de bug: ao cancelar uma tarefa a classe de negocio estava checando se o estado atual da tarefa era OPEN e qualquer coisa diferente disso lan�ava uma excecao. Segundo a maquina de estado poderi tmb ser IN_PROGRESS e HOLD
+- Correcao de bug: uma tarefa HOLD da lista de tarefas na tela de ManageTask estava aparecendo com core vermelha ao inves de amarela. O erro estava no metodo ResourceTaskBUS.getStatusOfAllocResource()
+- Correcao de bug: Na tela de andamento de tarefas, o campo de tempo estimado estava com valor default '0'. Foi mudado para "" (vazio) para for�ar o recurso a atualizar este campo, j� que o valor "0" � um valor valido.
+- Ajuste visual no decorator de visualizacao de tarefas em arvore. A tarefa mae intermediaria foi colocada tamb�m em negrito para evitar confus�o.
+- criacao da coluna Status no grid do form ManageTask. Refactoring do decorator TaskGridStatusDecorator.
+- Implementacao de um botao Copiar na tela ManageTask para copiar o conteudo da descricao da solicitacao para o nome e descricao da tarefa.
+- Implementacao da tela de Opcoes e da infra-estrutura de preferencias de usuario
+- Na tela de andamento de tarefas, o campo de data efetiva estava como default, a propria data estimada e nao a data corrente. Isto estava causando confusao para o recurso no momento da atualizacao do status da tarefa.
+- Exibir numero da solicitacao relacionada a tarefa nos grids de tarefa.
+- Exibir na tela de "Todas As Solicitacao" a coluna contendo os usernames dos recursos envolvidos com a execucao da solicitacao
+- Correcao de bug: Na tela de apontamento de tarefas, existiam problemas de interpretacao no campo de tempo pois nao se tinha a informacao de qual era a unidade e se seria permitido digitar "1h" ao inves de "1".
+
+plandora-v0.7.0
+- Ajustes na tela de Opcoes e da infra-estrutura de preferencias de usuario
+- Implementacao da tela de visualizacao de todas as Tarefas do Projeto
+- Criacao de filtros na tela de "Todas as Solicitacoes" do Projeto
+
+plandora-v0.8.0 (09/06/2005)
+- Adicionado coluna de projeto na Lista de Solicitacoes do Form de Solicitacoes
+- Os textAreas que estao desabilitados foram setados como readonly ao inves de disabled para facilitar o copy-paste
+- A informacao de descricao da solicitacao corrente foi adicionado ao form de historico de solicitacao
+- Implementacao do atributo de prioridade para a solicitacao
+- Criacao do filtro por prioridade no form de Todas as Solicitacoes
+- Ajustes no Gantt: criacao das marcas de fim de semana, criacao de diferenciacao visual para os jobs relacionados a tarefas fechafas e nao fechadas
+- Exibicao da informacao de data inicial do projeto e tempo de vida no grid de projetos do form principal
+- Possibilidade de ordenacao das colunas dos forms de Todas as Solicitacoes e Todas as Tarefas
+- Internamente houve a alteracao dos nomes de tabelas para minusculas pois o Banco MySql rodando no Linux a case sensitive
+- criacao de permissao para o recurso de um projeto ver ou nao o nome do cliente (dono da soliciacao)
+- correcao de bug: existe uma restricao que nao deixa fazer update de solicitacao se a data sugerida fosse menor do que a data corrente. O problema a que a restricao estava habilitada para a acao de 'ajuste de solicitacao', mas o campo de data nesta caso a desabilitado.
+- correcao de bug: a data de criacao da entidade planning (classe mae de projeto, task e requirement) estava sendo perdida quando era feito update em qualquer uma dos objetos filhas
+- correcao de bug: em determinadas situacoes ocorria um erro de NullPointerException ao abrir o form de Tarefa devido a falta do Locale corrente na sessao
+- correcao de bug: no salvamento de uma tarefa, estava ocorrendo um erro de NullPointerException pois nao estava sendo passado o prijectId relacionado pela tela chamadora, alem disso, tambam ocorria do combo de usuarios disponiveis nao ser carregado devido ao mesmo problema
+
+plandora-v0.8.5 (14/06/2005)
+- Adicionado coluna de projeto na Lista de Solicitacoes do Form Principal de recursos
+- A edicao da solicitacao (para mudanaa de prioridade) foi expandida para outros status alem do "aguardando aprovacao"
+- correcao de bug: relacionado a nome de tabelas lower-case que sao necessarios para utilizacao do mysql numa maquina com Linux
+- correcao de bug: em alguns casos onde existia texto com aspas duplas, os grids ficavam mal formados quando exibidor pelo Internet Explorer.
+
+plandora-v0.8.6 (16/06/2005)
+- correcao de bug: Apas a tarefa comeaar a ser executada o estado da solicitacao relacionada continava em "Planejada" ao inves de ir para "em-Progresso" tambam
+- correcao de bug: O gantt estava com problemas no posicionamento dos jobs de uma mesma tarefa, e estava exibindo erroneamente as tarefas sem job nenhum.
+- Nome do cliente relacionado com a tarefa estava sendo exibido na tela de historico do recurso (quando permitido). Foi mudado para a tela de Andamento de Tarefa para deixar mais visivel.
+
+plandora-v0.8.7 (20/06/2005)
+- tela de andamento de tarefas esta mostrando o 'tempo efetivo' da ultima vez que foi atualizado pois o recurso estava perdendo a referencia quando ia atualizar o andamento da tarefa
+- correcao de bug: ao atualizar o andamento de uma tarefa os dados de tempo nao estava sendo refletidos na tabela de alocacoes e com isso o gantt nao estava exibindo os dados corretamente
+
+*************** CONGELAMENTO DA VERSAO PARA O SOURCE-FORGE ********************
+
+plandora-v0.8.8 
+- correcao de bug: Data de referencia das coluna de dados das KPI's estavam sempre com um dia de adiantamento.
+- correcao de bug: Form de Rejeitar Solicitacoes estava exibindo indevidamente, lixo que permanecia na sessao (mensagem de erro/sucesso referente a outras transacoes)
+- correcao de bug: Gantt estava quebrando quando o campo de cor do usuario tivesse um padrao de cor diferente de RRGGBB
+- correcao de bug: O 'Form de projeto' estava nao estava setando data inicial correta quando se criava um novo projeto
+- correcao de bug: No 'Form de projeto' a funcionalidade de pesquisa de usuario nao estava filtrando corretamente
+- correcao de bug: No 'Form de projeto' estava sendo possivel adicionar (botao '+') quando o combo estava vazio sem nenhum tipo de tratamento
+- correcao de bug: 'Todas as Solicitacoes', 'Todas as Tarefas', 'BalancedScoredCard' e Gantt nao estavam respeitando a hierarquia de projetos por nao exibir os dados dos projetos em cascata
+- correcao de bug: Os dois calendarios da tela de Balanced ScoreCard estavam com um bug que fazia com que um campo afetasse o valor do outro.
+- refactoring do objeto Usuario que fica na sessao logo apas o login. Esta sendo colocando em memoria agora o objeto filho para que os atributos especificos relacionados ao role fique em memoria tambam.
+- tela de Solicitacoes: Quando um cliente selecionar um projeto na tela de solicitacoes, guardar qual foi este projeto e na proxima vez que ele entrar neste mesma tela, mostrar o ultimo projeto ja selecionado. Isso auxilia a usabilidade.
+- a tela principal de recurso/lider esta agora exibindo, se necessario, a lista de projetos no modo de arvore para mostrar a estrutura hierarquica dos projetos
+
+plandora-v0.8.9 (02/08/2005)
+- Implementacao do export das tarefas de um projeto para o formato de arquivo do GanttProject (sourceForge)
+- integracao com commonsLog (log4J)
+- correcao de bug: nao estava sendo possavel atualizar a data e tempo estimado quando o recurso era o mesmo.
+- correcao de bug: Query para buscar dados para o Gantt nao estava considerando tarefas-mae
+- correcao de bug: Eventualmente a insercao de projeto causava erro. O problema ocorria devido a falta de objeto locale na sessao causando erro de nullPointer
+- correcao de bug: ao editar uma tarefa cancelada na tela de gerenciamento de tarefas, ocorria crash da aplicacao.
+- correcao de bug: na tela de gerencimento de tarefas existia um problema em um cenario onde existia mais de uma alocacao relacionada a uma tarefa em que se estava tentando cancelar.
+- correcao de bug: na tela principal de recurso/lider detalhe da tarefa em "Minhas Tarefas" nao estava filtrando por recurso
+- criacao de validacao na tela de Alocacao de Tarefa, para nao deixar inserir duas vezes o mesmo recurso no listBox de alocacao.
+- criacao de validacao na tela de Cadastro de usuarios, para nao deixar inserir atributo de cor com formato RGB invalido.
+- gantt nao estava exibindo a data corrente no hint. Agora esta.
+- possibilidade de ordenacao dos status das tarefas da lista "Minhas Tarefas" a partir da tela de Opcoes de usuario.
+- busca no ResourceBundle dos textos hard-code remanescentes com o intuito de manter os conteados do sistema 100% 'internacionalizaveis'
+
+plandora-v0.8.9a (03/08/2005)
+- correcao de bug: estava ocorrendo erro ao gerar auto-alocacao. O problema foi corrigido.
+
+*************** CONGELAMENTO DA VERSAO PARA O SOURCE-FORGE ********************
+
+plandora-v0.8.10
+- correcao de bug: correcao no metodo validate do form de entrada de solicitacoes. O sistema estava apresentando erro de NullPointer logo que era feito um cadastro de auto-solicitacao sem especificar a data sugerida. O sistema nao estava validando este campo obrigatario.
+- inclusao de opcao de prioridade "a definir" para uma solicitacao
+- correcao de bug: forms de exibicao de 'Todas Solicitacoes' e 'Todas Tarefas' estavam exibindo recursos/clientes repetidamente. Isso foi corrigido.
+- Implementacao da funcionalidade de desabilitar um lader/recurso/cliente/ a enxergar um determinado projeto
+
+plandora-v0.8.11
+- Implementacao do suporte a lingua inglesa en-US
+- inicio da Implementacao da funcionalidade de aceite de solicitacao. A ideia a permitir que um cliente (quando esta permissao for dada a ele) diga que uma determinada solicitacao deve passar por um processo de Quality Assurance.
+
+plandora-v0.9.0
+- ajuste nos bullets coloridos dos grids de tela de tarefas para a exibicao do status corrente a partir do hint do mouse e colocacao de marcas diferenciais (a prova de daltanico ;-) ).
+- campo username foi estendido para 30 caracteres.
+- Implementacao de campo de preferencias para configurar o numero de palavras das celulas de nome/descricao dos grids. O valor default a 20.
+- ajuste no combo de status da tela de andamento de tarefa tornando-o dinamico. a exibido apenas os estados que fazem sentido para a tarefa segundo a maquina de estado.
+- correcao de bug: O combo de recursos disponaveis da tela de alocacao de tarefa estava exibindo os usuarios do projeto corrente e tmb (indevidamente) dos projetos filhos (caso ele tivesse algum). Isso provocava erros de FK em algums casos.
+- as listas do form principal ganharam ordenacao e ancoras de posicionamento de tela para melhorar navegabilidade
+
+plandora-v0.9.1
+==> Correcoes de bug
+- Devido a ordenacao do form principal alguns problemas ocorreram com o posicionamento default do grid de tarefas e do grid de projetos. O problema foi corrigido.
+- Mensagens/labels da taglib de tabela nao estava internacionalizada. Isso foi ajustado para buscar os labels do resouceBundle.
+- Ao fechar uma tarefa, o sistema nao estava setando uma determinada flag adequadamente causando o acumulo de tarefas fechadas na tela inicial mesmo que ela ja tivesse sido fechada a mais de uma semana.
+==> Features
+- Ordenacao no grid da tela de cadastro de solicitacoes 
+- Na tela de preferencias foi implementado campo para alteracao da senha pelo usuario. Alem disso, a password esta sendo criptografada antes da gravacao no BD para que seja mantida a privacidade do usuario.
+- implementacao no Gantt da barra de redimensionamento da caixa lateral esquerda contendo o grid de tarefas.
+- Implementacao do suporte a lingua espanhola es-ES
+- Implementacao do botao SAVE do Gantt e da infra-estrutura para a atualizaaao de tarefas a partir do manipulaaao dentro do Gantt (apenas para o reposicionamento/redimensionamento de Jobs e edicao de capacidade)
+- implementacao da funcionalidade para possibilitar a configuracao de capacidade minima 'alocavel' para cada recurso/projeto (default=480min)
+- listas "minhas solicitacoes" e "minhas tarefas" possuem agora numero maximo de registros a serem exibidos (configuravel pela tela de options) para evitar problemas de performace quando a base estiver muito grande
+- a lista de "minhas solicitacoes" possui criterio de exibicao igual ao de tarefas "nao exibir solicitacoes fechadas a mais de uma semana". 
+- nas listagens relacionadas a Solicitacoes, aquelas com status rejeitadas/canceladas e fechadas estao sendo mostradas em vermelho ou verde para dar destaque.
+- melhoria visual nos popups de historico de solicitacao e tarefa para que o grid mantenha o mesmo tamanho independente do numero de linhas
+- implementacao da funcionalidade que permite/proibe cliente de um determinado projeto ver os comentarios especificos dos recursos do projeto. Em outras palavras, agora a possavel permitir/proibir(default) o requisitante de visualizar os comentarios que os recursos estao adicionanado conforme a tarefa a feita
+- A interface grafica de comentarios dos historicos de solicitaaao e tarefa foram alterados para permitir copiar os conteados (antes era exibido em msgbox)
+- criacao do form de categorias para usuario root (uma categoria pode ser configurada para determinado projeto e para ser utilizado por tarefa ou solicitacao).
+- o campo de categoria foi colocado no form de solicitacao (da mesma forma que ja existia para o form de alocacao de tarefa). Agora, ao criar uma solicitaaao em um projeto a possavel informar em qual categoria ele pertence (isso a parametrizavel pelo usuario root, sugestaes de categorias: bug, change request, etc)
+- os combos de categoria dos forms de tarefa/solicitacao se auto-atualizam quando o projeto muda, isto significa que a partir de agora a possivel criar categorias espeficicas para cada projeto
+- implementacao da funcionalidade de MetaFields. Os meta campos devem ser cadastrados pelo usuario root e vinculados a um 'projeto' e 'uma ou qualquer categoria'. Quando o cliente abre a tela de Solicitacoes, este campo a exibido dinamicamente como se fosse um campo nativo do PLANdora.  Nesta versao a possavel criar meta campos do tipo: textBox, ComboBox (com dados estaticos) e SQLComboBox (com dados vindos de uma SQL pre-definida). Por enquanto a possivel apenas criar meta campos para a tela de solicitaaao. Este tipo de funcionalidade a bastante atil caso se necessite customizar a entrada de dados de determinado projeto (por exemplo: campo para guardar o nome da versao em que se encontrou um bug, etc). Os metacampos cadastrados aparecem tambam na tela de "Todas as Solicitacoes" visto pelo lader.
+- Para o usuario lader, na tela de preferencias, a possavel exibir/esconder campos da tela de "Todas as Solicitacoes". Isto foi implementado devido a grande quantidade de campos existente hoje. Sendo assim, o praprio lider pode customizar os campos que deseja exibir de acordo com as suas necessidades.
+
+*************** CONGELAMENTO DA VERSAO PARA O SOURCE-FORGE ********************
+
+plandora-v1.0.0
+==> Correcoes de bug
+- sistema esta agora requisitando comentario para a aacao de cancelamento de tarefa
+- alteracao da coluna 'sql' da tabela report para 'sql_text' devido a restricao de nomes de coluna do MySQL
+- usuario root nao estava exibindo todos os projetos existentes
+- [BUG:1553404] - There was a bug after changing a gantt chart by shifting the openning task. It only can succeed to save in server computer but cannot function in any client side computers.
+- [BUG:1288854] - The task screen hasn't been showing correctly the 'task list' when the user select a task without a requirement related.
+- [BUG:1288854] - The task screen hasn't been updating a task without a requirement related.
+- [BUG:1695187] - It was setted to 'task history form' and 'requirement history form' the lateral scrollbar.
+==> Features
+- alteracao da tela de andamento de tarefa para o entrada de dados de duraacao de forma pulverizado (dia a dia) e nao totalizado.
+- [FR:1306438] Detaque visual no form principal para tarefas atrasadas. Os destaques sao desenhados de acordo com o numero de dias em atraso (critico e warnig) e configuravel por usuario.
+- [FR:1208708] Implementation of the report feature
+- [FR:1572493] Implementation the 'pre approve' feature for the requirements. A customer can optionally open a requirement and generate a task (for a project resource) automatically, without leader approving. The 'self-allocation' feature was migrated to this new feature.
+- GanttChart: dash lines separating jobs vertically (between the tasks) in order to improve the visibility and decrease the polution
+- GanttChart: adjustment of dash job mode. The lines was exchanged to small points over the job area.
+- [FR:1638189] Implementation the 'category' filter for "Show All Reqs" form
+- Import/Export: creation of form specific for import/export generation and adjustments of export infra-structure
+- User Form: separation between user management and password management
+- The customer could now re-open a requirement (if allowed). After reopening the requirement back to the "waiting approve" status.
+- [FR:1201490] Implementation of the Notification feature infrastructure (email, http and audit log)
+
+
+*************** SOURCE-FORGE VERSION FREEZING ********************
+
+plandora-v1.1.0
+==> Bug Fix
+- when a requirement was edit into the Customer Requirement Form, the information about the project related was not been diplayed correctly
+- the event_log DB script contain a mistake, causing the misfunction of logging feature. A field 'id' was removed.
+- fix bugs in form of 'on-going task' form
+==> Features
+- new sub-report into "Project Report" jasper report. Inclusion of Pie graph displaying the resource task duration of project
+- creation of new Report: Comparison between the duration time estimated and actual duration time of project
+- implementation of Project Occurrences form and link with the current project
+- creation of new Report: Occurrence Book
+- implementation of the Knowlegde Base infra structure (using Lucene facilities).
+- categorization facilities for KPIs and Reports
+- the field 'birth' (nullable) was add into User entity.
+- implementation of form to create an 'ad Hoc' task by resource
+
+*************** SOURCE-FORGE VERSION FREEZING ********************
+
+plandora-v1.2.0
+==> Bug Fix
+- The 'delete occurrence' feature was fixed (was not working at all)
+- Fix some bugs in form of 'on-going task' form
+- [BUG:1230952] When a requirement was removed in Main form, the focus was wrongly redirected to the requirement form. This bug was fixed.
+
+==> Features
+- Implementation of Risk Form and link with the current project
+- Add of RISK type into the category form
+- was included the support of LDAP authentication for each user. The current authentication (Plandora DB) is the default method although
+- The procedure of 'save preferences into DB' was moved from 'logout action' to 'save options action screen'
+- Inclusion of Risk entity into Knowledge Base index engine
+- Implementation of new GUI Type for Meta Field: TEXT AREA
+- Inclusion of meta-field feature into Project Form
+- the table 'user' was renamed to 'tool_user'. The DAO classes related and the DBSscript file was adjusted. 
+- was included into project entity a attribute "Allow Allocation?" that define if tasks or requirements could be set to this project.
+- [FR:1224581] and [BUG:1205906] Implementation of Attachment facilities for requirement form 
+- Now, it is possible to create and set a Meta Field for all projects.
+- Implementation of task removing that can be performed (only) by the owner of task.
+- The report is now configurable by user role. A specific report could be viewed by the leader or resource.
+- Implementation of keyword ?#USER_ID# into report SQL field interpretator. This keyword should be used to refer to the id of current user connected.
+- Implementation of a grid containing the current allocation time per days into 'on-going task' form
+- Now it is possible to adjust the allocation information of a closed/canceled task.   
+- Now, some information of task (category, name and description) can be updated by user, if this user was the original creator of the task.
+- Implementation of discussion forum feature related to the requirement
+- [FR:1312239] Change the requirement priority in batch by project leader through the "All Requirement" Form
+- [FR:1217731] Now, the project leader is able to allow a customer to view the requirements opened by other customers in the same project (without edition)
+- Implementation of a new Project Occurrence. Now it is possible to create for each project, a number of iterations entry that must be used to control the deliverables and to allow/avoid the priority changing by customer though web GUI.
+
+*************** SOURCE-FORGE VERSION FREEZING ********************
+
+plandora-v1.3.0
+==> Bug Fix
+- bug fixed in requirement gantt chart view
+- the comboBox of macro tasks (Task Allocation form) was wrongly showing macro tasks of different projects.
+- the comboBox of E-mail Notification was losing the selected value.
+- the filter feature of 'My Requirements' and 'My Pending Requiremes' grids in main form wasn't working appropriately.
+- there was a bug in knowledge base searching when the project level was greather than two
+- when the task was 'in-progress' status the system was not allowing the user to put a zero value in 'actual time'
+- there was a bug at e-mail notification. When a notification has contained multiples recipients, only the last e-mail address received the message. 
+- The save feature of gantt chart was not working appropriately when the login mode was LDAP
+
+==> Features
+- Now, the project resources are able to filter through Option Form which projects should be hidden in 'Ongoing Task Form'
+- In meta fields, the query of SQLCombo field is now able to process keywords like '#PROJECT_ID#' and '#USER_ID#'.
+- Was included a button to create a new Ad-hoc task on 'Ongoing Task Form' 
+- Now, the default project for Ad-hoc task at 'Ongoing Task Form' is 'None' 
+- Now the user can change the apperance of requirements (the background could be collorized according to the requirement priority)
+- Was implemented in 'My Task' grid at main form a collumn that could be used to mark or classify a task (like a pin-point)
+- [FR:1201500] Implementation the Relationship grid at 'Task Form', 'Occurrence Form' and 'Risk Form'. Now, a task, occurrence or risk could be linked with other entities (risks, occurrences, requirements, tasks, etc)
+- Implementation of Meta Form feature. Now it is possible to create customized forms that uses customized fields (meta fields was already implemented since v0.9.1)
+- Implementation of Mind Maps that shows graphically the relationship among the entities
+- The 'iteration' occurrence entry, can be used to classify the requirements in phases, versions, releases, etc.    
+
+*************** SOURCE-FORGE VERSION FREEZING ********************
+
+plandora-v1.4.0
+==> Bug Fix
+- the grids that has displayed meta_fields was showing data with the same title in different columns
+- there was unexpected and invalid error message in 'ad-hoc task' form when the user has clicked in 'Next' or 'Previous' button without any project selected
+- there was enconding errors in GantProject export file. (thanks to NiltonPereira reporting)
+- the 'Occurrence Book' report did not displaying the list of iterations appropriately.
+- the 'risk form' was keeping the list of relationship when the Clear button was pressed
+- the gantt chart of spanish version was causing an error when the form was opening
+- when a task was closed, the macro-task was not closed. Now it is.
+- when a task was removed and the user press the refresh button occurs a NullPointerException causing a blank screen. The bug was fixed. 
+- was made the performance tunning at 'project form' (for root purposes). The performance of this form was terrible specially with many project records in it.  
+- there was an invalid message error at 'task form' when the lider tried to change the assignment of a task.
+- the 'All Requirements' form eventually appeared with hide columns. This bug was fixed
+
+==> Features
+- now the iteration (occurrence) related with the requirement, appears in 'my tasks' grid
+- now the columns of some grids of system could be displayed or hidden according to users preferences.
+- the 'refuse form' (refuse requirement and cancel task) was changed to new look'n feel
+- the icon to remove a task was included into grid of 'Ongoing Task Form'
+- now, it is possible to create and set a Meta Field for tasks.
+- [FR:1201487] implementation of Workflow template feature. Now a requirement could be attended using a workflow wizard.
+- now reports can be visualized by customers depending on the role set by root at Report Form.  
+- was included an occurrence book icon into the project grid at main form
+- now it is possible to set a picture (PNG or JPG photo) related to user.
+- now, when the resource set a hide project at option form, the project disapear from 'My Project' grid
+- now the resource can set a macro-task related to current task at 'Ad-Hoc' and 'on-going' forms
+- now, when a risk materalize, the sistem ask if the user want to create a issue linked with the risk.
+- implementation of gadget feature. A gadget is a chart that can be used to show information about the project 
+- now, the project resources can view a chart at lateral main screen based to a gadget class
+ 
+plandora-v1.4.1
+==> Features
+- now it is possible to set a role (only report purposes) for each user allocated into the project
+- now the reports of tool could be exported using RTF output format (the same way of PDF format)  
+- now some grids of tool contain a new filter combo (ex.: My Task grid could be filtered by Project, Risks grid and Occurrence grid could be filtered by status)
+
+plandora-v1.4.2
+==> Bug Fix
+- refactoring and bug fix at MindMap popup
+- a resource was able to view a report without permission 
+==> Features
+- now the root user could set a category to hidden status. This category will not be displayed at On-going task form
+ 
+plandora-v1.4.3
+==> Features
+- now the mindMap form display the relationship qualification between two entities
+- a new filter (status) was inclued into Requirement Search popup
+- now, the information about capacity of resource into a specific project is not only the earlier but all capacities changed during the project
+- the rule that block a task to be link with a closed requirement was removed. Now it is possible to link with any requirement from data base
+
+plandora-v1.4.5
+==> Bug Fix
+- a problem with the wrong position of 'week-end mark' into the 'on-going form' was fixed
+==> Features
+- now the root user is able to view (into the option form) the last actions of user through the tool 
+- now, it is possible manage the information about capacity of resource using a chart form linked with the project form
+- now, the system ask confirmation if the resource try to save a task without category selected
+- the scheduling grid of "on-going form", contain now two navigation buttons to skip by day (besides current weekly skiping)
+
+plandora-v1.4.6
+==> Bug Fix
+- The refusing action into "All Requirements Form" was wrongly forwarding to main form.
+==> Features
+- implementation of Repository Project form (SVN navigability integration) - Read Only
+- now, the requirements could be organized hierarchically. The parent id could be set using the "All Requirements Form"
+- now, it is possible to display the requirements at "All Requirements Form" using the hierarchy mode or list mode   
+- implementation of Resource Capacity Planning form into project form. Now it is possible to plan the capacity of resource along the project 
+
+plandora-v1.4.7
+==> Features
+- implementation of new Report export format (OpenOffice Writer) 
+- the look'n feel of knowledge base form was rebuild
+
+plandora-v1.4.8
+==> Bug Fix
+- the sorting feature of "All Requirement Form" was showing wrongly the meta fields coluns. This bug was fixed.
+==> Features
+- the field "Estimated Closure Date" was included into project form
+- now the report opens into a popup form
+
+plandora-v1.4.9
+==> Bug Fix
+- there was a but during the cancelation task feature into the task form (when leader canceled a macro-task whose contained a group of tasks)
+==> Features
+- implementation of feature to import the MS-Project v2003 XML file, in order to load new tasks, allocation and dependences
+- extension of meta-fields feature to Risk Form
+
+plandora-v1.4.10
+==> Features
+- now, the leader could selected multiple roles for a specific customer into the project
+- now it is possible to leader, to alloc into the Task Form a "key-resource" called "Anyone". After that, the new task appears to all resource of project waiting the assignment of one of those.
+- implementation of new Gadged: show data of a KPI (group by day, week or month)
+
+*************** SOURCE-FORGE VERSION FREEZING ********************
+
+plandora-v1.5.0
+==> Bug Fix
+- there was a error message into "On-Going Task Form" after clicking the checkBox "Don't display finished tasks after (..)" and "Refresh" button.
+
+plandora-v1.6.0
+==> Bug Fix
+- There was a error when saving a project. The problem occurs when a resource was removed from project and a role was set for this resource/project.
+==> Features
+- implementation of maximization feature for the gadgets.
+- Now, the encoding attribute used by export process could be overload by export class (that extends ExportBUS). The default value of encoding is UTF-8.
+
+*************** SOURCE-FORGE VERSION FREEZING ********************
+
+plandora-v1.6.1
+==> Bug Fix
+- there was a bug at KPI Gadget when the interval was 180 days (weekly). The chart has appeared in blank.
+- an 'eveyone' task was displayed into 'My Task' panel even after the cancelation of task.
+- there was a bug into mind map nodes apperance. Nodes in the same level was displayed wrongly in a tree format.    
+==> Features
+- implementation of export routine of project KPI data to CSV file (filtered by date and KPI category)
+- performance tunning at main page loading
+- before, when the task was cancelled, the tool waa reopening the requirement. Now, when the leader try to interrupt the last task related to a requirement the tool ask if the requirement must be reopened or finished
+- was created a new column into task list. This column shows what other tasks are blocking the current task.
+
+plandora-v1.6.2
+==> Bug Fix
+- the password field into data base was increased to 70 caracteres. Noticed that the content of this field is incrypted, because of this, the field must be more than 15 caracteres. 
+==> Features
+- implementation of Agile Board form 
+
+plandora-v1.6.3
+==> Features
+- implementation of Report Button at On-going form. This button shows a PDF report based to the daily tasks of form period set
+- now, the leader is able to set (at Project Form) witch project resource must access the Agile Form.   
+- implementation of new fields into risk form (check box of "impact in:" -> "costs", "quality", "escope", etc )
+
+plandora-v1.6.4
+==> Bug Fix 
+- bug fix, at calendar locale. Even user is set to english language, the calendar was showing date using portuguese language.
+- bug fix at View All Tasks Form. The form was showing a blocked task with 'locked' icon. This icon must be shown only to resources. 
+- bug fix (nullPointerException) after editing an ad-hoc task into Agile Board Form
+- bug fix at Agile Board. When user click the button 'New Story' the categories comboBox was blank.
+- adjust of Gadget chart "Billable Task". Some bugs was fixed and the data of chart was changed to task hour format.
+==> Features
+- implementation of 'Execute SQL' notification class. This channel, is able to execute any sql statement into Plandora or another database
+- implementation of Gadget chart "Defect Task" to show how many time was spent with bug fix into the project
+- implementation of Gadget chart "Predictable Task" to show how many time is related to planned task or unpredictable tasks
+
+plandora-v1.6.5
+==> Bug Fix 
+- bug fix at PredictableTaskChartGadget, DefectTaskChartGadget and BillableTaskChartGadget. The values of bars was not correctly painted according to the tasks. 
+- bug fix at project combo list of My Task grid. The combo was showing wrongly some projects without relation with current user. 
+==> Features
+- now it is possible to set a dynamic result from SQL column into the email notification Body.
+- now, when a leader changes the requirement id of a task that is part of a workflow the tool change the requirement id reference of all tasks at the same workflow instance, in order to keep the data consistence.  
+- the features of login authentication were generalized into specialized authentication classes, following the same pattern of other entities (KB, occurrences, gadgets, import/export, etc)
+
+plandora-v1.6.6
+==> Bug Fix
+- there was a bug at workflow icon into Show All Requirements form. The workflow chart was beeing displayed in blank.
+- the task form (used by leader to create new tasks) was not allowing to create a task with more than 24 hours. 
+==> Features
+- now, it is possible to project leader to choose which repository file will be visible by customer view.
+
+plandora-v1.6.7
+==> Bug Fix
+- In a task with more than one resource, when one of the resources set his task to 'closed status', the other tasks were disappearing from other resources 'My Task' list.
+- Bug fix at requirements list. In some cases, a requirement - related with a project which the user was not a resource - appears into user GUI.
+- Bug fix at download file of customer GUI from Repository View Form.
+- Bug fix at customer repository form   
+==> Features
+- was included a new column into grid of 'on-going task form'. Now the grid could display the current iteration relatated with the requirement of task
+
+
+*************** SOURCE-FORGE VERSION FREEZING ********************
+
+plandora-v1.7.1 - 07/12/2009
+==> Features
+- was included a new field into option form (for root user) to display the full log user actions (max of 200 lines)
+- the BSC form was rebuild to show values about goal, tolerance and status of strategic objectives. 
+- the KPI chart (gadget) was improved. It was included the 'Goal' line and it is able to show another KPI bars to compare with.
+==> Bug Fix
+- into Agile Board (new requirement popup) the category comboBox of Requirement was displayed in blank if selected project contain sub-projects listed. The bug was fixed.
+
+plandora-v1.7.2 - 14/12/2009
+==> Features
+- support to russian language - cyryllic symbols (thanks to Max Rozenson). See the discussion here: https://sourceforge.net/projects/plandora/forums/forum/396145/topic/3475435
+- implementation of gadget: "iteration burndown"
+- now it is possible to view the Burndown chart into Agile Board 
+- now it is possible to view the Resource Category Capacity gadget for all project resources
+==> Bug Fix
+- [BUG:2903037] the searching popup of relationship grid, was displaying (wrongly) records of any project (even project without relation with current user). The bug was fixed. 
+- [BUG:2908355] a bug with saving feature into gantt chart was fixed.
+- the KPI generation process was not considering the directives to use another data base
+
+plandora-v1.7.3 - 21/12/2009
+==> Features
+- support to currency data for KPI
+- now, the workflow diagram could be displayed by resource through the My Task grid.
+- now, the tool will set the estimated time = actual time if the task was closed and the original estimated_time was not specified (=zero)
+
+plandora-v1.7.4 - 04/01/2010
+==> Features
+- was included a field 'risk type' into risk form. This field should be used to define if the risk is a threat or an opportunity.
+- the gadget of Project Risk was changed to display the risks by type (threat or opportunity) separately.   
+- was included the checkbox field 'is development task...' into category form that must be used to define which category is related to development.   
+- was included the field 'Order' into category form, that must be used to set de apperance position of category into combobox.
+
+plandora-v1.7.5
+==> Bug Fix
+- there was a bug at Task Form that was included accidentally by release 1.7.4
+- the "All tasks forms" was not displaying the column of meta fields related to the tasks. This bug was fixed. 
+==> Features
+- now it is possible to show the KPIs only for the current project or on-cascade 
+
+plandora-v1.7.8 - 01/02/2010
+==> Bug Fix
+- Adjustments at calendar date format. Now the format could be configurated through the resource file of each language.
+==> Features
+- the libs of JasperReports was upgraded to version 3.7.0
+- Implementation of first version of Survey support at Plandora.
+
+plandora-v1.7.9 - 19/02/2010
+==> Bug Fix
+- Adjustments at html calendar component format. Now the format could be configurated through the resource file of each language.
+- that was a bug when a report keyword (for example: "?#Foo{}(2)#"  ) was used more than once into the report. The bug was fixed.
+
+plandora-v1.7.10
+==> Features
+- Now the customer can manage a requirement 'in the name of' someone else. Anyway, this feature must be permited by project leader.
+
+
+*************** SOURCE-FORGE VERSION FREEZING ********************
+
+plandora-v1.8.1 - 22/02/2010
+==> Bugs
+- The KPI gadget was display the chart blank when the filter was '30 days'. There system log has contained an indexOutOfRange error. The bug was fixed.
+- The anonymous survey was displaying blank when the survey anonymous key has contained a "+" character in it.
+- There was a bug into survey form during insertion or removing questions from the survey list.   
+==> Features
+- implementation of online viewer (only PDF and mindMap files) at repository viewer
+- implementation of shortcuts. Now, the resource could setup 3 favorite URLs that will be appeared at main form such as a customized icon
+- when a project was closed, the system checked if there were some open task, and if true, sent an error message. Now the error message contain a list of tasks that are blocking the project closure.
+
+plandora-v1.8.2 - 24/03/2010
+==> Features
+- now it is possible to define (by root user) the default currency of tool. All currency numbers will be formated using this configuration.
+
+plandora-v1.8.3 - 16/04/2010
+==> Features
+- implementation of invoice form. Now it is possible by leader and resources (allowed by leader) to create invoice records.
+- implementation of checkbox at occurrence form to hide/show the closed occurrences
+==> Bugs
+- there was a bug with popup of meta field calendar and the calendar of capacity management. [BUG:2983952]   
+- there was a bug when the leader set a specific custumer to see the reqs opened by other customers. The system was considering the permission for all projects, intested a specific project. The bug was fixed.   
+
+plandora-v1.8.4 - 17/05/2010
+==> Features
+- now the iteration can be set by tasks (even the adHoc tasks). The system is saving the information of iteration at history table, in order to track which iterations the task was passing by.
+- now it is possible to set a help comment for each meta field. When necessary, a icon will appear besides the meta field on gui that it was applyed.
+- now, the selection of gadgets is into the "main form", instead "options form".
+- now the searching popup is accepting the entities ids such as the searching criteria
+- implementation of 'calendar' gadget that shows all events and milestone of project
+- implementation of 'requirement summary' gadget that shows the number of requirements opened and closed along period
+- implementation of 'KPI Histogram' gadget that shows how often a KPI value occurs along the time. (thanks to Paola Tame support)
+- was included into 'All tasks Form' a column with the task category.
+- was included a button at Task Form to go the 'All tasks form' (related to the current project) [REQ:3000412]   
+- now the billable status could be set by each task (the default value is the billable status of task category). The leader is able to disable this feature through the project form.
+- now the project leader could change "in batch" the billable status and the iteration of tasks, through the 'All Task Form'  
+==> Bugs
+- when a project didn't contain any milestone or events, the calendar integration was causing problems with Lightining (was locking it) 
+- the task history popup was not displaying the username related to the history (it was showing 'null'). 
+- there was a bug with the sorting feature of some grids (specially AllReqs and AllTask). The system was sorting wrongly depending on the collumn selected. The bug was fixed.
+ 
+plandora-v1.8.5 - 01/06/2010
+==> Features
+- implementation of artifacts panel at task form (generation of html and pdf artifacts commited at project repository)
+- implementation of msgbox asking to leader if the requirement must be closed of kept opened when he has removed the last task liked to a requirement.
+- implementation of the repository history popuo at repository explorer form
+
+plandora-v1.8.6 - 23/06/2010
+==> Bugs
+- bug fix at SurveyForm. The domain field of multi-option questions was not editable.
+- the 'replicate' button of SurveyForm was not working appropriately when the user was replicating a survey from a different project.   
+- there was a bug at sorting feature of grids, specially when the grid was into a meta form. 
+
+plandora-v1.8.7 - 22/09/2010
+==> Bugs
+- bug fix at 'task cancelation' procedure. When a task was canceled, the agile board was hidding other tasks
+- there was a bug that was overwritten the value of estimated time when the task was passing to closed status
+==> Features
+- implementation of feature that able the leader to see the customer's point of view at Repository Form
+- implementation of slide bar on the top of all forms to navigate among the other forms.
+
+plandora-v1.8.8 - 08/10/2010
+==> Features
+- implementation of new gadget to show the invoices for each period of time
+- implementation of new gadget to show the recent team task updating (task stream)
+- implementation of user disabling through the User Form by root
+- implementation of 'Replicate Table' agent. This agent is able to replicate data of any Plandora table to a specific database (included external database)
+
+plandora-v1.8.9 - 14/10/2010
+==> Bugs
+- bug fix at gadgets with weekly and monthly granulariry. Sometimes, the value was not set into the correct chart slot. 
+==> Features
+- the notification form was renamed to 'Agent Form' due to the term Agent is wider than notification that is specific for email, post, etc.
+- implementation of a new Agent: Table Replication. Now it is possible to make copy of the content of a data base (even from different data base) to or from Plandora tables.
+
+plandora-v1.8.10 - 25/10/2010
+==> Features
+- Implementation of new look'n feel of Plandora.
+- Implementation of new Meta Field Gui Type. Now it is possible to include a grid with a mix of GUI types (combos, text, calendar, etc) in a grid format
+
+plandora-v1.8.11
+==> Bugs
+==> Features
+- The risk history form has been changed. Now the historic about impact, probability, etc are stored into separated DB columns.
+- Included into requirement form the artifacts grid.   
+- [FR:2855155] now the grids of tool contain a icon to export the content of grid to csv file
+- implementation of Resource Capacity form to be used by project leaders to setup the estimated capacity of each project resource. 
+
+*************** SOURCE-FORGE VERSION FREEZING ********************
+
+plandora-v1.9.1
+==> Bugs
+- Bug fix at Project Form. The action of creation of a new project was blocked by a stupid bug :-(
+==> Features
+- add into capacity form Chart a line with the information about actual allocation time
+- improvement at the scroll bar of Capacity Form. Now the lateral title with resource/project name is always displayed. 
+- implementation of a new gadget to show the task WIP information (Kanban)     
+
+*************** SOURCE-FORGE VERSION FREEZING ********************
+
+plandora-v1.9.2
+==> Bugs
+- before project closing/aborting, the system was not checking if it contain some pending invoice or requirement. 
+==> Features
+- improvement on macro-requirements feature. The hierarchy visualization of "All-Reqs" form was improved.
+- now, the status of a "macro requirement" will be changed (on-cascade) when a child requirement is set to in-progress, hold or closed status
+- improvements of system performance.
+- improvements of Alloc.Category Gadget. Now the time spent with task can be viewed by iterations
+
+plandora-v1.9.3 (21/12/2010)
+==> Bugs
+- there was a bug at Calendar Gadget. When the current month was set to december, 2010 the calendar was blank.
+- there was a bug at Agile Board during task creation. If the task was linked with a sub-project the resource list combobox was populated with incorrect resources values.
+- the 'repository browse' form and 'invoice' form has denied access to resource, even if leader set permission to him. The bug was fix.
+- the feature to expose a repository file to customer was not working. When the leader click over the 'yellow star' icon, the system display a nullpointer error message. This bug was fixed.
+- there was a bug with svn commit with more than one file. After successfully commit, the files displyed by system at artifacts box appears with wrong names due to a parsing error. The bug was fixed       
+==> Features
+- after svn commit, if the file was removed from repository, the system will also remove the link from artifact box. 
+- implementation of manage cost form (by leader users or allowed resources)
+- implementation of form to add expenses by resources. All expense must be approved by project leader to become a project cost. 
+
+plandora-v1.9.4
+==> Bugs
+- there was a bug at Agile Board. When the user try to edit a task without requirement link, the popup show up in blank.
+- there was a bug at Task Form when the leader was linking a requirement with a task. Occasually the system show up a popup warning (wrongly) that the task is the last opened task. 
+==> Features
+- new gadget of project risk exposure. This gadget shows the number of risks indicators (probability, impact or trend) over the time. 
+- new gadget of comparison between project costs and project budget (invoices) over the time. 
+- implementation of file uploading for DB repository viewer
+
+plandora-v1.9.5
+==> Bugs
+- bug fix at cost form: visual row align adjustment  
+==> Features
+- now, when leader creates a new expense, the cost will be set to 'budgeted' status by default.
+- a check box was included into cost form, in order to show/hide the costs the are out of selected range.  
+
+plandora-v1.9.6
+==> Bugs
+- [BUG:23702] the system was rounding (wrongly) the estimated time when a ad-hoc task was changed to "in-progress" 
+- alteracao do texto do botão do popup de workflow. [BUG:25217]
+- rounding bug fix at expense, cost and invoice forms. When user try to insert a value (for example:131,40) the system was considering 131,39.
+==> Features
+- now, the custom form contain a filter that hides records that were included more than X days ago.
+- now the user form, contain a filter that show/hide disabled users.
+
+
+Known Error:
+	Symptom: message appear at log file: "duplicate key violates unique constraint pk_report_result
+	Root Cause: if you save a KPI record (only root user) during the backgroud calculation, the column last_execution could be updated with a wrong value.  
+
+	Symptom: eventually the KB form shows a [Next Page] link but after click, the page appears blank
+	Root Cause: the calculation of paging must be fixed
+	
+
+
+create table cost_status (
+	id varchar(10) not null,
+	name varchar (50),
+	description varchar (100),
+	state_machine_order bigint(4),
+primary key pk_cost_status (id)
+);
+
+create table cost (
+	id varchar(10) NOT NULL,
+	name varchar(30) NOT NULL,
+	project_id varchar(10) NOT NULL,
+    category_id varchar(10) NOT NULL,
+	account_code varchar(30) NULL,
+	expense_id varchar(10) NULL,
+primary key pk_cost (id)	
+);
+
+create table cost_installment (
+	cost_id varchar(10) NOT NULL,
+	installment_num int(4) NOT NULL,
+	due_date timestamp(14) NOT NULL,
+	cost_status_id varchar(10) NOT NULL,
+	approver varchar(10) NULL,
+	value int(8) NOT NULL,
+primary key pk_cost_installment (cost_id, installment_num)	
+);
+
+create table expense (
+	id varchar(10) NOT NULL,
+	project_id varchar(10) NOT NULL,
+    user_id varchar(10) NOT NULL,
+primary key pk_expense (id)
+);
+
+create table cost_history (
+	cost_id varchar(10) NOT NULL,
+	installment_num int(4) NOT NULL,
+	creation_date timestamp(14) NULL,
+	name varchar(30) NOT NULL,
+	project_id varchar(10) NOT NULL,
+    category_id varchar(10) NOT NULL,
+	account_code varchar(30) NULL,
+	expense_id varchar(10) NULL,
+	due_date timestamp(14) NOT NULL,
+	cost_status_id varchar(10) NOT NULL,
+	value int(8) NOT NULL,
+	user_id varchar(10) NULL,	
+primary key pk_cost_history (cost_id, installment_num, creation_date)	
+);
+
+
+
+alter table cost add constraint cost_project foreign key (project_id) references project (id);
+alter table cost add constraint cost_planning foreign key (id) references planning (id);
+alter table cost_installment add constraint cost_inst_cost foreign key (cost_id) references cost (id);
+
+insert into cost_status (id, name, description, state_machine_order) values ('1', 'Waiting Approve', 'Waiting Approve', 1);
+insert into cost_status (id, name, description, state_machine_order) values ('2', 'Budgeted', 'Budgeted', 10 )
+insert into cost_status (id, name, description, state_machine_order) values ('3', 'Canceled', 'Canceled', 101);
+insert into cost_status (id, name, description, state_machine_order) values ('4', 'Paid', 'Paid', 100);
+
+insert into report (id, name, type, report_perspective_id, sql_text, execution_hour, last_execution, project_Id, final_date, data_type, file_name, profile_view) values ('9', 'Expense Report', 0, '', 'select e.id, t.name, pr.name as PROJECT_NAME, p.description, p.creation_date, c.id as COST_ID, c.name as COST_NAME, g.name as CATEGORY, c.account_code, ci.due_date, ci.value, at.username as approver, cs.name as STATUS, cs.state_machine_order from expense e, tool_user t, project pr, planning p, cost c, category g, cost_status cs, cost_installment ci LEFT OUTER JOIN tool_user at on (at.id = ci.approver) where e.user_id = t.id and e.project_id = pr.id and e.id = p.id and c.category_id = g.id and c.expense_id = e.id and c.id = ci.cost_id and ci.installment_num=1 and ci.cost_status_id = cs.id and e.id=?#Expense{!select id, id as lbl from expense where user_id in (select id from resource where project_id in (?#PROJECT_DESCENDANT#)) or user_id=?#USER_ID#!}(1)# order by e.id', 0, null, 0, null, 0, '#CLASS_PATH#/WEB-INF/classes/ExpenseReport.jasper', '3');
+
+alter table db_repository_version modify binary_file mediumblob null;

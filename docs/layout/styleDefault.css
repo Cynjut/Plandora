@@ -1,0 +1,41 @@
+.form-label {  font-family: "font: tahoma", arial, helvetica, sans-serif;; font-size: 10pt; font-style: normal; line-height: 20pt; font-weight: bold; color: #FFFFFF; text-decoration: none; background-color: #000084; background-position: center}
+.formTopList {  font-family: "font: tahoma", arial, helvetica, sans-serif; font-size: 10pt; font-style: normal; line-height: 15pt; font-weight: bold; color: #3975AD; text-decoration: none; background-color: #A8D3FF; background-position: center;}
+.formLabel { text-decoration: none; font-style: normal; font-weight: bold; color:#FFFFFF; line-height: 21pt; font-family: Tahoma, Arial, Verdana, sans-serif; font-size: 12pt; background-color: #3F76AB; height: auto}
+.formTitle { text-decoration: none; font-style: normal; font-weight: normal; color:#3975AD; line-height: 18pt; ; font-family: Tahoma, Arial, Verdana, sans-serif; font-size: 10pt; background-color: c8e3ff; height: auto ; text-align: right;}
+.textBox {  font-family: Tahoma, Arial, Verdana, sans-serif;
+	font-size: 8pt;
+	border-width: 2px;; border: 2px inset; color: #333333}
+.paging {text-decoration: none;
+	font-style: normal;
+	font-weight: normal;
+	color:#FFFFFF;
+	line-height: 7px;; font-family: Tahoma, Arial, Verdana, sans-serif; font-size: 7px}
+.pagingEnd {text-decoration: none;
+	font-style: normal;
+	font-weight: normal;
+	color:#FFFFFF; background-color: #3F76AB;
+	line-height: 7px;; font-family: Tahoma, Arial, Verdana, sans-serif; font-size: 7px}
+.selectBox { font-family: Tahoma, Arial, Verdana, sans-serif;
+	     font-size: 8pt;
+	     border-width: 2px;
+	     border: 2px;
+             color: #333333 ;
+             cursor: hand}
+.formBody { text-decoration: none; font-style: normal; font-weight: normal; color:#3975AD; line-height: 18pt; ; font-family: Tahoma, Arial, Verdana, sans-serif; font-size: 10pt; background-color: #c8e3ff; height: auto ; text-align: left}
+.formBodyGrid { text-decoration: none; font-style: normal; font-weight: normal; color:#3975AD; line-height: 18pt; ; font-family: Tahoma, Arial, Verdana, sans-serif; font-size: 10pt; background-color: #B3D9FF; height: auto ; text-align: left}
+.button { font-family: Tahoma, Arial, Verdana, sans-serif; font-size: 8pt; border-width: 2px;; border: 2px outset; color: #ffffff; font-weight: bold; background-color: #0080C0; cursor: hand; text-decoration: none}
+.gridBody { text-decoration: none; font-style: normal; font-weight: normal; color:#3975AD; line-height: 18pt; ; font-family: Tahoma, Arial, Verdana, sans-serif; font-size: 10pt; background-color: c8e3ff; height: auto ; text-align: left ; border-color: #333333 black black; border-top-width: 2px; border-right-width: 2px; border-bottom-width: 2px; border-left-width: 2px}
+.textBoxDisable { font-family: Tahoma, Arial, Verdana, sans-serif; font-size: 8pt; border-width: 2px;; border: 2px inset; color: #333333 ; background-color: #CCCCCC}
+.pagingFormBody { text-decoration: none; font-style: normal; font-weight: normal; color:#FFFFFF; line-height: 7px;; font-family: Tahoma, Arial, Verdana, sans-serif; font-size: 7px ; background-color: #CEE3FF}
+.clsNode, .clsNode:visited{
+	color: #3975AD;
+	font-weight : normal;
+	font-size : 10pt;
+	text-decoration : none;
+}
+.clsNode:hover{
+	color: #3975AD;
+	font-weight : normal;
+	font-size : 10pt;
+	text-decoration : underline;
+}

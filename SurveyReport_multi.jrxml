@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="SurveyReport_multi" language="groovy" pageWidth="555" pageHeight="802" columnWidth="555" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0">
+	<parameter name="SURVEY_ID" class="java.lang.String">
+		<parameterDescription><![CDATA[]]></parameterDescription>
+	</parameter>
+	<parameter name="QUESTION_ID" class="java.lang.String"/>
+	<queryString>
+		<![CDATA[select a.survey_id, a.question_id, a.sequence, a.content, count(w.value) as count, sub.total
+from question_alternative a, question_answer w,
+	(select count(value) as total from question_answer
+	  where question_id = $P{QUESTION_ID} and survey_id = $P{SURVEY_ID}) as sub
+where a.question_id = $P{QUESTION_ID}
+  and a.survey_id = $P{SURVEY_ID}
+  and a.survey_id = w.survey_id
+  and a.question_id = w.question_id
+  and w.value = a.sequence
+group by a.survey_id, a.question_id, a.sequence, a.content, sub.total
+order by 5 desc]]>
+	</queryString>
+	<field name="survey_id" class="java.lang.String">
+		<fieldDescription><![CDATA[]]></fieldDescription>
+	</field>
+	<field name="question_id" class="java.lang.String">
+		<fieldDescription><![CDATA[]]></fieldDescription>
+	</field>
+	<field name="sequence" class="java.lang.Integer">
+		<fieldDescription><![CDATA[]]></fieldDescription>
+	</field>
+	<field name="content" class="java.lang.String">
+		<fieldDescription><![CDATA[]]></fieldDescription>
+	</field>
+	<field name="count" class="java.lang.Long">
+		<fieldDescription><![CDATA[]]></fieldDescription>
+	</field>
+	<field name="total" class="java.lang.Long">
+		<fieldDescription><![CDATA[]]></fieldDescription>
+	</field>
+	<variable name="ANSWER_PERC" class="java.lang.Float">
+		<variableExpression><![CDATA[new Float((float)($F{count}.longValue()) /
+ (float)($F{total}.longValue())
+)]]></variableExpression>
+	</variable>
+	<variable name="ANSWER_COUNT_TOTAL" class="java.lang.Long" calculation="Sum">
+		<variableExpression><![CDATA[$F{count}]]></variableExpression>
+	</variable>
+	<filterExpression><![CDATA[$P{SURVEY_ID}]]></filterExpression>
+	<group name="QUESTION">
+		<groupExpression><![CDATA[$F{question_id}]]></groupExpression>
+		<groupHeader>
+			<band height="20">
+				<staticText>
+					<reportElement mode="Transparent" x="99" y="0" width="77" height="20" forecolor="#000000" backcolor="#FFFFFF"/>
+					<textElement textAlignment="Center" verticalAlignment="Middle" rotation="None" lineSpacing="Single" markup="none">
+						<font fontName="Verdana" size="9" isBold="true" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfFontName="Helvetica-Bold" pdfEncoding="Cp1252" isPdfEmbedded="false"/>
+					</textElement>
+					<text><![CDATA[Question]]></text>
+				</staticText>
+				<staticText>
+					<reportElement mode="Transparent" x="176" y="0" width="67" height="20" forecolor="#000000" backcolor="#FFFFFF"/>
+					<textElement textAlignment="Center" verticalAlignment="Middle" rotation="None" lineSpacing="Single" markup="none">
+						<font fontName="Verdana" size="9" isBold="true" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfFontName="Helvetica-Bold" pdfEncoding="Cp1252" isPdfEmbedded="false"/>
+					</textElement>
+					<text><![CDATA[Count]]></text>
+				</staticText>
+				<staticText>
+					<reportElement mode="Transparent" x="243" y="0" width="67" height="20" forecolor="#000000" backcolor="#FFFFFF"/>
+					<textElement textAlignment="Center" verticalAlignment="Middle" rotation="None" lineSpacing="Single" markup="none">
+						<font fontName="Verdana" size="9" isBold="true" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfFontName="Helvetica-Bold" pdfEncoding="Cp1252" isPdfEmbedded="false"/>
+					</textElement>
+					<text><![CDATA[(%)]]></text>
+				</staticText>
+			</band>
+		</groupHeader>
+		<groupFooter>
+			<band height="37">
+				<textField pattern="###0" isBlankWhenNull="true">
+					<reportElement mode="Opaque" x="179" y="2" width="61" height="20" forecolor="#000000" backcolor="#FFFFFF"/>
+					<textElement textAlignment="Center" verticalAlignment="Middle" rotation="None" lineSpacing="Single" markup="none">
+						<font fontName="Verdana" size="9" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfFontName="Helvetica" pdfEncoding="Cp1252" isPdfEmbedded="false"/>
+					</textElement>
+					<textFieldExpression class="java.lang.String"><![CDATA[$V{ANSWER_COUNT_TOTAL}]]></textFieldExpression>
+				</textField>
+				<line>
+					<reportElement x="104" y="2" width="133" height="1"/>
+				</line>
+				<staticText>
+					<reportElement mode="Transparent" x="58" y="2" width="115" height="20" forecolor="#000000" backcolor="#FFFFFF"/>
+					<textElement textAlignment="Right" verticalAlignment="Middle" rotation="None" lineSpacing="Single" markup="none">
+						<font fontName="Verdana" size="9" isBold="true" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfFontName="Helvetica-Bold" pdfEncoding="Cp1252" isPdfEmbedded="false"/>
+					</textElement>
+					<text><![CDATA[Total:]]></text>
+				</staticText>
+			</band>
+		</groupFooter>
+	</group>
+	<columnHeader>
+		<band splitType="Stretch"/>
+	</columnHeader>
+	<detail>
+		<band height="21" splitType="Stretch">
+			<textField isStretchWithOverflow="true" pattern="" isBlankWhenNull="true">
+				<reportElement mode="Transparent" x="3" y="0" width="170" height="20" forecolor="#000000" backcolor="#FFFFFF"/>
+				<textElement textAlignment="Right" verticalAlignment="Middle" rotation="None" lineSpacing="Single" markup="none">
+					<font fontName="Verdana" size="9" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfFontName="Helvetica" pdfEncoding="Cp1252" isPdfEmbedded="false"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{content}]]></textFieldExpression>
+			</textField>
+			<textField pattern="###0" isBlankWhenNull="true">
+				<reportElement mode="Opaque" x="179" y="0" width="62" height="20" forecolor="#000000" backcolor="#FFFFFF"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle" rotation="None" lineSpacing="Single" markup="none">
+					<font fontName="Verdana" size="9" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfFontName="Helvetica" pdfEncoding="Cp1252" isPdfEmbedded="false"/>
+				</textElement>
+				<textFieldExpression class="java.lang.Long"><![CDATA[$F{count}]]></textFieldExpression>
+			</textField>
+			<textField pattern="#,##0.00 %" isBlankWhenNull="true">
+				<reportElement mode="Opaque" x="240" y="0" width="67" height="20" forecolor="#000000" backcolor="#FFFFFF"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle" rotation="None" lineSpacing="Single" markup="none">
+					<font fontName="Verdana" size="9" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfFontName="Helvetica" pdfEncoding="Cp1252" isPdfEmbedded="false"/>
+				</textElement>
+				<textFieldExpression class="java.lang.Float"><![CDATA[$V{ANSWER_PERC}]]></textFieldExpression>
+			</textField>
+		</band>
+	</detail>
+	<columnFooter>
+		<band splitType="Prevent"/>
+	</columnFooter>
+</jasperReport>

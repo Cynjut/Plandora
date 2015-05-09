@@ -1,0 +1,242 @@
+<?xml version="1.0" encoding="UTF-8"  ?>
+<!-- Created with iReport - A designer for JasperReports -->
+<!DOCTYPE jasperReport PUBLIC "//JasperReports//DTD Report Design//EN" "http://jasperreports.sourceforge.net/dtds/jasperreport.dtd">
+<jasperReport
+		 name="ReqOverviewTask"
+		 columnCount="1"
+		 printOrder="Vertical"
+		 orientation="Portrait"
+		 pageWidth="535"
+		 pageHeight="842"
+		 columnWidth="535"
+		 columnSpacing="0"
+		 leftMargin="0"
+		 rightMargin="0"
+		 topMargin="0"
+		 bottomMargin="0"
+		 whenNoDataType="NoPages"
+		 isTitleNewPage="false"
+		 isSummaryNewPage="false">
+	<property name="ireport.scriptlethandling" value="0" />
+	<property name="ireport.encoding" value="UTF-8" />
+	<import value="java.util.*" />
+	<import value="net.sf.jasperreports.engine.*" />
+	<import value="net.sf.jasperreports.engine.data.*" />
+
+	<parameter name="REQ_ID" isForPrompting="false" class="java.lang.String">
+		<defaultValueExpression ><![CDATA["3823"]]></defaultValueExpression>
+	</parameter>
+	<queryString><![CDATA[select t.id, t.name, u.username, ts.name as task_statu_name, rt.actual_date, rt.actual_time
+from task t, resource_task rt, tool_user u, task_status ts
+where ts.id = rt.task_status_id 
+  and rt.resource_id=u.id 
+  and t.id = rt.task_id 
+  and t.requirement_id=$P{REQ_ID}]]></queryString>
+
+	<field name="id" class="java.lang.String"/>
+	<field name="name" class="java.lang.String"/>
+	<field name="username" class="java.lang.String"/>
+	<field name="task_statu_name" class="java.lang.String"/>
+	<field name="actual_date" class="java.sql.Timestamp"/>
+	<field name="actual_time" class="java.math.BigDecimal"/>
+
+		<background>
+			<band height="0"  isSplitAllowed="true" >
+			</band>
+		</background>
+		<title>
+			<band height="0"  isSplitAllowed="true" >
+			</band>
+		</title>
+		<pageHeader>
+			<band height="0"  isSplitAllowed="true" >
+			</band>
+		</pageHeader>
+		<columnHeader>
+			<band height="40"  isSplitAllowed="true" >
+				<staticText>
+					<reportElement
+						mode="Opaque"
+						x="4"
+						y="6"
+						width="526"
+						height="17"
+						backcolor="#CCCCCC"
+						key="staticText-1"/>
+					<box topBorder="1Point" topBorderColor="#000000" leftBorder="1Point" leftBorderColor="#000000" rightBorder="1Point" rightBorderColor="#000000" bottomBorder="1Point" bottomBorderColor="#000000"/>
+					<textElement textAlignment="Left" verticalAlignment="Middle">
+						<font fontName="Tahoma" isBold="true"/>
+					</textElement>
+				<text><![CDATA[  Related Task]]></text>
+				</staticText>
+				<staticText>
+					<reportElement
+						x="55"
+						y="25"
+						width="39"
+						height="12"
+						key="staticText-2"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
+					<textElement textAlignment="Left" verticalAlignment="Middle">
+						<font fontName="Tahoma" pdfFontName="Helvetica-Bold" size="8" isBold="true"/>
+					</textElement>
+				<text><![CDATA[Name]]></text>
+				</staticText>
+				<staticText>
+					<reportElement
+						x="289"
+						y="25"
+						width="39"
+						height="12"
+						key="staticText-3"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
+					<textElement textAlignment="Center" verticalAlignment="Middle">
+						<font fontName="Tahoma" pdfFontName="Helvetica-Bold" size="8" isBold="true"/>
+					</textElement>
+				<text><![CDATA[Resource]]></text>
+				</staticText>
+				<staticText>
+					<reportElement
+						x="347"
+						y="25"
+						width="39"
+						height="12"
+						key="staticText-4"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
+					<textElement textAlignment="Center" verticalAlignment="Middle">
+						<font fontName="Tahoma" pdfFontName="Helvetica-Bold" size="8" isBold="true"/>
+					</textElement>
+				<text><![CDATA[Status]]></text>
+				</staticText>
+				<staticText>
+					<reportElement
+						x="398"
+						y="25"
+						width="124"
+						height="12"
+						key="staticText-5"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
+					<textElement textAlignment="Center" verticalAlignment="Middle">
+						<font fontName="Tahoma" pdfFontName="Helvetica-Bold" size="8" isBold="true"/>
+					</textElement>
+				<text><![CDATA[Actual Date and Duration (h)]]></text>
+				</staticText>
+				<line direction="TopDown">
+					<reportElement
+						x="4"
+						y="38"
+						width="525"
+						height="0"
+						key="line-1"/>
+					<graphicElement stretchType="NoStretch"/>
+				</line>
+				<staticText>
+					<reportElement
+						x="7"
+						y="25"
+						width="39"
+						height="12"
+						key="staticText-7"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
+					<textElement textAlignment="Center" verticalAlignment="Middle">
+						<font fontName="Tahoma" pdfFontName="Helvetica-Bold" size="8" isBold="true"/>
+					</textElement>
+				<text><![CDATA[ID]]></text>
+				</staticText>
+			</band>
+		</columnHeader>
+		<detail>
+			<band height="16"  isSplitAllowed="true" >
+				<textField isStretchWithOverflow="true" isBlankWhenNull="false" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+					<reportElement
+						x="52"
+						y="2"
+						width="226"
+						height="13"
+						key="textField"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
+					<textElement verticalAlignment="Middle">
+						<font fontName="Tahoma" size="8"/>
+					</textElement>
+				<textFieldExpression   class="java.lang.String"><![CDATA[$F{name}]]></textFieldExpression>
+				</textField>
+				<textField isStretchWithOverflow="false" isBlankWhenNull="false" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+					<reportElement
+						x="283"
+						y="2"
+						width="55"
+						height="13"
+						key="textField"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
+					<textElement textAlignment="Center" verticalAlignment="Middle">
+						<font fontName="Tahoma" size="8"/>
+					</textElement>
+				<textFieldExpression   class="java.lang.String"><![CDATA[$F{username}]]></textFieldExpression>
+				</textField>
+				<textField isStretchWithOverflow="false" isBlankWhenNull="false" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+					<reportElement
+						x="338"
+						y="2"
+						width="64"
+						height="13"
+						key="textField"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
+					<textElement textAlignment="Center" verticalAlignment="Middle">
+						<font fontName="Tahoma" size="8"/>
+					</textElement>
+				<textFieldExpression   class="java.lang.String"><![CDATA[$F{task_statu_name}]]></textFieldExpression>
+				</textField>
+				<textField isStretchWithOverflow="false" isBlankWhenNull="false" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+					<reportElement
+						x="5"
+						y="2"
+						width="44"
+						height="13"
+						key="textField"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
+					<textElement textAlignment="Center" verticalAlignment="Middle">
+						<font fontName="Tahoma" size="8"/>
+					</textElement>
+				<textFieldExpression   class="java.lang.String"><![CDATA[$F{id}]]></textFieldExpression>
+				</textField>
+				<textField isStretchWithOverflow="false" pattern="MM/dd/yyyy" isBlankWhenNull="false" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+					<reportElement
+						x="411"
+						y="2"
+						width="61"
+						height="13"
+						key="textField"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
+					<textElement textAlignment="Center" verticalAlignment="Middle">
+						<font fontName="Tahoma" size="8"/>
+					</textElement>
+				<textFieldExpression   class="java.sql.Timestamp"><![CDATA[$F{actual_date}]]></textFieldExpression>
+				</textField>
+				<textField isStretchWithOverflow="false" pattern="###0.00;-###0.00" isBlankWhenNull="false" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+					<reportElement
+						x="475"
+						y="2"
+						width="34"
+						height="13"
+						key="textField"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
+					<textElement textAlignment="Center" verticalAlignment="Middle">
+						<font fontName="Tahoma" size="8"/>
+					</textElement>
+				<textFieldExpression   class="java.lang.Float"><![CDATA[new Float(((float)$F{actual_time}.longValue()/60))]]></textFieldExpression>
+				</textField>
+			</band>
+		</detail>
+		<columnFooter>
+			<band height="0"  isSplitAllowed="true" >
+			</band>
+		</columnFooter>
+		<pageFooter>
+			<band height="0"  isSplitAllowed="true" >
+			</band>
+		</pageFooter>
+		<summary>
+			<band height="0"  isSplitAllowed="true" >
+			</band>
+		</summary>
+</jasperReport>

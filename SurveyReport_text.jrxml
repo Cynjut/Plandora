@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="SurveyReport_text" language="groovy" pageWidth="555" pageHeight="802" columnWidth="555" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0">
+	<parameter name="SURVEY_ID" class="java.lang.String">
+		<parameterDescription><![CDATA[]]></parameterDescription>
+	</parameter>
+	<parameter name="QUESTION_ID" class="java.lang.String"/>
+	<queryString>
+		<![CDATA[select a.survey_id, a.question_id, a.user_id, a.value, a.answer_date, t.username
+from survey_question q, question_answer a LEFT OUTER JOIN tool_user t on t.id = a.user_id
+where a.question_id = $P{QUESTION_ID}
+  and a.survey_id = $P{SURVEY_ID}
+  and (q.type = '1' or q.type = '2')
+  and a.survey_id = q.survey_id
+  and a.question_id = q.id
+order by a.answer_date]]>
+	</queryString>
+	<field name="survey_id" class="java.lang.String">
+		<fieldDescription><![CDATA[]]></fieldDescription>
+	</field>
+	<field name="question_id" class="java.lang.String">
+		<fieldDescription><![CDATA[]]></fieldDescription>
+	</field>
+	<field name="user_id" class="java.lang.String">
+		<fieldDescription><![CDATA[]]></fieldDescription>
+	</field>
+	<field name="value" class="java.lang.String">
+		<fieldDescription><![CDATA[]]></fieldDescription>
+	</field>
+	<field name="answer_date" class="java.sql.Timestamp">
+		<fieldDescription><![CDATA[]]></fieldDescription>
+	</field>
+	<field name="username" class="java.lang.String">
+		<fieldDescription><![CDATA[]]></fieldDescription>
+	</field>
+	<columnHeader>
+		<band height="21" splitType="Stretch">
+			<staticText>
+				<reportElement mode="Transparent" x="198" y="1" width="67" height="20" forecolor="#000000" backcolor="#FFFFFF"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle" rotation="None" lineSpacing="Single" markup="none">
+					<font fontName="Verdana" size="9" isBold="true" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfFontName="Helvetica-Bold" pdfEncoding="Cp1252" isPdfEmbedded="false"/>
+				</textElement>
+				<text><![CDATA[User]]></text>
+			</staticText>
+			<staticText>
+				<reportElement mode="Transparent" x="291" y="1" width="67" height="20" forecolor="#000000" backcolor="#FFFFFF"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle" rotation="None" lineSpacing="Single" markup="none">
+					<font fontName="Verdana" size="9" isBold="true" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfFontName="Helvetica-Bold" pdfEncoding="Cp1252" isPdfEmbedded="false"/>
+				</textElement>
+				<text><![CDATA[Content]]></text>
+			</staticText>
+			<staticText>
+				<reportElement mode="Transparent" x="96" y="1" width="102" height="20" forecolor="#000000" backcolor="#FFFFFF"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle" rotation="None" lineSpacing="Single" markup="none">
+					<font fontName="Verdana" size="9" isBold="true" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfFontName="Helvetica-Bold" pdfEncoding="Cp1252" isPdfEmbedded="false"/>
+				</textElement>
+				<text><![CDATA[Answer Date]]></text>
+			</staticText>
+		</band>
+	</columnHeader>
+	<detail>
+		<band height="20" splitType="Stretch">
+			<textField isStretchWithOverflow="true" pattern="dd/MM/yyyy h:mm" isBlankWhenNull="true">
+				<reportElement mode="Transparent" x="96" y="0" width="102" height="20" forecolor="#000000" backcolor="#FFFFFF"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle" rotation="None" lineSpacing="Single" markup="none">
+					<font fontName="Verdana" size="9" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfFontName="Helvetica" pdfEncoding="Cp1252" isPdfEmbedded="false"/>
+				</textElement>
+				<textFieldExpression class="java.sql.Timestamp"><![CDATA[$F{answer_date}]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" pattern="" isBlankWhenNull="true">
+				<reportElement mode="Transparent" x="198" y="0" width="67" height="20" forecolor="#000000" backcolor="#FFFFFF"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle" rotation="None" lineSpacing="Single" markup="none">
+					<font fontName="Verdana" size="9" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfFontName="Helvetica" pdfEncoding="Cp1252" isPdfEmbedded="false"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[($F{user_id}==null?"Anonymous":$F{username})]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" pattern="" isBlankWhenNull="true">
+				<reportElement mode="Transparent" x="270" y="0" width="253" height="20" forecolor="#000000" backcolor="#FFFFFF"/>
+				<textElement textAlignment="Justified" verticalAlignment="Middle" rotation="None" lineSpacing="Single" markup="none">
+					<font fontName="Verdana" size="9" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfFontName="Helvetica" pdfEncoding="Cp1252" isPdfEmbedded="false"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{value}]]></textFieldExpression>
+			</textField>
+		</band>
+	</detail>
+	<columnFooter>
+		<band height="11" splitType="Stretch"/>
+	</columnFooter>
+</jasperReport>

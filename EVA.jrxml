@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8"  ?>
+<!-- Created with iReport - A designer for JasperReports -->
+<!DOCTYPE jasperReport PUBLIC "//JasperReports//DTD Report Design//EN" "http://jasperreports.sourceforge.net/dtds/jasperreport.dtd">
+<jasperReport
+		 name="EVA"
+		 columnCount="1"
+		 printOrder="Vertical"
+		 orientation="Portrait"
+		 pageWidth="595"
+		 pageHeight="842"
+		 columnWidth="535"
+		 columnSpacing="0"
+		 leftMargin="30"
+		 rightMargin="30"
+		 topMargin="20"
+		 bottomMargin="20"
+		 whenNoDataType="NoPages"
+		 isTitleNewPage="false"
+		 isSummaryNewPage="false">
+	<property name="ireport.scriptlethandling" value="0" />
+	<property name="ireport.encoding" value="UTF-8" />
+	<import value="java.util.*" />
+	<import value="net.sf.jasperreports.engine.*" />
+	<import value="net.sf.jasperreports.engine.data.*" />
+
+	<queryString><![CDATA[select sum((rt.estimated_time/8)* r.cost_per_hour) as est_hor_proj, 
+       sum((rt.actual_time/8)* r.cost_per_hour) as AC,
+1000 - sum((rt.actual_time/8)* r.cost_per_hour) as EV
+from resource_task rt, resource r
+where rt.resource_id = r.id
+and rt.project_id = r.project_id
+and r.cost_per_hour is not null
+]]></queryString>
+
+	<field name="est_hor_proj" class="java.lang.Double"/>
+	<field name="AC" class="java.lang.Double"/>
+	<field name="EV" class="java.lang.Double"/>
+
+		<background>
+			<band height="0"  isSplitAllowed="true" >
+			</band>
+		</background>
+		<title>
+			<band height="50"  isSplitAllowed="true" >
+			</band>
+		</title>
+		<pageHeader>
+			<band height="50"  isSplitAllowed="true" >
+			</band>
+		</pageHeader>
+		<columnHeader>
+			<band height="30"  isSplitAllowed="true" >
+			</band>
+		</columnHeader>
+		<detail>
+			<band height="100"  isSplitAllowed="true" >
+				<textField isStretchWithOverflow="false" pattern="##0.00" isBlankWhenNull="false" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+					<reportElement
+						x="63"
+						y="17"
+						width="100"
+						height="18"
+						key="textField"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
+					<textElement>
+						<font/>
+					</textElement>
+				<textFieldExpression   class="java.lang.Double"><![CDATA[$F{AC}]]></textFieldExpression>
+				</textField>
+				<textField isStretchWithOverflow="false" pattern="##0.00" isBlankWhenNull="false" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+					<reportElement
+						x="183"
+						y="16"
+						width="100"
+						height="18"
+						key="textField"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
+					<textElement>
+						<font/>
+					</textElement>
+				<textFieldExpression   class="java.lang.Double"><![CDATA[$F{EV}]]></textFieldExpression>
+				</textField>
+				<textField isStretchWithOverflow="false" pattern="##0.00" isBlankWhenNull="false" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+					<reportElement
+						x="351"
+						y="27"
+						width="100"
+						height="18"
+						key="textField"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
+					<textElement>
+						<font/>
+					</textElement>
+				<textFieldExpression   class="java.lang.Double"><![CDATA[$F{est_hor_proj}]]></textFieldExpression>
+				</textField>
+			</band>
+		</detail>
+		<columnFooter>
+			<band height="30"  isSplitAllowed="true" >
+			</band>
+		</columnFooter>
+		<pageFooter>
+			<band height="50"  isSplitAllowed="true" >
+			</band>
+		</pageFooter>
+		<lastPageFooter>
+			<band height="50"  isSplitAllowed="true" >
+			</band>
+		</lastPageFooter>
+		<summary>
+			<band height="50"  isSplitAllowed="true" >
+			</band>
+		</summary>
+</jasperReport>

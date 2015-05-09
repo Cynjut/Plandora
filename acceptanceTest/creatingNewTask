@@ -1,0 +1,154 @@
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>creatingNewTask</title>
+</head>
+<body>
+<table cellpadding="1" cellspacing="1" border="1">
+<thead>
+<tr><td rowspan="1" colspan="3">creatingNewTask</td></tr>
+</thead><tbody>
+<tr>
+	<td>open</td>
+	<td>/pandora/do/login?operation=prepareLogin</td>
+	<td></td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>username</td>
+	<td>franz</td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>password</td>
+	<td>123</td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>login</td>
+	<td></td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>gotoRequestForm</td>
+	<td></td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>description</td>
+	<td>teste automatico de solicitação</td>
+</tr>
+<tr>
+	<td>selectAndWait</td>
+	<td>projectRelated</td>
+	<td>label=Development Project Example</td>
+</tr>
+<tr>
+	<td>selectAndWait</td>
+	<td>categoryId</td>
+	<td>label=Bug</td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>save</td>
+	<td></td>
+</tr>
+<tr>
+	<td>assertHtmlSource</td>
+	<td></td>
+	<td>successfullyMessage</td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>backward</td>
+	<td></td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>//img[@alt='Criar tarefas para a Solicitação (Aceitar Solicitação)']</td>
+	<td></td>
+</tr>
+<tr>
+	<td>click</td>
+	<td>copy</td>
+	<td></td>
+</tr>
+<tr>
+	<td>select</td>
+	<td>resourceId</td>
+	<td>label=Franz Kafka</td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>estimatedTime</td>
+	<td>8</td>
+</tr>
+<tr>
+	<td>click</td>
+	<td>addRes</td>
+	<td></td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>save</td>
+	<td></td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>backward</td>
+	<td></td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>//img[@alt='Editar']</td>
+	<td></td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>slotBotton4</td>
+	<td>1</td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>slotBotton5</td>
+	<td>2</td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>slotBotton6</td>
+	<td>3</td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>slotBotton7</td>
+	<td>4</td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>save</td>
+	<td></td>
+</tr>
+<tr>
+	<td>assertAttribute</td>
+	<td>successfullyMessage</td>
+	<td></td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>backward</td>
+	<td></td>
+</tr>
+<tr>
+	<td>click</td>
+	<td>link=Sair</td>
+	<td></td>
+</tr>
+<tr>
+	<td>assertConfirmation</td>
+	<td>Você tem certeza que deseja sair do sistema?</td>
+	<td></td>
+</tr>
+
+</tbody></table>
+</body>
+</html>

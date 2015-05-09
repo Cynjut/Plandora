@@ -1,0 +1,59 @@
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>editRequirementFromMain</title>
+</head>
+<body>
+<table cellpadding="1" cellspacing="1" border="1">
+<thead>
+<tr><td rowspan="1" colspan="3">editRequirementFromMain</td></tr>
+</thead><tbody>
+<tr>
+	<td>open</td>
+	<td>http://localhost:8080/pandora/do/login?operation=doLogout</td>
+	<td></td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>username</td>
+	<td>albeper</td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>password</td>
+	<td>123</td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>login</td>
+	<td></td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>//img[@alt='Editar Solicitação']</td>
+	<td></td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>description</td>
+	<td>teste teste teste teste Fazer SRS NoAgito e atualizar a TDD com novos casos encontrados a partir da criação da SRS </td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>save</td>
+	<td></td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>backward</td>
+	<td></td>
+</tr>
+<tr>
+	<td>verifyTextPresent</td>
+	<td>teste teste teste teste</td>
+	<td></td>
+</tr>
+
+</tbody></table>
+</body>
+</html>

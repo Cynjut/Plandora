@@ -1,0 +1,253 @@
+<?xml version="1.0" encoding="UTF-8"  ?>
+<!-- Created with iReport - A designer for JasperReports -->
+<!DOCTYPE jasperReport PUBLIC "//JasperReports//DTD Report Design//EN" "http://jasperreports.sourceforge.net/dtds/jasperreport.dtd">
+<jasperReport
+		 name="OccurrenceBook"
+		 columnCount="1"
+		 printOrder="Vertical"
+		 orientation="Portrait"
+		 pageWidth="595"
+		 pageHeight="842"
+		 columnWidth="535"
+		 columnSpacing="0"
+		 leftMargin="30"
+		 rightMargin="30"
+		 topMargin="20"
+		 bottomMargin="20"
+		 whenNoDataType="NoPages"
+		 isTitleNewPage="false"
+		 isSummaryNewPage="false">
+	<property name="ireport.scriptlethandling" value="0" />
+	<property name="ireport.encoding" value="UTF-8" />
+	<import value="java.util.*" />
+	<import value="net.sf.jasperreports.engine.*" />
+	<import value="net.sf.jasperreports.engine.data.*" />
+
+	<queryString><![CDATA[select o.id, o.source, o.project_id, p.name as project_name 
+from occurrence o, project p
+where p.id = o.project_id]]></queryString>
+
+	<field name="id" class="java.lang.String"/>
+	<field name="source" class="java.lang.String"/>
+	<field name="project_id" class="java.lang.String"/>
+	<field name="project_name" class="java.lang.String"/>
+
+
+		<group  name="OCCURRENCE_PROJECT" isStartNewPage="true" >
+			<groupExpression><![CDATA[$F{project_id}]]></groupExpression>
+			<groupHeader>
+			<band height="28"  isSplitAllowed="true" >
+				<textField isStretchWithOverflow="false" isBlankWhenNull="false" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+					<reportElement
+						x="3"
+						y="4"
+						width="528"
+						height="21"
+						key="textField-1"/>
+					<box>					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+</box>
+					<textElement textAlignment="Right">
+						<font fontName="Tahoma" pdfFontName="Helvetica-Bold" size="14" isBold="true"/>
+					</textElement>
+				<textFieldExpression   class="java.lang.String"><![CDATA[$F{project_name}]]></textFieldExpression>
+				</textField>
+			</band>
+			</groupHeader>
+			<groupFooter>
+			<band height="140"  isSplitAllowed="true" >
+				<subreport  isUsingCache="true">
+					<reportElement
+						x="7"
+						y="5"
+						width="341"
+						height="128"
+						key="subreport-6"/>
+					<subreportParameter  name="PROJECT_ID">
+						<subreportParameterExpression><![CDATA[$F{project_id}]]></subreportParameterExpression>
+					</subreportParameter>
+					<connectionExpression><![CDATA[$P{REPORT_CONNECTION}]]></connectionExpression>
+					<subreportExpression  class="java.lang.String"><![CDATA["OccurrenceBook_graph.jasper"]]></subreportExpression>
+				</subreport>
+			</band>
+			</groupFooter>
+		</group>
+		<group  name="OCCURRENCE_SOURCE" >
+			<groupExpression><![CDATA[$F{source}]]></groupExpression>
+			<groupHeader>
+			<band height="21"  isSplitAllowed="true" >
+				<textField isStretchWithOverflow="false" isBlankWhenNull="false" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+					<reportElement
+						mode="Opaque"
+						x="0"
+						y="0"
+						width="533"
+						height="16"
+						backcolor="#CCCCCC"
+						key="textField-2"/>
+					<box>					<topPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineColor="#000000"/>
+					<rightPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+</box>
+					<textElement verticalAlignment="Middle">
+						<font fontName="Tahoma" pdfFontName="Helvetica-Bold" size="10" isBold="true"/>
+					</textElement>
+				<textFieldExpression   class="java.lang.String"><![CDATA["  " + ($F{source}.equals("com.pandora.bus.occurrence.MilestoneOccurrence")?"Milestones":
+  ($F{source}.equals("com.pandora.bus.occurrence.EventOccurrence")?"Events":
+    ($F{source}.equals("com.pandora.bus.occurrence.IssueOccurrence")?"Issues":
+       ($F{source}.equals("com.pandora.bus.occurrence.LessonLearnedOccurrence")?"Lessons Learned":
+          ($F{source}.equals("com.pandora.bus.occurrence.AdHocOccurrence")?"Ad Hoc":
+             ($F{source}.equals("com.pandora.bus.occurrence.IterationOccurrence")?"Iteration":"Other")
+          )
+       )
+    )
+  )
+)]]></textFieldExpression>
+				</textField>
+			</band>
+			</groupHeader>
+			<groupFooter>
+			<band height="16"  isSplitAllowed="true" >
+			</band>
+			</groupFooter>
+		</group>
+		<background>
+			<band height="0"  isSplitAllowed="true" >
+			</band>
+		</background>
+		<title>
+			<band height="0"  isSplitAllowed="true" >
+			</band>
+		</title>
+		<pageHeader>
+			<band height="35"  isSplitAllowed="true" >
+				<staticText>
+					<reportElement
+						x="4"
+						y="6"
+						width="159"
+						height="22"
+						key="staticText-1"/>
+					<box>					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+</box>
+					<textElement textAlignment="Right">
+						<font fontName="Tahoma" size="18" isBold="true"/>
+					</textElement>
+				<text><![CDATA[Occurrence Book]]></text>
+				</staticText>
+				<line direction="TopDown">
+					<reportElement
+						x="3"
+						y="30"
+						width="525"
+						height="0"
+						key="line-1"/>
+					<graphicElement stretchType="NoStretch"/>
+				</line>
+			</band>
+		</pageHeader>
+		<columnHeader>
+			<band height="0"  isSplitAllowed="true" >
+			</band>
+		</columnHeader>
+		<detail>
+			<band height="27"  isSplitAllowed="true" >
+				<subreport  isUsingCache="true">
+					<reportElement
+						x="0"
+						y="0"
+						width="153"
+						height="20"
+						key="subreport-1"/>
+					<subreportParameter  name="OCCURRENCE_ID">
+						<subreportParameterExpression><![CDATA[$F{id}]]></subreportParameterExpression>
+					</subreportParameter>
+					<connectionExpression><![CDATA[$P{REPORT_CONNECTION}]]></connectionExpression>
+					<subreportExpression  class="java.lang.String"><![CDATA["OccurrenceBook_Event.jasper"]]></subreportExpression>
+				</subreport>
+				<subreport  isUsingCache="true">
+					<reportElement
+						x="1"
+						y="4"
+						width="173"
+						height="18"
+						key="subreport-2"/>
+					<subreportParameter  name="OCCURRENCE_ID">
+						<subreportParameterExpression><![CDATA[$F{id}]]></subreportParameterExpression>
+					</subreportParameter>
+					<connectionExpression><![CDATA[$P{REPORT_CONNECTION}]]></connectionExpression>
+					<subreportExpression  class="java.lang.String"><![CDATA["OccurrenceBook_issue.jasper"]]></subreportExpression>
+				</subreport>
+				<subreport  isUsingCache="true">
+					<reportElement
+						x="1"
+						y="3"
+						width="244"
+						height="20"
+						key="subreport-3"/>
+					<subreportParameter  name="OCCURRENCE_ID">
+						<subreportParameterExpression><![CDATA[$F{id}]]></subreportParameterExpression>
+					</subreportParameter>
+					<connectionExpression><![CDATA[$P{REPORT_CONNECTION}]]></connectionExpression>
+					<subreportExpression  class="java.lang.String"><![CDATA["OccurrenceBook_Milestone.jasper"]]></subreportExpression>
+				</subreport>
+				<subreport  isUsingCache="true">
+					<reportElement
+						x="1"
+						y="5"
+						width="215"
+						height="16"
+						key="subreport-4"/>
+					<subreportParameter  name="OCCURRENCE_ID">
+						<subreportParameterExpression><![CDATA[$F{id}]]></subreportParameterExpression>
+					</subreportParameter>
+					<connectionExpression><![CDATA[$P{REPORT_CONNECTION}]]></connectionExpression>
+					<subreportExpression  class="java.lang.String"><![CDATA["OccurrenceBook_Lesson.jasper"]]></subreportExpression>
+				</subreport>
+				<subreport  isUsingCache="true">
+					<reportElement
+						x="3"
+						y="3"
+						width="145"
+						height="18"
+						key="subreport-5"/>
+					<subreportParameter  name="OCCURRENCE_ID">
+						<subreportParameterExpression><![CDATA[$F{id}]]></subreportParameterExpression>
+					</subreportParameter>
+					<connectionExpression><![CDATA[$P{REPORT_CONNECTION}]]></connectionExpression>
+					<subreportExpression  class="java.lang.String"><![CDATA["OccurrenceBook_adHoc.jasper"]]></subreportExpression>
+				</subreport>
+				<subreport  isUsingCache="true">
+					<reportElement
+						x="3"
+						y="3"
+						width="82"
+						height="18"
+						key="subreport-7"/>
+					<subreportParameter  name="OCCURRENCE_ID">
+						<subreportParameterExpression><![CDATA[$F{id}]]></subreportParameterExpression>
+					</subreportParameter>
+					<connectionExpression><![CDATA[$P{REPORT_CONNECTION}]]></connectionExpression>
+					<subreportExpression  class="java.lang.String"><![CDATA["OccurrenceBook_Iteration.jasper"]]></subreportExpression>
+				</subreport>
+			</band>
+		</detail>
+		<columnFooter>
+			<band height="0"  isSplitAllowed="true" >
+			</band>
+		</columnFooter>
+		<pageFooter>
+			<band height="0"  isSplitAllowed="true" >
+			</band>
+		</pageFooter>
+		<summary>
+			<band height="0"  isSplitAllowed="true" >
+			</band>
+		</summary>
+</jasperReport>

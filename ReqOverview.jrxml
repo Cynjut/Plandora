@@ -1,0 +1,467 @@
+<?xml version="1.0" encoding="UTF-8"  ?>
+<!-- Created with iReport - A designer for JasperReports -->
+<!DOCTYPE jasperReport PUBLIC "//JasperReports//DTD Report Design//EN" "http://jasperreports.sourceforge.net/dtds/jasperreport.dtd">
+<jasperReport
+		 name="ReqOverview"
+		 columnCount="1"
+		 printOrder="Vertical"
+		 orientation="Portrait"
+		 pageWidth="595"
+		 pageHeight="842"
+		 columnWidth="535"
+		 columnSpacing="0"
+		 leftMargin="30"
+		 rightMargin="30"
+		 topMargin="20"
+		 bottomMargin="20"
+		 whenNoDataType="NoPages"
+		 isTitleNewPage="false"
+		 isSummaryNewPage="false">
+	<property name="ireport.scriptlethandling" value="0" />
+	<property name="ireport.encoding" value="UTF-8" />
+	<import value="java.util.*" />
+	<import value="net.sf.jasperreports.engine.*" />
+	<import value="net.sf.jasperreports.engine.data.*" />
+
+	<queryString><![CDATA[select r.id, r.suggested_date, r.deadline_date, r.priority, r.reopening, 
+rs.name as status_name, c.name as category_name, p.description, p.creation_date, 
+pr.name as project_name 
+from requirement r, requirement_status rs, category c, planning p, project pr
+where r.category_id=c.id 
+  and r.requirement_status_id = rs.id 
+  and r.project_id = pr.id
+  and r.id = p.id 
+and r.id in (103)]]></queryString>
+
+	<field name="id" class="java.lang.String"/>
+	<field name="suggested_date" class="java.sql.Timestamp"/>
+	<field name="deadline_date" class="java.sql.Timestamp"/>
+	<field name="priority" class="java.math.BigDecimal"/>
+	<field name="reopening" class="java.math.BigDecimal"/>
+	<field name="status_name" class="java.lang.String"/>
+	<field name="category_name" class="java.lang.String"/>
+	<field name="description" class="java.lang.String"/>
+	<field name="creation_date" class="java.sql.Timestamp"/>
+	<field name="project_name" class="java.lang.String"/>
+
+
+		<group  name="REQUIREMENT" isStartNewPage="true" >
+			<groupExpression><![CDATA[$F{id}]]></groupExpression>
+			<groupHeader>
+			<band height="50"  isSplitAllowed="true" >
+				<staticText>
+					<reportElement
+						x="3"
+						y="6"
+						width="209"
+						height="22"
+						key="staticText-9"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
+					<textElement textAlignment="Right">
+						<font fontName="Tahoma" size="18" isBold="true"/>
+					</textElement>
+				<text><![CDATA[Requirement Overview]]></text>
+				</staticText>
+				<line direction="TopDown">
+					<reportElement
+						x="3"
+						y="31"
+						width="525"
+						height="0"
+						key="line-4"/>
+					<graphicElement stretchType="NoStretch"/>
+				</line>
+				<textField isStretchWithOverflow="false" isBlankWhenNull="false" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+					<reportElement
+						x="214"
+						y="6"
+						width="170"
+						height="22"
+						key="textField-5"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
+					<textElement>
+						<font fontName="Tahoma" size="18" isBold="true"/>
+					</textElement>
+				<textFieldExpression   class="java.lang.String"><![CDATA[" ID: " + $F{id}]]></textFieldExpression>
+				</textField>
+			</band>
+			</groupHeader>
+			<groupFooter>
+			<band height="73"  isSplitAllowed="true" >
+				<subreport  isUsingCache="true">
+					<reportElement
+						x="7"
+						y="4"
+						width="513"
+						height="29"
+						key="subreport-1"/>
+					<subreportParameter  name="REQ_ID">
+						<subreportParameterExpression><![CDATA[$F{id}]]></subreportParameterExpression>
+					</subreportParameter>
+					<connectionExpression><![CDATA[$P{REPORT_CONNECTION}]]></connectionExpression>
+					<subreportExpression  class="java.lang.String"><![CDATA["ReqOverviewHistory.jasper"]]></subreportExpression>
+				</subreport>
+				<subreport  isUsingCache="true">
+					<reportElement
+						x="7"
+						y="38"
+						width="513"
+						height="28"
+						key="subreport-2"
+						positionType="Float"/>
+					<subreportParameter  name="REQ_ID">
+						<subreportParameterExpression><![CDATA[$F{id}]]></subreportParameterExpression>
+					</subreportParameter>
+					<connectionExpression><![CDATA[$P{REPORT_CONNECTION}]]></connectionExpression>
+					<subreportExpression  class="java.lang.String"><![CDATA["ReqOverviewTask.jasper"]]></subreportExpression>
+				</subreport>
+			</band>
+			</groupFooter>
+		</group>
+		<background>
+			<band height="0"  isSplitAllowed="true" >
+			</band>
+		</background>
+		<title>
+			<band height="0"  isSplitAllowed="true" >
+			</band>
+		</title>
+		<pageHeader>
+			<band height="0"  isSplitAllowed="true" >
+			</band>
+		</pageHeader>
+		<columnHeader>
+			<band height="0"  isSplitAllowed="true" >
+			</band>
+		</columnHeader>
+		<detail>
+			<band height="84"  isSplitAllowed="true" >
+				<textField isStretchWithOverflow="true" isBlankWhenNull="false" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+					<reportElement
+						x="76"
+						y="69"
+						width="449"
+						height="12"
+						key="textField"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
+					<textElement>
+						<font fontName="Tahoma" size="8"/>
+					</textElement>
+				<textFieldExpression   class="java.lang.String"><![CDATA[$F{description}]]></textFieldExpression>
+				</textField>
+				<staticText>
+					<reportElement
+						mode="Opaque"
+						x="5"
+						y="69"
+						width="68"
+						height="11"
+						forecolor="#000000"
+						backcolor="#CCCCCC"
+						key="staticText-2"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
+					<textElement textAlignment="Right" verticalAlignment="Middle">
+						<font fontName="Tahoma" pdfFontName="Helvetica-Bold" size="8" isBold="true"/>
+					</textElement>
+				<text><![CDATA[Description:]]></text>
+				</staticText>
+				<staticText>
+					<reportElement
+						mode="Opaque"
+						x="5"
+						y="18"
+						width="68"
+						height="11"
+						forecolor="#000000"
+						backcolor="#CCCCCC"
+						key="staticText-3"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
+					<textElement textAlignment="Right" verticalAlignment="Middle">
+						<font fontName="Tahoma" pdfFontName="Helvetica-Bold" size="8" isBold="true"/>
+					</textElement>
+				<text><![CDATA[Suggested Date:]]></text>
+				</staticText>
+				<textField isStretchWithOverflow="false" pattern="MM/dd/yyyy" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+					<reportElement
+						x="76"
+						y="17"
+						width="93"
+						height="12"
+						key="textField"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
+					<textElement verticalAlignment="Middle">
+						<font fontName="Tahoma" size="8"/>
+					</textElement>
+				<textFieldExpression   class="java.sql.Timestamp"><![CDATA[$F{suggested_date}]]></textFieldExpression>
+				</textField>
+				<staticText>
+					<reportElement
+						mode="Opaque"
+						x="5"
+						y="35"
+						width="68"
+						height="11"
+						forecolor="#000000"
+						backcolor="#CCCCCC"
+						key="staticText-4"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
+					<textElement textAlignment="Right" verticalAlignment="Middle">
+						<font fontName="Tahoma" pdfFontName="Helvetica-Bold" size="8" isBold="true"/>
+					</textElement>
+				<text><![CDATA[Priority:]]></text>
+				</staticText>
+				<staticText>
+					<reportElement
+						mode="Opaque"
+						x="181"
+						y="18"
+						width="68"
+						height="11"
+						forecolor="#000000"
+						backcolor="#CCCCCC"
+						key="staticText-5"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
+					<textElement textAlignment="Right" verticalAlignment="Middle">
+						<font fontName="Tahoma" pdfFontName="Helvetica-Bold" size="8" isBold="true"/>
+					</textElement>
+				<text><![CDATA[Deadline Date:]]></text>
+				</staticText>
+				<textField isStretchWithOverflow="false" pattern="MM/dd/yyyy" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+					<reportElement
+						x="253"
+						y="17"
+						width="93"
+						height="12"
+						key="textField"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
+					<textElement verticalAlignment="Middle">
+						<font fontName="Tahoma" size="8"/>
+					</textElement>
+				<textFieldExpression   class="java.sql.Timestamp"><![CDATA[$F{deadline_date}]]></textFieldExpression>
+				</textField>
+				<textField isStretchWithOverflow="false" isBlankWhenNull="false" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+					<reportElement
+						x="76"
+						y="34"
+						width="92"
+						height="12"
+						key="textField"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
+					<textElement verticalAlignment="Middle">
+						<font fontName="Tahoma" size="8"/>
+					</textElement>
+				<textFieldExpression   class="java.lang.String"><![CDATA[($F{priority}.intValue()==0?"Lower":
+	($F{priority}.intValue()==1?"Low":
+		($F{priority}.intValue()==2?"Medium":
+			($F{priority}.intValue()==3?"High":
+				($F{priority}.intValue()==4?"Higher":"Undefined")
+			)
+		)
+	)
+)]]></textFieldExpression>
+				</textField>
+				<staticText>
+					<reportElement
+						mode="Opaque"
+						x="181"
+						y="35"
+						width="68"
+						height="11"
+						forecolor="#000000"
+						backcolor="#CCCCCC"
+						key="staticText-6"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
+					<textElement textAlignment="Right" verticalAlignment="Middle">
+						<font fontName="Tahoma" pdfFontName="Helvetica-Bold" size="8" isBold="true"/>
+					</textElement>
+				<text><![CDATA[Category:]]></text>
+				</staticText>
+				<textField isStretchWithOverflow="false" isBlankWhenNull="false" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+					<reportElement
+						x="253"
+						y="34"
+						width="270"
+						height="12"
+						key="textField"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
+					<textElement verticalAlignment="Middle">
+						<font fontName="Tahoma" size="8"/>
+					</textElement>
+				<textFieldExpression   class="java.lang.String"><![CDATA[$F{category_name}]]></textFieldExpression>
+				</textField>
+				<staticText>
+					<reportElement
+						mode="Opaque"
+						x="5"
+						y="52"
+						width="68"
+						height="11"
+						forecolor="#000000"
+						backcolor="#CCCCCC"
+						key="staticText-7"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
+					<textElement textAlignment="Right" verticalAlignment="Middle">
+						<font fontName="Tahoma" pdfFontName="Helvetica-Bold" size="8" isBold="true"/>
+					</textElement>
+				<text><![CDATA[Status:]]></text>
+				</staticText>
+				<textField isStretchWithOverflow="false" isBlankWhenNull="false" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+					<reportElement
+						x="76"
+						y="51"
+						width="100"
+						height="12"
+						key="textField"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
+					<textElement verticalAlignment="Middle">
+						<font fontName="Tahoma" size="8"/>
+					</textElement>
+				<textFieldExpression   class="java.lang.String"><![CDATA[$F{status_name}]]></textFieldExpression>
+				</textField>
+				<staticText>
+					<reportElement
+						mode="Opaque"
+						x="5"
+						y="3"
+						width="68"
+						height="11"
+						forecolor="#000000"
+						backcolor="#CCCCCC"
+						key="staticText-8"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
+					<textElement textAlignment="Right" verticalAlignment="Middle">
+						<font fontName="Tahoma" pdfFontName="Helvetica-Bold" size="8" isBold="true"/>
+					</textElement>
+				<text><![CDATA[Creation Date:]]></text>
+				</staticText>
+				<textField isStretchWithOverflow="false" pattern="EEE, MMM d, yyyy HH:mm:ss" isBlankWhenNull="false" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+					<reportElement
+						x="76"
+						y="2"
+						width="137"
+						height="12"
+						key="textField"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
+					<textElement verticalAlignment="Middle">
+						<font fontName="Tahoma" size="8"/>
+					</textElement>
+				<textFieldExpression   class="java.sql.Timestamp"><![CDATA[$F{creation_date}]]></textFieldExpression>
+				</textField>
+				<staticText>
+					<reportElement
+						mode="Opaque"
+						x="181"
+						y="52"
+						width="68"
+						height="11"
+						forecolor="#000000"
+						backcolor="#CCCCCC"
+						key="staticText-10"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
+					<textElement textAlignment="Right" verticalAlignment="Middle">
+						<font fontName="Tahoma" pdfFontName="Helvetica-Bold" size="8" isBold="true"/>
+					</textElement>
+				<text><![CDATA[Project:]]></text>
+				</staticText>
+				<textField isStretchWithOverflow="false" isBlankWhenNull="false" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+					<reportElement
+						x="253"
+						y="51"
+						width="273"
+						height="12"
+						key="textField"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
+					<textElement verticalAlignment="Middle">
+						<font fontName="Tahoma" size="8"/>
+					</textElement>
+				<textFieldExpression   class="java.lang.String"><![CDATA[$F{project_name}]]></textFieldExpression>
+				</textField>
+			</band>
+		</detail>
+		<columnFooter>
+			<band height="0"  isSplitAllowed="true" >
+			</band>
+		</columnFooter>
+		<pageFooter>
+			<band height="26"  isSplitAllowed="true" >
+				<textField isStretchWithOverflow="false" isBlankWhenNull="false" evaluationTime="Report" hyperlinkType="None"  hyperlinkTarget="Self" >
+					<reportElement
+						x="491"
+						y="6"
+						width="39"
+						height="18"
+						key="textField-1"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
+					<textElement>
+						<font fontName="Verdana"/>
+					</textElement>
+				<textFieldExpression   class="java.lang.String"><![CDATA[" of " + $V{PAGE_NUMBER} + ""]]></textFieldExpression>
+				</textField>
+				<textField isStretchWithOverflow="false" isBlankWhenNull="false" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+					<reportElement
+						x="453"
+						y="6"
+						width="42"
+						height="18"
+						key="textField-2"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
+					<textElement textAlignment="Right">
+						<font fontName="Verdana"/>
+					</textElement>
+				<textFieldExpression   class="java.lang.String"><![CDATA["Page " + $V{PAGE_NUMBER} + " of "]]></textFieldExpression>
+				</textField>
+				<line direction="TopDown">
+					<reportElement
+						x="8"
+						y="3"
+						width="522"
+						height="0"
+						key="line-2"/>
+					<graphicElement stretchType="NoStretch"/>
+				</line>
+			</band>
+		</pageFooter>
+		<lastPageFooter>
+			<band height="27"  isSplitAllowed="true" >
+				<textField isStretchWithOverflow="false" isBlankWhenNull="false" evaluationTime="Report" hyperlinkType="None"  hyperlinkTarget="Self" >
+					<reportElement
+						x="491"
+						y="6"
+						width="39"
+						height="18"
+						key="textField-3"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
+					<textElement>
+						<font fontName="Verdana"/>
+					</textElement>
+				<textFieldExpression   class="java.lang.String"><![CDATA[" of " + $V{PAGE_NUMBER} + ""]]></textFieldExpression>
+				</textField>
+				<textField isStretchWithOverflow="false" isBlankWhenNull="false" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+					<reportElement
+						x="453"
+						y="6"
+						width="42"
+						height="18"
+						key="textField-4"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
+					<textElement textAlignment="Right">
+						<font fontName="Verdana"/>
+					</textElement>
+				<textFieldExpression   class="java.lang.String"><![CDATA["Page " + $V{PAGE_NUMBER} + " of "]]></textFieldExpression>
+				</textField>
+				<line direction="TopDown">
+					<reportElement
+						x="8"
+						y="3"
+						width="522"
+						height="0"
+						key="line-3"/>
+					<graphicElement stretchType="NoStretch"/>
+				</line>
+			</band>
+		</lastPageFooter>
+		<summary>
+			<band height="0"  isSplitAllowed="true" >
+			</band>
+		</summary>
+</jasperReport>

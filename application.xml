@@ -1,0 +1,11 @@
+<?xml version="1.0"?>
+<!DOCTYPE application PUBLIC "-//Sun Microsystems, Inc.//DTD J2EE Application 1.2//EN" "../WEB-INF/lib/application_1_3.dtd">
+<application>
+    <display-name>pandora</display-name>
+    <module>
+        <web>
+            <web-uri>pandora.war</web-uri>
+            <context-root>/pandora</context-root>
+        </web>
+    </module>   
+</application>

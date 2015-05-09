@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="UTF-8"  ?>
+<!-- Created with iReport - A designer for JasperReports -->
+<!DOCTYPE jasperReport PUBLIC "//JasperReports//DTD Report Design//EN" "http://jasperreports.sourceforge.net/dtds/jasperreport.dtd">
+<jasperReport
+		 name="OccurrenceBook_graph"
+		 columnCount="1"
+		 printOrder="Vertical"
+		 orientation="Portrait"
+		 pageWidth="535"
+		 pageHeight="802"
+		 columnWidth="535"
+		 columnSpacing="0"
+		 leftMargin="0"
+		 rightMargin="0"
+		 topMargin="0"
+		 bottomMargin="0"
+		 whenNoDataType="NoPages"
+		 isTitleNewPage="false"
+		 isSummaryNewPage="false">
+	<property name="ireport.scriptlethandling" value="0" />
+	<property name="ireport.encoding" value="UTF-8" />
+	<import value="java.util.*" />
+	<import value="net.sf.jasperreports.engine.*" />
+	<import value="net.sf.jasperreports.engine.data.*" />
+
+	<parameter name="PROJECT_ID" isForPrompting="false" class="java.lang.String">
+		<defaultValueExpression ><![CDATA["2"]]></defaultValueExpression>
+	</parameter>
+	<queryString><![CDATA[select project_id, source, occurrence_status, count(*) as c 
+from occurrence 
+where project_id = $P{PROJECT_ID}
+group by project_id, source, occurrence_status]]></queryString>
+
+	<field name="project_id" class="java.lang.String"/>
+	<field name="source" class="java.lang.String"/>
+	<field name="occurrence_status" class="java.lang.String"/>
+	<field name="c" class="java.lang.Long"/>
+
+
+		<group  name="PROJECT_GRAPH" >
+			<groupExpression><![CDATA[$F{project_id}]]></groupExpression>
+			<groupHeader>
+			<band height="1"  isSplitAllowed="true" >
+			</band>
+			</groupHeader>
+			<groupFooter>
+			<band height="180"  isSplitAllowed="true" >
+				<stackedBar3DChart>
+					<chart  hyperlinkTarget="Self" >
+					<reportElement
+						x="4"
+						y="4"
+						width="356"
+						height="165"
+						key="element-1"/>
+					<box>					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="0.0" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+</box>
+						<chartLegend textColor="#000000" backgroundColor="#FFFFFF" >
+					</chartLegend>
+					</chart>
+					<categoryDataset>
+						<dataset >
+						</dataset>
+						<categorySeries>
+							<seriesExpression><![CDATA[($F{occurrence_status}.equals("0")?"Initial Status":
+	($F{occurrence_status}.equals("98") || $F{occurrence_status}.equals("99") || $F{occurrence_status}.equals("100")?"Final Status":"Intermediate Status")
+)]]></seriesExpression>
+							<categoryExpression><![CDATA[($F{source}.equals("com.pandora.bus.occurrence.MilestoneOccurrence")?"Milestones":
+  ($F{source}.equals("com.pandora.bus.occurrence.EventOccurrence")?"Events":
+    ($F{source}.equals("com.pandora.bus.occurrence.IssueOccurrence")?"Issues":
+       ($F{source}.equals("com.pandora.bus.occurrence.LessonLearnedOccurrence")?"Lessons Learned":
+          ($F{source}.equals("com.pandora.bus.occurrence.AdHocOccurrence")?"Ad Hoc":
+                ($F{source}.equals("com.pandora.bus.occurrence.IterationOccurrence")?"Iteration":"Other")
+           )
+       )
+    )
+  )
+)]]></categoryExpression>
+							<valueExpression><![CDATA[$F{c}]]></valueExpression>
+				<itemHyperlink >
+				</itemHyperlink>
+						</categorySeries>
+					</categoryDataset>
+					<bar3DPlot xOffset="10.0" yOffset="5.0" >
+						<plot orientation="Horizontal" />
+						<categoryAxisFormat>
+							<axisFormat >
+							</axisFormat>
+						</categoryAxisFormat>
+						<valueAxisFormat>
+							<axisFormat >
+							</axisFormat>
+						</valueAxisFormat>
+					</bar3DPlot>
+				</stackedBar3DChart>
+			</band>
+			</groupFooter>
+		</group>
+		<background>
+			<band height="0"  isSplitAllowed="true" >
+			</band>
+		</background>
+		<title>
+			<band height="0"  isSplitAllowed="true" >
+			</band>
+		</title>
+		<pageHeader>
+			<band height="0"  isSplitAllowed="true" >
+			</band>
+		</pageHeader>
+		<columnHeader>
+			<band height="0"  isSplitAllowed="true" >
+			</band>
+		</columnHeader>
+		<detail>
+			<band height="3"  isSplitAllowed="true" >
+			</band>
+		</detail>
+		<columnFooter>
+			<band height="0"  isSplitAllowed="true" >
+			</band>
+		</columnFooter>
+		<pageFooter>
+			<band height="0"  isSplitAllowed="true" >
+			</band>
+		</pageFooter>
+		<summary>
+			<band height="0"  isSplitAllowed="true" >
+			</band>
+		</summary>
+</jasperReport>

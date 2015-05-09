@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="src" path="java"/>
+	<classpathentry kind="lib" path="lib/activation.jar"/>
+	<classpathentry kind="lib" path="lib/commons-beanutils.jar"/>
+	<classpathentry kind="lib" path="lib/commons-collections.jar"/>
+	<classpathentry kind="lib" path="lib/commons-digester.jar"/>
+	<classpathentry kind="lib" path="lib/commons-fileupload.jar"/>
+	<classpathentry kind="lib" path="lib/commons-httpclient-2.0.jar"/>
+	<classpathentry kind="lib" path="lib/commons-lang.jar"/>
+	<classpathentry kind="lib" path="lib/commons-logging.jar"/>
+	<classpathentry kind="lib" path="lib/commons-validator.jar"/>
+	<classpathentry kind="lib" path="lib/jakarta-oro.jar"/>
+	<classpathentry kind="lib" path="lib/jcommon-1.0.0.jar"/>
+	<classpathentry kind="lib" path="lib/junit.jar"/>
+	<classpathentry kind="lib" path="lib/ldap.jar"/>
+	<classpathentry kind="lib" path="lib/lucene-core-2.2.0.jar"/>
+	<classpathentry kind="lib" path="lib/mail.jar"/>
+	<classpathentry kind="lib" path="lib/servlet.jar"/>
+	<classpathentry kind="lib" path="lib/smtp.jar"/>
+	<classpathentry kind="lib" path="lib/struts.jar" sourcepath="lib/struts.jar"/>
+	<classpathentry kind="lib" path="lib/tomcat-http11.jar"/>
+	<classpathentry kind="lib" path="lib/groovy-all-1.5.5.jar"/>
+	<classpathentry kind="lib" path="lib/jasperreports-3.7.0.jar"/>
+	<classpathentry kind="lib" path="lib/jfreechart-1.0.12.jar"/>
+	<classpathentry kind="lib" path="lib/mysql-connector-java-5.1.10-bin.jar"/>
+	<classpathentry kind="lib" path="lib/plandora-report-font.jar"/>
+	<classpathentry kind="lib" path="lib/spring.jar"/>
+	<classpathentry kind="lib" path="lib/svnkit.jar"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry kind="lib" path="lib/javaswf.jar"/>
+	<classpathentry kind="lib" path="lib/pdfbox-1.2.1.jar"/>
+	<classpathentry kind="lib" path="lib/jtidy-r938.jar"/>
+	<classpathentry kind="lib" path="lib/core-renderer.jar"/>
+	<classpathentry kind="lib" path="lib/iText-2.1.0.jar"/>
+	<classpathentry kind="lib" path="lib/poi-ooxml-3.7-beta3-20100924.jar"/>
+	<classpathentry kind="lib" path="lib/poi-ooxml-schemas-3.7-beta3-20100924.jar"/>
+	<classpathentry kind="lib" path="lib/iText-rtf-2.1.0.jar"/>
+	<classpathentry kind="output" path="bin"/>
+</classpath>

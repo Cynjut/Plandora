@@ -1016,39 +1016,39 @@ alter table cost_installment add constraint cost_inst_cost foreign key (cost_id)
 insert into area (id,name,description) values ('1','Development','Development'); 
 insert into area (id,name,description) values ('10','Purchasing','Purchasing'); 
 insert into area (id,name,description) values ('2','Maintenance','Maintenance'); 
-insert into area (id,name,description) values ('3','Suport','Suport'); 
-insert into area (id,name,description) values ('4','Researching','Researching'); 
-insert into area (id,name,description) values ('5','Account','Account'); 
-insert into area (id,name,description) values ('6','Selling','Selling'); 
+insert into area (id,name,description) values ('3','Support','Support'); 
+insert into area (id,name,description) values ('4','Research','Research'); 
+insert into area (id,name,description) values ('5','Accounting','Accounting'); 
+insert into area (id,name,description) values ('6','Sales','Sales'); 
 insert into area (id,name,description) values ('7','Customer Care','Customer Care'); 
 insert into area (id,name,description) values ('8','Finance','Finance '); 
-insert into area (id,name,description) values ('9','Directory','Directory'); 
+insert into area (id,name,description) values ('9','Management','Management'); 
 
 insert into department (id,name,description) values ('1','Purchasing','Purchasing Department'); 
 insert into department (id,name,description) values ('2','Finance','Finance Department'); 
 insert into department (id,name,description) values ('3','HR','Human Resouce Department'); 
 insert into department (id,name,description) values ('4','IT','IT Department'); 
 insert into department (id,name,description) values ('5','Marketing','Marketing Department'); 
-insert into department (id,name,description) values ('6','Directory','Directory'); 
-insert into department (id,name,description) values ('7','Account','Account Department'); 
+insert into department (id,name,description) values ('6','Management','Front Office'); 
+insert into department (id,name,description) values ('7','Accounting','Accounting Department'); 
 insert into department (id,name,description) values ('8','Commercial','Commercial Department'); 
 
-insert into function (id,name,description) values ('1','Purchase Analist','Purchase Analist'); 
-insert into function (id,name,description) values ('10','Customer Attendent','Customer Care Attendent'); 
-insert into function (id,name,description) values ('11','Finance Analist','Finance Analist'); 
-insert into function (id,name,description) values ('12','Secretary','Secretary'); 
-insert into function (id,name,description) values ('13','DBA','Data Base administrator'); 
-insert into function (id,name,description) values ('14','Support Analist','Support Analist (Helpdesk)'); 
-insert into function (id,name,description) values ('15','Computer Programmer','Computer Programmer');
-insert into function (id,name,description) values ('16','Final User','Final User');
-insert into function (id,name,description) values ('2','Adm.Assistent','Adm.Assistent'); 
-insert into function (id,name,description) values ('3','Coordenator','Coordenator'); 
-insert into function (id,name,description) values ('4','Diretor','Diretor'); 
+insert into function (id,name,description) values ('1','Purchase Analyst','Purchase Analyst'); 
+insert into function (id,name,description) values ('2','Admin Staff','Administrative Assistance'); 
+insert into function (id,name,description) values ('3','Coordinator','Coordinator'); 
+insert into function (id,name,description) values ('4','Director','Director'); 
 insert into function (id,name,description) values ('5','President','President'); 
-insert into function (id,name,description) values ('6','Manager','Manager Department'); 
-insert into function (id,name,description) values ('7','System Analist','System Analist'); 
-insert into function (id,name,description) values ('8','Purchaser','Purchaser'); 
+insert into function (id,name,description) values ('6','Management','Management Department'); 
+insert into function (id,name,description) values ('7','System Analyst','System Analyst'); 
+insert into function (id,name,description) values ('8','Purchasing','Purchasing'); 
 insert into function (id,name,description) values ('9','Seller','Seller'); 
+insert into function (id,name,description) values ('10','CSR','Customer Support Rep'); 
+insert into function (id,name,description) values ('11','Finance Analyst','Finance Analyst'); 
+insert into function (id,name,description) values ('12','Admin staff','Administrative Staff'); 
+insert into function (id,name,description) values ('13','DBA','Data Base administrator'); 
+insert into function (id,name,description) values ('14','Support Analyst','Support Analyst (Helpdesk)'); 
+insert into function (id,name,description) values ('15','Computer Programmer','Computer Programmer');
+insert into function (id,name,description) values ('16','End User','End User');
 
 insert into project_status (id,name,note,state_machine_order) values ('1','Open','Open Project',1); 
 insert into project_status (id,name,note,state_machine_order) values ('2','Closed','Closed Project',3); 
@@ -1057,26 +1057,26 @@ insert into project_status (id,name,note,state_machine_order) values ('4','on-Ho
 
 insert into task_status (id,name,description,state_machine_order) values ('1','Open','Open',1); 
 insert into task_status (id,name,description,state_machine_order) values ('2','Closed','Close',100); 
-insert into task_status (id,name,description,state_machine_order) values ('3','Canceled','Canceled',101); 
-insert into task_status (id,name,description,state_machine_order) values ('4','in-Progress','in-Progress',20); 
-insert into task_status (id,name,description,state_machine_order) values ('5','on-Hold','on-Hold',50); 
+insert into task_status (id,name,description,state_machine_order) values ('3','Cancelled','Cancelled',101); 
+insert into task_status (id,name,description,state_machine_order) values ('4','In-Progress','In-Progress',20); 
+insert into task_status (id,name,description,state_machine_order) values ('5','On Hold','On Hold',50); 
 insert into task_status (id,name,description,state_machine_order) values ('6','Reopen','Reopen',2);
 
-insert into requirement_status (id,name,description,state_machine_order) values ('1','Waiting Approve','Waiting Approve',1); 
+insert into requirement_status (id,name,description,state_machine_order) values ('1','Waiting Approval','Waiting Approval',1); 
 insert into requirement_status (id,name,description,state_machine_order) values ('3','Refused','Refused',202); 
 insert into requirement_status (id,name,description,state_machine_order) values ('4','Closed','Closed',201); 
-insert into requirement_status (id,name,description,state_machine_order) values ('5','Canceled','Canceled',200); 
+insert into requirement_status (id,name,description,state_machine_order) values ('5','Cancelled','Cancelled',200); 
 insert into requirement_status (id,name,description,state_machine_order) values ('6','Planned','Planned',100); 
 insert into requirement_status (id,name,description,state_machine_order) values ('7','in-Progress','in-Progress', 300); 
 
 insert into tool_user (id,username,password,name,email,phone,color,department_id,area_id,function_id,country,language) values ('2','franz','','Franz Kafka',NULL,NULL,'C0c0c0','2','4','11','BR','pt'); 
-insert into tool_user (id,username,password,name,email,phone,color,department_id,area_id,function_id,country,language) values ('3','root','','System Root', 'DO NOT REMOVE THIS USER',NULL,'000000','4','2','7','BR','pt'); 
+insert into tool_user (id,username,password,name,email,phone,color,department_id,area_id,function_id,country,language) values ('1','root','','System Root', 'DO NOT REMOVE THIS USER',NULL,'000000','4','2','7','BR','pt'); 
 insert into tool_user (id,username,password,name,email,phone,color,department_id,area_id,function_id,country,language) values ('4','camus','','Albert Camus',NULL,NULL,'1199AA','6','9','3','BR','pt'); 
 insert into tool_user (id,username,password,name,email,phone,color,department_id,area_id,function_id,country,language) values ('5','noam','','Noam Chomsky',NULL,NULL,'F1E3AB','4','4','3','BR','pt'); 
 
 insert into invoice_status (id,name,description,state_machine_order) values ('1','Bugdet','Bugdet',1); 
 insert into invoice_status (id,name,description,state_machine_order) values ('2','Paid','Paid',100); 
-insert into invoice_status (id,name,description,state_machine_order) values ('3','Canceled','Canceled',101); 
+insert into invoice_status (id,name,description,state_machine_order) values ('3','Cancelled','Cancelled',101); 
 insert into invoice_status (id,name,description,state_machine_order) values ('4','Reviewed','Reviewed',40); 
 insert into invoice_status (id,name,description,state_machine_order) values ('5','Submitted','Submitted',50); 
 
@@ -1089,11 +1089,11 @@ insert into project (id,name,parent_id,project_status_id) values ('2','Developme
 
 insert into category (id,name,description, type, project_id) values ('0','',NULL,NULL,NULL); -- MANDATORY
 insert into category (id,name,description, type, project_id, billable) values ('1','Implementation' ,NULL,0, NULL, 1); 
-insert into category (id,name,description, type, project_id, billable) values ('2','Analisys'       ,NULL,0, NULL, 1); 
+insert into category (id,name,description, type, project_id, billable) values ('2','Analysis'       ,NULL,0, NULL, 1); 
 insert into category (id,name,description, type, project_id, billable, is_defect, is_testing) values ('3','Testing',NULL,0, NULL, 0, 0, 1); 
 insert into category (id,name,description, type, project_id, billable, is_defect, is_testing) values ('4','Maintenance',NULL,0, NULL, 0, 1, 0); 
 insert into category (id,name,description, type, project_id, billable) values ('5','Support Service',NULL,0, NULL, 1); 
-insert into category (id,name,description, type, project_id, billable) values ('6','Trainning'      ,NULL,0, NULL, 0); 
+insert into category (id,name,description, type, project_id, billable) values ('6','Training'      ,NULL,0, NULL, 0); 
 insert into category (id,name,description, type, project_id) values ('7','Bug'            ,NULL,1, 2); 
 insert into category (id,name,description, type, project_id) values ('8','Enhancement'    ,NULL,1, 2); 
 insert into category (id,name,description, type, project_id) values ('9','Change'         ,NULL,1, 2); 
@@ -1125,7 +1125,7 @@ insert into category (id,name,description, type, project_id) values ('34','Cost 
 insert into category (id,name,description, type, project_id) values ('35','Cost Center N', NULL, 7, NULL); 
 
 insert into customer (id,project_id) values ('2','0'); 
-insert into customer (id,project_id) values ('3','0'); 
+insert into customer (id,project_id) values ('1','0'); 
 insert into customer (id,project_id) values ('4','0'); 
 insert into customer (id,project_id) values ('5','0'); 
 insert into customer (id,project_id) values ('2','1'); 
@@ -1135,26 +1135,26 @@ insert into customer (id,project_id) values ('2','2');
 insert into customer (id,project_id) values ('4','2'); 
 insert into customer (id,project_id) values ('5','2'); 
 
-insert into resource (id,project_id,capacity_per_day) values ('3','0', 480); 
+insert into resource (id,project_id,capacity_per_day) values ('1','0', 480); 
 insert into resource (id,project_id,capacity_per_day) values ('5','1', 480); 
 insert into resource (id,project_id,capacity_per_day) values ('2','2', 480); 
 insert into resource (id,project_id,capacity_per_day) values ('4','2', 480); 
 
-insert into customer (id,project_id) values ('3','1'); 
-insert into customer (id,project_id) values ('3','2'); 
-insert into resource (id,project_id,capacity_per_day) values ('3','1', 480); 
-insert into resource (id,project_id,capacity_per_day) values ('3','2', 480); 
+insert into customer (id,project_id) values ('1','1'); 
+insert into customer (id,project_id) values ('1','2'); 
+insert into resource (id,project_id,capacity_per_day) values ('1','1', 480); 
+insert into resource (id,project_id,capacity_per_day) values ('1','2', 480); 
 
 
-insert into leader (id,project_id) values ('3','0'); 
+insert into leader (id,project_id) values ('1','0'); 
 insert into leader (id,project_id) values ('5','1'); 
 insert into leader (id,project_id) values ('2','2'); 
 
 insert into risk_status (id, name, description, status_type) values ('1', 'Identified', 'Identified', '0'); 
 insert into risk_status (id, name, description, status_type) values ('2', 'Materialized', 'Materialized', '1'); 
-insert into risk_status (id, name, description, status_type) values ('3', 'Canceled', 'Canceled', '2'); 
+insert into risk_status (id, name, description, status_type) values ('3', 'Cancelled', 'Cancelled', '2'); 
 
-insert into root (id,project_id) values ('3','0'); 
+insert into root (id,project_id) values ('1','0'); 
 
 insert into p_sequence (id) values (200);
 

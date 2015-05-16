@@ -8,7 +8,7 @@ public class RootTO extends LeaderTO {
 	private static final long serialVersionUID = 1L;
 
     /** The value used by root constant into data base*/
-    public static final Integer ROLE_ROOT = new Integer(3);
+    public static final Integer ROLE_ROOT = new Integer(1);
 
     /** The username of root used by system should be 'root' */
     public static final String ROOT_USER = "root";

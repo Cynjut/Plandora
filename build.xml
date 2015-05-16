@@ -6,7 +6,7 @@
   		 eclise -> window -> preference -> ant -> runtime -> (aba) properties
   	-->
 	
-   <!-- definicao de propriedades -->	
+   <!-- definition of properties -->	
    <property name="src" value="${my_source}" />
    <property name="dist" value="${my_source}/dist" />
    <property name="build" value="${my_source}/build" />
@@ -18,7 +18,7 @@
    <property name="src-tree" value="${src}/java" />
    <property name="tomcat_deploy_dir" value="${tomcat_home}/webapps"/>	
 	
-    <!-- cria as pastas dist e build -->
+    <!-- create build and dist directories -->
    	<target name="resetdir">
     	<delete dir="${dist}" />
        	<delete dir="${build}" />
@@ -28,7 +28,7 @@
        	<mkdir dir="${build}"/>
 	</target>
 
-    <!-- compila projeto -->
+    <!-- compile project -->
 	<target name="compile" depends="resetdir">
     	<echo message="Compiling classes..."></echo>
 
@@ -55,9 +55,9 @@
 		</copy>
  	</target>	
 
-	<!-- gera arquivo JAR do gantt -->
+	<!-- create gantt library JAR -->
 	<target name="gantt" depends="compile">   
-		<echo message="Criando arquivos jar (gantt, flowchart e intefaces)..."/>
+		<echo message="Create jar archives (gantt, flowchart e intefaces)..."/>
 		<jar jarfile="${dist}/gantt.jar" basedir="${build}"
 			excludes="**/lib/**, **/pandora/exception/**, **/delegate/**, **/org/**, **/tests/**, **/bus/**, **/taglib/**, **/dao/**, **/struts/**, **/helper/SessionHelper.class, **/helper/LogHelper.class, **/helper/HtmlHelper.class, **/helper/XmlDomParse.class, **/imp/**, **/acceptanceTest/**, **/pandora/*.class, **/*.jasper, **/flowchart/**, **/gui/client/**" >
 		</jar>
@@ -87,9 +87,9 @@
 
 	</target>
 	
-	<!-- gera arquivo WAR -->
+	<!-- generate WAR -->
    	<target name="war" depends="gantt">
-		<echo message="Criando arquivo pandora.war..."/>
+		<echo message="Create pandora.war..."/>
   	
 		<copy file="${src}/application.xml" overwrite="true" tofile="${build}/application.xml"/>			
 		<replace file="${build}/application.xml" token="pandora" value="${application}"/>
@@ -126,8 +126,10 @@
 			</lib>		
        	</war>
    		
-		<echo message="Copiando ${dist}/${application}.war ${tomcat_deploy_dir}..."/>
+		<echo message="Copy ${dist}/${application}.war ${tomcat_deploy_dir}..."/>
 		<copy file="${dist}/${application}.war" overwrite="true" tofile="${tomcat_deploy_dir}/${application}.war"/>
+		<echo message="Copy context.xml ${tomcat_deploy_dir}..."/>
+		<copy file="context.xml" overwrite="false" tofile="${tomcat_deploy_dir}/${application}/META-INF/context.xml"/>
 	</target>
 
 </project>

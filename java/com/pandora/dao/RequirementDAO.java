@@ -41,6 +41,8 @@ public class RequirementDAO extends PlanningDAO {
 
     AdditionalFieldDAO afdao = new AdditionalFieldDAO();
     
+    DiscussionTopicDAO dtdao = new DiscussionTopicDAO();
+    
     /**
      * Get a list of all requirement TOs from data base based on user id and 
      * boolean flag that must be used by searching.
@@ -59,6 +61,28 @@ public class RequirementDAO extends PlanningDAO {
         return response;
     }
 
+
+    public void insertList(Vector<RequirementTO> rlist) throws DataAccessException {
+        Connection c = null;
+		try {
+			c = getConnection(false);
+			for (RequirementTO rto : rlist) {
+				this.insert(rto, c);
+			}
+			c.commit();
+		} catch(Exception e){
+			try {
+				c.rollback();
+			} catch (SQLException e1) {
+				e1.printStackTrace();
+			}
+			throw new DataAccessException(e);
+		} finally{
+			this.closeConnection(c);			
+		}    	
+    }
+    
+    
     public void changeRequirementStatus(ResourceTaskTO rtto, Integer newState, String taskComment) throws BusinessException, DataAccessException{
         Connection c = null;
 		PreparedStatement pstmt = null;
@@ -132,7 +156,7 @@ public class RequirementDAO extends PlanningDAO {
 				closedReqsWhere = "and p.final_date is null ";
 			}
 
-			//WARNING: the query bellow must return all tasks of requirement. The class AgilePanelReqDecorator demand this... (albertopereto 18/09/2009)
+			//WARNING: the query below must return all tasks of request. The class AgilePanelReqDecorator demand this... (albertopereto 18/09/2009)
 		    String sql = "select r.id as REQ_ID, p.description, r.priority, p.iteration, r.user_id, " +
 		    		            "r.requirement_status_id, t.id as TASK_ID, t.name, rt.resource_id, " +
 		    		            "rt.task_status_id, ts.state_machine_order as TASK_STATE, t.is_unpredictable, " +
@@ -175,7 +199,8 @@ public class RequirementDAO extends PlanningDAO {
 				}
 				
 				String taskId = super.getString(rs, "TASK_ID");
-				if (taskId!=null) {
+				String statId = super.getString(rs, "task_status_id");
+				if (taskId!=null && statId!=null) {
 					TaskTO tto = new TaskTO(taskId);
 					tto.setName(super.getString(rs, "name"));
 					Integer unpredint = super.getInteger(rs, "is_unpredictable");
@@ -187,7 +212,7 @@ public class RequirementDAO extends PlanningDAO {
 					tto.setProject(pto);
 					ResourceTO rto = new ResourceTO(super.getString(rs, "resource_id"));
 					rto.setUsername(super.getString(rs, "username"));
-					TaskStatusTO tsto = new TaskStatusTO(super.getString(rs, "task_status_id"));
+					TaskStatusTO tsto = new TaskStatusTO(statId);
 					tsto.setStateMachineOrder(super.getInteger(rs, "TASK_STATE"));
 					
 					ResourceTaskTO rtto = new ResourceTaskTO();
@@ -211,8 +236,8 @@ public class RequirementDAO extends PlanningDAO {
 	}
 
     
-    private Vector getListUntilID(String initialId, String finalId, Connection c) throws DataAccessException{
-        Vector response = new Vector();
+    private Vector<RequirementTO> getListUntilID(String initialId, String finalId, Connection c) throws DataAccessException{
+        Vector<RequirementTO> response = new Vector<RequirementTO>();
 		ResultSet rs = null;
 		PreparedStatement pstmt = null;
 		
@@ -244,21 +269,17 @@ public class RequirementDAO extends PlanningDAO {
 		} catch (SQLException e) {
 			throw new DataAccessException(e);
 		}finally{
-			try {
-				if(rs != null) rs.close();
-				if(pstmt != null) pstmt.close();
-			} catch (SQLException ec) {
-			    LogUtil.log(this, LogUtil.LOG_ERROR, "DB Closing statement error", ec);
-			} 		
+			super.closeStatement(rs, pstmt);
 		}	 
 		return response;
     }
+
     
     /**
      * Get a list of all Requirement TOs from data base based on user and project.
      */
-    public Vector getListByUserProject(UserTO uto, ProjectTO pto) throws DataAccessException{
-        Vector response = null;
+    public Vector<RequirementTO> getListByUserProject(UserTO uto, ProjectTO pto) throws DataAccessException{
+        Vector<RequirementTO> response = null;
         Connection c = null;
 		try {
 			c = getConnection();
@@ -277,7 +298,6 @@ public class RequirementDAO extends PlanningDAO {
      */
     private Vector<RequirementTO> getListByUser(UserTO uto, boolean hideClosed, boolean sharingView, Connection c) throws DataAccessException{
         Vector<RequirementTO> response= new Vector<RequirementTO>();
-	    DiscussionTopicDAO dtdao = new DiscussionTopicDAO();
 		ResultSet rs = null;
 		PreparedStatement pstmt = null;
 		CustomerDAO cdao = new CustomerDAO();
@@ -292,7 +312,7 @@ public class RequirementDAO extends PlanningDAO {
 		    
 		    String userSql = "r.user_id='" + uto.getId() + "' and r.project_id in (select project_id from customer where id = '" + uto.getId() + "' and (is_disable=0 or is_disable is null) ) ";
 		    if (sharingView) {
-		    	Vector canSeeReqList = cdao.getCanOtherReqCustomerList(uto, c);
+		    	Vector<CustomerTO> canSeeReqList = cdao.getCanOtherReqCustomerList(uto, c);
 		    	if (canSeeReqList!=null && canSeeReqList.size()>0) {
 			    	userSql = this.getOtherCustomer(uto, canSeeReqList);
 			    	userSql = userSql + " or (r.user_id='" + uto.getId() + "')";		    		
@@ -341,12 +361,12 @@ public class RequirementDAO extends PlanningDAO {
     }
 
 
-	private String getOtherCustomer(UserTO uto, Vector canSeeReqList) {
+	private String getOtherCustomer(UserTO uto, Vector<CustomerTO> canSeeReqList) {
 		String userSql = "";
 		boolean first = false;		
-		Iterator i = canSeeReqList.iterator();
+		Iterator<CustomerTO> i = canSeeReqList.iterator();
 		while(i.hasNext()) {
-			CustomerTO other = (CustomerTO)i.next();
+			CustomerTO other = i.next();
 			if (!other.getId().equals(uto.getId())) {
 				if (!first) {
 					first = true;
@@ -363,8 +383,8 @@ public class RequirementDAO extends PlanningDAO {
     /**
      * Get a list of all Requirement TOs from data base based on user and project.
      */
-    private Vector getListByUserProject(UserTO uto, ProjectTO pto, Connection c) throws DataAccessException{
-        Vector response= new Vector();
+    private Vector<RequirementTO> getListByUserProject(UserTO uto, ProjectTO pto, Connection c) throws DataAccessException{
+        Vector<RequirementTO> response= new Vector<RequirementTO>();
 		ResultSet rs = null;
 		PreparedStatement pstmt = null;
 		
@@ -391,24 +411,18 @@ public class RequirementDAO extends PlanningDAO {
 		} catch (SQLException e) {
 			throw new DataAccessException(e);
 		}finally{
-			//Close the current result set and statement
-			try {
-				if(rs != null) rs.close();
-				if(pstmt != null) pstmt.close();
-			} catch (SQLException ec) {
-			    LogUtil.log(this, LogUtil.LOG_ERROR, "DB Closing statement error", ec);
-			} 		
+			super.closeStatement(rs, pstmt);
 		}	 
 		return response;
     }
     
     
-    public Vector getThinListByProject(ProjectTO pto) throws DataAccessException{
-        Vector response = null;
+    public Vector<RequirementTO> getThinListByProject(ProjectTO pto, String categoryId) throws DataAccessException{
+        Vector<RequirementTO> response = null;
         Connection c = null;
 		try {
 			c = getConnection();
-			response = this.getThinListByProject(pto, c);
+			response = this.getThinListByProject(pto, categoryId, c);
 		} catch(Exception e){
 			throw new DataAccessException(e);
 		} finally{
@@ -421,13 +435,13 @@ public class RequirementDAO extends PlanningDAO {
     /**
      * Get a list of all Requirement TOs from data base based on project id.
      */
-    public Vector<RequirementTO> getListByProject(ProjectTO pto, String status, String requester, String priority, 
+    public Vector<RequirementTO> getListByProject(String idsList, String status, String requester, String priority, 
     		String categoryName, String templateId) throws DataAccessException {
         Vector<RequirementTO> response = null;
         Connection c = null;
 		try {
 			c = getConnection();
-			response = this.getListByProject(pto, status, requester, priority, categoryName, templateId, c);
+			response = this.getListByProject(idsList, status, requester, priority, categoryName, templateId, c);
 		} catch(Exception e){
 			throw new DataAccessException(e);
 		} finally{
@@ -437,8 +451,8 @@ public class RequirementDAO extends PlanningDAO {
     }
 
     
-    public Vector getThinListByProject(ProjectTO pto, Connection c) throws DataAccessException{
-        Vector response= new Vector();
+    public Vector<RequirementTO> getThinListByProject(ProjectTO pto, String categoryId, Connection c) throws DataAccessException{
+        Vector<RequirementTO> response= new Vector<RequirementTO>();
 		ResultSet rs = null;
 		PreparedStatement pstmt = null;
 
@@ -446,9 +460,15 @@ public class RequirementDAO extends PlanningDAO {
 		    String sql = "select r.id, p.creation_date, p.final_date " +
 		    		     "  from requirement r, planning p " +
 						 " where r.id = p.id and r.project_id=?";
-		    
+		    if (categoryId!=null && !categoryId.trim().equals("") && !categoryId.trim().equals("-1")) {
+		    	sql = sql + " and r.category_id=?";
+		    }
 			pstmt = c.prepareStatement(sql);
 			pstmt.setString(1, pto.getId());
+		    if (categoryId!=null && !categoryId.trim().equals("") && !categoryId.trim().equals("-1")) {
+		    	pstmt.setString(2, categoryId);
+		    }
+			
 			rs = pstmt.executeQuery();
 			while (rs.next()){
 				String id = super.getString(rs, "id");
@@ -470,30 +490,29 @@ public class RequirementDAO extends PlanningDAO {
     /**
      * Get a list of all Requirement TOs from data base based on project id.
      */
-    private Vector<RequirementTO> getListByProject(ProjectTO pto, String status, String requester, String priority, 
+    private Vector<RequirementTO> getListByProject(String idsList, String status, String requester, String priority, 
             String categoryName, String templateId, Connection c) throws DataAccessException{
         Vector<RequirementTO> response= new Vector<RequirementTO>();
 		ResultSet rs = null;
 		PreparedStatement pstmt = null;
 		ResourceTaskDAO rtdao = new ResourceTaskDAO();
-		DiscussionTopicDAO dtdao = new DiscussionTopicDAO();
 
 		try {
 		    String sql = "select r.id, p.description, p.creation_date, p.iteration, r.suggested_date, r.project_id, " +
 					    "r.user_id, p.final_date, r.priority, r.requirement_status_id, u.username, " +
 					    "r.deadline_date, r.reopening, rs.name, rs.state_machine_order, " +
-					    "r.category_id, c.name as CATEGORY_NAME " +
-						"from requirement r, requirement_status rs, planning p, tool_user u, category c " +
-						"where r.REQUERIMENT_STATUS_ID = rs.ID " +
-						"AND c.id = r.category_id " +
-						"AND r.ID = p.ID AND r.USER_ID = u.id AND r.project_id=?";
+					    "r.category_id, c.name as CATEGORY_NAME, pr.name as PROJECT_NAME " +
+						"from requirement r, requirement_status rs, planning p, tool_user u, category c, project pr " +
+						"where r.requirement_status_id = rs.id " +
+						"AND c.id = r.category_id AND pr.id = r.project_id " +
+						"AND r.id = p.id AND r.user_id = u.id AND r.project_id in (" + idsList + ")";
 		    
 		    if (status.equals("-1")){
 		        sql+=" AND p.final_date is NULL";
 		    } else if (status.equals("-2")){
 		        sql+="";
 		    } else {
-		        sql+=" AND r.REQUERIMENT_STATUS_ID='" + status + "'";
+		        sql+=" AND r.REQUIREMENT_STATUS_ID='" + status + "'";
 		    }
 
 		    if (priority.equals("-1")){
@@ -519,7 +538,6 @@ public class RequirementDAO extends PlanningDAO {
 		    }
 		    
 			pstmt = c.prepareStatement(sql);
-			pstmt.setString(1, pto.getId());
 			rs = pstmt.executeQuery();
 						
 			while (rs.next()){
@@ -531,6 +549,8 @@ public class RequirementDAO extends PlanningDAO {
 			    
 			    //get a list of resource task related. (maybe it returns null)
 			    rto.setResourceTaskList(rtdao.getListByRequirement(rto, c));
+			    ProjectTO pto = rto.getProject();
+			    pto.setName(getString(rs, "PROJECT_NAME"));
 			    rto.setProject(pto);
 			    
 			    //get the additional fields of requirement
@@ -554,8 +574,8 @@ public class RequirementDAO extends PlanningDAO {
     /**
      * Get a list of all Requirement TOs from data base based on filters (Project, Requester user and keyword).
      */
-    public Vector getListByFilter(ProjectTO pto, CustomerTO cto, Vector kwList) throws DataAccessException {
-        Vector response = null;
+    public Vector<RequirementTO> getListByFilter(ProjectTO pto, CustomerTO cto, Vector<String> kwList) throws DataAccessException {
+        Vector<RequirementTO> response = null;
         Connection c = null;
 		try {
 			c = getConnection();
@@ -572,8 +592,8 @@ public class RequirementDAO extends PlanningDAO {
     /**
      * Get a list of all Requirement TOs from data base based on filters (Project, Requester user and keyword).
      */
-    private Vector getListByFilter(ProjectTO pto, CustomerTO cto, Vector kwList, Connection c) throws DataAccessException{
-        Vector response= new Vector();
+    private Vector<RequirementTO> getListByFilter(ProjectTO pto, CustomerTO cto, Vector<String> kwList, Connection c) throws DataAccessException{
+        Vector<RequirementTO> response= new Vector<RequirementTO>();
 		ResultSet rs = null;
 		PreparedStatement pstmt = null;
 		
@@ -585,7 +605,7 @@ public class RequirementDAO extends PlanningDAO {
 		    }
 
 		    //if the keyword was used such as a filter...		    
-		    Vector vfields = new Vector();
+		    Vector<String> vfields = new Vector<String>();
 		    vfields.addElement("p.description");
 		    vfields.addElement("p.id");
 		    String keyWhere = StringUtil.getSQLKeywordsByFields(kwList, vfields);
@@ -594,12 +614,12 @@ public class RequirementDAO extends PlanningDAO {
 		    }
 
 		    String sql = "select p.id, p.description, p.creation_date, p.iteration, r.suggested_date, r.project_id, " +
-					    "r.USER_ID, p.final_date, r.priority, r.REQUERIMENT_STATUS_ID, u.USERNAME, " +
+					    "r.USER_ID, p.final_date, r.priority, r.REQUIREMENT_STATUS_ID, u.USERNAME, " +
 					    "r.deadline_date, r.reopening, rs.name, rs.state_machine_order, " +
 					    "r.category_id, c.name as CATEGORY_NAME " +
 						"from requirement r, requirement_status rs, planning p, planning pp, " +
 						"project pr, tool_user u, category c " +
-						"where r.REQUERIMENT_STATUS_ID = rs.ID " +
+						"where r.REQUIREMENT_STATUS_ID = rs.ID " +
 						"and r.ID = p.ID " +
 						"and r.PROJECT_ID = pp.ID " +
 						"and r.PROJECT_ID = pr.ID " +
@@ -624,13 +644,7 @@ public class RequirementDAO extends PlanningDAO {
 		} catch (SQLException e) {
 			throw new DataAccessException(e);
 		}finally{
-			//Close the current result set and statement
-			try {
-				if(rs != null) rs.close();
-				if(pstmt != null) pstmt.close();
-			} catch (SQLException ec) {
-			    LogUtil.log(this, LogUtil.LOG_ERROR, "DB Closing statement error", ec);
-			} 		
+			super.closeStatement(rs, pstmt);
 		}	 
 		return response;
     }
@@ -658,26 +672,19 @@ public class RequirementDAO extends PlanningDAO {
         Vector<RequirementTO> response= new Vector<RequirementTO>();
 		ResultSet rs = null;
 		PreparedStatement pstmt = null;
-		DiscussionTopicDAO dtdao = new DiscussionTopicDAO();
 
 		try {
-		    //select a requirement from database
 		    String sql = "select r.id, p.description, p.creation_date, p.iteration, r.suggested_date, r.project_id, " +
-		    		     "r.USER_ID, r.deadline_date, r.priority, p.final_date, pr.name, r.REQUERIMENT_STATUS_ID, r.reopening, " +
-		    		     "u.USERNAME, rs.name as STATUS_NAME, r.category_id, c.name as CATEGORY_NAME " +
+		    		     "r.user_id, r.deadline_date, r.priority, p.final_date, pr.name, r.REQUIREMENT_STATUS_ID, r.reopening, " +
+		    		     "u.username, rs.name as STATUS_NAME, r.category_id, c.name as CATEGORY_NAME " +
             			"from requirement r, requirement_status rs, planning p, " +
-            			"planning pp, project pr, leader e, tool_user u, category c " +
-            			"where r.REQUERIMENT_STATUS_ID = rs.ID " +
-            			"and r.ID = p.ID " +
-            			"and r.PROJECT_ID = pp.ID " +
-            			"and r.PROJECT_ID = pr.ID " +
-            			"and pp.ID = e.PROJECT_ID " +
-            			"AND c.id = r.category_id " +
-            			"and r.USER_ID = u.id " +
-            			"and pp.FINAL_DATE is NULL " +
-            			"and rs.STATE_MACHINE_ORDER = 1 " +
-            			"and e.id = ?";
-		    //if true, exclude from the list, the requirements of current user (uto)
+            			"planning pp, project pr, leader e, tool_user u, category c, customer cu " +
+            			"where r.REQUIREMENT_STATUS_ID = rs.ID and cu.id = e.id and pp.ID = cu.project_id " +
+            			"and r.ID = p.ID and r.PROJECT_ID = pp.ID and r.PROJECT_ID = pr.ID " +
+            			"and pp.ID = e.project_id and c.id = r.category_id and r.USER_ID = u.id " +
+            			"and pp.final_date is null and rs.state_machine_order=1 " +
+            			"and e.id = ? and (cu.is_disable is null or cu.is_disable=0) ";
+		    //if true, exclude from the list, the requests of current user (uto)
 		    if (exceptCurrUserReq) {
 		        sql = sql + "and r.user_id <> ?";    
 		    }
@@ -695,7 +702,6 @@ public class RequirementDAO extends PlanningDAO {
 			    //get remaining field...
 			    ProjectTO pto = rto.getProject();
 			    pto.setName(getString(rs, "NAME"));
-			    //pto.setProjectLeaders(ldao.getLeaderListByProjectId(pto, c));
 			    
 			    UserTO reqUto = rto.getRequester();
 			    reqUto.setUsername(getString(rs, "USERNAME"));
@@ -725,9 +731,6 @@ public class RequirementDAO extends PlanningDAO {
     
     /**
      * Get a specific Requirement TO from data base, based on id.
-     * @param to
-     * @param c
-     * @throws DataAccessException
      */
     public TransferObject getObject(TransferObject to, Connection c) throws DataAccessException {
 		RequirementTO response= null;
@@ -760,8 +763,9 @@ public class RequirementDAO extends PlanningDAO {
 			    cto.setUsername(getString(rs, "USERNAME"));
 			    cto.setName(getString(rs, "USER_FULL_NAME"));
 			    
-			    //get the additional fields of requirement
+			    //get the additional fields and discussion topics of request
 			    response.setAdditionalFields(afdao.getListByPlanning(response, null, c));
+			    response.setDiscussionTopics(dtdao.getListByPlanning(response, c));
 			    
 			    response.setRequester(cto);
 			} 
@@ -769,13 +773,7 @@ public class RequirementDAO extends PlanningDAO {
 		} catch (SQLException e) {
 			throw new DataAccessException(e);
 		}finally{
-			//Close the current result set and statement
-			try {
-				if(rs != null) rs.close();
-				if(pstmt != null) pstmt.close();
-			} catch (SQLException ec) {
-			    LogUtil.log(this, LogUtil.LOG_ERROR, "DB Closing statement error", ec);
-			} 		
+			super.closeStatement(rs, pstmt);
 		}	 
 		return response;
     }
@@ -845,6 +843,21 @@ public class RequirementDAO extends PlanningDAO {
 		}finally{
 			super.closeStatement(null, pstmt);
 		}       
+    }
+
+
+    public void updatelite(RequirementTO to, Connection c) throws DataAccessException {
+		PreparedStatement pstmt = null; 
+		try {
+			pstmt = c.prepareStatement("update planning set iteration=? where id=?");
+			pstmt.setString(1, to.getIteration());
+			pstmt.setString(2, to.getId());	
+			pstmt.executeUpdate();
+		} catch (SQLException e) {
+			throw new DataAccessException(e);
+		}finally{
+			super.closeStatement(null, pstmt);
+		}  
     }
     
     
@@ -1141,14 +1154,14 @@ public class RequirementDAO extends PlanningDAO {
         pto.setId(getString(rs, "project_id"));
         response.setProject(pto);
         
-        rsto.setId(getString(rs, "REQUERIMENT_STATUS_ID"));
+        rsto.setId(getString(rs, "REQUIREMENT_STATUS_ID"));
         if (isRemainStatusValues){
     	    rsto.setName(getString(rs, "name"));
     	    rsto.setStateMachineOrder(getInteger(rs, "state_machine_order"));            
         }
         response.setRequirementStatus(rsto);
         
-        response.setAttachments(atDAO.getListByPlanningId(response.getId()));
+        response.setAttachments(atDAO.getListByPlanningId(response.getId(), null)); //obs: the projectId argument here is null because, the system must display only attachments linked with req id
 
         return response;
     }

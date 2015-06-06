@@ -24,7 +24,7 @@ public class SurveyQuestionTO extends TransferObject {
 
 	private Integer position;
 	
-	private Vector alterativesList;
+	private Vector<QuestionAlternativeTO> alterativesList;
 	
 	private SurveyTO survey;
 	
@@ -70,10 +70,10 @@ public class SurveyQuestionTO extends TransferObject {
 	
 	
 	////////////////////////////////////////	
-	public Vector getAlterativesList() {
+	public Vector<QuestionAlternativeTO> getAlterativesList() {
 		return alterativesList;
 	}
-	public void setAlterativesList(Vector newValue) {
+	public void setAlterativesList(Vector<QuestionAlternativeTO> newValue) {
 		this.alterativesList = newValue;
 	}
 	
@@ -159,10 +159,10 @@ public class SurveyQuestionTO extends TransferObject {
 	private StringBuffer getHtmlForMultipleChoice(String answer){
 		StringBuffer buff = new StringBuffer();
 		
-		Vector list = this.getAlterativesList();
-		Iterator i = list.iterator();
+		Vector<QuestionAlternativeTO> list = this.getAlterativesList();
+		Iterator<QuestionAlternativeTO> i = list.iterator();
 		while(i.hasNext()) {
-			QuestionAlternativeTO qato = (QuestionAlternativeTO)i.next();
+			QuestionAlternativeTO qato = i.next();
 			buff.append("  <tr class=\"tableCell\">\n");			
 			buff.append("     <td class=\"tableCell\" width=\"20\"><input type=\"radio\" name=\"field_" +  this.getId() + "\" VALUE=\"" +  qato.getSequence() + "\"  " + (qato.getSequence().toString().equals(answer)?"checked":"")  + " /></td>\n");
 			buff.append("     <td class=\"tableCell\">" +  qato.getContent() + "</td>\n");

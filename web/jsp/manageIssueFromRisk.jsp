@@ -13,15 +13,15 @@
 				<center><bean:message key="message.formRisk.issueConfirm"/></center>
 			</td>
 			<td>&nbsp</td>
-		</tr>
+		</tr>		
 		<tr><td colspan="3">&nbsp</td></tr>
 		<tr><td>&nbsp</td>
 			<td class="formBody">
 				<center>
-					<html:button property="yes" styleClass="button" onclick="javascript:window.location='../do/manageRisk?operation=updateOrInsertRisk&create_issue=on'">
+					<html:button property="yes" styleClass="button" onclick="javascript:closeMessage();saveRiskWithIssue();">
 					  <bean:message key="label.formRisk.createRiskWithIssue"/>
 					</html:button> &nbsp;&nbsp;&nbsp;
-					<html:button property="no" styleClass="button"  onclick="javascript:window.location='../do/manageRisk?operation=updateOrInsertRisk&create_issue=off'">
+					<html:button property="no" styleClass="button"  onclick="javascript:closeMessage();saveOnlyRisk();">
 					  <bean:message key="label.formRisk.createOnlyRisk"/>
 					</html:button> &nbsp;&nbsp;&nbsp;
 					<html:button property="cancel" styleClass="button" onclick="closeMessage();">

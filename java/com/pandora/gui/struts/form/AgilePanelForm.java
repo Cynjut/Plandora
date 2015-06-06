@@ -36,6 +36,10 @@ public class AgilePanelForm extends GeneralStrutsForm {
 	
 	private String maximizedGadgetId;
 	
+	private String taskId;
+	
+	private String resourceId;
+	
 	
 	public void reset(ActionMapping mapping, HttpServletRequest request) {
 		this.hideFinishedReq = false;
@@ -169,6 +173,24 @@ public class AgilePanelForm extends GeneralStrutsForm {
 	}
 	public void setMaximizedGadgetId(String newValue) {
 		this.maximizedGadgetId = newValue;
+	}
+
+	
+	//////////////////////////////////////////
+	public String getTaskId() {
+		return taskId;
+	}
+	public void setTaskId(String newValue) {
+		this.taskId = newValue;
+	}
+
+
+	//////////////////////////////////////////
+	public String getResourceId() {
+		return resourceId;
+	}
+	public void setResourceId(String newValue) {
+		this.resourceId = newValue;
 	}
 	
     

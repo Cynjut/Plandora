@@ -18,12 +18,6 @@ public class ShowAllRequirementForm extends GeneralStrutsForm {
     /** Id of status selected by combo. Value -2 = All status; Value -1 = All status except Close and Canceled */
     private String statusSelected = "-1";
 
-    /** Priority number selected by combo. Value -2 = All Priorities; Value -1 = All priorities except Lowest */
-    private String prioritySelected = "-1";
-    
-    /** Category number selected by combo. Value -1 = All Categories */
-    private String categorySelected = "-1";
-
     /** View mode selected by combo. Value -1 = List Mode */
     private String viewModeSelected = "-1";
  
@@ -65,24 +59,6 @@ public class ShowAllRequirementForm extends GeneralStrutsForm {
     }
     
     
-    ////////////////////////////////////////////    
-    public String getPrioritySelected() {
-        return prioritySelected;
-    }
-    public void setPrioritySelected(String newValue) {
-        this.prioritySelected = newValue;
-    }
-
-    
-    ////////////////////////////////////////////    
-    public String getCategorySelected() {
-        return categorySelected;
-    }
-    public void setCategorySelected(String newValue) {
-        this.categorySelected = newValue;
-    }
-
-    
     ////////////////////////////////////////////
     public String getViewModeSelected() {
 		return viewModeSelected;
@@ -92,14 +68,6 @@ public class ShowAllRequirementForm extends GeneralStrutsForm {
 	}
 
 
-	public String getShowUpdateInBatch() {
-    	String response = "off";
-    	if (this.getShowPriority().equals("on") || this.getShowIteration().equals("on") || this.getShowParentReq().equals("on")) {
-    		response = "on";
-    	}
-    	return response;
-    }
-   
     ////////////////////////////////////////////
     public String getShowPriority() {
     	return super.getCurrentUser().getPreference().getPreference(PreferenceTO.LIST_ALL_REQ_SW_PRIORITY);

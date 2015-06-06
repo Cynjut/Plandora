@@ -24,6 +24,17 @@ public class RepositoryBUS extends GeneralBusiness {
 	RepositoryDAO dao = new RepositoryDAO();
 	
 	
+	public Vector<RepositoryFilePlanningTO> getEntitiesFromFile(RepositoryFileTO rfto) throws BusinessException {
+		Vector<RepositoryFilePlanningTO> response = new Vector<RepositoryFilePlanningTO>();
+        try {
+        	response = dao.getEntitiesFromFile(rfto);
+        } catch (Exception e) {
+        	throw new  BusinessException(e);
+        }		
+		return response;
+	}
+
+	
 	public Vector<RepositoryFileTO> getFiles(ProjectTO pto, String path, String rev, boolean includeEntitiesLink) throws Exception {
 		Vector<RepositoryFileTO> response = null;
 		String url = pto.getRepositoryURL();
@@ -51,8 +62,9 @@ public class RepositoryBUS extends GeneralBusiness {
 						rfto.setEntities(entities);					
 					}					
 				}
-				
-				RepositoryFileProjectTO dbRfto = dao.getFileFromDB(pto, rfto.getPath());
+
+	    		String extractedPath = getExtractPath(pto, rfto.getPath());
+				RepositoryFileProjectTO dbRfto = dao.getFileFromDB(pto, extractedPath);
 				if (dbRfto!=null && dbRfto.getFile()!=null) {
 					rfto.setArtifactTemplateType(dbRfto.getFile().getArtifactTemplateType());
 				}
@@ -62,7 +74,7 @@ public class RepositoryBUS extends GeneralBusiness {
 		
 		return response;
 	}
-
+	
 	
 	public Vector<RepositoryLogTO> getLogs(ProjectTO pto, String path, String rev) throws Exception {
 		Vector<RepositoryLogTO> response = null;
@@ -98,11 +110,28 @@ public class RepositoryBUS extends GeneralBusiness {
 				RepositoryFileProjectTO dbRfto = dao.getFileFromDB(pto, rfto.getPath());
 				if (dbRfto!=null && dbRfto.getFile()!=null) {
 					rfto.setArtifactTemplateType(dbRfto.getFile().getArtifactTemplateType());
+					rfto.setArtifact(dbRfto.getFile().getArtifact());
 				}
 			}			
 		}
 		return rfto;		
 	}	
+
+	
+	public void removeFile(ProjectTO pto, String pathName, String rev) throws Exception {
+		if (this.canRemoveFile(pto)) {
+			String url = pto.getRepositoryURL();
+			String repositoryClass = pto.getRepositoryClass();
+			String user = pto.getRepositoryUser();
+			String pass = pto.getRepositoryPass();
+			
+			Repository rep = getRepositoryClass(repositoryClass);
+			rep.removeFile(pto, url, pathName, rev, user, pass);
+			
+		} else {
+			throw new Exception("This project do not accept removing repository files.");
+		}
+	}
 
 	
 	public RepositoryFileTO getFileInfo(ProjectTO pto, String pathName, String rev) throws Exception {
@@ -131,7 +160,19 @@ public class RepositoryBUS extends GeneralBusiness {
 		return response;
 	}
 
+	
+	public RepositoryFileProjectTO getFileFromDBbyId(ProjectTO pto, String fileId) throws BusinessException {
+		RepositoryFileProjectTO response = null;
+        try {
+        	response = dao.getFileFromDBbyId(pto, fileId);
+        } catch (Exception e) {
+        	throw new  BusinessException(e);
+        }
+		return response;
+	}
 
+	
+	
 	public void commitFile(ProjectTO pto, String path, String fileName, String rev,  
 			String logMessage, String contentType, byte[] fileData, String user, String pass) throws Exception {
 		String url = pto.getRepositoryURL();
@@ -161,10 +202,10 @@ public class RepositoryBUS extends GeneralBusiness {
 	}
 	
 	
-	public void updateDisabledStatus(ProjectTO pto, String path, boolean disabled, String artifactTemplateType) throws BusinessException {
+	public void updateDisabledStatus(ProjectTO pto, String path, boolean disabled) throws BusinessException {
         try {
         	path = getExtractPath(pto, path);
-        	dao.updateDisabledStatus(pto, path, disabled, artifactTemplateType);
+        	dao.updateDisabledStatus(pto, path, disabled);
         } catch (Exception e) {
         	throw new  BusinessException(e);
         }		
@@ -182,14 +223,24 @@ public class RepositoryBUS extends GeneralBusiness {
 	}
 
 	
-	public void updateRepositoryFilePlan(String path, String entityId, ProjectTO pto, String artifactTemplateType, boolean removeIfAlreadyExists) throws BusinessException {
+	public void updateRepositoryFilePlan(String path, String entityId, ProjectTO pto, boolean removeIfAlreadyExists) throws BusinessException {
         try {
-        	dao.updateRepositoryFilePlan(path, entityId, pto, artifactTemplateType, removeIfAlreadyExists);
+        	dao.updateRepositoryFilePlan(path, entityId, pto, removeIfAlreadyExists);
         } catch (Exception e) {
         	throw new  BusinessException(e);
         }
 	}
 
+	
+	public void updateDownloadableStatus(ProjectTO pto, String fileId, boolean isDownloadable) throws BusinessException {
+        try {
+        	dao.updateDownloadableStatus(pto, fileId, isDownloadable);
+        } catch (Exception e) {
+        	throw new  BusinessException(e);
+        }
+	}
+
+	
 	
 	public void breakRepositoryEntityLink(String pathId, String entityId) throws BusinessException {
         try {
@@ -203,12 +254,12 @@ public class RepositoryBUS extends GeneralBusiness {
 	/**
 	 * Static method used to return a instance of repository 
 	 */
-	@SuppressWarnings("unchecked")
 	public static Repository getRepositoryClass(String className){
 		Repository response = null;
 		if (className!=null && !className.trim().equals("-1")) {
 	        try {
-	            Class klass = Class.forName(className);
+	            @SuppressWarnings("rawtypes")
+				Class klass = Class.forName(className);
 	            response = (Repository)klass.newInstance();
 	        } catch (Exception e) {
 	        	e.printStackTrace();
@@ -223,9 +274,20 @@ public class RepositoryBUS extends GeneralBusiness {
 	 * Remove the url prefix of repository path... 
 	 */
 	public String getExtractPath(ProjectTO pto, String path) throws BusinessException{
+		String response = path;
 		ProjectDelegate pdel = new ProjectDelegate();
 		pto = pdel.getProjectObject(pto, true);
-    	return path.replaceAll(pto.getRepositoryURL(), "");
+		if (pto!=null && pto.getRepositoryURL()!=null) {
+			String url = pto.getRepositoryURL();
+			if (!url.endsWith("\\")) {
+				url = url + "\\";
+			}
+			if (!url.endsWith("/")) {
+				url = url + "/";
+			}
+			response = path.replaceAll(url, "");
+		}
+    	return response;
 	}
 
 
@@ -239,6 +301,17 @@ public class RepositoryBUS extends GeneralBusiness {
 		}
 	}
 
+	
+	public boolean canRemoveFile(ProjectTO pto) throws Exception{
+		String repositoryClass = pto.getRepositoryClass();
+		Repository rep = getRepositoryClass(repositoryClass);
+		if (rep==null) {
+			throw new Exception("The repository wrapper [" +  repositoryClass + "] was not found.");
+		} else {
+			return rep.canRemoveFile();	
+		}
+	}	
+	
 
 	public void uploadFile(UserTO handler, String path, String projectId, byte[] fileData, String contentType, String fileName, String logMessage) throws Exception {
 		UserDelegate udel = new UserDelegate();
@@ -283,4 +356,15 @@ public class RepositoryBUS extends GeneralBusiness {
 		}					
 	}
 
+
+	public void insertHistory(UserTO handler, ProjectTO pto, RepositoryFileTO file, String repAction, String comment) throws BusinessException {
+		try {		
+			dao.insertHistory(handler, pto, file, repAction, comment);	
+		} catch (Exception e) {
+			throw new  BusinessException(e);
+		}					
+	}
+
+
 }
+

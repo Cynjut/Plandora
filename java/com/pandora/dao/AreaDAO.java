@@ -9,7 +9,6 @@ import java.util.Vector;
 import com.pandora.AreaTO;
 import com.pandora.TransferObject;
 import com.pandora.exception.DataAccessException;
-import com.pandora.helper.LogUtil;
 
 /**
  * This class contain the methods to access information about 
@@ -21,7 +20,7 @@ public class AreaDAO extends DataAccess {
      * Get a list of all Area TOs from data base.
      */
     public Vector getList(Connection c) throws DataAccessException {
-		Vector response= new Vector();
+		Vector<AreaTO> response= new Vector<AreaTO>();
 		ResultSet rs = null;
 		PreparedStatement pstmt = null; 
 		try {
@@ -39,13 +38,7 @@ public class AreaDAO extends DataAccess {
 		} catch (SQLException e) {
 			throw new DataAccessException(e);
 		}finally{
-			//Close the current result set and statement
-			try {
-				if(rs != null) rs.close();
-				if(pstmt != null) pstmt.close();
-			} catch (SQLException ec) {
-			    LogUtil.log(this, LogUtil.LOG_ERROR, "DB Closing statement error", ec);
-			} 		
+			super.closeStatement(rs, pstmt);
 		}	 
 		return response;
     }
@@ -73,13 +66,7 @@ public class AreaDAO extends DataAccess {
 		} catch (SQLException e) {
 			throw new DataAccessException(e);
 		}finally{
-			//Close the current result set and statement
-			try {
-				if(rs != null) rs.close();
-				if(pstmt != null) pstmt.close();
-			} catch (SQLException ec) {
-			    LogUtil.log(this, LogUtil.LOG_ERROR, "DB Closing statement error", ec);
-			} 		
+			super.closeStatement(rs, pstmt);
 		}	 
 		return response;
     }
@@ -101,11 +88,7 @@ public class AreaDAO extends DataAccess {
 		} catch (SQLException e) {
 			throw new DataAccessException(e);
 		}finally{
-			try {
-				if(pstmt != null) pstmt.close();
-			} catch (SQLException ec) {
-			    LogUtil.log(this, LogUtil.LOG_ERROR, "DB Closing statement error", ec);
-			} 		
+			super.closeStatement(null, pstmt);	
 		}       
     }
     
@@ -116,20 +99,17 @@ public class AreaDAO extends DataAccess {
 		PreparedStatement pstmt = null; 
 		try {
 		    
-		    AreaTO uto = (AreaTO)to;
+		    AreaTO ato = (AreaTO)to;
 			pstmt = c.prepareStatement("update area set name=?, description=? where id=?");
-			pstmt.setString(1, uto.getName());
-			pstmt.setString(2, uto.getDescription());
+			pstmt.setString(1, ato.getName());
+			pstmt.setString(2, ato.getDescription());
+			pstmt.setString(3, ato.getId());
 			pstmt.executeUpdate();
 												
 		} catch (SQLException e) {
 			throw new DataAccessException(e);
 		}finally{
-			try {
-				if(pstmt != null) pstmt.close();
-			} catch (SQLException ec) {
-			    LogUtil.log(this, LogUtil.LOG_ERROR, "DB Closing statement error", ec);
-			} 		
+			super.closeStatement(null, pstmt);
 		}
     }
 
@@ -140,25 +120,20 @@ public class AreaDAO extends DataAccess {
 		PreparedStatement pstmt = null; 
 		try {
 		    
-		    AreaTO uto = (AreaTO)to;
+		    AreaTO ato = (AreaTO)to;
 			pstmt = c.prepareStatement("delete from area where id = ?");
-			LogUtil.log(this, LogUtil.LOG_DEBUG, "id:" + uto.getId());
-			pstmt.setString(1, uto.getId());			
+			pstmt.setString(1, ato.getId());			
 			pstmt.executeUpdate();
 												
 		} catch (SQLException e) {
 			throw new DataAccessException(e);
 		}finally{
-			try {
-				if(pstmt != null) pstmt.close();
-			} catch (SQLException ec) {
-			    LogUtil.log(this, LogUtil.LOG_ERROR, "DB Closing statement error", ec);
-			} 		
+			super.closeStatement(null, pstmt);	
 		}
     }
     
     /**
-     * This method get a User TO from BD based on username.
+     * This method get a TO from BD based on area.
      * @param uto
      * @return
      * @throws DataAccessException
@@ -175,7 +150,7 @@ public class AreaDAO extends DataAccess {
     }
 
     /**
-     * This method get a User TO from BD based on username.
+     * This method get a TO from BD based on area name.
      */
     private AreaTO getObjectByName(AreaTO uto, Connection c) throws DataAccessException{
 		AreaTO response= null;
@@ -196,13 +171,7 @@ public class AreaDAO extends DataAccess {
 		} catch (SQLException e) {
 			throw new DataAccessException(e);
 		}finally{
-			//Close the current result set and statement
-			try {
-				if(rs != null) rs.close();
-				if(pstmt != null) pstmt.close();
-			} catch (SQLException ec) {
-			    LogUtil.log(this, LogUtil.LOG_ERROR, "DB Closing statement error", ec);
-			} 		
+			super.closeStatement(rs, pstmt);		
 		}	 
 		return response;
     }

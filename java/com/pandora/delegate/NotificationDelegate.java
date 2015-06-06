@@ -25,10 +25,18 @@ public class NotificationDelegate extends GeneralDelegate {
     /* (non-Javadoc)
      * @see com.pandora.bus.alert.NotificationBUS.getNotificationList()
      */            
-    public Vector getNotificationList() throws BusinessException {
-        return bus.getNotificationList();
+    public Vector<NotificationTO> getNotificationList() throws BusinessException {
+        return this.getNotificationList(false);
     }
 
+
+    /* (non-Javadoc)
+     * @see com.pandora.bus.alert.NotificationBUS.getNotificationList(boolean)
+     */            
+    public Vector<NotificationTO> getNotificationList(boolean hideClosedAgents) throws BusinessException {
+        return bus.getNotificationList(hideClosedAgents);
+    }
+    
 
     /* (non-Javadoc)
      * @see com.pandora.bus.alert.NotificationBUS.getNotificationObject(com.pandora.NotificationTO)

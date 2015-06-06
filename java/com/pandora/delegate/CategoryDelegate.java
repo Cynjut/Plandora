@@ -17,10 +17,10 @@ public class CategoryDelegate  extends GeneralDelegate{
     
     
     /* (non-Javadoc)
-     * @see com.pandora.bus.CategoryBUS.getCategoryList()
+     * @see com.pandora.bus.CategoryBUS.getCategoryList(boolean)
      */
-    public Vector<CategoryTO> getCategoryList() throws BusinessException{
-        return bus.getCategoryList();
+    public Vector<CategoryTO> getCategoryList(boolean hideClosed) throws BusinessException{
+        return bus.getCategoryList(hideClosed);
     }
 
     
@@ -31,6 +31,7 @@ public class CategoryDelegate  extends GeneralDelegate{
         return bus.getCategoryListByType(type, pto, includeSubProjects);
     }    
 
+    
     /* (non-Javadoc)
      * @see com.pandora.bus.CategoryBUS.getCategory(com.pandora.CategoryTO)
      */
@@ -58,8 +59,17 @@ public class CategoryDelegate  extends GeneralDelegate{
     /* (non-Javadoc)
      * @see com.pandora.bus.CategoryBUS.removeCategory(com.pandora.CategoryTO)
      */
-    public void removeReport(CategoryTO cto) throws BusinessException {
+    public void removeCategory(CategoryTO cto) throws BusinessException {
         bus.removeCategory(cto);
     }
+
+    /* (non-Javadoc)
+     * @see com.pandora.bus.CategoryBUS.getCategoryByName(java.lang.String)
+     */
+	public CategoryTO getCategoryByName(String cname, Integer type, ProjectTO pto) throws BusinessException {
+		return bus.getCategoryByName(cname, type, pto);
+	}
+
+
 
 }

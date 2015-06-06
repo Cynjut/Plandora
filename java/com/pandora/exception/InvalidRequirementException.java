@@ -1,7 +1,7 @@
 package com.pandora.exception;
 
 /**
- * This exception is thown when a task is trying to be inserted but the requirement related is invalid.
+ * This exception is thrown when a task is trying to be inserted but the requirement related is invalid.
  */
 public class InvalidRequirementException  extends BusinessException {
 

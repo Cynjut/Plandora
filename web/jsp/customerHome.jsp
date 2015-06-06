@@ -4,6 +4,7 @@
 <%@ taglib uri="/WEB-INF/lib/struts-logic" prefix="logic" %>
 <%@ taglib uri="/WEB-INF/lib/plandora-html" prefix="plandora-html" %>
 
+<%@ page import="com.pandora.PlanningRelationTO"%>
 <%@ page import="com.pandora.PreferenceTO"%>
 
 <jsp:include page="header.jsp" />
@@ -52,7 +53,18 @@
          	}
          }             
     }
-
+    
+    function selectedPlanning(planId){
+    	with(document.forms["custReqForm"]){
+			linkRelation.value = planId;
+		}
+	}
+    
+    function removeRelation(operat, planningId, relatedId, fwd, listKey) {
+		window.location = "../do/manageCustRequest?operation=" + operat + "&linkRelation=" + relatedId + "&SOURCE_ENTITY_ID=" + planningId + "&RELATION_FORWARD=" + fwd + "&COLLECTION_KEY=" + listKey;	
+    }
+    
+        	
     function edit(id, src){
     	if (src =="REQ") {
     		window.location = "../do/manageCustRequest?operation=editRequest&isReopenRequirement=off&showBackward=on&isAdjustment=off&isAdjustmentWithoutProj=off&readOnlyMode=off&id=" + id;
@@ -112,6 +124,14 @@
          }
     }
 		    
+	function gridComboFilterRefresh(url, param, cbName){
+		javascript:buttonClick('custReqForm', 'refreshRequest');
+	}
+
+	function gridTextFilterRefresh(url, param, cbName){
+		javascript:buttonClick('custReqForm', 'refreshRequest');
+	}
+		    
 </script>
 
 <html:form  action="manageCustRequest">
@@ -126,6 +146,7 @@
 	<html:hidden name="custReqForm" property="preApproveList"/>
 	<html:hidden name="custReqForm" property="readOnlyMode"/>
 	<html:hidden name="custReqForm" property="canChangeRequester"/>
+	<html:hidden name="custReqForm" property="showTechComments"/>
 	<logic:equal name="custReqForm" property="isAdjustment" value="on">
 		<html:hidden name="custReqForm" property="description"/>
 	</logic:equal>
@@ -167,7 +188,7 @@
       <td class="formBody">
 		<logic:equal name="custReqForm" property="canChangeRequester" value="on">   
 	  		<html:select name="custReqForm" property="requesterId" styleClass="textBox">
-				<html:options collection="projCustomerList" property="id" labelProperty="username"/>
+				<html:options collection="projCustomerList" property="id" labelProperty="username" filter="false"/>
 			</html:select>					 
 		</logic:equal>    
 		<logic:equal name="custReqForm" property="canChangeRequester" value="off">
@@ -199,12 +220,12 @@
       <td colspan="3" class="formBody">
 		  <logic:equal name="custReqForm" property="isAdjustmentWithoutProj" value="on">
 		  		<html:select name="custReqForm" property="projectRelated" styleClass="textBox" disabled="true">
-					<html:options collection="projectList" property="id" labelProperty="name"/>
+					<html:options collection="projectList" property="id" labelProperty="name" filter="false"/>
 				</html:select>			
 		  </logic:equal>
 		  <logic:equal name="custReqForm" property="isAdjustmentWithoutProj" value="off">
 		  		<html:select name="custReqForm" property="projectRelated" styleClass="textBox" onkeypress="javascript:changeProject();" onchange="javascript:changeProject();">
-					<html:options collection="projectList" property="id" labelProperty="name"/>
+					<html:options collection="projectList" property="id" labelProperty="name" filter="false"/>
 				</html:select>
 		  </logic:equal>
       </td>
@@ -234,7 +255,7 @@
       <td class="formTitle"><bean:message key="label.requestCategory"/>:&nbsp;</td>
       <td colspan="3" class="formBody">
 	  		<html:select name="custReqForm" property="categoryId" styleClass="textBox" onkeypress="javascript:changeProject();" onchange="javascript:changeProject();">
-				<html:options collection="categoryList" property="id" labelProperty="name"/>
+				<html:options collection="categoryList" property="id" labelProperty="name" filter="false"/>
 			</html:select>
       </td>
 	  <logic:equal name="custReqForm" property="isAdjustment" value="on">
@@ -248,7 +269,7 @@
 	  	  <td class="formTitle"><bean:message key="label.request.selRes"/>:&nbsp;</td>
 	  	  <td class="formBody">
 			<html:select name="custReqForm" property="selectedResource" styleClass="textBox" onkeypress="javascript:checkPreApproveTrigger();" onchange="javascript:checkPreApproveTrigger();">
-				<html:options collection="projResList" property="id" labelProperty="name"/>
+				<html:options collection="projResList" property="id" labelProperty="name" filter="false"/>
 			</html:select>      
 	  	  </td>
 	  	  <td class="formBody">&nbsp;</td>
@@ -260,7 +281,7 @@
       <td class="formTitle"><bean:message key="label.requestPriority"/>:&nbsp;</td>
       <td colspan="3" class="formBody">
 		<html:select name="custReqForm" property="priority" styleClass="textBox">
-			<html:options collection="priorityList" property="id" labelProperty="genericTag"/>
+			<html:options collection="priorityList" property="id" labelProperty="genericTag" filter="false"/>
 		</html:select>      
       </td>
   	  <td class="formTitle">&nbsp;</td>
@@ -324,50 +345,81 @@
   	</table>
 
 	<table width="98%" border="0" cellspacing="0" cellpadding="0">   	    
-    <tr class="formNotes">
-      <td><div>&nbsp;&nbsp;*&nbsp;<bean:message key="label.requestSuggestedDate.obs"/></div></td>
-      <td colspan="3">&nbsp;</td>
-    </tr> 	    
+    	<tr class="formNotes">
+    		<td width="130" class="formTitle">&nbsp;</td>
+      		<td><div>&nbsp;&nbsp;*&nbsp;<bean:message key="label.requestSuggestedDate.obs"/></div></td>
+      		<td colspan="3">&nbsp;</td>
+    	</tr> 	    
   	</table>
 			
     <logic:equal name="custReqForm" property="isReopenRequirement" value="on">  	
 		<table width="98%" border="0" cellspacing="0" cellpadding="0">   	    
-	    <tr class="formNotes">
-	      <td><div>&nbsp;&nbsp;**&nbsp;<bean:message key="label.requestComment.obs"/></div></td>
-	      <td colspan="3">&nbsp;</td>
-	    </tr>	    
+	    	<tr class="formNotes">
+	    	<td width="130" class="formTitle">&nbsp;</td>
+	      		<td><div>&nbsp;&nbsp;**&nbsp;<bean:message key="label.requestComment.obs"/></div></td>
+	      		<td colspan="3">&nbsp;</td>
+	    	</tr>	    
 	  	</table>  	
     </logic:equal>  	
 
 	<table width="98%" border="0" cellspacing="0" cellpadding="0">    
-	<tr class="pagingFormBody">
-		<td width="20">&nbsp;</td>
-		<td>
-			<table width="80%" border="0" cellspacing="0" cellpadding="0">
-				<tr class="gapFormBody">
-					<td colspan="2">&nbsp;</td>
-				</tr>		
-			  	<plandora-html:attachment name="custReqForm" collection="attachmentList" removedForward="refreshCustAfterAttach"/> 	
-			</table> 
-		</td>
-		<td width="10">&nbsp;</td>
-	</tr>
-	
-	<logic:equal name="custReqForm" property="canSeeArtifacts" value="on">    
 		<tr class="pagingFormBody">
-			<td width="20">&nbsp;</td>
+			<td width="10">&nbsp;</td>
+			<td width="130" class="formTitle">&nbsp;</td>
 			<td>
 				<table width="55%" border="0" cellspacing="0" cellpadding="0">
 					<tr class="gapFormBody">
 						<td colspan="4">&nbsp;</td>
 					</tr>		
-				  	<plandora-html:artifact name="custReqForm" property="reqNum" projectProperty="projectRelated" collection="repositoryList"/> 	
+			  		<plandora-html:attachment name="custReqForm" collection="attachmentList" removedForward="refreshCustAfterAttach"/> 	
 				</table> 
 			</td>
 			<td width="10">&nbsp;</td>
 		</tr>
-	</logic:equal>	
+	</table>
 	
+	<logic:notEqual name="custReqForm" property="id" value="">
+	    <logic:equal name="custReqForm" property="showTechComments" value="on">
+			<table width="98%" border="0" cellspacing="0" cellpadding="0">
+			<tr class="pagingFormBody">
+	    	    <td width="10">&nbsp;</td>
+	    	    <td width="130" class="formTitle">&nbsp;</td>
+				<td>
+					<table width="55%" border="0" cellspacing="0" cellpadding="0">
+						<tr class="gapFormBody">
+							<td colspan="4">&nbsp;</td>
+						</tr>		
+					  	<plandora-html:relationship name="custReqForm" entity="<%=PlanningRelationTO.ENTITY_REQ%>" property="id" projectProperty="projectRelated" collection="reqRelationshipList" forward="goToCustRequest" removeFunction="removeRelation"/>
+					</table> 
+				</td>
+				<td width="10">&nbsp;</td>
+			</tr>
+			<tr class="gapFormBody">
+			  <td colspan="4">&nbsp;</td>
+			</tr> 		
+			</table>
+		</logic:equal>
+	</logic:notEqual>	 	
+	
+	<logic:equal name="custReqForm" property="canSeeArtifacts" value="on">
+		<table width="98%" border="0" cellspacing="0" cellpadding="0">       
+			<tr class="pagingFormBody">
+				<td width="10">&nbsp;</td>
+				<td width="130" class="formTitle">&nbsp;</td>
+				<td>
+					<table width="55%" border="0" cellspacing="0" cellpadding="0">
+						<tr class="gapFormBody">
+							<td colspan="4">&nbsp;</td>
+						</tr>		
+				  		<plandora-html:artifact name="custReqForm" property="reqNum" projectProperty="projectRelated" collection="repositoryList"/> 	
+					</table> 
+				</td>
+				<td width="10">&nbsp;</td>
+			</tr>
+		</table> 
+	</logic:equal>    
+
+	<table width="98%" border="0" cellspacing="0" cellpadding="0">    	
 	<logic:equal name="custReqForm" property="canSeeDiscussion" value="on">    
 		<tr class="pagingFormBody">
 			<td width="20">&nbsp;</td>
@@ -378,15 +430,15 @@
 			</td>
 			<td width="10">&nbsp;</td>
 		</tr>
-	</logic:equal>    
-	</table> 
+	</logic:equal>   
+	</table>		
 	
 	<display:headerfootergrid type="FOOTER">			
 		<table width="98%" border="0" cellspacing="0" cellpadding="0"><tr>
 		  <logic:equal name="custReqForm" property="readOnlyMode" value="off">
 			  <td width="120">
 				  <html:button property="save" styleClass="button" onclick="javascript:saveRequirement('custReqForm', 'saveRequirement');">
-					<bean:write name="custReqForm" property="saveLabel" />    	    
+					<bean:write name="custReqForm" property="saveLabel" filter="false" />    	    
 				  </html:button>    
 			  </td>
 		  </logic:equal>
@@ -428,21 +480,21 @@
 	<table width="98%" border="0" cellspacing="0" cellpadding="0">
 	<tr class="formBody">
 		<td>
-			<display:table border="1" width="100%" name="requirementList" scope="session" pagesize="<%=PreferenceTO.HOME_REQULIST_NUMLINE%>" requestURI="../do/manageCustRequest?operation=navigate">
-				<display:column sort="true" likeSearching="true" width="5%" property="id" title="label.gridReqNum" />			
-	   		    <display:column sort="true" likeSearching="true" property="description" maxWords="<%=PreferenceTO.LIST_NUMWORDS%>" title="label.requestDesc" decorator="com.pandora.gui.taglib.decorator.RequirementGridHilight" />
-				<display:column sort="true" likeSearching="true" width="7%" property="requester.username" align="center" title="label.showAllReqForm.grid.requester" />    					
-				<display:column sort="true" width="12%" align="center" property="project.name" title="label.requestProject" description="label.requestProject" visibleProperty="<%=PreferenceTO.HOME_REQLIST_SW_PROJ%>" />
-				<display:column sort="true" width="7%" align="center" property="priority" title="label.requestPriority" description="label.requestPriority" visibleProperty="<%=PreferenceTO.HOME_REQLIST_SW_PRIOR%>" decorator="com.pandora.gui.taglib.decorator.RequirementGridPriorityDecorator" />
-			    <display:column sort="true" width="10%" property="category.name" align="center" title="label.manageTask.category" description="label.manageTask.category" visibleProperty="<%=PreferenceTO.HOME_REQLIST_SW_CATEG%>" />
- 			    <display:column sort="true" width="16%" align="center" property="requirementStatus.name" title="label.requestStatus" description="label.requestStatus" visibleProperty="<%=PreferenceTO.HOME_REQLIST_SW_STAT%>" decorator="com.pandora.gui.taglib.decorator.RequirementGridStatus" />
-				<display:column sort="true" width="10%" property="iteration" align="center" title="label.occurrence.iteration" description="label.manageTask.grid.iteration.req.desc" visibleProperty="<%=PreferenceTO.HOME_REQLIST_SW_ITERA%>" decorator="com.pandora.gui.taglib.decorator.IterationLinkDecorator" tag="req_only"/> 			    
-				<display:metafieldcolumn width="10%" property="id" align="center" description="label.manageOption.showMetaField" visibleProperty="<%=PreferenceTO.LIST_ALL_REQ_SW_META_FIELD%>" />
-				<display:column width="2%" property="id" title="grid.title.empty" decorator="com.pandora.gui.taglib.decorator.RequirementGridEditDecorator" />
-				<display:column width="2%" property="id" title="grid.title.empty" decorator="com.pandora.gui.taglib.decorator.RequirementGridDeleteDecorator" tag="'custReqForm', 'giveUpRequest'" />
-				<display:column width="2%" property="id" title="grid.title.empty" decorator="com.pandora.gui.taglib.decorator.GridDetailDecorator" tag="'REQ'" />
- 			    <display:column width="2%" property="id" title="grid.title.empty" decorator="com.pandora.gui.taglib.decorator.AttachmentGridDecorator" tag="REQ" />
-			</display:table>					
+			<plandora-html:ptable width="100%" name="requirementList" scope="session" pagesize="<%=PreferenceTO.HOME_REQULIST_NUMLINE%>" frm="custReqForm">
+				<plandora-html:pcolumn sort="true" likeSearching="true" width="5%" property="id" title="label.gridReqNum" />			
+	   		    <plandora-html:pcolumn sort="true" likeSearching="true" property="description" maxWords="<%=PreferenceTO.LIST_NUMWORDS%>" title="label.requestDesc" decorator="com.pandora.gui.taglib.decorator.RequirementGridHilight" />
+				<plandora-html:pcolumn sort="true" comboFilter="true" likeSearching="true" width="7%" property="requester.username" align="center" title="label.showAllReqForm.grid.requester" />    					
+				<plandora-html:pcolumn sort="true" comboFilter="true" width="12%" align="center" property="project.name" title="label.requestProject" description="label.requestProject" visibleProperty="<%=PreferenceTO.HOME_REQLIST_SW_PROJ%>" />
+				<plandora-html:pcolumn sort="true" comboFilter="true" width="7%" align="center" property="priority" title="label.requestPriority" description="label.requestPriority" visibleProperty="<%=PreferenceTO.HOME_REQLIST_SW_PRIOR%>" decorator="com.pandora.gui.taglib.decorator.RequirementGridPriorityDecorator" />
+			    <plandora-html:pcolumn sort="true" width="10%" property="category.name" align="center" title="label.manageTask.category" description="label.manageTask.category" visibleProperty="<%=PreferenceTO.HOME_REQLIST_SW_CATEG%>" />
+ 			    <plandora-html:pcolumn sort="true" comboFilter="true" width="16%" align="center" property="requirementStatus.name" title="label.requestStatus" description="label.requestStatus" visibleProperty="<%=PreferenceTO.HOME_REQLIST_SW_STAT%>" decorator="com.pandora.gui.taglib.decorator.RequirementGridStatus" />
+				<plandora-html:pcolumn sort="true" width="10%" property="iteration" align="center" title="label.occurrence.iteration" description="label.manageTask.grid.iteration.req.desc" visibleProperty="<%=PreferenceTO.HOME_REQLIST_SW_ITERA%>" decorator="com.pandora.gui.taglib.decorator.IterationLinkDecorator" tag="req_only"/> 			    
+				<plandora-html:metafieldPcolumn width="16%" property="additionalFields" align="center" description="label.manageOption.showMetaField" visibleProperty="<%=PreferenceTO.LIST_ALL_REQ_SW_META_FIELD%>" />
+				<plandora-html:pcolumn width="2%" property="id" title="grid.title.empty" decorator="com.pandora.gui.taglib.decorator.RequirementGridEditDecorator" />
+				<plandora-html:pcolumn width="2%" property="id" title="grid.title.empty" decorator="com.pandora.gui.taglib.decorator.RequirementGridDeleteDecorator" tag="'custReqForm', 'giveUpRequest'" />
+				<plandora-html:pcolumn width="2%" property="id" title="grid.title.empty" decorator="com.pandora.gui.taglib.decorator.GridDetailDecorator" tag="'REQ'" />
+ 			    <plandora-html:pcolumn width="2%" property="id" title="grid.title.empty" decorator="com.pandora.gui.taglib.decorator.AttachmentGridDecorator" tag="REQ" />
+			</plandora-html:ptable>					
 		</td>
 	</tr> 
 	</table>

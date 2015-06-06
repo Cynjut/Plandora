@@ -3,8 +3,8 @@ package com.pandora.bus;
 import java.sql.Timestamp;
 import java.util.Vector;
 
-import com.pandora.MetaFormTO;
 import com.pandora.CustomFormTO;
+import com.pandora.MetaFormTO;
 import com.pandora.dao.CustomFormDAO;
 import com.pandora.dao.MetaFormDAO;
 import com.pandora.exception.BusinessException;
@@ -14,7 +14,7 @@ import com.pandora.exception.DataAccessException;
  */
 public class MetaFormBUS extends GeneralBusiness {
 
-    /** The Data Acess Object related with current business entity */
+    /** The Data Access Object related with current business entity */
     MetaFormDAO dao = new MetaFormDAO();
     CustomFormDAO cdao = new CustomFormDAO();
     

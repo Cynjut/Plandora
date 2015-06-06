@@ -1,7 +1,7 @@
 package com.pandora.exception;
 
 /**
- * This exception is thown when a task is trying to be inserted or updated but her
+ * This exception is thrown when a task is trying to be inserted or updated but her
  * parent task is related with a different requirement.
  */
 public class TasksDiffRequirementException extends BusinessException {
@@ -21,7 +21,7 @@ public class TasksDiffRequirementException extends BusinessException {
      * @param e
      */
     public TasksDiffRequirementException() {
-        super("A task and his parent task cannot have differents requirement.");
+        super("A task and his parent task cannot have different requests.");
     }    
 
 }

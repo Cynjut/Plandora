@@ -28,7 +28,7 @@ public class SnipArtifactAction extends GeneralStrutsAction {
 			snip.setHandler(uto);
 			
 			frm.setPopupTitle(super.getBundleMessage(request, snip.getUniqueName()));
-			frm.setHtmlFormBody(snip.getHtmlBody(request));
+			frm.setHtmlFormBody(snip.getHtmlBody(request, frm));
 			
 		} catch (Exception e) {
 			this.setErrorFormSession(request, "error.generic.showFormError", e);
@@ -46,7 +46,7 @@ public class SnipArtifactAction extends GeneralStrutsAction {
 			
 			UserTO uto = SessionUtil.getCurrentUser(request);
 			snip.setHandler(uto);
-			String content = snip.submit(request);
+			String content = snip.submit(request, frm);
 			
 	        response.setContentType("text/xml");  
 	        response.setHeader("Cache-Control", "no-cache");  
@@ -60,4 +60,27 @@ public class SnipArtifactAction extends GeneralStrutsAction {
 		return null;
 	}
 
+	
+	public ActionForward refreshSnip(ActionMapping mapping, ActionForm form,
+			 HttpServletRequest request, HttpServletResponse response){
+		try {
+			SnipArtifactForm frm = (SnipArtifactForm)form;
+			SnipArtifact snip = SnipArtifactBUS.getSnipArtifactClass(frm.getSnip());
+			
+			UserTO uto = SessionUtil.getCurrentUser(request);
+			snip.setHandler(uto);
+			String content = snip.refresh(request, frm, frm.getRefreshCommand());
+			
+	        response.setContentType("text/xml");  
+	        response.setHeader("Cache-Control", "no-cache");  
+	        PrintWriter out = response.getWriter();  
+	        out.println(content);  
+	        out.flush();
+			
+		} catch (Exception e) {
+			this.setErrorFormSession(request, "error.generic.showFormError", e);
+		}		
+		return null;
+	}
+	
 }

@@ -47,7 +47,7 @@
 	<tr><td width="10">&nbsp;</td><td>
 	
 	<display:headerfootergrid width="100%" type="HEADER">
-		<bean:write name="customFormForm" property="formTitle" />
+		<bean:write name="customFormForm" property="formTitle" filter="false"/>
 	</display:headerfootergrid>
 	
 	<table width="98%" border="0" cellspacing="0" cellpadding="0">
@@ -58,7 +58,7 @@
     <tr class="pagingFormBody">
       <td>&nbsp;</td>
       <td colspan="3">
-	  	<plandora-html:metafield name="customFormForm" collection="metaFormFieldList" styleTitle="formTitle" styleBody="formBody" styleForms="textBox" titleWidth="120" forward="manageCustomForm?operation=navigate"/>     
+	  	<plandora-html:metafield name="customFormForm" collection="metaFieldList" styleTitle="formTitle" styleBody="formBody" styleForms="textBox" titleWidth="120" forward="manageCustomForm?operation=navigate"/>     
 	  </td>		  
       <td>&nbsp;</td>	  
     </tr>
@@ -72,7 +72,7 @@
 		<table width="98%" border="0" cellspacing="0" cellpadding="0"><tr>
 		  <td width="120">
 			  <html:button property="save" styleClass="button" onclick="javascript:beforeSaveEvent();">
-				<bean:write name="customFormForm" property="saveLabel" />
+				<bean:write name="customFormForm" property="saveLabel" filter="false"/>
 			  </html:button>    
 		  </td>
 		  <td width="120">
@@ -98,12 +98,12 @@
 	<table width="98%" border="0" cellspacing="0" cellpadding="0">
 	<tr class="formBody">
 		<td>
-			<display:table border="1" width="100%" name="customList" scope="session" pagesize="customFormRowNumber" requestURI="../do/manageCustomForm?operation=navigate">
-				<display:column width="4%" property="id" align="center" title="grid.title.empty" />			
-				<display:metafieldcolumn comboFilterId="customFormComboFilterId" property="id" sort="true" likeSearching="true" align="center" />
-				<display:column width="2%" property="id" title="grid.title.empty" decorator="com.pandora.gui.taglib.decorator.GridEditDecorator" tag="'customFormForm', 'editRecord'" />
-				<display:column width="2%" property="id" title="grid.title.empty" decorator="com.pandora.gui.taglib.decorator.GridDeleteDecorator" tag="'customFormForm', 'removeRecord'" />
-			</display:table>		
+			<plandora-html:ptable width="100%" name="customList" scope="session" pagesize="customFormRowNumber" frm="customFormForm">
+				<plandora-html:pcolumn width="4%" property="id" align="center" title="grid.title.empty" />			
+				<plandora-html:metafieldPcolumn property="additionalFields" comboFilter="true" likeSearching="true" align="center" />			
+				<plandora-html:pcolumn width="2%" property="id" title="grid.title.empty" decorator="com.pandora.gui.taglib.decorator.GridEditDecorator" tag="'customFormForm', 'editRecord'" />
+				<plandora-html:pcolumn width="2%" property="id" title="grid.title.empty" decorator="com.pandora.gui.taglib.decorator.GridDeleteDecorator" tag="'customFormForm', 'removeRecord'" />
+			</plandora-html:ptable>		
 		</td>
 	</tr> 
 	</table>

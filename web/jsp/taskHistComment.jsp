@@ -5,7 +5,7 @@
 <%@ taglib uri="/WEB-INF/lib/struts-logic" prefix="logic" %>
 
 <html>
-	<title><bean:message key="title.taskHistoryWindow"/><bean:write name="histTaskForm" property="taskId" /></title>
+	<title><bean:message key="title.taskHistoryWindow"/><bean:write name="histTaskForm" property="taskId" filter="false"/></title>
 	<head>
 		<link href="../css/styleDefault.css" id="style" TYPE="text/css" rel="STYLESHEET">
 		<link rel="shortcut icon" type="image/x-icon" href="../images/favicon.ico" />
@@ -30,10 +30,10 @@
 	</tr>
 	</table>
 	
-	<table class="table" width="100%" border="1" cellspacing="1" cellpadding="2">
+	<table class="table" width="100%" height="92%" border="1" cellspacing="1" cellpadding="2">
 		<tr class="tableRowEven">
-		   <td colspan="2">
-				<html:textarea name="histTaskForm" property="historyComment" styleClass="textBox" cols="143" rows="14" readonly="true" />				
+		   <td>
+				<html:textarea name="histTaskForm" property="historyComment" styleClass="fullTextArea" readonly="true" />				
 		   </td>
 		</tr>	
 	</table>

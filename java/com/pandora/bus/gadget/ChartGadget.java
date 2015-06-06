@@ -40,7 +40,7 @@ public class ChartGadget extends Gadget {
 		}
 	}
 	
-	public StringBuffer gadgetToHtml(HttpServletRequest request, int width, int height, String loadingLabel) throws BusinessException{
+	public StringBuffer gadgetToHtml(HttpServletRequest request, HttpServletResponse response, int width, int height, String loadingLabel) throws BusinessException{
 	    StringBuffer content = new StringBuffer();
 	    
 	    String id = getId();
@@ -90,7 +90,6 @@ public class ChartGadget extends Gadget {
 	protected String getJSonTitle(String title){
 		return "\"title\":{\n" +
         	"\"text\":  \"" + title + "\",\n" +
-        	//"\"tooltip\": { \"shadow\": true, \"title\": \"{font-size: 9px; color: #808080;}\", \"body\": \"{font-size: 9px; color: #808080;}\" }, \n" +
         	"\"style\": \"{font-size: 9px; color:#000080; font-family: Verdana; text-align: center;}\"\n" +
         	"}, " +
         	"\"bg_colour\": \"#FFFFFF\" \n";		
@@ -104,12 +103,87 @@ public class ChartGadget extends Gadget {
 
 	}
 	
+	
+	protected String getBarsValues(float[][] vals, String labels[], String barColors[], float[][] lineVals, String lineNames[], String lineColors[]){
+		if (barColors==null) {
+			barColors = new String[]{"000040", "8080FF", "0080FF", "8000FF", "80FF80", "800040", "800000",  "FF0000", "FF8C37", "FFDC39", "FFFF00", "BEF01E", "5AFF28", "008000", "00FF00", "808000", "808040", "808080", "C0C0C0", "00FFFF", "000040", "8080FF", "0080FF", "8000FF", "80FF80", "800040", "800000",  "FF0000", "FF8C37", "FFDC39", "FFFF00", "BEF01E", "5AFF28", "008000", "00FF00", "808000", "808040", "808080", "C0C0C0", "00FFFF", "000040", "8080FF", "0080FF", "8000FF", "80FF80", "800040", "800000",  "FF0000", "FF8C37", "FFDC39", "FFFF00", "BEF01E", "5AFF28", "008000", "00FF00", "808000", "808040", "808080", "C0C0C0", "00FFFF"};			
+		}
+
+		String response = "\"elements\":[\n";
+
+		for (int i=0; i<vals[0].length;i++) {
+			if (i>0) {
+				response = response + ",";
+			}
+			
+			response = response + "{ \"type\": \"bar\",\n \"values\": [ ";
+			boolean isFirst = true;
+
+			for (int j=0; j<vals.length;j++) {
+				if (!isFirst) {
+					response = response + ", ";		
+				}				
+				response = response + formatFloat(vals[j][i]);
+				isFirst = false;				
+			}
+
+			response = response + "],\n\"colour\": \"" + barColors[i] + "\",\n";
+			response = response + "\"font-size\": 9,\n" +
+			  					  "\"alpha\":  0.5,\n" +
+			  					  "\"outline-colour\": \"#000000\",\n";
+			response = response + "\"tip\": \"" + labels[i] + " : #val#\" \n } \n";
+		}
+				
+		if (lineVals!=null && lineVals[0]!=null) {
+			response = response + ",";
+
+			for (int i=0; i<lineVals[0].length;i++) {
+				
+				response = response + "{\"type\": \"line\",\n";
+			    response = response + "\"values\": [";
+
+			    boolean isFirst = true;
+			    for (int j=0; j<lineVals.length;j++) {
+		            if (!isFirst) {
+		            	response = response + ", ";
+		            }
+		            response = response + "{ \"type\": \"dot\", \"value\": " + formatFloat(lineVals[j][i]) + ", \"tip\": \"" + lineNames[i] + " : #val#\" } " ;
+		            isFirst = false;
+			    }
+
+				response = response + "], ";
+				response = response + "\"dot-style\": { \"type\": \"dot\", \"dot-size\": 3, \"halo-size\": 1}, ";
+			    
+			    if (lineColors!=null && lineColors[i]!=null) {
+			    	response = response + "\"colour\": \"#" + lineColors[i] + "\" ";	
+			    } else {
+			    	response = response + "\"colour\": \"#0000CC\" ";
+			    }
+			    
+			    
+			    if (i+1<lineVals[0].length) {				
+					response = response + "},\n";	
+				} else {
+					response = response + "} \n";
+				}
+			}
+		} else {
+			response = response + "}\n";	
+		}
+
+		response = response + "]\n";
+		
+		
+		return response;		
+	}
+
+	
 	protected String getBarStackValues(float[][] vals, String labels[]){
 	    return getBarStackValues(vals, labels, null, null, null, null, true);    
 	}
 	
 	protected String getBarStackValues(float[][] vals, String labels[], float[][] lineVals, String lineNames[], String lineColors[], boolean isVerticalLabels){
-		return getBarStackValues(vals, labels, null, lineVals, lineNames, lineColors, true);
+		return getBarStackValues(vals, labels, null, lineVals, lineNames, lineColors, isVerticalLabels);
 	}
 	
 	protected String getBarStackValues(float[][] vals, String labels[], String[] barColors, float[][] lineVals, String lineNames[], String lineColors[], boolean isVerticalLabels){
@@ -143,7 +217,7 @@ public class ChartGadget extends Gadget {
 						line = line + " [" + labels[idx] + "] #x_label#\", ";						
 					} else {
 						line = line + "\", " ;						
-					}						
+					}					
 
 					line = line + "\"colour\": \"#" + barColors[j] + "\"} " ;
 					
@@ -443,14 +517,43 @@ public class ChartGadget extends Gadget {
 		return maxTotal;
 	}
 
+	private float getLBound(float[][] vals, boolean isStackBar) {
+		float minTotal = 0;
+		if (vals!=null) {
+			for (int i=0; i<vals.length;i++) {
+				float buff = 0;
+				for (int j=0; j<vals[i].length;j++) {
+					if (isStackBar) {
+						buff = buff + vals[i][j];	
+					} else {
+						buff = vals[i][j];
+						if (buff<minTotal) {
+							minTotal = buff;
+						}											
+					}
+				}
+				if (isStackBar) {
+					if (buff<minTotal) {
+						minTotal = buff;
+					}					
+				}
+			}			
+		}
+		return minTotal;
+	}
+
+	
 	protected String getJSonAxis(String[] labels, float[][] vals, String axisType){
 		return getJSonAxis(labels, vals, null, axisType);
 	}
 	protected String getJSonAxis(String[] labels, float[][] vals, float[][] valLine, String axisType){
 		return getJSonAxis(labels, vals, valLine, axisType, true);
 	}
-	
 	protected String getJSonAxis(String[] labels, float[][] valBar, float[][] valLine, String axisType, boolean isStackBar){
+		return getJSonAxis(labels, valBar, valLine, axisType, isStackBar, null, null);
+	}
+	
+	protected String getJSonAxis(String[] labels, float[][] valBar, float[][] valLine, String axisType, boolean isStackBar, String prefix, String sufix){
 		String response = "";
 		float maxTotal = 0;
 		
@@ -485,9 +588,21 @@ public class ChartGadget extends Gadget {
 					maxTotal = maxLine;
 				}
 			}
-			response = response + " \"min\":   0,\n" +
+			
+			float minTotal = this.getLBound(valBar, isStackBar);
+			if (valLine!=null){
+				float otherMin = this.getLBound(valLine, false);
+				if (otherMin<minTotal){
+					minTotal = otherMin;
+				}
+			}			
+			response = response + " \"min\":   " + minTotal + ",\n" +
 								  " \"steps\": " + ((int)(maxTotal/4)) + ",\n" +
                                   "  \"max\":  " + ((int)(maxTotal+1)) + " \n";
+			
+			if (prefix!=null || sufix!=null) {
+				response = response + ", \"labels\": { \"text\": \"" + (prefix!=null?prefix:"") + "#val#" + (sufix!=null?sufix:"") + "\" }";
+			}
 		}
 		
 		response = response + "}\n";
@@ -496,77 +611,6 @@ public class ChartGadget extends Gadget {
 	}
 
 	
-	protected Vector<TransferObject> getAtiveUsersByProject(String projectId) throws BusinessException {
-		return getAtiveUsers(null, projectId);
-	}
 	
-	
-	protected Vector<TransferObject> getAtiveUsers(String userId) throws BusinessException{
-		return getAtiveUsers(userId, null);
-	}
-	
-	
-	private Vector<TransferObject> getAtiveUsers(String userId, String projectId) throws BusinessException{
-    	Vector userlist = new Vector();
-    	DbQueryDelegate qdel = new DbQueryDelegate();
-    	HashMap hm = new HashMap();
-    	
-    	TransferObject defaultOpt = new TransferObject("-1", "label.combo.select");
-    	TransferObject separator = new TransferObject("-1", "");
-    	userlist.addElement(defaultOpt);
-
-    	//get the current active users related to the project where 'userId' is allocated
-    	String sqlData = "select distinct t.id, t.name from resource r, customer c, tool_user t " +
-    			"where t.id = r.id and t.id = c.id and c.project_id = r.project_id and " +
-    			"(c.is_disable = 0 or c.is_disable is null) and t.final_date is null and t.username <> 'root' and ";
-    	if (userId!=null) {
-    		sqlData = sqlData + "r.project_id in (select project_id from resource where id= '" + userId + "' ) ";
-    	} else {
-    		sqlData = sqlData + "r.project_id ='" + projectId + "' ";
-    	}
-    	sqlData = sqlData + "order by name";
-    			
-    	Vector dbAllocList = qdel.performQuery(sqlData, null, null);
-    	if (dbAllocList!=null) {
-    		for (int i=1; i<dbAllocList.size(); i++) {
-    			Vector item = (Vector)dbAllocList.elementAt(i);
-    			TransferObject to = new TransferObject((String)item.elementAt(0), (String)item.elementAt(1));
-    			hm.put(to.getId(), to);
-    			userlist.addElement(to);
-    		}
-    	}
-
-    	//get the inactive users related to the project where 'userId' is allocated    	
-    	String sqlData2 = "select distinct t.id, t.name from resource r, customer c, tool_user t " +
-			"where t.id = r.id and t.id = c.id and c.project_id = r.project_id and " +
-			"c.is_disable = 1 and t.username <> 'root' and t.final_date is null and ";
-    	if (userId!=null) {
-    		sqlData2 = sqlData2 + "r.project_id in (select project_id from resource where id= '" + userId + "' ) ";
-    	} else {
-    		sqlData2 = sqlData2 + "r.project_id ='" + projectId + "' ";
-    	}
-    	sqlData2 = sqlData2 + "order by name";
-    	
-    	dbAllocList = qdel.performQuery(sqlData2, null, null);
-    	if (dbAllocList!=null && dbAllocList.size()>0) {
-    		boolean isSep = false;
-
-    		for (int i=1; i<dbAllocList.size(); i++) {
-    			Vector item = (Vector)dbAllocList.elementAt(i);
-    			TransferObject to = new TransferObject((String)item.elementAt(0), (String)item.elementAt(1));
-    			if (hm.get(to.getId())==null) {
-    				
-    				if (!isSep) {
-    		    		userlist.addElement(separator);
-    		    		isSep = true;
-    				}
-    				
-    				userlist.addElement(to);	
-    			}
-    		}
-    	}
-    	
-		return userlist;
-	}	
 		
 }

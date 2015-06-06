@@ -7,6 +7,7 @@ import java.net.URLEncoder;
 
 import org.w3c.dom.Node;
 
+import com.pandora.bus.SystemSingleton;
 import com.pandora.helper.XmlDomParse;
 import com.pandora.integration.exception.IntegrationException;
 
@@ -96,7 +97,8 @@ public abstract class Integration implements Serializable {
         String response = null;
         if (this.getComment()!=null) {
             try {
-				response = URLEncoder.encode(this.getComment(), "UTF-8");
+            	String encoding = SystemSingleton.getInstance().getDefaultEncoding();
+				response = URLEncoder.encode(this.getComment(), encoding);
 			} catch (UnsupportedEncodingException e) {
 				e.printStackTrace();
 				response = null;
@@ -107,7 +109,8 @@ public abstract class Integration implements Serializable {
 
     private void setEncodedComment(String encc) {
         try {
-			this.setComment(URLDecoder.decode(encc, "UTF-8"));
+        	String encoding = SystemSingleton.getInstance().getDefaultEncoding();
+			this.setComment(URLDecoder.decode(encc, encoding));
 		} catch (UnsupportedEncodingException e) {
 			e.printStackTrace();
 		}

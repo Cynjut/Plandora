@@ -20,8 +20,8 @@ import com.pandora.helper.LogUtil;
 
 public class SurveyDAO extends DataAccess {
 
-	public Vector getAnswerByQuestion(SurveyQuestionTO sqto) throws DataAccessException {
-        Vector response = null;
+	public Vector<QuestionAnswerTO> getAnswerByQuestion(SurveyQuestionTO sqto) throws DataAccessException {
+        Vector<QuestionAnswerTO> response = null;
         Connection c = null;
 		try {
 			c = getConnection();
@@ -50,8 +50,8 @@ public class SurveyDAO extends DataAccess {
 	}
 
 	
-	public Vector getSurveyListByUser(UserTO uto, boolean ignoreClosed) throws DataAccessException {
-        Vector response = null;
+	public Vector<SurveyTO> getSurveyListByUser(UserTO uto, boolean ignoreClosed) throws DataAccessException {
+        Vector<SurveyTO> response = null;
         Connection c = null;
 		try {
 			c = getConnection();
@@ -65,12 +65,12 @@ public class SurveyDAO extends DataAccess {
 	}
 
 
-	public Vector getSurveyListByProject(ProjectTO pto) throws DataAccessException {
-        Vector response = null;
+	public Vector<SurveyTO> getSurveyListByProject(ProjectTO pto, boolean ignoreClosed) throws DataAccessException {
+        Vector<SurveyTO> response = null;
         Connection c = null;
 		try {
 			c = getConnection();
-			response = this.getSurveyListByUser(pto, c);
+			response = this.getSurveyListByProject(pto, ignoreClosed, c);
 		} catch(Exception e) {
 			throw new DataAccessException(e);
 		} finally {
@@ -79,7 +79,7 @@ public class SurveyDAO extends DataAccess {
         return response;
 	}
 	
-	public void saveAnswer(Vector answerList) throws DataAccessException {
+	public void saveAnswer(Vector<QuestionAnswerTO> answerList) throws DataAccessException {
 		Connection c = null;
 		PreparedStatement pstmt = null;		
 		try {
@@ -87,9 +87,9 @@ public class SurveyDAO extends DataAccess {
 			if (answerList!=null) {
 				c = getConnection(false);
 								
-				Iterator i = answerList.iterator();
+				Iterator<QuestionAnswerTO> i = answerList.iterator();
 				while(i.hasNext()) {
-					QuestionAnswerTO qato = (QuestionAnswerTO)i.next();
+					QuestionAnswerTO qato = i.next();
 					
 					if (qato.getUser()!=null) {
 						pstmt = c.prepareStatement("delete from question_answer " +
@@ -121,15 +121,15 @@ public class SurveyDAO extends DataAccess {
 	}
 	
 	
-	private Vector getSurveyListByUser(UserTO uto, boolean ignoreClosed, Connection c) throws DataAccessException{
-		Vector response = new Vector();
+	private Vector<SurveyTO> getSurveyListByUser(UserTO uto, boolean ignoreClosed, Connection c) throws DataAccessException{
+		Vector<SurveyTO> response = new Vector<SurveyTO>();
 		ResultSet rs = null;
 		PreparedStatement pstmt = null; 
 		String closedWhere = "";
 		
 		try {
 			
-			if (!ignoreClosed) {
+			if (ignoreClosed) {
 				closedWhere = " and (s.final_date is null or s.final_date >= ?)";
 			}
 			
@@ -139,10 +139,10 @@ public class SurveyDAO extends DataAccess {
 					"from survey s, project p " +
 					"where s.project_id = p.id " +
 					  "and s.project_id in (select distinct project_id from customer where id = ?) " +
-					  "and s.creation_date <= ?" + closedWhere);	
+					  "and s.creation_date <= ?" + closedWhere + " order by s.creation_date");	
 			pstmt.setString(1, uto.getId());
 			pstmt.setTimestamp(2, DateUtil.getNow());
-			if (!ignoreClosed) {
+			if (ignoreClosed) {
 				pstmt.setTimestamp(3, DateUtil.getNow());	
 			}
 			rs = pstmt.executeQuery();
@@ -161,19 +161,27 @@ public class SurveyDAO extends DataAccess {
 	}
 	
 	
-    private Vector getSurveyListByUser(ProjectTO pto, Connection c) throws DataAccessException {
-		Vector response= new Vector();
+    private Vector<SurveyTO> getSurveyListByProject(ProjectTO pto, boolean ignoreClosed, Connection c) throws DataAccessException {
+		Vector<SurveyTO> response= new Vector<SurveyTO>();
 		ResultSet rs = null;
-		PreparedStatement pstmt = null; 
+		PreparedStatement pstmt = null;
+		String closedWhere = "";
 		try {
+
+			if (ignoreClosed) {
+				closedWhere = " and (final_date is null or final_date >= ?)";
+			}
+			
 			pstmt = c.prepareStatement("select id, name, description, is_template, is_anonymous, " +
 					"project_id, creation_date, final_date, date_publishing, anonymous_key " +
-					"from survey where project_id=?");			
+					"from survey where project_id=?" + closedWhere);			
 			pstmt.setString(1, pto.getId());
-			rs = pstmt.executeQuery();
+			if (ignoreClosed) {
+				pstmt.setTimestamp(2, DateUtil.getNow());	
+			}			
+			rs = pstmt.executeQuery();			
 			while (rs.next()) {
-				SurveyTO to = this.populateBeanByResultSet(rs);
-			    response.addElement(to);
+			    response.addElement(this.populateBeanByResultSet(rs));
 			}
 						
 		} catch (SQLException e) {
@@ -227,8 +235,8 @@ public class SurveyDAO extends DataAccess {
     }
 
     
-    private Vector getSurveyQuestion(SurveyTO to, Connection c)  throws DataAccessException {
-        Vector response = new Vector();
+    private Vector<SurveyQuestionTO> getSurveyQuestion(SurveyTO to, Connection c)  throws DataAccessException {
+        Vector<SurveyQuestionTO> response = new Vector<SurveyQuestionTO>();
 		ResultSet rs = null;
 		PreparedStatement pstmt = null; 
 		
@@ -243,7 +251,7 @@ public class SurveyDAO extends DataAccess {
 		        	question.setAlterativesList(this.getAlternatives(question, c));
 		        }
 		        if (to.getOwner()!=null) {
-			        Vector answers = this.getAnswerByQuestion(question, to.getOwner(), c);
+			        Vector<QuestionAnswerTO> answers = this.getAnswerByQuestion(question, to.getOwner(), c);
 			        if (answers!=null && answers.size()>0) {
 			        	question.setRelatedAnswer((QuestionAnswerTO)answers.get(0));	
 			        }		        	
@@ -260,8 +268,8 @@ public class SurveyDAO extends DataAccess {
     }
 
     
-    private Vector getAnswerByQuestion(SurveyQuestionTO question, UserTO uto, Connection c)  throws DataAccessException {
-    	Vector response = new Vector();
+    private Vector<QuestionAnswerTO> getAnswerByQuestion(SurveyQuestionTO question, UserTO uto, Connection c)  throws DataAccessException {
+    	Vector<QuestionAnswerTO> response = new Vector<QuestionAnswerTO>();
 		ResultSet rs = null;
 		PreparedStatement pstmt = null;
 
@@ -315,8 +323,8 @@ public class SurveyDAO extends DataAccess {
     }
 
 	
-    private Vector getAlternatives(SurveyQuestionTO to, Connection c)  throws DataAccessException {
-        Vector response = new Vector();
+    private Vector<QuestionAlternativeTO> getAlternatives(SurveyQuestionTO to, Connection c)  throws DataAccessException {
+        Vector<QuestionAlternativeTO> response = new Vector<QuestionAlternativeTO>();
 		ResultSet rs = null;
 		PreparedStatement pstmt = null; 
 		
@@ -344,9 +352,9 @@ public class SurveyDAO extends DataAccess {
     private void insertAlternatives(SurveyQuestionTO q, Connection c) throws DataAccessException{
 		PreparedStatement pstmt = null;
 		try {
-			Vector list = q.getAlterativesList();
+			Vector<QuestionAlternativeTO> list = q.getAlterativesList();
 			if (list!=null) {
-				Iterator i = list.iterator();
+				Iterator<QuestionAlternativeTO> i = list.iterator();
 				while (i.hasNext()) {
 					QuestionAlternativeTO qa = (QuestionAlternativeTO)i.next();
 					
@@ -446,13 +454,14 @@ public class SurveyDAO extends DataAccess {
 			pstmt.setString(10, sto.getAnonymousKey());
 			pstmt.executeUpdate();
 			
-			Iterator i = sto.getQuestionList().iterator();
-			while(i.hasNext()) {
-				SurveyQuestionTO q = (SurveyQuestionTO)i.next();
-				q.setSurvey(sto);				
-				this.insertQuestion(q, c);
+			if (sto.getQuestionList()!=null) {
+				Iterator<SurveyQuestionTO> i = sto.getQuestionList().iterator();
+				while(i.hasNext()) {
+					SurveyQuestionTO q = i.next();
+					q.setSurvey(sto);				
+					this.insertQuestion(q, c);
+				}				
 			}
-			
 			
 		} catch (SQLException e) {
 			throw new DataAccessException(e);
@@ -490,9 +499,9 @@ public class SurveyDAO extends DataAccess {
 			if (sto.getQuestionsToBeUpdated()!=null && sto.getQuestionList()!=null) {
 				Object[] list = sto.getQuestionsToBeUpdated().toArray();
 				for (int i=0 ; i<list.length; i++) {
-					Iterator j = sto.getQuestionList().iterator();
+					Iterator<SurveyQuestionTO> j = sto.getQuestionList().iterator();
 					while(j.hasNext()) {
-						SurveyQuestionTO sq = (SurveyQuestionTO)j.next();
+						SurveyQuestionTO sq = j.next();
 						if (list[i].equals(sq.getId())) {
 							this.updateQuestion(sq, c);
 						}						
@@ -509,9 +518,9 @@ public class SurveyDAO extends DataAccess {
 			}
 
 			//insert new questions if necessary
-			Iterator i = sto.getQuestionList().iterator();
+			Iterator<SurveyQuestionTO>i = sto.getQuestionList().iterator();
 			while(i.hasNext()) {
-				SurveyQuestionTO q = (SurveyQuestionTO)i.next();
+				SurveyQuestionTO q = i.next();
 				if (q.getId().startsWith("NEW_")) {
 					q.setSurvey(sto);				
 					this.insertQuestion(q, c);					

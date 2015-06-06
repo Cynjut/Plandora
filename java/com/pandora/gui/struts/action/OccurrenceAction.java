@@ -5,6 +5,7 @@ import java.util.Iterator;
 import java.util.Locale;
 import java.util.Vector;
 
+import javax.servlet.RequestDispatcher;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -12,7 +13,10 @@ import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionForward;
 import org.apache.struts.action.ActionMapping;
 
+import com.pandora.CategoryTO;
 import com.pandora.FieldValueTO;
+import com.pandora.LeaderTO;
+import com.pandora.MetaFieldTO;
 import com.pandora.OccurrenceFieldTO;
 import com.pandora.OccurrenceTO;
 import com.pandora.PreferenceTO;
@@ -22,12 +26,15 @@ import com.pandora.TransferObject;
 import com.pandora.UserTO;
 import com.pandora.bus.occurrence.Occurrence;
 import com.pandora.bus.occurrence.StrategicObjectivesOccurrence;
+import com.pandora.delegate.CategoryDelegate;
+import com.pandora.delegate.MetaFieldDelegate;
 import com.pandora.delegate.OccurrenceDelegate;
 import com.pandora.delegate.PreferenceDelegate;
 import com.pandora.delegate.ProjectDelegate;
 import com.pandora.delegate.ReportDelegate;
 import com.pandora.delegate.UserDelegate;
 import com.pandora.exception.BusinessException;
+import com.pandora.exception.MetaFieldNumericTypeException;
 import com.pandora.gui.struts.form.GeneralStrutsForm;
 import com.pandora.gui.struts.form.OccurrenceForm;
 import com.pandora.gui.struts.form.ResTaskForm;
@@ -43,7 +50,6 @@ public class OccurrenceAction extends GeneralStrutsAction {
 	public ActionForward prepareForm(ActionMapping mapping, ActionForm form,
 			HttpServletRequest request, HttpServletResponse response){
 		ProjectDelegate pdel = new ProjectDelegate();
-		UserDelegate udel = new UserDelegate();
 		String forward = "showOccurrence";
 		try {
 			this.clearForm(form, request);
@@ -68,6 +74,7 @@ public class OccurrenceAction extends GeneralStrutsAction {
     
 		return mapping.findForward(forward);		
 	}
+	
 	
 	public ActionForward navigate(ActionMapping mapping, ActionForm form,
 			 HttpServletRequest request, HttpServletResponse response){
@@ -100,9 +107,7 @@ public class OccurrenceAction extends GeneralStrutsAction {
 		    OccurrenceForm ofrm = (OccurrenceForm)form;
 		    OccurrenceDelegate odel = new OccurrenceDelegate();
 		    odel.removeKpiLink(ofrm.getSelectedKpi(), ofrm.getId());
-		    
 		    this.refreshKpiPainel(request, ofrm);
-		    
 		} catch(BusinessException e){
 		   this.setErrorFormSession(request, "error.formOccurrence.showForm", e);
 		}	    
@@ -154,6 +159,8 @@ public class OccurrenceAction extends GeneralStrutsAction {
 		        this.setErrorFormSession(request, "error.formOccurrence.source.invalid", null);
 		    }
 			
+		} catch(MetaFieldNumericTypeException e){
+			this.setErrorFormSession(request, e.getMessage(), e.getMetaFieldName(), null, null, null, null, e);
 		} catch(BusinessException e){
 		    this.setErrorFormSession(request, errorMsg, e);
 		} catch(NullPointerException e){
@@ -189,26 +196,44 @@ public class OccurrenceAction extends GeneralStrutsAction {
 
 	
 	private void refresh(OccurrenceForm ofrm, HttpServletRequest request){
-	    String forward = "showOccurrence";
-	    UserDelegate udel = new UserDelegate();
-	    PreferenceDelegate pdel = new PreferenceDelegate();
 		try {	    		    
 		    OccurrenceDelegate odel = new OccurrenceDelegate();
-		    Vector oList = odel.getOccurenceList(ofrm.getProjectId(), ofrm.getHideClosedOccurrences());
+		    UserTO uto = SessionUtil.getCurrentUser(request);
+		    ProjectTO pto = new ProjectTO(ofrm.getProjectId());
+		    
+		    Vector<OccurrenceTO> oList = odel.getOccurenceList(ofrm.getProjectId(), uto.getId(), ofrm.getHideClosedOccurrences());
 		    request.getSession().setAttribute("occurrenceList", oList);
 		    
-		    Vector visibilityList = new Vector();
-	        visibilityList.add(new TransferObject("1", this.getBundleMessage(request, "label.public")));
-	        visibilityList.add(new TransferObject("0", this.getBundleMessage(request, "label.private")));
+		    UserDelegate udel = new UserDelegate();
+		    Vector<LeaderTO> projectLeaders = udel.getLeaderByProject("'" + pto.getId() + "'");
+		    Vector<TransferObject> visibilityList = getVisibilityList(projectLeaders, uto, request);
 	        request.getSession().setAttribute("visibilityList", visibilityList);
-		    	        	        	        
+		    	     
+	        request.getSession().setAttribute("metaFieldList", new Vector<MetaFieldTO>());
+		    
 		} catch(BusinessException e){
 		   this.setErrorFormSession(request, "error.formOccurrence.showForm", e);
 		}
 	}
 
+	private Vector<TransferObject> getVisibilityList(Vector<LeaderTO> projectLeaders, UserTO uto, HttpServletRequest request){
+		Vector<TransferObject> visibilityList = new Vector<TransferObject>();
+		visibilityList.add(new TransferObject("1", this.getBundleMessage(request, "label.public")));
+		
+		Iterator<LeaderTO> itleader = projectLeaders.iterator();
+		while(itleader.hasNext()){
+			if(uto.getId().equals(itleader.next().getId())){
+				visibilityList.add(new TransferObject("0", this.getBundleMessage(request, "label.private")));
+				break;
+			}
+		}
+		return visibilityList;
+	}
 	
     private void refreshOccurrenceSourceFields(HttpServletRequest request, ActionForm form, OccurrenceTO oto) {
+		MetaFieldDelegate mfdel = new MetaFieldDelegate();
+		CategoryDelegate cdel = new CategoryDelegate();
+   	
 		try {
 		    StringBuffer html = new StringBuffer();
 		    String fieldIdList = "";
@@ -221,22 +246,35 @@ public class OccurrenceAction extends GeneralStrutsAction {
 		    	Locale loc = SessionUtil.getCurrentLocale(request);
 		    	String mask = super.getCalendarMask(request);
 		    	
-		        Iterator i = obus.getFields().iterator();
+		        Iterator<FieldValueTO> i = obus.getFields().iterator();
 		        while(i.hasNext()) {
-		            FieldValueTO field = (FieldValueTO)i.next();		            
+		            FieldValueTO field = i.next();		            
 		            String fieldLabel = this.getBundleMessage(request, field.getLabel(), true);
 
 		            if (field.getDomain()!=null) {
 		                field.setDomain(super.applyBundle(request, field.getDomain()));
 		            }
+		            
+		            if (field.getGridFields()!=null) {
+		            	for (FieldValueTO subField : field.getGridFields()) {
+				            if (subField.getDomain()!=null) {
+				            	subField.setDomain(super.applyBundle(request, subField.getDomain()));
+				            }
+						}
+		            }
 
 		            String fieldValue = "";
+		            Vector<Vector<Object>> fieldTableValues = null;
 		            if (oto!=null && oto.getFields()!=null) {
-		                fieldValue = oto.getFieldValueByKey(field.getId(), obus, mask, loc);
+		            	if (field.getType().equals(FieldValueTO.FIELD_TYPE_GRID)) {
+		            		fieldTableValues = oto.getFieldTableValueByKey(field.getId(), obus);
+		            	} else {
+		            		fieldValue = oto.getFieldValueByKey(field.getId(), obus, mask, loc);	
+		            	}
 		            }			        
 			        html.append("<tr class=\"pagingFormBody\"><td width=\"10\">&nbsp;</td>");
 			        html.append("<td width=\"150\" class=\"formTitle\">" + fieldLabel + ":&nbsp;</td>");
-			        html.append("<td class=\"formBody\">" + this.getHtmlField(field, fieldValue, request));
+			        html.append("<td class=\"formBody\">" + this.getHtmlField(field, fieldValue, fieldTableValues, request));
 			        html.append("</td><td width=\"10\">&nbsp;</td></tr>\n");
 			        
 			        if (fieldIdList.trim().length()>0) {
@@ -252,15 +290,21 @@ public class OccurrenceAction extends GeneralStrutsAction {
 		    	
 		    	//set the values to populate the status combo
 		    	if (obus.getStatusValues()!=null) {
-		    	    Vector values = super.applyBundle(request, obus.getStatusValues());
+		    	    Vector<TransferObject> values = super.applyBundle(request, obus.getStatusValues());
 			    	ofrm.setStatusComboHtml(HtmlUtil.getComboBox("status", values, "textBox", ofrm.getStatus()));
 		    	}
 		    	
-		    	
+				request.getSession().setAttribute("metaFieldList", new Vector<MetaFieldTO>());		    
+				CategoryTO cto = cdel.getCategoryByName(ofrm.getSource(), CategoryTO.TYPE_OCCURRENCE, ofrm.getProject());
+				if (cto!=null && ofrm.getId()!=null) {
+					Vector<MetaFieldTO> list = mfdel.getListByProjectAndContainer(ofrm.getId(), cto.getId(), MetaFieldTO.APPLY_TO_OCCURRENCE);
+					request.getSession().setAttribute("metaFieldList", list);		    					
+				}
+				
 		    } else {
 		        this.setErrorFormSession(request, "error.formOccurrence.source.invalid", null); 
 		    }
-
+		    
 		    ofrm.setFieldsHtml(gap + html.toString() + helpContent + gap);
 		    ofrm.setFieldIdList(fieldIdList);
 		    
@@ -270,11 +314,22 @@ public class OccurrenceAction extends GeneralStrutsAction {
     }
     
     
-    private String getHtmlField(FieldValueTO field, String fieldValue, HttpServletRequest request){
+    private String getHtmlField(FieldValueTO field, String fieldValue, Vector<Vector<Object>> fieldTableValues, HttpServletRequest request){
+    	
+    	String[] labels = null;
+    	if (field.getGridFields()!=null) {
+    		labels = new String[field.getGridFields().size()];
+    		for(int i=0; i<field.getGridFields().size(); i++){
+    			FieldValueTO gridColumn = field.getGridFields().get(i);
+    			labels[i] = this.getBundleMessage(request, gridColumn.getLabel(), true);		
+			}
+    	}
+        
         String[] labelsForCalendar = new String[2];
         labelsForCalendar[0] = this.getBundleMessage(request, "label.calendar.button");
         labelsForCalendar[1] = this.getBundleMessage(request, "calendar.format");
-        return HtmlUtil.getHtmlField(field, fieldValue, "occurrenceForm", null, labelsForCalendar);
+        
+        return HtmlUtil.getHtmlField(field, fieldValue, fieldTableValues, "occurrenceForm", labels, labelsForCalendar, null);
     }
     
 
@@ -284,7 +339,7 @@ public class OccurrenceAction extends GeneralStrutsAction {
 	    try {
             request.getSession().setAttribute("sourceList", this.getSourceList(request, form));
         } catch (BusinessException e) {
-            request.getSession().setAttribute("sourceList", new Vector());
+            request.getSession().setAttribute("sourceList", new Vector<TransferObject>());
         }
 	    this.refreshSource(mapping, form, request, response);
 	}
@@ -294,17 +349,16 @@ public class OccurrenceAction extends GeneralStrutsAction {
 			HttpServletRequest request, HttpServletResponse response){
 	    String forward = "showOccurrence";
 	    OccurrenceDelegate odel = new OccurrenceDelegate();
-		
 		try {
-		    OccurrenceForm ofrm = (OccurrenceForm)form;
-		    OccurrenceTO oto = odel.getOccurrenceObject(new OccurrenceTO(ofrm.getId()));
+		    OccurrenceForm frm = (OccurrenceForm)form;
+		    OccurrenceTO oto = odel.getOccurrenceObject(new OccurrenceTO(frm.getId()));
 		    
-		    this.getActionFormFromTransferObject(oto, ofrm, request);
+		    this.getActionFormFromTransferObject(oto, frm, request);
 		    
 			//set current operation status for Updating	
-		    ofrm.setSaveMethod(OccurrenceForm.UPDATE_METHOD, SessionUtil.getCurrentUser(request));
+		    frm.setSaveMethod(OccurrenceForm.UPDATE_METHOD, SessionUtil.getCurrentUser(request));
 		    
-	        this.refreshKpiPainel(request, ofrm);
+	        this.refreshKpiPainel(request, frm);
 		    
 		} catch(BusinessException e){
 		    this.setErrorFormSession(request, "error.formOccurrence.showForm", e);
@@ -316,18 +370,18 @@ public class OccurrenceAction extends GeneralStrutsAction {
 	private void refreshKpiPainel(HttpServletRequest request, OccurrenceForm ofrm) throws BusinessException {
 		if (ofrm.getSource()!=null && ofrm.getSource().equals(StrategicObjectivesOccurrence.class.getName())) {
 			ReportDelegate rdel = new ReportDelegate();
-			Vector kpiList = rdel.getKpiByOccurrence(ofrm.getId());
+			Vector<ReportTO> kpiList = rdel.getKpiByOccurrence(ofrm.getId());
 			ofrm.setKpiListHtml(this.getIndicatorList(kpiList, request, ofrm.getId()));
 			
-			Vector allKpiList = rdel.getListBySource(true, null, ofrm.getProject(), true);
+			Vector<ReportTO> allKpiList = rdel.getListBySource(true, null, ofrm.getProject(), true);
 
-			Vector closedKpiList = new Vector();
-			Vector openKpiList = new Vector();
+			Vector<ReportTO> closedKpiList = new Vector<ReportTO>();
+			Vector<ReportTO> openKpiList = new Vector<ReportTO>();
 			ReportTO defaultOpt = new ReportTO("-1");
 			defaultOpt.setName(this.getBundleMessage(request, "label.combo.select"));
 			openKpiList.add(0, defaultOpt);
 			
-			Iterator i = allKpiList.iterator();
+			Iterator<ReportTO> i = allKpiList.iterator();
 			while(i.hasNext()) {
 				ReportTO rto = (ReportTO)i.next();
 				if (rto.getFinalDate()==null) {
@@ -340,7 +394,7 @@ public class OccurrenceAction extends GeneralStrutsAction {
 			request.getSession().setAttribute("openIndicatorsList", openKpiList);
 			request.getSession().setAttribute("closeIndicatorsList", closedKpiList);
 			
-			Vector kpiWeigthList = new Vector();
+			Vector<TransferObject> kpiWeigthList = new Vector<TransferObject>();
 			kpiWeigthList.addElement(new TransferObject("0", "0"));
 			kpiWeigthList.addElement(new TransferObject("1", "1"));
 			kpiWeigthList.addElement(new TransferObject("2", "2"));
@@ -400,8 +454,8 @@ public class OccurrenceAction extends GeneralStrutsAction {
 	}
 	
 	
-	private Vector getSourceList(HttpServletRequest request, ActionForm form) throws BusinessException{
-	    Vector response = new Vector();	    
+	private Vector<TransferObject> getSourceList(HttpServletRequest request, ActionForm form) throws BusinessException{
+	    Vector<TransferObject> response = new Vector<TransferObject>();	    
 	    UserDelegate udel = new UserDelegate();
 	    UserTO uto = udel.getRoot();
 	    String occClasses = uto.getPreference().getPreference(PreferenceTO.OCCURRENCE_BUS_CLASS);
@@ -433,7 +487,7 @@ public class OccurrenceAction extends GeneralStrutsAction {
 	private Occurrence getOccurrenceClass(String className){
 	    Occurrence response = null;
         try {
-            Class klass = Class.forName(className);
+            Class<?> klass = Class.forName(className);
             response = (Occurrence)klass.newInstance();
         } catch (Exception e) {
             response = null;
@@ -462,13 +516,14 @@ public class OccurrenceAction extends GeneralStrutsAction {
 	    frm.setProject(to.getProject());
 	    frm.setProjectId(to.getProject().getId());
 	    frm.setStatus(to.getStatus());
-	    frm.setVisible(to.isVisible()?"1":"0");
+	    frm.setVisible(to.getVisible()?"1":"0");
 	    frm.setCreationDate(to.getCreationDate());
 	    if (to.getProject()!=null) {
 	    	frm.setProjectName(to.getProject().getName());	
 	    } else {
 	    	frm.setProjectName("");
-	    }	    
+	    }
+	    frm.setAdditionalFields(to.getAdditionalFields());	
 	    
 	    //set the relationship of occurrences
 	    request.getSession().setAttribute("occRelationshipList", to.getRelationList());
@@ -477,7 +532,8 @@ public class OccurrenceAction extends GeneralStrutsAction {
 	}
 	
 	
-	private OccurrenceTO getTransferObjectFromActionForm(OccurrenceForm frm, HttpServletRequest request){
+	@SuppressWarnings("rawtypes")
+	private OccurrenceTO getTransferObjectFromActionForm(OccurrenceForm frm, HttpServletRequest request) throws MetaFieldNumericTypeException{
 	    OccurrenceTO oto = new OccurrenceTO();
 	    oto.setId(frm.getId());
 	    oto.setSource(frm.getSource());
@@ -513,6 +569,45 @@ public class OccurrenceAction extends GeneralStrutsAction {
 				        String type = obus.getType(fields[i]);
 				        if (type!=null && type.equals(FieldValueTO.FIELD_TYPE_DATE)){
 				        	ofto.setDateValue(DateUtil.getDateTime(fieldValue, oto.getHandler().getCalendarMask(), oto.getLocale()));
+				        	
+				        } else if (type!=null && type.equals(FieldValueTO.FIELD_TYPE_GRID)){
+				        	String linesCountStr = request.getParameter(fields[i] + "_rows");
+				        	Vector<Vector<Object>> tableData = new Vector<Vector<Object>>();
+				        	FieldValueTO fvto = obus.getField(fields[i]);
+				        	if (fvto!=null && linesCountStr!=null && !linesCountStr.trim().equals("")) {
+				        		int cols = Integer.parseInt(linesCountStr);
+				        		
+				        		//get all rows data...
+				        		for(int r=0; r<cols; r++) {
+				        			Vector<Object> newLine = null;
+					        		for (FieldValueTO column : fvto.getGridFields()) {
+					        			String cellValStr = request.getParameter(column.getId() + "_" + r);
+					        			if (cellValStr!=null) {
+					        				if (newLine==null) {
+					        					newLine = new Vector<Object>();
+					        				}					        				
+					        				newLine.add(cellValStr);
+					        			}
+									}
+					        		if (newLine!=null) {
+					        			tableData.add(newLine);	
+					        		}
+				        		}
+				        		
+				        		//get additional row..
+				        		Vector<Object> newLine = new Vector<Object>();
+				        		for (FieldValueTO column : fvto.getGridFields()) {
+				        			String cellValStr = request.getParameter(column.getId());
+				        			if (cellValStr==null) {
+				        				cellValStr = "";
+				        			}				        			
+				        			newLine.add(cellValStr);
+								}
+				        		tableData.add(newLine);
+				        		
+				        	}
+				        	ofto.setTableValues(tableData);
+				        	
 				        } else {
 				        	ofto.setDateValue(null);
 				        }
@@ -523,17 +618,24 @@ public class OccurrenceAction extends GeneralStrutsAction {
 		    }
 	    }
 	    
+		@SuppressWarnings("unchecked")
+		Vector<MetaFieldTO> metaFieldList = (Vector)request.getSession().getAttribute("metaFieldList");
+		super.setMetaFieldValuesFromForm(metaFieldList, request, oto);	    
+		if (metaFieldList!=null) {
+		    frm.setAdditionalFields(oto.getAdditionalFields());
+		}
+	    
 	    return oto;
 	}
 	
 	
-	private String getIndicatorList(Vector indicators, HttpServletRequest request, String oid){
+	private String getIndicatorList(Vector<ReportTO> indicators, HttpServletRequest request, String oid){
 		StringBuffer response = new StringBuffer("<table class=\"table\" width=\"100%\" border=\"0\" cellspacing=\"1\" cellpadding=\"2\">");
 		
 		if (indicators!=null) {
-			Iterator i = indicators.iterator();
+			Iterator<ReportTO> i = indicators.iterator();
 			while(i.hasNext()) {
-				ReportTO kpi = (ReportTO)i.next();				
+				ReportTO kpi = i.next();				
 				response.append("<tr>\n");
 				response.append("<td class=\"tableCell\" align=\"left\" valign=\"center\">" + kpi.getName() + "</td>\n");	
 				response.append("<td class=\"tableCell\" width=\"15\" align=\"center\" valign=\"center\">");
@@ -552,4 +654,122 @@ public class OccurrenceAction extends GeneralStrutsAction {
 		response.append("</table>");
 		return response.toString();
 	}
+	
+	
+	public ActionForward occTableRemoveRow(ActionMapping mapping, ActionForm form,
+			 HttpServletRequest request, HttpServletResponse response) {
+        OccurrenceDelegate odel = new OccurrenceDelegate();		
+	    try {
+	        OccurrenceForm frm = (OccurrenceForm)form;
+	        String gridId = frm.getGenericTag();
+	        String[] tokens = gridId.split("_");
+	        if (tokens!=null && tokens.length==2) {
+	        	int rowToBeRemoved = Integer.parseInt(tokens[1]);
+	        	String strRows = request.getParameter(tokens[0] + "_rows");
+	        	
+			    Occurrence obus = getOccurrenceClass(frm.getSource());
+		        FieldValueTO fvto = obus.getField(tokens[0]);
+
+			    if (fvto!=null && strRows!=null && !strRows.trim().equals("") && obus!=null && obus.getFields()!=null) {
+			    	int rows = Integer.parseInt(strRows);
+			    	if (rows>0) {
+					    OccurrenceTO oto = odel.getOccurrenceObject(new OccurrenceTO(frm.getId()));
+					    Vector<Vector<Object>> fieldTableValues = new Vector<Vector<Object>>();
+					    
+					    for(int r=0; r<rows;r++) {
+					    	if (r!=rowToBeRemoved) {
+						    	Vector<Object> line = new Vector<Object>();
+							    for (FieldValueTO column : fvto.getGridFields()) {
+							    	String content = request.getParameter(column.getId() + "_" + r);
+							    	if (content!=null) {
+							    		line.add(content);	
+							    	} else {
+							    		line.add("");
+							    	}
+								}
+							    fieldTableValues.add(line);					    		
+					    	}
+					    }
+					    
+					    OccurrenceFieldTO field = oto.getField(tokens[0]);
+					    if (field!=null) {
+					    	field.setTableValues(fieldTableValues);			    	
+					    }
+					    refreshOccurrenceSourceFields(request, frm, oto);
+			    	}
+			    }
+	        }
+
+			RequestDispatcher dispatcher = request.getRequestDispatcher("../do/manageOccurrence?operation=navigate");   
+			dispatcher.forward(request, response);
+	        
+		} catch(Exception e){
+	        this.setErrorFormSession(request, "error.generic.showFormError", e);
+	    }
+		
+		return null;
+	}
+	
+
+	public ActionForward occTableAddRow(ActionMapping mapping, ActionForm form,
+			 HttpServletRequest request, HttpServletResponse response){
+        OccurrenceDelegate odel = new OccurrenceDelegate();		
+	    try {
+	        OccurrenceForm frm = (OccurrenceForm)form;
+	        String gridId = frm.getGenericTag();
+
+	        String strRows = request.getParameter(gridId + "_rows");
+		    Occurrence obus = getOccurrenceClass(frm.getSource());
+	        FieldValueTO fvto = obus.getField(gridId);
+
+		    if (fvto!=null && strRows!=null && !strRows.trim().equals("") && obus!=null && obus.getFields()!=null) {
+		    	int rows = Integer.parseInt(strRows);
+		    	if (rows>0) {
+				    OccurrenceTO oto = odel.getOccurrenceObject(new OccurrenceTO(frm.getId()));
+				    Vector<Vector<Object>> fieldTableValues = new Vector<Vector<Object>>();
+				    
+				    for(int r=0; r<rows;r++) {
+				    	Vector<Object> line = new Vector<Object>();
+					    for (FieldValueTO column : fvto.getGridFields()) {
+					    	String content = request.getParameter(column.getId() + "_" + r);
+					    	if (content!=null) {
+					    		line.add(content);	
+					    	} else {
+					    		line.add("");
+					    	}
+						}
+					    fieldTableValues.add(line);
+				    }
+				    
+				    //new content line...
+				    Vector<Object> newLine = new Vector<Object>();
+				    for (FieldValueTO column : fvto.getGridFields()) {
+				    	String content = request.getParameter(column.getId());
+				    	if (content!=null) {
+				    		newLine.add(content);	
+				    	} else {
+				    		newLine.add("");
+				    	}
+					}
+				    fieldTableValues.add(newLine);
+
+				    if (oto!=null) {
+					    OccurrenceFieldTO field = oto.getField(gridId);
+					    if (field!=null) {
+					    	field.setTableValues(fieldTableValues);			    	
+					    }				    	
+				    }
+				    refreshOccurrenceSourceFields(request, frm, oto);				    
+		    	}
+		    }
+
+			RequestDispatcher dispatcher = request.getRequestDispatcher("../do/manageOccurrence?operation=navigate");   
+			dispatcher.forward(request, response);
+	        
+		} catch(Exception e){
+	        this.setErrorFormSession(request, "error.generic.showFormError", e);
+	    }
+		return null;
+	}
+	
 }

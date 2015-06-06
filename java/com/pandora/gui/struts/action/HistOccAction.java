@@ -30,7 +30,7 @@ public class HistOccAction extends GeneralStrutsAction {
 			
 			//get all Information about request history 
 			OccurrenceDelegate odel = new OccurrenceDelegate();
-			Vector list = odel.getHistory(frm.getOccId());
+			Vector<OccurrenceHistoryTO> list = odel.getHistory(frm.getOccId());
 			request.getSession().setAttribute("occHistoryList", list);
 									
 		} catch(BusinessException e){
@@ -48,7 +48,8 @@ public class HistOccAction extends GeneralStrutsAction {
         try {		
 	    	
             HistOccForm frm = (HistOccForm) form;
-	    	Vector occList = (Vector)request.getSession().getAttribute("occHistoryList");
+	    	@SuppressWarnings("rawtypes")
+			Vector occList = (Vector)request.getSession().getAttribute("occHistoryList");
 
 			String selectedItem = frm.getSelectedIndex();
 			if (selectedItem!=null) {

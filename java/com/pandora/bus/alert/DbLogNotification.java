@@ -2,6 +2,7 @@ package com.pandora.bus.alert;
 
 import java.util.Vector;
 
+import com.pandora.NotificationFieldTO;
 import com.pandora.bus.EventBUS;
 import com.pandora.helper.LogUtil;
 
@@ -21,7 +22,7 @@ public class DbLogNotification extends Notification {
     /* (non-Javadoc)
      * @see com.pandora.bus.alert.Notification#sendNotification(java.util.Vector, java.util.Vector)
      */    
-    public boolean sendNotification(Vector fields, Vector sqlData) throws Exception {
+    public boolean sendNotification(Vector<NotificationFieldTO> fields, Vector<Vector<Object>> sqlData) throws Exception {
         EventBUS bus = new EventBUS();
         
         String summary = this.getParamByKey(LOG_SUMMARY, fields);
@@ -36,8 +37,8 @@ public class DbLogNotification extends Notification {
     /* (non-Javadoc)
      * @see com.pandora.bus.alert.Notification#getFieldLabels()
      */
-    public Vector getFieldLabels() {
-        Vector list = new Vector();
+    public Vector<String> getFieldLabels() {
+        Vector<String> list = new Vector<String>();
         list.add("notification.dblog.summary");
         list.add("notification.dblog.username");
         return list;
@@ -47,8 +48,8 @@ public class DbLogNotification extends Notification {
     /* (non-Javadoc)
      * @see com.pandora.bus.alert.Notification#getFieldTypes()
      */    
-    public Vector getFieldTypes() {
-        Vector list = new Vector();
+    public Vector<String> getFieldTypes() {
+        Vector<String> list = new Vector<String>();
         list.add("1");
         list.add("1");
         return list;
@@ -58,8 +59,8 @@ public class DbLogNotification extends Notification {
     /* (non-Javadoc)
      * @see com.pandora.bus.alert.Notification#getFieldKeys()
      */    
-    public Vector getFieldKeys() {
-        Vector list = new Vector();
+    public Vector<String> getFieldKeys() {
+        Vector<String> list = new Vector<String>();
         list.add(LOG_SUMMARY);
         list.add(LOG_USERNAME);
         return list;

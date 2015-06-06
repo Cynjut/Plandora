@@ -1,16 +1,21 @@
 package com.pandora.bus;
 
 import java.util.Iterator;
+import java.util.Locale;
 import java.util.Vector;
 
+import com.pandora.CustomerTO;
 import com.pandora.ProjectTO;
 import com.pandora.RiskHistoryTO;
 import com.pandora.RiskStatusTO;
 import com.pandora.RiskTO;
+import com.pandora.TaskHistoryTO;
+import com.pandora.UserTO;
 import com.pandora.dao.RiskDAO;
 import com.pandora.dao.RiskHistoryDAO;
 import com.pandora.exception.BusinessException;
 import com.pandora.exception.DataAccessException;
+import com.pandora.helper.DateUtil;
 
 /**
  */
@@ -19,8 +24,11 @@ public class RiskBUS extends GeneralBusiness {
     /** The Data Access Object related with current business entity */
     RiskDAO dao = new RiskDAO();
     
-    
     public Vector<RiskTO> getRiskList(String projectId) throws BusinessException {
+    	return this.getRiskList(projectId, null);
+    }
+    
+    public Vector<RiskTO> getRiskList(String projectId, String userId) throws BusinessException {
         Vector<RiskTO> response = new Vector<RiskTO>();
         ProjectBUS pbus = new ProjectBUS();
         try {
@@ -30,11 +38,11 @@ public class RiskBUS extends GeneralBusiness {
             Iterator<ProjectTO> i = childs.iterator();
             while(i.hasNext()){
                 ProjectTO childProj = i.next();
-                Vector<RiskTO> rskOfChild = this.getRiskList(childProj.getId());
+                Vector<RiskTO> rskOfChild = this.getRiskList(childProj.getId(), userId);
                 response.addAll(rskOfChild);
             }
                     
-            response.addAll(dao.getListByProjectId(projectId));
+            response.addAll(dao.getListByProjectId(projectId, userId));
             
         } catch (DataAccessException e) {
             throw new BusinessException(e);
@@ -93,8 +101,8 @@ public class RiskBUS extends GeneralBusiness {
         return response;
     }
     
-    public Vector getListUntilID(String initialId, String finalId) throws BusinessException{
-        Vector response = new Vector();
+    public Vector<RiskTO> getListUntilID(String initialId, String finalId) throws BusinessException{
+    	Vector<RiskTO> response = new Vector<RiskTO>();
         try {
             response = dao.getListUntilID(initialId, finalId);
         } catch (DataAccessException e) {
@@ -132,5 +140,22 @@ public class RiskBUS extends GeneralBusiness {
     	}
     	return response;
     }
-    
+ 
+    public String getRiskLifecycle(Vector<RiskHistoryTO> items, UserTO reader) throws BusinessException {
+        StringBuffer buff = new StringBuffer();
+
+        Locale loc = reader.getLocale();
+        String label = " " + reader.getBundle().getMessage(loc, "label.requestHistory.wrote");
+
+        for (RiskHistoryTO rhto : items) {
+            if (rhto.getContent()!=null && rhto.getContent().trim().length()>0 ){
+
+                buff.append("\n------" + rhto.getUser().getUsername() + 
+                        label + DateUtil.getDateTime(rhto.getCreationDate(), loc, 2, 2) + "------");
+                buff.append("\n" + rhto.getContent() + "\n");                    
+            }
+        }
+
+        return buff.toString();    	
+    }    
 }

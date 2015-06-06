@@ -19,7 +19,6 @@ import com.pandora.TransferObject;
 import com.pandora.UserTO;
 import com.pandora.exception.DataAccessException;
 import com.pandora.helper.DateUtil;
-import com.pandora.helper.LogUtil;
 
 /**
  * This class contain all methods to handle data related with Task History entity into data base.
@@ -29,8 +28,8 @@ public class TaskHistoryDAO extends DataAccess {
     /**
      * Return a list of Task History objects from database based on task id.
      */
-    public Vector getListByTask(String taskId) throws DataAccessException {
-        Vector response = null;
+    public Vector<TaskHistoryTO> getListByTask(String taskId) throws DataAccessException {
+        Vector<TaskHistoryTO> response = null;
         Connection c = null;
 		try {
 			c = getConnection();
@@ -47,8 +46,8 @@ public class TaskHistoryDAO extends DataAccess {
 	/**
      * Return a list of Task History objects from database based on task id and resource id.
      */
-    public Vector getListByResourceTask(String taskId, String resourceId) throws DataAccessException {
-        Vector response = null;
+    public Vector<TaskHistoryTO> getListByResourceTask(String taskId, String resourceId) throws DataAccessException {
+        Vector<TaskHistoryTO> response = null;
         Connection c = null;
 		try {
 			c = getConnection();
@@ -64,8 +63,8 @@ public class TaskHistoryDAO extends DataAccess {
     /**
      * Return a list of Task History objects from database based on requirement history object reference.
      */
-    public Vector getListByRequirementHistory(RequirementHistoryTO rhto) throws DataAccessException {
-        Vector response = null;
+    public Vector<TaskHistoryTO> getListByRequirementHistory(RequirementHistoryTO rhto) throws DataAccessException {
+        Vector<TaskHistoryTO> response = null;
         Connection c = null;
 		try {
 			c = getConnection();
@@ -82,8 +81,8 @@ public class TaskHistoryDAO extends DataAccess {
     /**
      * Return a list of Task History objects from database based on requirement id.
      */
-    public Vector getHistoryByRequirementId(String reqId) throws DataAccessException {
-        Vector response = null;
+    public Vector<TaskHistoryTO> getHistoryByRequirementId(String reqId) throws DataAccessException {
+        Vector<TaskHistoryTO> response = null;
         Connection c = null;
 		try {
 			c = getConnection();
@@ -117,8 +116,8 @@ public class TaskHistoryDAO extends DataAccess {
     /**
      * Return a list of Task History objects from database based on task id.
      */
-    private Vector getListByTask(String taskId, Connection c) throws DataAccessException {
-        Vector response = new Vector();
+    private Vector<TaskHistoryTO> getListByTask(String taskId, Connection c) throws DataAccessException {
+        Vector<TaskHistoryTO> response = new Vector<TaskHistoryTO>();
 		ResultSet rs = null;
 		PreparedStatement pstmt = null; 
 		try {
@@ -166,8 +165,8 @@ public class TaskHistoryDAO extends DataAccess {
     /**
      * Return a list of Task History objects from database based on requirement history object reference.
      */
-    private Vector getListByRequirementHistory(RequirementHistoryTO rhto, Connection c) throws DataAccessException {
-        Vector response = new Vector();
+    private Vector<TaskHistoryTO> getListByRequirementHistory(RequirementHistoryTO rhto, Connection c) throws DataAccessException {
+        Vector<TaskHistoryTO> response = new Vector<TaskHistoryTO>();
 		ResultSet rs = null;
 		PreparedStatement pstmt = null; 
 		try {
@@ -207,8 +206,8 @@ public class TaskHistoryDAO extends DataAccess {
     /**
      * Return a list of Task History objects from database based on task id and resource id.
      */
-    private Vector getListByResourceTask(String taskId, String resourceId, Connection c) throws DataAccessException {
-        Vector response = new Vector();
+    private Vector<TaskHistoryTO> getListByResourceTask(String taskId, String resourceId, Connection c) throws DataAccessException {
+        Vector<TaskHistoryTO> response = new Vector<TaskHistoryTO>();
 		ResultSet rs = null;
 		PreparedStatement pstmt = null; 
 		try {
@@ -257,8 +256,8 @@ public class TaskHistoryDAO extends DataAccess {
     /**
      * Return a list of Task History objects from database based on requirement id.
      */
-    private Vector getHistoryByRequirementId(String reqId, Connection c) throws DataAccessException {
-        Vector response = new Vector();
+    private Vector<TaskHistoryTO> getHistoryByRequirementId(String reqId, Connection c) throws DataAccessException {
+        Vector<TaskHistoryTO> response = new Vector<TaskHistoryTO>();
 		ResultSet rs = null;
 		PreparedStatement pstmt = null; 
 		try {

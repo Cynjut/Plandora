@@ -1,12 +1,15 @@
 package com.pandora.gui.struts.action;
 
 import java.awt.image.BufferedImage;
+import java.io.ByteArrayOutputStream;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Locale;
 import java.util.Vector;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import javax.imageio.IIOException;
 import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -14,28 +17,34 @@ import javax.servlet.http.HttpServletResponse;
 import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionForward;
 import org.apache.struts.action.ActionMapping;
+import org.apache.xmlbeans.impl.util.Base64;
 
 import com.pandora.CategoryTO;
 import com.pandora.CustomNodeTemplateTO;
 import com.pandora.DecisionNodeTemplateTO;
 import com.pandora.LeaderTO;
 import com.pandora.NodeTemplateTO;
+import com.pandora.OccurrenceTO;
+import com.pandora.PreferenceTO;
 import com.pandora.ProjectTO;
 import com.pandora.RequirementTO;
 import com.pandora.ResourceTO;
 import com.pandora.ResourceTaskTO;
+import com.pandora.RootTO;
 import com.pandora.StepNodeTemplateTO;
 import com.pandora.TaskStatusTO;
 import com.pandora.TemplateTO;
 import com.pandora.UserTO;
+import com.pandora.bus.TaskNodeTemplateBUS;
+import com.pandora.bus.occurrence.IterationOccurrence;
 import com.pandora.delegate.CategoryDelegate;
+import com.pandora.delegate.OccurrenceDelegate;
 import com.pandora.delegate.ProjectDelegate;
 import com.pandora.delegate.RequirementDelegate;
 import com.pandora.delegate.TaskTemplateDelegate;
 import com.pandora.delegate.UserDelegate;
 import com.pandora.exception.BusinessException;
 import com.pandora.exception.SaveWorkflowException;
-import com.pandora.exception.ZeroCapacityException;
 import com.pandora.gui.struts.form.ApplyTaskTemplateForm;
 import com.pandora.helper.DateUtil;
 import com.pandora.helper.SessionUtil;
@@ -43,26 +52,22 @@ import com.pandora.helper.StringUtil;
 
 public class ApplyTaskTemplateAction extends GeneralStrutsAction {
 
+	HashMap<String, String> recursiveNodes = new HashMap<String, String>();
+	
 	public ActionForward prepareForm(ActionMapping mapping, ActionForm form,
 			 HttpServletRequest request, HttpServletResponse response){
 		String forward = "showApplyTaskTemplate";
-		TaskTemplateDelegate tdel = new TaskTemplateDelegate();
 		
 		try {
 		    ApplyTaskTemplateForm frm = (ApplyTaskTemplateForm)form;
 		    frm.clear();
 		    
-		    //fetch the id of current workflow instance
-		    Integer instance = tdel.getInstance(frm.getTemplateId(), frm.getReqId());
-		    if (instance!=null) {
-		    	frm.setInstanceId(instance.toString());	
-		    } else {
-		    	frm.setInstanceId("");
-		    }
+		    defineInstance(frm);
 
-		    request.getSession().setAttribute("projectList", new Vector());
-		    request.getSession().setAttribute("categoryList", new Vector());
-		    request.getSession().setAttribute("resourceAllocated", new Vector());
+		    request.getSession().setAttribute("iterationList", new Vector<OccurrenceTO>());
+		    request.getSession().setAttribute("projectList", new Vector<ProjectTO>());
+		    request.getSession().setAttribute("categoryList", new Vector<CategoryTO>());
+		    this.putResourceAllocListIntoSession(null, request);
 		    
 			this.refresh(mapping, form, request, response);
 			
@@ -83,20 +88,38 @@ public class ApplyTaskTemplateAction extends GeneralStrutsAction {
 		    frm.setResourceId("-1");
 		    
 		    CategoryDelegate cdel = new CategoryDelegate();
-		    Vector cList = cdel.getCategoryListByType(CategoryTO.TYPE_TASK, pto, false);
+		    Vector<CategoryTO> cList = cdel.getCategoryListByType(CategoryTO.TYPE_TASK, pto, false);
 		    request.getSession().setAttribute("categoryList", cList);			
-		    		    
-		    Vector ulist = new Vector();
+		    
+		    OccurrenceDelegate odel = new OccurrenceDelegate();
+		    Vector<OccurrenceTO> olist = odel.getOccurenceListByType(pto.getId(), IterationOccurrence.class.getName(), false);
+		    OccurrenceTO oto = new OccurrenceTO("-1");
+		    oto.setName(this.getBundleMessage(request, "label.combo.select"));
+		    olist.add(0, oto);
+		    request.getSession().setAttribute("iterationList", olist);
+
+		    Vector<ResourceTO> ulist = new Vector<ResourceTO>();
 		    UserDelegate udel = new UserDelegate();
-		    Vector resourceList = udel.getResourceByProject(pto.getId(), false, true);		    
+		    Vector<ResourceTO> resourceList = udel.getResourceByProject(pto.getId(), false, true);		    
 
 		    if (resourceList!=null && resourceList.size()>1) {
 			    ResourceTO dummy = new ResourceTO("-1");
 			    dummy.setName(this.getBundleMessage(request, "title.formApplyTaskTemplate.resource.select"));
-			    ulist.add(dummy);			    	
+			    ulist.add(dummy);
+			    			    
+			    for (ResourceTO rto: resourceList) {
+					if (rto.getUsername().equals(RootTO.ROOT_USER)){
+						resourceList.remove(rto);
+					    UserTO root = udel.getRoot();
+					    ResourceTO anyone = new ResourceTO(root.getId());
+					    anyone.setName(this.getBundleMessage(request, "label.manageTask.anyRes"));
+					    ulist.add(1, anyone);
+					    break;
+					}
+				}
 		    }
 		    
-		    ulist.addAll(resourceList);		
+		    ulist.addAll(resourceList);
 		    request.getSession().setAttribute("resourceList", ulist);
 		    
 		} catch(Exception e){
@@ -116,16 +139,25 @@ public class ApplyTaskTemplateAction extends GeneralStrutsAction {
 		    ApplyTaskTemplateForm frm = (ApplyTaskTemplateForm)form;
 
 		    //save the workflow starting at the root node...
-		    UserTO currentUser = SessionUtil.getCurrentUser(request);		    
-		    tdel.saveWorkflow(frm.getCurrentRoot().getId(), new Integer(frm.getInstanceId()), frm.getReqId(), currentUser);
-
-		    this.refresh(mapping, form, request, response);
+		    UserTO currentUser = SessionUtil.getCurrentUser(request);
 		    
-			//set success message into http session
-			this.setSuccessFormSession(request, "message.formApplyTaskTemplate.saveworkflow");
+		    Integer inst = null;
+		    if (frm.getInstanceId()!=null && !frm.getInstanceId().trim().equals("")) {
+		    	inst = new Integer(frm.getInstanceId());	
+		    }
+		    
+		    this.recursiveNodes = new HashMap<String, String>();
+		    this.saveCustomNodesRecursive(frm.getCurrentRoot(), frm.getTemplateId(), frm.getReqId(), inst, frm.getProjectId());
+		    
+		    if (tdel.checkSavedNodes(inst, frm.getTemplateId())) {
+			    tdel.saveWorkflow(frm.getCurrentRoot().getId(), inst, frm.getReqId(), frm.getProjectId(), currentUser);
+			    this.refresh(mapping, form, request, response);
+				this.setSuccessFormSession(request, "message.formApplyTaskTemplate.saveworkflow");
+		    } else {
+		    	this.setSuccessFormSession(request, "message.formApplyTaskTemplate.saveworkflowErr");
+		    }
+		    
 
-		} catch(ZeroCapacityException e){
-			this.setErrorFormSession(request, "error.manageTask.zeroCapacity", e);			
 		} catch(SaveWorkflowException es){
 			if (es!=null && es.getMsgInBundle()!=null) {
 				errLabel = es.getMsgInBundle();
@@ -140,19 +172,21 @@ public class ApplyTaskTemplateAction extends GeneralStrutsAction {
 	
 	public ActionForward renderImage(ActionMapping mapping, ActionForm form,
 			 HttpServletRequest request, HttpServletResponse response){
-
 	    ServletOutputStream sos = null;
 		TaskTemplateDelegate tdel = new TaskTemplateDelegate();
-		
+
 		try {
 		    ApplyTaskTemplateForm frm = (ApplyTaskTemplateForm)form;		    
 		    UserTO currentUser = SessionUtil.getCurrentUser(request);
-		    
+
 		    String bgcolor = request.getParameter("bgcolor");
-		    
+		    if (bgcolor==null || bgcolor.trim().equals("")){
+		    	bgcolor = "EFEFEF";
+		    }
+
 		    NodeTemplateTO root = frm.getCurrentRoot();
-		    if (root!=null && bgcolor!=null && !bgcolor.trim().equals("") ) {
-		    	
+		    if (root!=null) {
+
 				//draw an image representation of nodes
 			    BufferedImage image = tdel.drawWorkFlow(root, currentUser, bgcolor, false);
 				frm.setHtmlMap(root.getHtmlMapCoords());
@@ -160,9 +194,17 @@ public class ApplyTaskTemplateAction extends GeneralStrutsAction {
 	            response.setContentType("image/png");  
 	            response.setHeader("Cache-Control", "no-cache");  
 			    sos = response.getOutputStream();
-			    javax.imageio.ImageIO.write(image, "PNG", sos);		    
+			    if (sos!=null) {			    	
+			    	ByteArrayOutputStream out = new ByteArrayOutputStream();
+			    	javax.imageio.ImageIO.write(image, "PNG", out);
+			    	byte[] base64bytes = Base64.encode(out.toByteArray());
+			    	String buffer = "data:image/png;base64," + new String(base64bytes);
+			    	sos.write(buffer.getBytes());
+			    }
 		    }
 
+		} catch(IIOException e) {
+			e.printStackTrace();
 		} catch(Exception e) {
 		    e.printStackTrace();
 		}
@@ -217,22 +259,20 @@ public class ApplyTaskTemplateAction extends GeneralStrutsAction {
 			    cntto.setCategoryId(null);
 			    cntto.setResource(null);
 		    } else {
-		    	
+		    	cntto.setIterationId(frm.getIterationId());
 			    cntto.setCategoryId(frm.getCategoryId());
 			    cntto.setProjectId(frm.getProjectId());
-			    Vector resList = (Vector)request.getSession().getAttribute("resourceAllocated");
+			    
+			    @SuppressWarnings("unchecked")
+				Vector<ResourceTaskTO> resList = (Vector<ResourceTaskTO>)request.getSession().getAttribute("resourceAllocated");
+			    
 			    cntto.setResource(tdel.getResourceListFromVector(resList));
 			    cntto.setQuestionContent(null);
 		    }
 		    
 		    tdel.saveCustomNodeTemplate(cntto);
 
-		    Integer instance = tdel.getInstance(frm.getTemplateId(), frm.getReqId());
-		    if (instance!=null) {
-		    	frm.setInstanceId(instance.toString());	
-		    } else {
-		    	frm.setInstanceId("");
-		    }
+		    defineInstance(frm);
 		    
 			//set success message into http session
 			this.setSuccessFormSession(request, "message.formApplyTaskTemplate.save");
@@ -244,19 +284,19 @@ public class ApplyTaskTemplateAction extends GeneralStrutsAction {
 		}
 		return mapping.findForward(forward);	    
 	}
-	
-	
+
+
 	public ActionForward refresh(ActionMapping mapping, ActionForm form,
 			HttpServletRequest request, HttpServletResponse response){
 	    String forward = "showApplyTaskTemplate";
 		TaskTemplateDelegate tdel = new TaskTemplateDelegate();
 	    ProjectDelegate pdel = new ProjectDelegate();
-	    
+
 		try {
 			ApplyTaskTemplateForm frm = (ApplyTaskTemplateForm)form;
 			UserTO currentUser = SessionUtil.getCurrentUser(request);
 			
-			Vector projList = pdel.getProjectListForManagement((LeaderTO)currentUser, true);
+			Vector<ProjectTO> projList = pdel.getProjectListForManagement((LeaderTO)currentUser, true);
 			request.getSession().setAttribute("projectList", projList);
 			
 			//get template tree from data base
@@ -273,6 +313,13 @@ public class ApplyTaskTemplateAction extends GeneralStrutsAction {
 			} else {
 				RequirementDelegate rd = new RequirementDelegate();
 				rto = rd.getRequirement(new RequirementTO(reqId));
+				if ((frm.getProjectId()==null || frm.getProjectId().trim().equals("")) && rto!=null && rto.getProject()!=null) {
+					frm.setProjectId(rto.getProject().getId());
+				} else {
+					if (frm.getProjId()!=null && !frm.getProjId().equals("")) {
+						frm.setProjectId(frm.getProjId());	
+					}
+				}
 				this.refreshAfterProjectChange(mapping, form, request, response);
 			}
 			
@@ -295,13 +342,25 @@ public class ApplyTaskTemplateAction extends GeneralStrutsAction {
 				frm.setCategoryName("");
 			}
 			
-			//render diagram to get the coordenates of nodes...
+			//render diagram to get the coordinates of nodes...
 		    tdel.drawWorkFlow(root, currentUser, "FFFFFF", false);
 			frm.setHtmlMap(root.getHtmlMapCoords());
 			
-		    Vector tlist = tdel.getNodeListByTemplate(frm.getTemplateId(), frm.getInstanceId(), reqId);
+			Vector<NodeTemplateTO> tlist = tdel.getNodeListByTemplate(frm.getTemplateId(), frm.getInstanceId(), reqId);
 		    request.getSession().setAttribute("nodeTemplateList", tlist);
 
+		    ProjectTO pto =null;
+			if (frm.getProjId()!=null && !frm.getProjId().trim().equals("")) {
+				pto = new ProjectTO(frm.getProjId());
+			} else if (frm.getProjectId()!=null && !frm.getProjectId().trim().equals("")) {
+				pto = new ProjectTO(frm.getProjectId());
+			}
+			if (pto!=null) {
+				pto = pdel.getProjectObject(pto, true);
+				frm.setProjectName(pto.getName());	
+			}
+			
+		    
 		    if (frm.getId()!=null && !frm.getId().equals("")) {
 			    NodeTemplateTO ntto = root.getNode(frm.getId(), false);
 			    if (ntto!=null) {
@@ -347,15 +406,16 @@ public class ApplyTaskTemplateAction extends GeneralStrutsAction {
 		    Locale loc = SessionUtil.getCurrentLocale(request);
 
 		    ResourceTaskTO rtto = this.getResTaskFromVector(frm, request, loc);
-	        Vector resList = (Vector)request.getSession().getAttribute("resourceAllocated");
+	        @SuppressWarnings("unchecked")
+			Vector<ResourceTaskTO> resList = (Vector<ResourceTaskTO>)request.getSession().getAttribute("resourceAllocated");
 	        if (resList==null) {
-	        	resList = new Vector();
+	        	resList = new Vector<ResourceTaskTO>();
 	        }
-	        
+
 	        boolean notExists = true;
-		    Iterator i = resList.iterator();
+		    Iterator<ResourceTaskTO> i = resList.iterator();
 		    while(i.hasNext()){
-		        ResourceTaskTO buff = (ResourceTaskTO)i.next();
+		        ResourceTaskTO buff = i.next();
 		        if (buff.getResource().getId().equals(rtto.getResource().getId())) {
 		            this.setErrorFormSession(request, "message.resourceIntoListExists", null);
 		            notExists = false;
@@ -365,7 +425,7 @@ public class ApplyTaskTemplateAction extends GeneralStrutsAction {
 	        
 		    if (notExists) {
 		        resList.addElement(rtto);
-		        request.getSession().setAttribute("resourceAllocated", resList);		            		        
+		        this.putResourceAllocListIntoSession(resList, request);	            		        
 		    }
 
 		} catch(Exception e){
@@ -380,11 +440,12 @@ public class ApplyTaskTemplateAction extends GeneralStrutsAction {
 	    String forward = "showApplyTaskTemplate";
 	    try {
 
-		    Vector resList = (Vector)request.getSession().getAttribute("resourceAllocated");
+		    @SuppressWarnings("unchecked")
+			Vector<ResourceTaskTO> resList = (Vector<ResourceTaskTO>)request.getSession().getAttribute("resourceAllocated");
 		    String resId = request.getParameter("removeResId");
 		    
 		    boolean alreadyExists = false;
-		    Iterator i = resList.iterator();
+		    Iterator<ResourceTaskTO> i = resList.iterator();
 		    while(i.hasNext()){
 		        ResourceTaskTO rtto = (ResourceTaskTO)i.next();
 		        if (rtto.getResource().getId().equals(resId)) {
@@ -411,7 +472,7 @@ public class ApplyTaskTemplateAction extends GeneralStrutsAction {
 	   	        	    break;
 	   		        }
 	   		    }
-	   		    request.getSession().setAttribute("resourceAllocated", resList);    		    
+	   		    this.putResourceAllocListIntoSession(resList, request);
 	       	}
 		    
 		} catch(Exception e){
@@ -430,20 +491,39 @@ public class ApplyTaskTemplateAction extends GeneralStrutsAction {
         String estimTime = frm.getEstimatedTime();
         
         //get the resource object from database
-        ResourceTO rto = new ResourceTO(resourceId);
-        rto.setProject(new ProjectTO(frm.getProjectId()));
-        rto = udel.getResource(rto);
+        ResourceTO rto = new ResourceTO(resourceId);        
+        UserTO uto = udel.getUser(rto);
+        if (uto.getUsername().equals(RootTO.ROOT_USER)) {
+        	rto.setName(this.getBundleMessage(request, "label.manageTask.anyRes"));
+        	rto.setUsername(rto.getName());
+        } else {
+            rto.setProject(new ProjectTO(frm.getProjectId()));
+            rto = udel.getResource(rto);        	
+        }
         
         rtto.setResource(rto);        
-        //rtto.setTask(new TaskTO(frm.getId()));
         rtto.setLabel(rto.getName());
-        
+
         //update new estimated date and start date
-        rtto.setEstimatedTime(new Integer((int)(StringUtil.getStringToFloat(estimTime, loc) * 60)));
+        rtto.setEstimatedTime(this.formatTime(request, estimTime, loc));
         rtto.setStartDate(DateUtil.getDateTime(initialDate, super.getCalendarMask(request), loc));
         
         return rtto;
 	}
+	
+
+	private Integer formatTime(HttpServletRequest request, String estimTime, Locale loc) {
+		Integer response = 0;
+		UserTO uto = SessionUtil.getCurrentUser(request);
+	    String frmtInput = uto.getPreference().getPreference(PreferenceTO.INPUT_TASK_FORMAT);
+	    if (!frmtInput.equals("2")) {
+	    	response = new Integer((int)(StringUtil.getStringToFloat(estimTime, loc) * 60));
+	    } else {
+	    	response =  StringUtil.getHHMMToInteger(estimTime);		    	
+	    }    		
+	    return response;
+	}
+	
 	
 	private void getActionFormFromTransferObject(NodeTemplateTO ntto, ActionMapping mapping, ActionForm form,
 			 HttpServletRequest request, HttpServletResponse response) throws Exception{
@@ -464,27 +544,49 @@ public class ApplyTaskTemplateAction extends GeneralStrutsAction {
 	    frm.setIsParentTask(ntto.getIsParentTask());
 	    
 	    frm.setResourceId(null);
-	    frm.setEstimatedTime(null);
-	    frm.setInitDate(null);
+	    frm.setEstimatedTime("0");
+	    frm.setInitDate(DateUtil.getDate(DateUtil.getNow(), handler.getCalendarMask(), handler.getLocale()));
 	    frm.setQuestionContent(null);
+    	frm.setIterationId(null);
 	    
     	frm.setNodeType(ntto.getNodeType());	
 	    if (ntto.getNodeType().equals(NodeTemplateTO.NODE_TEMPLATE_DECISION)) {
 	    	frm.setQuestionContent(((DecisionNodeTemplateTO)ntto).getQuestionContent());
-	    	request.getSession().setAttribute("resourceAllocated", new Vector());
+	    	putResourceAllocListIntoSession(null, request);	    	
 	    } else {
-		    
+	    	
+	    	if ((StepNodeTemplateTO)ntto!=null) {
+		    	String iteration = ((StepNodeTemplateTO)ntto).getIterationId();
+		    	if (iteration!=null && !iteration.equals("-1")) {
+		    		frm.setIterationId(iteration);	
+		    	}	    		
+	    	}
+
 	    	this.refreshAfterProjectChange(mapping, form, request, response);
 		    
-	    	frm.setCategoryId(this.resolveCategory((StepNodeTemplateTO)ntto, frm.getProjectId()));		    	
-		    Vector resList = tdel.getResourceListFromString(((StepNodeTemplateTO)ntto).getResourceId(), handler);
+	    	frm.setCategoryId(this.resolveCategory((StepNodeTemplateTO)ntto, frm.getProjectId()));
+		    Vector<ResourceTaskTO> resList = tdel.getResourceListFromString(((StepNodeTemplateTO)ntto).getResourceId(), null, handler);
 		    if (resList!=null && resList.size()>0) {
 		    	frm.setResourceId(tdel.getResourceListFromVector(resList));	
 		    }
-		    request.getSession().setAttribute("resourceAllocated", resList);
+		    putResourceAllocListIntoSession(resList, request);
 	    }		
 	}
 	
+	private void putResourceAllocListIntoSession(Vector<ResourceTaskTO> resList, HttpServletRequest request){
+		if (resList!=null) {
+	    	for (ResourceTaskTO rtto : resList) {
+	    		if (rtto.getResource()!=null && rtto.getResource().getUsername().equals(RootTO.ROOT_USER)){ 
+	    			rtto.getResource().setUsername(this.getBundleMessage(request, "label.manageTask.anyRes"));
+	    			rtto.getResource().setName(rtto.getResource().getUsername());
+	    			rtto.setLabel(rtto.getResource().getUsername());
+	    		}
+			}
+	    	request.getSession().setAttribute("resourceAllocated", resList);			
+		} else{
+			request.getSession().setAttribute("resourceAllocated", new Vector<ResourceTaskTO>());
+		}
+	}
 	
 	private String resolveCategory(StepNodeTemplateTO step, String projectId){
 		String response = step.getCategoryId();
@@ -492,9 +594,9 @@ public class ApplyTaskTemplateAction extends GeneralStrutsAction {
 		if (response!=null && response.equals(CategoryTO.DEFAULT_CATEGORY_ID) && step.getCategoryRegex()!=null) {
 			try {
 				CategoryDelegate cdel = new CategoryDelegate();
-				Vector list = cdel.getCategoryListByType(CategoryTO.TYPE_TASK, new ProjectTO(projectId), false);
+				Vector<CategoryTO> list = cdel.getCategoryListByType(CategoryTO.TYPE_TASK, new ProjectTO(projectId), false);
 				if (list!=null) {
-					Iterator i = list.iterator();
+					Iterator<CategoryTO> i = list.iterator();
 					Pattern pattern = Pattern.compile(step.getCategoryRegex());
 					
 					while(i.hasNext()) {
@@ -513,5 +615,68 @@ public class ApplyTaskTemplateAction extends GeneralStrutsAction {
 		
 		return response;
 	}
+
+
+	private void defineInstance(ApplyTaskTemplateForm frm) throws BusinessException {
+		TaskTemplateDelegate tdel = new TaskTemplateDelegate();
+		Integer instance = tdel.getInstance(frm.getTemplateId(), frm.getReqId());
+		if (instance!=null) {
+			frm.setInstanceId(instance.toString());	
+		} else {
+			frm.setInstanceId("");
+		}
+	}
+
 	
+	private void saveCustomNodesRecursive(NodeTemplateTO node, String templateId, String reqId, Integer instanceId, String defaultProjectId) throws BusinessException{
+	    TaskTemplateDelegate tdel = new TaskTemplateDelegate();			
+
+	    if (node!=null && this.recursiveNodes.get(node.getId())==null) {
+	    	this.recursiveNodes.put(node.getId(), node.getId());
+	    	
+		    CustomNodeTemplateTO cntto = new CustomNodeTemplateTO();
+		    cntto.setPlanningId(reqId);
+		    cntto.setTemplateId(templateId);
+		    cntto.setNodeTemplateId(node.getId());
+	    	cntto.setInstanceId(instanceId);	
+
+		    cntto.setDescription(node.getDescription());
+		    cntto.setName(node.getName());
+		    cntto.setIsParentTask(new Boolean(node.getIsParentTask()));
+		    
+		    if (node.getNodeType().equals(NodeTemplateTO.NODE_TEMPLATE_DECISION)) {
+		    	cntto.setQuestionContent(((DecisionNodeTemplateTO)node).getQuestionContent());
+			    cntto.setCategoryId(null);
+			    cntto.setResource(null);
+			    
+			    if (((DecisionNodeTemplateTO)node).getNextNode()!=null) {
+			    	this.saveCustomNodesRecursive(((DecisionNodeTemplateTO)node).getNextNode(), templateId, reqId, instanceId, defaultProjectId);	
+			    }
+			    if (((DecisionNodeTemplateTO)node).getNextNodeIfFalse()!=null) {
+			    	this.saveCustomNodesRecursive(((DecisionNodeTemplateTO)node).getNextNodeIfFalse(), templateId, reqId, instanceId, defaultProjectId);	
+			    }
+			    
+		    } else {
+		    	cntto.setIterationId(((StepNodeTemplateTO)node).getIterationId());
+			    cntto.setCategoryId(((StepNodeTemplateTO)node).getCategoryId());
+			    
+			    String projectId = defaultProjectId;
+			    if (node.getProject()!=null && node.getProject().getId()!=null && !node.getProject().getId().trim().equals("")){
+			    	projectId = node.getProject().getId();
+			    }
+			    cntto.setProjectId(projectId);
+			    
+			    String resource = ((StepNodeTemplateTO)node).getResourceId();
+			    resource = resource.replaceAll("DEFAULT", TaskNodeTemplateBUS.getDateOfResourceList(DateUtil.getNow()));
+			    cntto.setResource(resource);
+			    
+			    cntto.setQuestionContent(null);
+			    
+			    this.saveCustomNodesRecursive(((StepNodeTemplateTO)node).getNextNode(), templateId, reqId, instanceId, defaultProjectId);
+		    }
+		    
+		    tdel.saveCustomNodeTemplate(cntto);	    	
+	    }
+	    		
+	}
 }

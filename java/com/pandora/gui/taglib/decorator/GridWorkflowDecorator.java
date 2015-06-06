@@ -1,8 +1,5 @@
 package com.pandora.gui.taglib.decorator;
 
-import java.util.Iterator;
-import java.util.Vector;
-
 import org.apache.taglibs.display.ColumnDecorator;
 
 import com.pandora.RequirementTO;
@@ -68,19 +65,15 @@ public class GridWorkflowDecorator extends ColumnDecorator {
 		    
 		} else if (obj instanceof RequirementTO) {
 			RequirementTO rto = (RequirementTO) obj;
-			Vector taskList = null;
-			TaskTO tto = null; 
+			TaskTO tto = null;
 			try {
-				TaskDelegate tdel = new TaskDelegate();
-				taskList = tdel.getTaskListByRequirement(rto, rto.getProject(), true);
-				if (taskList!=null) {
-					Iterator i = taskList.iterator();
-					while(i.hasNext()) {
-						tto = (TaskTO)i.next();
-						if (tto.getTemplateInstanceId()!=null) {
+				if (rto.getResourceTaskList()!=null) {
+					for (ResourceTaskTO rtto : rto.getResourceTaskList()) {
+						tto = rtto.getTask();
+						if (tto!=null && tto.getTemplateInstanceId()!=null) {
 							break;
 						}
-					}
+					}					
 				}
 			} catch(Exception e) {
 				tto = null;

@@ -11,7 +11,12 @@ public class PlanningRelationTO extends TransferObject {
 	public static final String ENTITY_REQ  = "2"; 
 	public static final String ENTITY_PROJ = "3";
 	public static final String ENTITY_OCCU = "4"; 
-	public static final String ENTITY_RISK = "5"; 
+	public static final String ENTITY_RISK = "5";
+	public static final String ENTITY_COST = "6";
+	public static final String ENTITY_EXPE = "7";
+	public static final String ENTITY_ARTF = "8";
+	public static final String ENTITY_INVO = "9";
+	
 
 	public static final String RELATION_RELATED_WITH     = "2";
 	public static final String RELATION_COMPOSED_BY      = "5";

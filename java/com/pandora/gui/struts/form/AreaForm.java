@@ -2,6 +2,7 @@ package com.pandora.gui.struts.form;
 
 import javax.servlet.http.HttpServletRequest;
 
+import org.apache.struts.action.ActionError;
 import org.apache.struts.action.ActionErrors;
 import org.apache.struts.action.ActionMapping;
 
@@ -38,9 +39,9 @@ public class AreaForm extends GeneralStrutsForm {
     public void clear(){
         name = null;        
         description= null;
+        id=null;
         this.setSaveMethod(null, null);
     }
-    
     
     /**
 	 * Validate the form.
@@ -48,7 +49,10 @@ public class AreaForm extends GeneralStrutsForm {
 	public ActionErrors validate(ActionMapping arg0, HttpServletRequest arg1) {
 		ActionErrors errors = new ActionErrors();
 		
-		if (operation.equals("errorArea")){
+		if (operation.equals("saveArea")){
+		    if (this.name==null || this.name.trim().equals("")){
+		    	errors.add("Name", new ActionError("errors.required", "Area") );
+		    }			
 		}
 		
 		return errors;

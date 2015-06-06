@@ -30,9 +30,9 @@ public class InvoiceTO extends PlanningTO {
 	
 	private Vector<InvoiceItemTO> itemsList;
 	
-	private ArrayList itemsToBeUpdated = new ArrayList();
+	private ArrayList<String> itemsToBeUpdated = new ArrayList<String>();
 	
-	private ArrayList itemsToBeRemoved = new ArrayList();
+	private ArrayList<String> itemsToBeRemoved = new ArrayList<String>();
 
 	private UserTO handler;
 	
@@ -45,8 +45,8 @@ public class InvoiceTO extends PlanningTO {
 	}
 
 
-	public Integer getTotal() {
-    	int total = 0;
+	public Long getTotal() {
+    	long total = 0;
     	try {
         	if (itemsList!=null) {
             	Iterator<InvoiceItemTO> i = itemsList.iterator();
@@ -59,7 +59,7 @@ public class InvoiceTO extends PlanningTO {
     		e.printStackTrace();
     		total = 0;
     	}
-		return new Integer(total);
+		return new Long(total);
 	}	
 	
 	///////////////////////////////////////
@@ -154,19 +154,19 @@ public class InvoiceTO extends PlanningTO {
 	
 	
 	///////////////////////////////////////	
-	public ArrayList getItemsToBeUpdated() {
+	public ArrayList<String> getItemsToBeUpdated() {
 		return itemsToBeUpdated;
 	}
-	public void setItemsToBeUpdated(ArrayList newValue) {
+	public void setItemsToBeUpdated(ArrayList<String> newValue) {
 		this.itemsToBeUpdated = newValue;
 	}
 	
 	
 	///////////////////////////////////////	
-	public ArrayList getItemsToBeRemoved() {
+	public ArrayList<String> getItemsToBeRemoved() {
 		return itemsToBeRemoved;
 	}
-	public void setItemsToBeRemoved(ArrayList newValue) {
+	public void setItemsToBeRemoved(ArrayList<String> newValue) {
 		this.itemsToBeRemoved = newValue;
 	}
 

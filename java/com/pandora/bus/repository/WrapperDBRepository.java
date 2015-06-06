@@ -15,6 +15,7 @@ import com.pandora.UserTO;
 import com.pandora.delegate.DbQueryDelegate;
 import com.pandora.delegate.UserDelegate;
 import com.pandora.exception.BusinessException;
+import com.pandora.exception.NotEmptyFolderException;
 import com.pandora.helper.DateUtil;
 import com.pandora.helper.LogUtil;
 
@@ -38,6 +39,13 @@ public class WrapperDBRepository extends Repository {
 	}
 
 	
+	@Override
+	public boolean canRemoveFile() {
+		return true;
+	}
+
+	
+
 	@Override
 	public Vector<RepositoryFileTO> getFiles(ProjectTO pto, String url, String path, String rev, String user, String pass) throws Exception {
 		Vector<RepositoryFileTO> response = new Vector<RepositoryFileTO>();
@@ -68,11 +76,11 @@ public class WrapperDBRepository extends Repository {
 		int[] types = new int[]{Types.VARCHAR};
 		Vector<String> param = new Vector<String>();
 		param.add(pto.getId());
-		Vector list = db.performQuery(sql, types, param);
+		Vector<Vector<Object>> list = db.performQuery(sql, types, param);
 		
 		if (list!=null && list.size()>1) {
 			for (int i=1; i<list.size(); i++) {			
-				Vector<Object> item = (Vector)list.elementAt(i);
+				Vector<Object> item = list.elementAt(i);
 				
 				RepositoryFileTO rfto = new RepositoryFileTO();
 				
@@ -134,10 +142,10 @@ public class WrapperDBRepository extends Repository {
 		Vector<String> param = new Vector<String>();
 		param.add(pto.getId());
 		param.add(pathName);
-		Vector list = db.performQuery(sql, types, param);
+		Vector<Vector<Object>> list = db.performQuery(sql, types, param);
 		
 		if (list!=null && list.size()>1) {
-			Vector item = (Vector)list.elementAt(1);
+			Vector<Object> item = list.elementAt(1);
 			response = new RepositoryFileTO();
 			
 			response.setId((String)item.elementAt(0));
@@ -196,6 +204,48 @@ public class WrapperDBRepository extends Repository {
 	}
 	
 
+	@Override
+	public void removeFile(ProjectTO pto, String url, String pathName,
+			String rev, String user, String pass) throws Exception {
+		DbQueryDelegate db = new DbQueryDelegate();
+		ArrayList<String> sqls = new ArrayList<String>();
+		ArrayList<DBQueryParam> params = new ArrayList<DBQueryParam>();
+		
+		RepositoryFileTO rfto = this.getFile(pto, url, pathName, rev, user, pass);
+		if (rfto!=null) {
+			
+			if (rfto.getIsDirectory()) {
+				String sql = "select count(*) as c from db_repository_item " +
+							 "where repository_file_path like ?";
+				int[] types = new int[]{Types.VARCHAR};
+				Vector<String> param = new Vector<String>();
+				param.add(pathName + "%");
+				Vector<Vector<Object>> list = db.performQuery(sql, types, param);
+				if (list!=null && list.size()>0 && list.get(1)!=null && list.get(1).get(0)!=null) {
+					if (Integer.parseInt(list.get(1).get(0).toString())>1) {
+						throw new NotEmptyFolderException();
+					}
+				}
+			}
+			
+			sqls.add("delete from db_repository_version where repository_item_id=?");
+			int[] tp1 = {Types.VARCHAR};
+			Vector<Object> pr1 = new Vector<Object>();
+			pr1.add(rfto.getId());
+			params.add(new DBQueryParam(tp1, pr1));		
+
+			sqls.add("delete from db_repository_item where id=?");
+			int[] tp2 = {Types.VARCHAR};
+			Vector<Object> pr2 = new Vector<Object>();
+			pr2.add(rfto.getId());
+			params.add(new DBQueryParam(tp2, pr2));		
+			
+			db.executeQuery(sqls, params);
+		}
+	}
+
+	
+	
 	public RepositoryFileTO getFileInfo(ProjectTO pto, String url, String pathName, String rev, String user, String pass) throws Exception {
 		return getFile(pto, url, pathName, rev, user, pass);
 	}
@@ -308,11 +358,11 @@ public class WrapperDBRepository extends Repository {
 		Vector<Object> param = new Vector<Object>();
 		param.add(pto.getId());
 		param.add(path);
-		Vector list = db.performQuery(sql, types, param);
+		Vector<Vector<Object>> list = db.performQuery(sql, types, param);
 		
 		if (list!=null && list.size()>1) {
 			for (int i=1; i<list.size(); i++) {
-				Vector item = (Vector)list.elementAt(i);
+				Vector<Object> item = list.elementAt(i);
 				RepositoryLogTO log = new RepositoryLogTO();
 			
 				UserTO uto = udel.getUser(new UserTO((String)item.elementAt(3)));
@@ -433,9 +483,9 @@ public class WrapperDBRepository extends Repository {
 			int[] tp = {Types.VARCHAR};
 			Vector<Object> pr = new Vector<Object>();
 			pr.add(pto.getId());
-			Vector vseq = del.performQuery("select id from db_repository_sequence where project_id=?", tp, pr);
+			Vector<Vector<Object>> vseq = del.performQuery("select id from db_repository_sequence where project_id=?", tp, pr);
 			if (vseq!=null && vseq.size()>1) {
-				Vector item = (Vector)vseq.get(1);
+				Vector<Object> item = vseq.get(1);
 				currentValue = Long.parseLong((String)item.get(0));
 			}
 		} catch (NullPointerException e) {

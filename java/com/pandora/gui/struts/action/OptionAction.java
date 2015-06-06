@@ -72,15 +72,22 @@ public class OptionAction extends GeneralStrutsAction {
 	        frm.setPendNumLine(pto.getPreference(PreferenceTO.HOME_PENDLIST_NUMLINE));
 	        frm.setTaskNumLine(pto.getPreference(PreferenceTO.HOME_TASKLIST_NUMLINE));
 	        frm.setProjNumLine(pto.getPreference(PreferenceTO.HOME_PROJLIST_NUMLINE));
+	        frm.setInfoNumLine(pto.getPreference(PreferenceTO.HOME_TEAMLIST_NUMLINE));
+	        
+	        frm.setTopicNumLine(pto.getPreference(PreferenceTO.HOME_TOPICLIST_NUMLINE));
+	        
 	        frm.setShowPriorityColor(pto.getPreference(PreferenceTO.HOME_REQULIST_PRIORITY_COLOR).equalsIgnoreCase("TRUE"));
 	        frm.setMaxNumOfWords(pto.getPreference(PreferenceTO.LIST_NUMWORDS));
 	        frm.setPagingTOListAll(pto.getPreference(PreferenceTO.LIST_ALL_SHOW_PAGING).equals("15"));
+	        frm.setShowLockedTasks(pto.getPreference(PreferenceTO.MY_TASK_SHOW_LOCK).equalsIgnoreCase("on"));
 	        frm.setMyReqMaxDaysAgo(pto.getPreference(PreferenceTO.MY_REQU_DAYS_AGO));
 	        frm.setMyTaskMaxDaysAgo(pto.getPreference(PreferenceTO.MY_TASK_DAYS_AGO));
 
 	        frm.setUploadMaxFile(pto.getPreference(PreferenceTO.UPLOAD_MAX_SIZE));
 	        frm.setArtifactMaxFile(pto.getPreference(PreferenceTO.ARTIFACT_MAX_SIZE));
 	        frm.setCurrencyLocale(pto.getPreference(PreferenceTO.GENERAL_CURRENCY));
+	        frm.setDefaultCapacity(pto.getPreference(PreferenceTO.GENERAL_DEFAULT_CAPACITY));
+	        frm.setMaxMetaFieldTimeout(pto.getPreference(PreferenceTO.GENERAL_METAFIELD_TIMEOUT));
 	        
 	        frm.setNewVersionUrl(pto.getPreference(PreferenceTO.NEW_VERSION_URL));
 	        frm.setTaskReportUrl(pto.getPreference(PreferenceTO.TASK_REPORT_URL));
@@ -92,6 +99,7 @@ public class OptionAction extends GeneralStrutsAction {
 	        frm.setNotifiChannels(pto.getPreference(PreferenceTO.NOTIFICATION_BUS_CLASS));
 	        frm.setCalendarSyncClasses(pto.getPreference(PreferenceTO.CALEND_SYNC_BUS_CLASS));
 	        frm.setConverterClasses(pto.getPreference(PreferenceTO.CONVERTER_BUS_CLASS));
+	        frm.setOverviewProjectClasses(pto.getPreference(PreferenceTO.OVERVIEW_PROJ_CLASS));
 	        frm.setKbClasses(pto.getPreference(PreferenceTO.KB_BUS_CLASS));
 	        frm.setGadgetClasses(pto.getPreference(PreferenceTO.GADGET_BUS_CLASS));
 	        frm.setRepositoryClasses(pto.getPreference(PreferenceTO.REPOSITORY_BUS_CLASS));
@@ -114,15 +122,47 @@ public class OptionAction extends GeneralStrutsAction {
 	        frm.setShortcutName1(pto.getPreference(PreferenceTO.SHORTCUT_NAME + "1"));
 	        frm.setShortcutName2(pto.getPreference(PreferenceTO.SHORTCUT_NAME + "2"));
 	        frm.setShortcutName3(pto.getPreference(PreferenceTO.SHORTCUT_NAME + "3"));
+	        frm.setShortcutName4(pto.getPreference(PreferenceTO.SHORTCUT_NAME + "4"));
+	        frm.setShortcutName5(pto.getPreference(PreferenceTO.SHORTCUT_NAME + "5"));
+	        frm.setShortcutName6(pto.getPreference(PreferenceTO.SHORTCUT_NAME + "6"));
+	        frm.setShortcutName7(pto.getPreference(PreferenceTO.SHORTCUT_NAME + "7"));
+	        frm.setShortcutName8(pto.getPreference(PreferenceTO.SHORTCUT_NAME + "8"));
+	        frm.setShortcutName9(pto.getPreference(PreferenceTO.SHORTCUT_NAME + "9"));
+	        frm.setShortcutName10(pto.getPreference(PreferenceTO.SHORTCUT_NAME + "10"));
 
 	        frm.setShortcutURL1(pto.getPreference(PreferenceTO.SHORTCUT_URL + "1"));
 	        frm.setShortcutURL2(pto.getPreference(PreferenceTO.SHORTCUT_URL + "2"));
 	        frm.setShortcutURL3(pto.getPreference(PreferenceTO.SHORTCUT_URL + "3"));
+	        frm.setShortcutURL4(pto.getPreference(PreferenceTO.SHORTCUT_URL + "4"));
+	        frm.setShortcutURL5(pto.getPreference(PreferenceTO.SHORTCUT_URL + "5"));
+	        frm.setShortcutURL6(pto.getPreference(PreferenceTO.SHORTCUT_URL + "6"));
+	        frm.setShortcutURL7(pto.getPreference(PreferenceTO.SHORTCUT_URL + "7"));
+	        frm.setShortcutURL8(pto.getPreference(PreferenceTO.SHORTCUT_URL + "8"));
+	        frm.setShortcutURL9(pto.getPreference(PreferenceTO.SHORTCUT_URL + "9"));
+	        frm.setShortcutURL10(pto.getPreference(PreferenceTO.SHORTCUT_URL + "10"));
 	        	        
 	        frm.setShortcutIcon1(pto.getPreference(PreferenceTO.SHORTCUT_ICON + "1"));
 	        frm.setShortcutIcon2(pto.getPreference(PreferenceTO.SHORTCUT_ICON + "2"));
 	        frm.setShortcutIcon3(pto.getPreference(PreferenceTO.SHORTCUT_ICON + "3"));
+	        frm.setShortcutIcon4(pto.getPreference(PreferenceTO.SHORTCUT_ICON + "4"));
+	        frm.setShortcutIcon5(pto.getPreference(PreferenceTO.SHORTCUT_ICON + "5"));
+	        frm.setShortcutIcon6(pto.getPreference(PreferenceTO.SHORTCUT_ICON + "6"));
+	        frm.setShortcutIcon7(pto.getPreference(PreferenceTO.SHORTCUT_ICON + "7"));
+	        frm.setShortcutIcon8(pto.getPreference(PreferenceTO.SHORTCUT_ICON + "8"));
+	        frm.setShortcutIcon9(pto.getPreference(PreferenceTO.SHORTCUT_ICON + "9"));
+	        frm.setShortcutIcon10(pto.getPreference(PreferenceTO.SHORTCUT_ICON + "10"));
 
+	        frm.setShortcutOpen1(pto.getPreference(PreferenceTO.SHORTCUT_OPEN + "1"));
+	        frm.setShortcutOpen2(pto.getPreference(PreferenceTO.SHORTCUT_OPEN + "2"));
+	        frm.setShortcutOpen3(pto.getPreference(PreferenceTO.SHORTCUT_OPEN + "3"));
+	        frm.setShortcutOpen4(pto.getPreference(PreferenceTO.SHORTCUT_OPEN + "4"));
+	        frm.setShortcutOpen5(pto.getPreference(PreferenceTO.SHORTCUT_OPEN + "5"));
+	        frm.setShortcutOpen6(pto.getPreference(PreferenceTO.SHORTCUT_OPEN + "6"));
+	        frm.setShortcutOpen7(pto.getPreference(PreferenceTO.SHORTCUT_OPEN + "7"));
+	        frm.setShortcutOpen8(pto.getPreference(PreferenceTO.SHORTCUT_OPEN + "8"));
+	        frm.setShortcutOpen9(pto.getPreference(PreferenceTO.SHORTCUT_OPEN + "9"));
+	        frm.setShortcutOpen10(pto.getPreference(PreferenceTO.SHORTCUT_OPEN + "10"));
+	        
 	        
 	        //set a list of taskStatus on form
 	        Vector<TaskStatusTO> tslist = this.getTaskStatusOrder(request);
@@ -134,11 +174,19 @@ public class OptionAction extends GeneralStrutsAction {
 	        request.getSession().setAttribute("taskInputFormatList", inputList);	    
 	      
 	        Vector<TransferObject> scList = new Vector<TransferObject>();
-	        for (int i=1; i<=6; i++) {
-	        	scList.addElement(new TransferObject(i+"", this.getBundleMessage(request, "label.manageOption.shortcuts.icon." + i)));	
+	        scList.addElement(new TransferObject("-1", ""));
+	        for (int i=1; i<=8; i++) {
+	        	scList.addElement(new TransferObject(i+"", this.getBundleMessage(request, "label.shortcut.type." + i)));	
 	        }
 	        request.getSession().setAttribute("shorcutIconList", scList);	    
-	        	        
+
+	        Vector<TransferObject> soList = new Vector<TransferObject>();
+	        soList.addElement(new TransferObject("-1", ""));
+	        for (int i=1; i<=2; i++) {
+	        	soList.addElement(new TransferObject(i+"", this.getBundleMessage(request, "label.shortcut.opening." + i)));	
+	        }
+	        request.getSession().setAttribute("shorcutOpenList", soList);	    
+	        
 	        if (uto.getUsername().equals(RootTO.ROOT_USER)) {
 	        	StringBuffer actionContent = new StringBuffer("");
 	        	HashMap<String,EventTO> hm = SessionUtil.getLastEvents();
@@ -190,6 +238,9 @@ public class OptionAction extends GeneralStrutsAction {
         
 	    return tslist;
 	}
+
+	
+	
 	
 	/**
 	 * Save the preferences values into data base
@@ -326,6 +377,9 @@ public class OptionAction extends GeneralStrutsAction {
 
         child = new PreferenceTO(PreferenceTO.HOME_REQULIST_NUMLINE, frm.getRequNumLine(), uto);
         hm.put(PreferenceTO.HOME_REQULIST_NUMLINE, child);
+
+        child = new PreferenceTO(PreferenceTO.HOME_TOPICLIST_NUMLINE, frm.getTopicNumLine(), uto);
+        hm.put(PreferenceTO.HOME_TOPICLIST_NUMLINE, child);
         
         child = new PreferenceTO(PreferenceTO.HOME_PENDLIST_NUMLINE, frm.getPendNumLine(), uto);
         hm.put(PreferenceTO.HOME_PENDLIST_NUMLINE, child);
@@ -336,6 +390,9 @@ public class OptionAction extends GeneralStrutsAction {
         child = new PreferenceTO(PreferenceTO.HOME_PROJLIST_NUMLINE, frm.getProjNumLine(), uto);
         hm.put(PreferenceTO.HOME_PROJLIST_NUMLINE, child);
 
+        child = new PreferenceTO(PreferenceTO.HOME_TEAMLIST_NUMLINE, frm.getInfoNumLine(), uto);
+        hm.put(PreferenceTO.HOME_TEAMLIST_NUMLINE, child);
+        
         child = new PreferenceTO(PreferenceTO.LIST_NUMWORDS, frm.getMaxNumOfWords(), uto);
         hm.put(PreferenceTO.LIST_NUMWORDS, child);
 
@@ -349,6 +406,10 @@ public class OptionAction extends GeneralStrutsAction {
         child = new PreferenceTO(PreferenceTO.LIST_ALL_SHOW_PAGING, (frm.getPagingTOListAll()?"15":"0"), uto);
         hm.put(PreferenceTO.LIST_ALL_SHOW_PAGING, child);
 
+        frm.setShowLockedTasks(request.getParameter("showLockedTasks")!=null);
+        child = new PreferenceTO(PreferenceTO.MY_TASK_SHOW_LOCK, (frm.getShowLockedTasks()?"on":"off"), uto);
+        hm.put(PreferenceTO.MY_TASK_SHOW_LOCK, child);
+        
         frm.setShowPriorityColor(request.getParameter("showPriorityColor")!=null);
         child = new PreferenceTO(PreferenceTO.HOME_REQULIST_PRIORITY_COLOR, (frm.getShowPriorityColor()?"TRUE":"FALSE"), uto);
         hm.put(PreferenceTO.HOME_REQULIST_PRIORITY_COLOR, child);
@@ -385,6 +446,34 @@ public class OptionAction extends GeneralStrutsAction {
 	    child = new PreferenceTO(PreferenceTO.SHORTCUT_NAME + "3", frm.getShortcutName3(), uto);
 	    hm.put(PreferenceTO.SHORTCUT_NAME + "3", child);
 
+	    frm.setShortcutName4(request.getParameter("shortcutName4"));
+	    child = new PreferenceTO(PreferenceTO.SHORTCUT_NAME + "4", frm.getShortcutName4(), uto);
+	    hm.put(PreferenceTO.SHORTCUT_NAME + "4", child);	    
+
+	    frm.setShortcutName5(request.getParameter("shortcutName5"));
+	    child = new PreferenceTO(PreferenceTO.SHORTCUT_NAME + "5", frm.getShortcutName5(), uto);
+	    hm.put(PreferenceTO.SHORTCUT_NAME + "5", child);	    
+
+	    frm.setShortcutName6(request.getParameter("shortcutName6"));
+	    child = new PreferenceTO(PreferenceTO.SHORTCUT_NAME + "6", frm.getShortcutName6(), uto);
+	    hm.put(PreferenceTO.SHORTCUT_NAME + "6", child);	    
+
+	    frm.setShortcutName7(request.getParameter("shortcutName7"));
+	    child = new PreferenceTO(PreferenceTO.SHORTCUT_NAME + "7", frm.getShortcutName7(), uto);
+	    hm.put(PreferenceTO.SHORTCUT_NAME + "7", child);	    
+
+	    frm.setShortcutName8(request.getParameter("shortcutName8"));
+	    child = new PreferenceTO(PreferenceTO.SHORTCUT_NAME + "8", frm.getShortcutName8(), uto);
+	    hm.put(PreferenceTO.SHORTCUT_NAME + "8", child);	    
+	    
+	    frm.setShortcutName9(request.getParameter("shortcutName9"));
+	    child = new PreferenceTO(PreferenceTO.SHORTCUT_NAME + "9", frm.getShortcutName9(), uto);
+	    hm.put(PreferenceTO.SHORTCUT_NAME + "9", child);	    
+
+	    frm.setShortcutName10(request.getParameter("shortcutName10"));
+	    child = new PreferenceTO(PreferenceTO.SHORTCUT_NAME + "10", frm.getShortcutName10(), uto);
+	    hm.put(PreferenceTO.SHORTCUT_NAME + "10", child);	    
+	    
 	    
 	    frm.setShortcutIcon1(request.getParameter("shortcutIcon1"));
 	    child = new PreferenceTO(PreferenceTO.SHORTCUT_ICON + "1", frm.getShortcutIcon1(), uto);
@@ -398,18 +487,175 @@ public class OptionAction extends GeneralStrutsAction {
 	    child = new PreferenceTO(PreferenceTO.SHORTCUT_ICON + "3", frm.getShortcutIcon3(), uto);
 	    hm.put(PreferenceTO.SHORTCUT_ICON + "3", child);
 	    
+	    frm.setShortcutIcon4(request.getParameter("shortcutIcon4"));
+	    child = new PreferenceTO(PreferenceTO.SHORTCUT_ICON + "4", frm.getShortcutIcon4(), uto);
+	    hm.put(PreferenceTO.SHORTCUT_ICON + "4", child);
 
-	    frm.setShortcutURL1(request.getParameter("shortcutURL1"));
+	    frm.setShortcutIcon5(request.getParameter("shortcutIcon5"));
+	    child = new PreferenceTO(PreferenceTO.SHORTCUT_ICON + "5", frm.getShortcutIcon5(), uto);
+	    hm.put(PreferenceTO.SHORTCUT_ICON + "5", child);
+
+	    frm.setShortcutIcon6(request.getParameter("shortcutIcon6"));
+	    child = new PreferenceTO(PreferenceTO.SHORTCUT_ICON + "6", frm.getShortcutIcon6(), uto);
+	    hm.put(PreferenceTO.SHORTCUT_ICON + "6", child);
+
+	    frm.setShortcutIcon7(request.getParameter("shortcutIcon7"));
+	    child = new PreferenceTO(PreferenceTO.SHORTCUT_ICON + "7", frm.getShortcutIcon7(), uto);
+	    hm.put(PreferenceTO.SHORTCUT_ICON + "7", child);
+
+	    frm.setShortcutIcon8(request.getParameter("shortcutIcon8"));
+	    child = new PreferenceTO(PreferenceTO.SHORTCUT_ICON + "8", frm.getShortcutIcon8(), uto);
+	    hm.put(PreferenceTO.SHORTCUT_ICON + "8", child);
+
+	    frm.setShortcutIcon9(request.getParameter("shortcutIcon9"));
+	    child = new PreferenceTO(PreferenceTO.SHORTCUT_ICON + "9", frm.getShortcutIcon9(), uto);
+	    hm.put(PreferenceTO.SHORTCUT_ICON + "9", child);
+
+	    frm.setShortcutIcon10(request.getParameter("shortcutIcon10"));
+	    child = new PreferenceTO(PreferenceTO.SHORTCUT_ICON + "10", frm.getShortcutIcon10(), uto);
+	    hm.put(PreferenceTO.SHORTCUT_ICON + "10", child);
+	    
+	    String content = "";
+	    if (frm.getShortcutIcon1()!=null && !frm.getShortcutIcon1().equals("") && 
+	    		frm.getShortcutName1()!=null && !frm.getShortcutName1().equals("") &&
+	    		frm.getShortcutOpen1()!=null && !frm.getShortcutOpen1().equals("")) {
+	    	content = request.getParameter("shortcutURL1");
+	    }
+	    frm.setShortcutURL1(content);
 	    child = new PreferenceTO(PreferenceTO.SHORTCUT_URL + "1", frm.getShortcutURL1(), uto);
 	    hm.put(PreferenceTO.SHORTCUT_URL + "1", child);
+	    
 
-	    frm.setShortcutURL2(request.getParameter("shortcutURL2"));
+	    content = "";
+	    if (frm.getShortcutIcon2()!=null && !frm.getShortcutIcon2().equals("") && 
+	    		frm.getShortcutName2()!=null && !frm.getShortcutName2().equals("") &&
+	    		frm.getShortcutOpen2()!=null && !frm.getShortcutOpen2().equals("")) {
+	    	content = request.getParameter("shortcutURL2");
+	    }
+	    frm.setShortcutURL2(content);
 	    child = new PreferenceTO(PreferenceTO.SHORTCUT_URL + "2", frm.getShortcutURL2(), uto);
 	    hm.put(PreferenceTO.SHORTCUT_URL + "2", child);
 	    
-	    frm.setShortcutURL3(request.getParameter("shortcutURL3"));
+	    content = "";
+	    if (frm.getShortcutIcon3()!=null && !frm.getShortcutIcon3().equals("") && 
+	    		frm.getShortcutName3()!=null && !frm.getShortcutName3().equals("") &&
+	    		frm.getShortcutOpen3()!=null && !frm.getShortcutOpen3().equals("")) {
+	    	content = request.getParameter("shortcutURL3");
+	    }
+	    frm.setShortcutURL3(content);
 	    child = new PreferenceTO(PreferenceTO.SHORTCUT_URL + "3", frm.getShortcutURL3(), uto);
 	    hm.put(PreferenceTO.SHORTCUT_URL + "3", child);
+
+	    content = "";
+	    if (frm.getShortcutIcon4()!=null && !frm.getShortcutIcon4().equals("") && 
+	    		frm.getShortcutName4()!=null && !frm.getShortcutName4().equals("") &&
+	    		frm.getShortcutOpen4()!=null && !frm.getShortcutOpen4().equals("")) {
+	    	content = request.getParameter("shortcutURL4");
+	    }
+	    frm.setShortcutURL4(content);	    
+	    child = new PreferenceTO(PreferenceTO.SHORTCUT_URL + "4", frm.getShortcutURL4(), uto);
+	    hm.put(PreferenceTO.SHORTCUT_URL + "4", child);	    
+	    
+	    content = "";
+	    if (frm.getShortcutIcon5()!=null && !frm.getShortcutIcon5().equals("") && 
+	    		frm.getShortcutName5()!=null && !frm.getShortcutName5().equals("") &&
+	    		frm.getShortcutOpen5()!=null && !frm.getShortcutOpen5().equals("")) {
+	    	content = request.getParameter("shortcutURL5");
+	    }
+	    frm.setShortcutURL5(content);	    
+	    child = new PreferenceTO(PreferenceTO.SHORTCUT_URL + "5", frm.getShortcutURL5(), uto);
+	    hm.put(PreferenceTO.SHORTCUT_URL + "5", child);	    
+
+	    content = "";
+	    if (frm.getShortcutIcon6()!=null && !frm.getShortcutIcon6().equals("") && 
+	    		frm.getShortcutName6()!=null && !frm.getShortcutName6().equals("") &&
+	    		frm.getShortcutOpen6()!=null && !frm.getShortcutOpen6().equals("")) {
+	    	content = request.getParameter("shortcutURL6");
+	    }
+	    frm.setShortcutURL6(content);	    
+	    child = new PreferenceTO(PreferenceTO.SHORTCUT_URL + "6", frm.getShortcutURL6(), uto);
+	    hm.put(PreferenceTO.SHORTCUT_URL + "6", child);	    
+	    
+	    content = "";
+	    if (frm.getShortcutIcon7()!=null && !frm.getShortcutIcon7().equals("") && 
+	    		frm.getShortcutName7()!=null && !frm.getShortcutName7().equals("") &&
+	    		frm.getShortcutOpen7()!=null && !frm.getShortcutOpen7().equals("")) {
+	    	content = request.getParameter("shortcutURL7");
+	    }
+	    frm.setShortcutURL7(content);	    
+	    child = new PreferenceTO(PreferenceTO.SHORTCUT_URL + "7", frm.getShortcutURL7(), uto);
+	    hm.put(PreferenceTO.SHORTCUT_URL + "7", child);	    
+	    
+	    content = "";
+	    if (frm.getShortcutIcon8()!=null && !frm.getShortcutIcon8().equals("") && 
+	    		frm.getShortcutName8()!=null && !frm.getShortcutName8().equals("") &&
+	    		frm.getShortcutOpen8()!=null && !frm.getShortcutOpen8().equals("")) {
+	    	content = request.getParameter("shortcutURL8");
+	    }
+	    frm.setShortcutURL8(content);
+	    child = new PreferenceTO(PreferenceTO.SHORTCUT_URL + "8", frm.getShortcutURL8(), uto);
+	    hm.put(PreferenceTO.SHORTCUT_URL + "8", child);	    
+
+	    content = "";
+	    if (frm.getShortcutIcon9()!=null && !frm.getShortcutIcon9().equals("") && 
+	    		frm.getShortcutName9()!=null && !frm.getShortcutName9().equals("") &&
+	    		frm.getShortcutOpen9()!=null && !frm.getShortcutOpen9().equals("")) {
+	    	content = request.getParameter("shortcutURL9");
+	    }
+	    frm.setShortcutURL9(content);
+	    child = new PreferenceTO(PreferenceTO.SHORTCUT_URL + "9", frm.getShortcutURL9(), uto);
+	    hm.put(PreferenceTO.SHORTCUT_URL + "9", child);
+
+	    content = "";
+	    if (frm.getShortcutIcon10()!=null && !frm.getShortcutIcon10().equals("") && 
+	    		frm.getShortcutName10()!=null && !frm.getShortcutName10().equals("") &&
+	    		frm.getShortcutOpen10()!=null && !frm.getShortcutOpen10().equals("")) {
+	    	content = request.getParameter("shortcutURL10");
+	    }
+	    frm.setShortcutURL10(content);	    
+	    child = new PreferenceTO(PreferenceTO.SHORTCUT_URL + "10", frm.getShortcutURL10(), uto);
+	    hm.put(PreferenceTO.SHORTCUT_URL + "10", child);	    
+	    
+	    
+	    frm.setShortcutOpen1(request.getParameter("shortcutOpen1"));
+	    child = new PreferenceTO(PreferenceTO.SHORTCUT_OPEN + "1", frm.getShortcutOpen1(), uto);
+	    hm.put(PreferenceTO.SHORTCUT_OPEN + "1", child);
+
+	    frm.setShortcutOpen2(request.getParameter("shortcutOpen2"));
+	    child = new PreferenceTO(PreferenceTO.SHORTCUT_OPEN + "2", frm.getShortcutOpen2(), uto);
+	    hm.put(PreferenceTO.SHORTCUT_OPEN + "2", child);
+	    
+	    frm.setShortcutOpen3(request.getParameter("shortcutOpen3"));
+	    child = new PreferenceTO(PreferenceTO.SHORTCUT_OPEN + "3", frm.getShortcutOpen3(), uto);
+	    hm.put(PreferenceTO.SHORTCUT_OPEN + "3", child);
+
+	    frm.setShortcutOpen4(request.getParameter("shortcutOpen4"));
+	    child = new PreferenceTO(PreferenceTO.SHORTCUT_OPEN + "4", frm.getShortcutOpen4(), uto);
+	    hm.put(PreferenceTO.SHORTCUT_OPEN + "4", child);
+	    
+	    frm.setShortcutOpen5(request.getParameter("shortcutOpen5"));
+	    child = new PreferenceTO(PreferenceTO.SHORTCUT_OPEN + "5", frm.getShortcutOpen5(), uto);
+	    hm.put(PreferenceTO.SHORTCUT_OPEN + "5", child);	    
+	    
+	    frm.setShortcutOpen6(request.getParameter("shortcutOpen6"));
+	    child = new PreferenceTO(PreferenceTO.SHORTCUT_OPEN + "6", frm.getShortcutOpen6(), uto);
+	    hm.put(PreferenceTO.SHORTCUT_OPEN + "6", child);
+	    
+	    frm.setShortcutOpen7(request.getParameter("shortcutOpen7"));
+	    child = new PreferenceTO(PreferenceTO.SHORTCUT_OPEN + "7", frm.getShortcutOpen7(), uto);
+	    hm.put(PreferenceTO.SHORTCUT_OPEN + "7", child);
+	    
+	    frm.setShortcutOpen8(request.getParameter("shortcutOpen8"));
+	    child = new PreferenceTO(PreferenceTO.SHORTCUT_OPEN + "8", frm.getShortcutOpen8(), uto);
+	    hm.put(PreferenceTO.SHORTCUT_OPEN + "8", child);	    
+	    
+	    frm.setShortcutOpen9(request.getParameter("shortcutOpen9"));
+	    child = new PreferenceTO(PreferenceTO.SHORTCUT_OPEN + "9", frm.getShortcutOpen9(), uto);
+	    hm.put(PreferenceTO.SHORTCUT_OPEN + "9", child);
+	    
+	    frm.setShortcutOpen10(request.getParameter("shortcutOpen10"));
+	    child = new PreferenceTO(PreferenceTO.SHORTCUT_OPEN + "10", frm.getShortcutOpen10(), uto);
+	    hm.put(PreferenceTO.SHORTCUT_OPEN + "10", child);	    
 	    
 	    
         frm.setHideProject(hideProjectList);
@@ -434,6 +680,9 @@ public class OptionAction extends GeneralStrutsAction {
 
         child = new PreferenceTO(PreferenceTO.CONVERTER_BUS_CLASS, frm.getConverterClasses(), uto);
         hm.put(PreferenceTO.CONVERTER_BUS_CLASS, child);
+
+        child = new PreferenceTO(PreferenceTO.OVERVIEW_PROJ_CLASS, frm.getOverviewProjectClasses(), uto);
+        hm.put(PreferenceTO.OVERVIEW_PROJ_CLASS, child);
 
         child = new PreferenceTO(PreferenceTO.OCCURRENCE_BUS_CLASS, frm.getOccurrenceSources(), uto);
         hm.put(PreferenceTO.OCCURRENCE_BUS_CLASS, child);
@@ -479,6 +728,12 @@ public class OptionAction extends GeneralStrutsAction {
         
         child = new PreferenceTO(PreferenceTO.GENERAL_CURRENCY, frm.getCurrencyLocale(), uto);
         hm.put(PreferenceTO.GENERAL_CURRENCY, child);
+
+        child = new PreferenceTO(PreferenceTO.GENERAL_METAFIELD_TIMEOUT, frm.getMaxMetaFieldTimeout(), uto);
+        hm.put(PreferenceTO.GENERAL_METAFIELD_TIMEOUT, child);
+
+        child = new PreferenceTO(PreferenceTO.GENERAL_DEFAULT_CAPACITY, frm.getDefaultCapacity(), uto);
+        hm.put(PreferenceTO.GENERAL_DEFAULT_CAPACITY, child);
         
         child = new PreferenceTO(PreferenceTO.NEW_VERSION_URL, frm.getNewVersionUrl(), uto);
         hm.put(PreferenceTO.NEW_VERSION_URL, child);       

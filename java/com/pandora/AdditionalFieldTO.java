@@ -23,6 +23,8 @@ public class AdditionalFieldTO extends TransferObject {
     
     private Timestamp dateValue;
     
+    private Float numericValue;
+    
     /**
      * Constructor 
      */
@@ -92,6 +94,17 @@ public class AdditionalFieldTO extends TransferObject {
 	public void setDateValue(Timestamp newValue) {
 		this.dateValue = newValue;
 	}
+
+	
+	/////////////////////////////////////////////    
+	public Float getNumericValue() {
+		return numericValue;
+	}
+
+	public void setNumericValue(Float numericValue) {
+		this.numericValue = numericValue;
+	}
     
+	
     
 }

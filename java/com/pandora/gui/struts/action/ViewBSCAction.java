@@ -14,10 +14,8 @@ import org.apache.struts.action.ActionForward;
 import org.apache.struts.action.ActionMapping;
 
 import com.pandora.CategoryTO;
-import com.pandora.PreferenceTO;
 import com.pandora.ProjectTO;
 import com.pandora.ReportTO;
-import com.pandora.UserTO;
 import com.pandora.delegate.CategoryDelegate;
 import com.pandora.delegate.ProjectDelegate;
 import com.pandora.delegate.ReportDelegate;
@@ -64,7 +62,7 @@ public class ViewBSCAction extends GeneralStrutsAction {
 		    frm.setLearningTable(defTable);
 		    
 		    CategoryDelegate cdel = new CategoryDelegate();
-			Vector categoryListFrmDB = cdel.getCategoryListByType(CategoryTO.TYPE_KPI, new ProjectTO(""), false);		    
+			Vector<CategoryTO> categoryListFrmDB = cdel.getCategoryListByType(CategoryTO.TYPE_KPI, new ProjectTO(""), false);		    
 			request.getSession().setAttribute("categoryList", categoryListFrmDB);
 
 			refresh(mapping, form, request, response);
@@ -98,10 +96,10 @@ public class ViewBSCAction extends GeneralStrutsAction {
 			    //get data from data base
 		        Timestamp initalDbDate = DateUtil.getChangedDate(initalDate, Calendar.DATE, 1);
 		        Timestamp finalDbDate = DateUtil.getChangedDate(finalDate, Calendar.DATE, 1);		    		        
-			    Vector listFinan = rdel.getReportListBySearch(initalDbDate, finalDbDate, ReportTO.FINANTIAL_PERSP, frm.getProjectId(), frm.getCategoryId());
-			    Vector listCust = rdel.getReportListBySearch(initalDbDate, finalDbDate, ReportTO.CUSTOMER_PERSP, frm.getProjectId(), frm.getCategoryId());
-			    Vector listProc = rdel.getReportListBySearch(initalDbDate, finalDbDate, ReportTO.PROCESS_PERSP, frm.getProjectId(), frm.getCategoryId());
-			    Vector listLearn = rdel.getReportListBySearch(initalDbDate, finalDbDate, ReportTO.LEARNING_PERSP, frm.getProjectId(), frm.getCategoryId());
+			    Vector<ReportTO> listFinan = rdel.getReportListBySearch(initalDbDate, finalDbDate, ReportTO.FINANCIAL_PERSP, frm.getProjectId(), frm.getCategoryId());
+			    Vector<ReportTO> listCust = rdel.getReportListBySearch(initalDbDate, finalDbDate, ReportTO.CUSTOMER_PERSP, frm.getProjectId(), frm.getCategoryId());
+			    Vector<ReportTO> listProc = rdel.getReportListBySearch(initalDbDate, finalDbDate, ReportTO.PROCESS_PERSP, frm.getProjectId(), frm.getCategoryId());
+			    Vector<ReportTO> listLearn = rdel.getReportListBySearch(initalDbDate, finalDbDate, ReportTO.LEARNING_PERSP, frm.getProjectId(), frm.getCategoryId());
 			    
 			    //convert data to html table format
 			    String mask = super.getCalendarMask(request);
@@ -126,15 +124,15 @@ public class ViewBSCAction extends GeneralStrutsAction {
 	 * Convert list of Report/ReportResult object to html format
 	 * @throws BusinessException 
 	 */
-	private String convertVectorToHtml(Vector list, String mask, Locale loc) throws BusinessException{
+	private String convertVectorToHtml(Vector<ReportTO> list, String mask, Locale loc) throws BusinessException{
 	   StringBuffer sb = new StringBuffer();
 	   UserDelegate udel = new UserDelegate();
 	   Locale currencyLoc = udel.getCurrencyLocale();
 	   
 	   //print the data line
-	   Iterator i = list.iterator();	   
+	   Iterator<ReportTO> i = list.iterator();	   
 	   while(i.hasNext()){
-	       ReportTO rto = (ReportTO)i.next();
+	       ReportTO rto = i.next();
 	       sb.append(rto.convertToHtml(mask, loc, currencyLoc));
 	   }
 	   

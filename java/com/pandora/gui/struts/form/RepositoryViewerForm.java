@@ -1,6 +1,6 @@
 package com.pandora.gui.struts.form;
 
-import org.apache.struts.upload.FormFile;
+
 
 
 public class RepositoryViewerForm extends HosterRepositoryForm {
@@ -20,6 +20,8 @@ public class RepositoryViewerForm extends HosterRepositoryForm {
     private String emulateCustomerViewer = "off";
     
     private String showUploadButton = "off";
+    
+    private String uriPath;
     
     
     /////////////////////////////////////        
@@ -82,6 +84,15 @@ public class RepositoryViewerForm extends HosterRepositoryForm {
 	}
 	public void setShowUploadButton(String newValue) {
 		this.showUploadButton = newValue;
+	}
+
+	
+
+	public void setUriPath(String newValue) {
+		this.uriPath = newValue;
+	}
+	public String getAnonymousURI(){
+		return this.uriPath + "/artifact?id=" + this.getId() + "&prj=" + this.getProjectId();
 	}
 	
 }

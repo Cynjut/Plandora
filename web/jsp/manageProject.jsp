@@ -79,9 +79,12 @@
 		 	var checkObjLead = eval("cb_" + userId + "_LEADER_COL");
 			var checkObjRes = eval("cb_" + userId + "_RESOURCE_COL");
 			var checkObjCus = eval("cb_" + userId + "_CUSTOMER_COL");
-			var checkObjSeeCust = eval("cb_" + userId + "_ALLOW_SEE_CUSTOMER_COL");						
+			var checkObjSeeCust = eval("cb_" + userId + "_ALLOW_SEE_CUSTOMER_COL");
+			var checkObjSeeDisc = eval("cb_" + userId + "_ALLOW_SEE_DISCUSSION_COL");
+			
 			if (checkObjRes.checked){
-				checkObjCus.checked=true;			
+				checkObjCus.checked=true;
+				checkObjSeeDisc.checked=true;
 			} else {
 				checkObjLead.checked=false;
 				checkObjSeeCust.checked=false;			
@@ -98,6 +101,7 @@
 			var checkObjRep = eval("cb_" + userId + "_CAN_SEE_REPOSITORY_COL");
 			var checkObjInv = eval("cb_" + userId + "_CAN_SEE_INVOICE_COL");
 			var checkObjAgl = eval("cb_" + userId + "_CAN_SELF_ALLOC_COL");
+			var checkObjSeeDisc = eval("cb_" + userId + "_ALLOW_SEE_DISCUSSION_COL");
 				
 			if (checkObjLead.checked){			
 				checkObjRes.checked=true;
@@ -105,6 +109,7 @@
 				checkObjRep.checked=true;
 				checkObjInv.checked=true;
 				checkObjAgl.checked=true;
+				checkObjSeeDisc.checked=true;
 			}			
 		 }
 	 }
@@ -153,7 +158,15 @@
    	function showResourceCapacity(resId, projId) {
 	   	window.location = "../do/showResCapacityPanel?operation=prepareForm&type=RES&resourceId=" + resId + "&projectId=" + projId;
    	}
-   	    
+   	
+   	   
+   	function gridComboFilterRefresh(url, param, cbName){
+		javascript:buttonClick('projectForm', 'refreshList');
+	}
+
+	function gridTextFilterRefresh(url, param, fldName){
+		javascript:buttonClick('projectForm', 'refreshList');
+	}
 </script>
 
 <html:form  action="manageProject">
@@ -164,7 +177,7 @@
 	<html:hidden name="projectForm" property="removedUserId"/>	
 	<html:hidden name="projectForm" property="showRepositoryUserPwd"/>
 				
-	<br>
+	<plandora-html:shortcut name="projectForm" property="goToProject" fieldList="id"/>
 
 	<table width="100%" height="80%" border="0" cellspacing="0" cellpadding="0">
 	<tr><td width="10">&nbsp;</td><td>
@@ -214,13 +227,13 @@
       <td width="130" class="formTitle"><bean:message key="label.projParent"/>:&nbsp;</td>
       <td width="230" class="formBody">
 		<html:select name="projectForm" property="parentProject" styleClass="textBox">
-			<html:options collection="parentPrjList" property="id" labelProperty="name"/>
+			<html:options collection="parentPrjList" property="id" labelProperty="name" filter="false"/>
 		</html:select>      
       </td>
       <td width="130" class="formTitle"><bean:message key="label.projStatus"/>:&nbsp;</td>
       <td width="250" class="formBody">
 		<html:select name="projectForm" property="projectStatus" styleClass="textBox">
-			<html:options collection="parentPrjStatusList" property="id" labelProperty="name"/>
+			<html:options collection="parentPrjStatusList" property="id" labelProperty="name" filter="false"/>
 		</html:select>
       </td>
       <td>&nbsp;</td>
@@ -232,7 +245,7 @@
       <td class="formTitle"><bean:message key="label.canAlloc"/>:&nbsp;</td>
       <td class="formBody">
 		<html:select name="projectForm" property="canAlloc" styleClass="textBox">
-			<html:options collection="canAllocList" property="id" labelProperty="genericTag"/>
+			<html:options collection="canAllocList" property="id" labelProperty="genericTag" filter="false"/>
 		</html:select>      
       </td>
       <td class="formTitle"><bean:message key="label.projEstimClosure"/>:&nbsp;</td>
@@ -241,7 +254,21 @@
       </td>
       <td>&nbsp;</td>
       <td>&nbsp;</td>	  
+    </tr>
+
+    <tr class="pagingFormBody">
+      <td>&nbsp;</td>
+      <td class="formTitle"><bean:message key="label.projBudget"/>:&nbsp;</td>
+      <td class="formBody">
+      	<bean:write name="projectForm" property="budgetCurrencySymbol" filter="false" />&nbsp;
+      	<html:text name="projectForm" property="budget" styleClass="textBox" size="15" maxlength="20" />
+      </td>
+      <td>&nbsp;</td>
+	  <td>&nbsp;</td>
+      <td>&nbsp;</td>
+      <td>&nbsp;</td>	  
     </tr>    
+        
     
     <tr class="pagingFormBody">
       <td>&nbsp;</td>
@@ -260,7 +287,7 @@
 		<table width="98%" border="0" cellspacing="0" cellpadding="0"><tr>
 		  <td width="150">
 			  <html:button property="save" styleClass="button" onclick="javascript:saveProject();">
-				<bean:write name="projectForm" property="saveLabel" />
+				<bean:write name="projectForm" property="saveLabel" filter="false"/>
 			  </html:button>    
 		  </td>
 		  <td width="120">
@@ -306,7 +333,7 @@
       <td class="formTitle"><bean:message key="label.projResUser"/>:&nbsp;</td>
       <td class="formBody">
 		<html:select name="projectForm" property="selectedUserId" styleClass="textBox">
-			<html:options collection="UserList" property="id" labelProperty="name"/>
+			<html:options collection="UserList" property="id" labelProperty="nameWithCompany" filter="false"/>
 		</html:select>            
       	<html:button property="addUser" styleClass="button" onclick="javascript:buttonClick('projectForm', 'addUser');">
 			<bean:message key="button.addInto"/>
@@ -329,27 +356,27 @@
 			<table width="100%" border="0" cellspacing="0" cellpadding="0">
 			<tr class="formBody">
 				<td>
-					<display:table border="1" width="90%" name="allocList" scope="session">
-						  <display:column width="15%" property="username" title="label.userName"  decorator="com.pandora.gui.taglib.decorator.UserInfoDecorator" tag="projectForm"/>
-						  <display:column property="name" title="label.name" />	
-						  <display:column width="2%" property="id" title="grid.title.empty" decorator="com.pandora.gui.taglib.decorator.CustomerRoleDecorator" />
-  						  <display:column width="2%" property="id" title="grid.title.empty" decorator="com.pandora.gui.taglib.decorator.ResourceCapacityDecorator" />
-						  <display:column width="4%" property="id" title="label.proj.grid.C1" decorator="com.pandora.gui.taglib.decorator.ProjectGridCheckBoxDecorator" tag="<%=ProjectGridCheckBoxDecorator.CUSTOMER_COL %>" />
-						  <display:column width="4%" property="id" title="label.proj.grid.C2" decorator="com.pandora.gui.taglib.decorator.ProjectGridCheckBoxDecorator" tag="<%=ProjectGridCheckBoxDecorator.RESOURCE_COL %>" />
-						  <display:column width="4%" property="id" title="label.proj.grid.C3" decorator="com.pandora.gui.taglib.decorator.ProjectGridCheckBoxDecorator" tag="<%=ProjectGridCheckBoxDecorator.LEADER_COL %>" />
-						  <display:column width="4%" property="id" title="label.proj.grid.C4" decorator="com.pandora.gui.taglib.decorator.ProjectGridCheckBoxDecorator" tag="<%=ProjectGridCheckBoxDecorator.ALLOW_PRE_APPROVE_COL %>" />
-						  <display:column width="4%" property="id" title="label.proj.grid.C5" decorator="com.pandora.gui.taglib.decorator.ProjectGridCheckBoxDecorator" tag="<%=ProjectGridCheckBoxDecorator.ALLOW_SEE_CUSTOMER_COL %>" />
-						  <display:column width="4%" property="id" title="label.proj.grid.C11" decorator="com.pandora.gui.taglib.decorator.ProjectGridCheckBoxDecorator" tag="<%=ProjectGridCheckBoxDecorator.CAN_SELF_ALLOC_COL %>" />
-						  <display:column width="4%" property="id" title="label.proj.grid.C13" decorator="com.pandora.gui.taglib.decorator.ProjectGridCheckBoxDecorator" tag="<%=ProjectGridCheckBoxDecorator.CAN_SEE_REPOSITORY_COL %>" />
-						  <display:column width="4%" property="id" title="label.proj.grid.C14" decorator="com.pandora.gui.taglib.decorator.ProjectGridCheckBoxDecorator" tag="<%=ProjectGridCheckBoxDecorator.CAN_SEE_INVOICE_COL %>" />						  						  						  
-						  <display:column width="4%" property="id" title="label.proj.grid.C8" decorator="com.pandora.gui.taglib.decorator.ProjectGridCheckBoxDecorator" tag="<%=ProjectGridCheckBoxDecorator.ALLOW_SEE_TECH_COMMENTS %>" />
-						  <display:column width="4%" property="id" title="label.proj.grid.C9" decorator="com.pandora.gui.taglib.decorator.ProjectGridCheckBoxDecorator" tag="<%=ProjectGridCheckBoxDecorator.ALLOW_SEE_DISCUSSION_COL %>" />
-						  <display:column width="4%" property="id" title="label.proj.grid.C10" decorator="com.pandora.gui.taglib.decorator.ProjectGridCheckBoxDecorator" tag="<%=ProjectGridCheckBoxDecorator.CAN_SEE_OTHER_REQS_COL %>" />
-						  <display:column width="4%" property="id" title="label.proj.grid.C12" decorator="com.pandora.gui.taglib.decorator.ProjectGridCheckBoxDecorator" tag="<%=ProjectGridCheckBoxDecorator.CAN_OPEN_OTHEROWNER_REQS_COL %>" />
-						  <display:column width="4%" property="id" title="label.proj.grid.C7" decorator="com.pandora.gui.taglib.decorator.ProjectGridCheckBoxDecorator" tag="<%=ProjectGridCheckBoxDecorator.REQ_ACCEPT_CUSTOMER_COL %>" />	
-						  <display:column width="4%" property="id" title="label.proj.grid.C6" decorator="com.pandora.gui.taglib.decorator.ProjectGridCheckBoxDecorator" tag="<%=ProjectGridCheckBoxDecorator.DISABLE_USER_COL %>" />
-						  <display:column width="2%" property="id" title="grid.title.empty" decorator="com.pandora.gui.taglib.decorator.GridDeleteDecorator" tag="''" />
-					</display:table>
+					<plandora-html:ptable width="90%" name="allocList" frm="projectForm">
+						  <plandora-html:pcolumn width="15%" property="username" title="label.userName"  decorator="com.pandora.gui.taglib.decorator.UserInfoDecorator" tag="projectForm"/>
+						  <plandora-html:pcolumn property="name" title="label.name" />	
+						  <plandora-html:pcolumn width="2%" property="id" title="grid.title.empty" decorator="com.pandora.gui.taglib.decorator.CustomerRoleDecorator" />
+  						  <plandora-html:pcolumn width="2%" property="id" title="grid.title.empty" decorator="com.pandora.gui.taglib.decorator.ResourceCapacityDecorator" />
+						  <plandora-html:pcolumn width="4%" property="id" title="label.proj.grid.C1" decorator="com.pandora.gui.taglib.decorator.ProjectGridCheckBoxDecorator" tag="<%=ProjectGridCheckBoxDecorator.CUSTOMER_COL %>" />
+						  <plandora-html:pcolumn width="4%" property="id" title="label.proj.grid.C2" decorator="com.pandora.gui.taglib.decorator.ProjectGridCheckBoxDecorator" tag="<%=ProjectGridCheckBoxDecorator.RESOURCE_COL %>" />
+						  <plandora-html:pcolumn width="4%" property="id" title="label.proj.grid.C3" decorator="com.pandora.gui.taglib.decorator.ProjectGridCheckBoxDecorator" tag="<%=ProjectGridCheckBoxDecorator.LEADER_COL %>" />
+						  <plandora-html:pcolumn width="4%" property="id" title="label.proj.grid.C4" decorator="com.pandora.gui.taglib.decorator.ProjectGridCheckBoxDecorator" tag="<%=ProjectGridCheckBoxDecorator.ALLOW_PRE_APPROVE_COL %>" />
+						  <plandora-html:pcolumn width="4%" property="id" title="label.proj.grid.C5" decorator="com.pandora.gui.taglib.decorator.ProjectGridCheckBoxDecorator" tag="<%=ProjectGridCheckBoxDecorator.ALLOW_SEE_CUSTOMER_COL %>" />
+						  <plandora-html:pcolumn width="4%" property="id" title="label.proj.grid.C11" decorator="com.pandora.gui.taglib.decorator.ProjectGridCheckBoxDecorator" tag="<%=ProjectGridCheckBoxDecorator.CAN_SELF_ALLOC_COL %>" />
+						  <plandora-html:pcolumn width="4%" property="id" title="label.proj.grid.C13" decorator="com.pandora.gui.taglib.decorator.ProjectGridCheckBoxDecorator" tag="<%=ProjectGridCheckBoxDecorator.CAN_SEE_REPOSITORY_COL %>" />
+						  <plandora-html:pcolumn width="4%" property="id" title="label.proj.grid.C14" decorator="com.pandora.gui.taglib.decorator.ProjectGridCheckBoxDecorator" tag="<%=ProjectGridCheckBoxDecorator.CAN_SEE_INVOICE_COL %>" />						  						  						  
+						  <plandora-html:pcolumn width="4%" property="id" title="label.proj.grid.C8" decorator="com.pandora.gui.taglib.decorator.ProjectGridCheckBoxDecorator" tag="<%=ProjectGridCheckBoxDecorator.ALLOW_SEE_TECH_COMMENTS %>" />
+						  <plandora-html:pcolumn width="4%" property="id" title="label.proj.grid.C9" decorator="com.pandora.gui.taglib.decorator.ProjectGridCheckBoxDecorator" tag="<%=ProjectGridCheckBoxDecorator.ALLOW_SEE_DISCUSSION_COL %>" />
+						  <plandora-html:pcolumn width="4%" property="id" title="label.proj.grid.C10" decorator="com.pandora.gui.taglib.decorator.ProjectGridCheckBoxDecorator" tag="<%=ProjectGridCheckBoxDecorator.CAN_SEE_OTHER_REQS_COL %>" />
+						  <plandora-html:pcolumn width="4%" property="id" title="label.proj.grid.C12" decorator="com.pandora.gui.taglib.decorator.ProjectGridCheckBoxDecorator" tag="<%=ProjectGridCheckBoxDecorator.CAN_OPEN_OTHEROWNER_REQS_COL %>" />
+						  <plandora-html:pcolumn width="4%" property="id" title="label.proj.grid.C7" decorator="com.pandora.gui.taglib.decorator.ProjectGridCheckBoxDecorator" tag="<%=ProjectGridCheckBoxDecorator.REQ_ACCEPT_CUSTOMER_COL %>" />	
+						  <plandora-html:pcolumn width="4%" property="id" title="label.proj.grid.C6" decorator="com.pandora.gui.taglib.decorator.ProjectGridCheckBoxDecorator" tag="<%=ProjectGridCheckBoxDecorator.DISABLE_USER_COL %>" />
+						  <plandora-html:pcolumn width="2%" property="id" title="grid.title.empty" decorator="com.pandora.gui.taglib.decorator.GridDeleteDecorator" tag="''" />
+					</plandora-html:ptable>
 				</td>
 			</tr> 
 			</table>
@@ -408,7 +435,7 @@
 		<table width="98%" border="0" cellspacing="0" cellpadding="0"><tr>
 		  <td width="150">
 			  <html:button property="save" styleClass="button" onclick="javascript:saveProject();">
-				<bean:write name="projectForm" property="saveLabel" />
+				<bean:write name="projectForm" property="saveLabel" filter="false"/>
 			  </html:button>    
 		  </td>
 		  <td width="120">
@@ -424,6 +451,51 @@
 		  </td>
 		</tr></table>
 	</display:headerfootergrid> 
+
+	<logic:notEqual name="projectForm" property="htmlQualifications" value="">
+
+		<div>&nbsp;</div>
+		
+		<display:headerfootergrid width="100%" type="HEADER">
+			<bean:message key="title.project.qualification"/>
+		</display:headerfootergrid>
+	
+		<table width="98%" border="0" cellspacing="0" cellpadding="0">	
+	    <tr class="gapFormBody">
+	      <td width="10">&nbsp;</td>
+	      <td width="200">&nbsp;</td>
+	      <td width="200">&nbsp;</td>
+		  <td width="200">&nbsp;</td>
+		  <td width="200">&nbsp;</td>
+		  <td width="200">&nbsp;</td>
+		  <td>&nbsp;</td>
+		  <td width="10">&nbsp;</td>
+	    </tr>	    
+	
+		<bean:write name="projectForm" property="htmlQualifications" filter="false" />
+	
+	    <tr class="gapFormBody">
+	      <td colspan="6">&nbsp;</td>
+	    </tr>	
+	  	</table>
+	
+		<display:headerfootergrid type="FOOTER">
+			<table width="98%" border="0" cellspacing="0" cellpadding="0"><tr>
+			  <td width="150">
+				  <html:button property="save" styleClass="button" onclick="javascript:saveProject();">
+					<bean:write name="projectForm" property="saveLabel" filter="false"/>
+				  </html:button>    
+			  </td>
+			  <td>&nbsp;</td>
+			  <td width="120">
+				  <html:button property="backward" styleClass="button" onclick="javascript:buttonClick('projectForm', 'backward');">
+					<bean:message key="button.backward"/>
+				  </html:button>    
+			  </td>
+			</tr></table>
+		</display:headerfootergrid> 	
+	
+	</logic:notEqual>
 	
 	<div>&nbsp;</div>
 	
@@ -447,7 +519,7 @@
       <td class="formTitle"><bean:message key="label.projRepositoryClass"/>:&nbsp;</td>
       <td class="formBody">
 		<html:select name="projectForm" property="repositoryClass" styleClass="textBox" onkeypress="javascript:changeRepository();" onchange="javascript:changeRepository();">
-			<html:options collection="repositoryList" property="id" labelProperty="genericTag"/>
+			<html:options collection="repositoryList" property="id" labelProperty="genericTag" filter="false"/>
 		</html:select>      
       </td>
       <td colspan="3">&nbsp;</td>
@@ -567,7 +639,7 @@
 		<table width="98%" border="0" cellspacing="0" cellpadding="0"><tr>
 		  <td width="150">
 			  <html:button property="save" styleClass="button" onclick="javascript:saveProject();">
-				<bean:write name="projectForm" property="saveLabel" />
+				<bean:write name="projectForm" property="saveLabel" filter="false"/>
 			  </html:button>    
 		  </td>
 		  <td>&nbsp;</td>
@@ -588,13 +660,13 @@
 	<table width="98%" border="0" cellspacing="0" cellpadding="0">
 	<tr class="formBody">
 		<td>
-			<display:table border="1" width="100%" name="projectList" scope="session" pagesize="10" requestURI="../do/manageProject?operation=navigate">
-				  <display:column sort="true" likeSearching="true" width="20%" property="name" title="label.projName" />			
-				  <display:column sort="true" likeSearching="true" property="description" maxWords="40" title="label.projDesc" />
-				  <display:column sort="true" likeSearching="true" comboFilter="true" width="20%" align="center" property="parentProject.name" title="label.projParent" />	
-				  <display:column sort="true" width="8%" property="projectStatus.name" align="center" title="label.projStatus" />
-				  <display:column width="2%" property="id" title="grid.title.empty" decorator="com.pandora.gui.taglib.decorator.ProjectGridEditDecorator" tag="'PRJ'" />
-			</display:table>		
+			<plandora-html:ptable width="100%" name="projectList" scope="session" pagesize="10"  frm="projectForm">
+				  <plandora-html:pcolumn sort="true" likeSearching="true" width="20%" property="name" title="label.projName" />			
+				  <plandora-html:pcolumn sort="true" likeSearching="true" property="description" maxWords="40" title="label.projDesc" />
+				  <plandora-html:pcolumn sort="true" likeSearching="true" comboFilter="true" width="20%" align="center" property="parentProject.name" title="label.projParent" />	
+				  <plandora-html:pcolumn sort="true" width="8%" property="projectStatus.name" comboFilter="true" align="center" title="label.projStatus" />
+				  <plandora-html:pcolumn width="2%" property="id" title="grid.title.empty" decorator="com.pandora.gui.taglib.decorator.ProjectGridEditDecorator" tag="'PRJ'" />
+			</plandora-html:ptable>		
 		</td>
 	</tr> 
 	</table>

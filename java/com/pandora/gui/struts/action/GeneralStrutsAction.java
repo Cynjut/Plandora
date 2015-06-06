@@ -6,6 +6,8 @@ import java.io.InputStream;
 import java.io.PrintWriter;
 import java.net.URLDecoder;
 import java.sql.Timestamp;
+import java.text.DecimalFormat;
+import java.text.NumberFormat;
 import java.util.Iterator;
 import java.util.Locale;
 import java.util.Vector;
@@ -27,25 +29,32 @@ import com.pandora.MetaFieldTO;
 import com.pandora.PlanningRelationTO;
 import com.pandora.PlanningTO;
 import com.pandora.ProjectTO;
+import com.pandora.RepositoryFilePlanningTO;
 import com.pandora.RepositoryFileTO;
 import com.pandora.TransferObject;
 import com.pandora.UserTO;
+import com.pandora.bus.SystemSingleton;
 import com.pandora.delegate.DiscussionTopicDelegate;
 import com.pandora.delegate.PlanningDelegate;
 import com.pandora.delegate.PlanningRelationDelegate;
 import com.pandora.delegate.ProjectDelegate;
 import com.pandora.delegate.RepositoryDelegate;
 import com.pandora.delegate.UserDelegate;
+import com.pandora.exception.BusinessException;
 import com.pandora.exception.InvalidRelationException;
+import com.pandora.exception.MetaFieldNumericTypeException;
 import com.pandora.gui.struts.form.GeneralErrorForm;
 import com.pandora.gui.struts.form.GeneralStrutsForm;
 import com.pandora.gui.struts.form.GeneralSuccessForm;
 import com.pandora.gui.struts.form.HosterRepositoryForm;
+import com.pandora.gui.taglib.artifacts.Artifact;
 import com.pandora.gui.taglib.decorator.RepositoryEntityCheckBoxDecorator;
 import com.pandora.gui.taglib.decorator.RepositoryEntityRadioBoxDecorator;
 import com.pandora.gui.taglib.decorator.RepositoryEntryNameDecorator;
 import com.pandora.gui.taglib.decorator.RepositoryEntryTypeDecorator;
+import com.pandora.gui.taglib.table.PTableHelper;
 import com.pandora.helper.DateUtil;
+import com.pandora.helper.LogUtil;
 import com.pandora.helper.SessionUtil;
 import com.pandora.helper.StringUtil;
 
@@ -63,9 +72,13 @@ public class GeneralStrutsAction extends DispatchAction{
 	  * @param exceptionMessage The exception message to display in source 
 	  */
 	public void setErrorFormSession(HttpServletRequest request, String errMsg, Exception e) {
+		setErrorFormSession(request, errMsg, null, null, null, null, null, e);
+	}
+
+	public void setErrorFormSession(HttpServletRequest request, String errMsg, String arg0, String arg1, String arg2, String arg3, String arg4, Exception e) {
 		try {
 			GeneralErrorForm errFrm = new GeneralErrorForm();
-			errFrm.setErrorMessage(errMsg);
+			errFrm.setErrorMessage(errMsg, arg0, arg1, arg2, arg3, arg4);
 			if (e!=null){
 			    if (e.getMessage()==null) {
 			        errFrm.setExceptionMessage(e.toString());    
@@ -81,7 +94,7 @@ public class GeneralStrutsAction extends DispatchAction{
 			ee.printStackTrace();
 		}
 	}
-
+	
 	/**
 	  * Auxiliar Method. Set into http session, the successForm bean to be used on forms to show a successfully message.  
 	  * @param request The request
@@ -127,6 +140,154 @@ public class GeneralStrutsAction extends DispatchAction{
 	    
 	    return response;
 	}		
+
+	
+	public ActionForward requestArtifactBody(ActionMapping mapping, ActionForm form,
+			 HttpServletRequest request, HttpServletResponse response){
+		Artifact tartifact = new Artifact();
+	    RepositoryDelegate rdel = new RepositoryDelegate();
+	    
+		try {
+			String gridParam = request.getParameter("ajaxGridParam");
+			String projectId = null;
+			String entityId = null;
+			String artifactId = null;
+			Vector<RepositoryFilePlanningTO> list = new Vector<RepositoryFilePlanningTO>();
+			
+			if (gridParam!=null) {
+				gridParam = new String(gridParam.getBytes(), this.getBundleMessage(request, "encoding"));
+				
+				String[] params = gridParam.split("\\|");
+				if (params!=null && params.length>=2) {
+					String[] projToken = params[0].split("=");
+					if (projToken!=null && projToken.length==2) {
+						projectId = projToken[1];
+					}
+					String[] entiToken = params[1].split("=");
+					if (entiToken!=null && entiToken.length==2) {
+						entityId = entiToken[1];
+						list = rdel.getFilesFromPlanning(new PlanningTO(entityId));
+					}
+					if (params.length>2) {
+						String[] artifToken = params[2].split("=");
+						if (artifToken!=null && artifToken.length==2) {
+							artifactId = artifToken[1];
+						}						
+					}
+				}
+
+			} else {
+				gridParam = "";
+			}
+
+			UserTO uto = SessionUtil.getCurrentUser(request);
+			String chartset = SystemSingleton.getInstance().getDefaultEncoding();
+ 	        response.setContentType("text/html; charset=" + chartset);
+	        response.setHeader("Cache-Control", "no-cache");
+			
+        	String title = getBundleMessage(request, "label.artifactTag.title");
+        	String newArtifact = getBundleMessage(request, "label.artifactTag.new");
+        	String browse = getBundleMessage(request, "label.artifactTag.browse");
+        	String confirmation = getBundleMessage(request, "label.artifactTag.removelink.confirm");	        
+        	
+	        PrintWriter out = response.getWriter();
+	        tartifact.setOnlyBody("true");
+	        tartifact.setAjax("true");
+	        tartifact.setName("mindMapForm");
+		    StringBuffer body = tartifact.renderArtifact(list, entityId, projectId, artifactId, uto, title, newArtifact, browse, confirmation, request.getSession());
+		    if (body!=null) {
+		    	out.println(body.toString());	
+		    } else {
+		    	out.println("");
+		    }
+	        out.flush();				
+			
+		} catch(Exception e){
+			e.printStackTrace();
+		    this.setErrorFormSession(request, "error.generic.showFormError", e);
+		}
+	    return null;		
+	}
+	
+	
+	public ActionForward requestPTableBody(ActionMapping mapping, ActionForm form,
+			 HttpServletRequest request, HttpServletResponse response){
+		PTableHelper tHelper = new PTableHelper();
+		
+		try {
+			String gridId = request.getParameter("ajaxGridId");
+			String gridParam = request.getParameter("ajaxGridParam");
+			if (gridParam!=null) {
+				gridParam = new String(gridParam.getBytes(), this.getBundleMessage(request, "encoding"));	
+			} else {
+				gridParam = "";
+			}
+
+			String chartset = SystemSingleton.getInstance().getDefaultEncoding();
+ 	        response.setContentType("text/html; charset=" + chartset);
+	        response.setHeader("Cache-Control", "no-cache");
+			
+	        PrintWriter out = response.getWriter();  	       
+	        
+	        if ( gridParam.startsWith("show_panel") || gridParam.startsWith("search_like") ) {
+
+	        	String panel = tHelper.reloadPanelList(gridId, request, gridParam);
+	        	out.println(panel);
+	        	
+	        } else {
+			    String body = tHelper.getTableBody(gridId, request, gridParam);					
+			    String header = tHelper.getTableHeader(gridId, request, gridParam);
+			    
+		        header = header.replaceAll("&nbsp;", "");
+		        body = body.replaceAll("&nbsp;", "");
+
+		        out.println(header);
+		        out.println(body);	        	
+	        }
+	         
+	        out.flush();				
+			
+		} catch(Exception e){
+			e.printStackTrace();
+		    this.setErrorFormSession(request, "error.generic.showFormError", e);
+		}
+	    return null;
+	}	
+
+	
+	public ActionForward requestPTableExport(ActionMapping mapping, ActionForm form,
+			 HttpServletRequest request, HttpServletResponse response){
+		PrintWriter out = null;
+		PTableHelper tHelper = new PTableHelper();
+		try {
+			String gridId = request.getParameter("ajaxGridId");
+	        if (gridId != null) {
+
+	        	UserTO uto = SessionUtil.getCurrentUser(request);
+	        	String userEnconding = uto.getBundle().getMessage(uto.getLocale(), "encoding");
+	        	String content = tHelper.getCsvContent(gridId, request, "");
+	        	
+	            response.setContentType("text/csv; charset=" + userEnconding);  
+	            response.setHeader("Cache-Control", "no-cache");
+	            response.setHeader("Content-Disposition", "attachment; filename=\"grid.csv\"");	            
+	            out = response.getWriter();  
+	            out.println(content);  
+	            out.flush();											
+	        }
+		}catch(Exception ee) {
+			ee.printStackTrace();
+		} finally {
+			try {			
+				if (out != null) {
+					out.close();
+				}
+				
+			} catch (Exception ex) {
+				ex.printStackTrace();				
+	        }
+		}
+		return null;		
+	}
 	
 	
 	/**
@@ -162,7 +323,11 @@ public class GeneralStrutsAction extends DispatchAction{
 			String exportkey = request.getParameter("exportkey");
 			StringBuffer sb = (StringBuffer)request.getSession().getAttribute(exportkey);
 	        if (sb != null) {
-	            response.setContentType("text/csv; charset=ISO-8859-1");  
+	        	
+	        	UserTO uto = SessionUtil.getCurrentUser(request);
+	        	String userEnconding = uto.getBundle().getMessage(uto.getLocale(), "encoding");
+	        	
+	            response.setContentType("text/csv; charset=" + userEnconding);  
 	            response.setHeader("Cache-Control", "no-cache");
     			response.setHeader("Content-Disposition", "attachment; filename=\"grid.csv\"");	            
 	            out = response.getWriter();  
@@ -236,6 +401,9 @@ public class GeneralStrutsAction extends DispatchAction{
 						chkDec.initRow(rfto, 0, 0);
 						radDec.initRow(rfto, 0, 0);
 						
+						chkDec.setSession(request.getSession());						
+						radDec.setSession(request.getSession());
+						
 						sb.append("<tr class=\"tableRowEven\">");
 						sb.append("<td class=\"tableCell\" width=\"10\" align=\"center\" valign=\"top\">" + typeDec.decorate(rfto.getIsDirectory()) + "</td>");
 						
@@ -285,8 +453,9 @@ public class GeneralStrutsAction extends DispatchAction{
 			GeneralStrutsForm frm = (GeneralStrutsForm)form;			
 			String entityId = frm.getId();
 			String path = frm.getGenericTag();
-			path = URLDecoder.decode(path, "UTF-8");
-			rdel.updateRepositoryFilePlan(path, entityId, null, null, true);
+			String chartset = SystemSingleton.getInstance().getDefaultEncoding();
+			path = URLDecoder.decode(path, chartset);
+			rdel.updateRepositoryFilePlan(path, entityId, null, true);
 		} catch(Exception e) {
 			e.printStackTrace();
 		}			
@@ -299,7 +468,8 @@ public class GeneralStrutsAction extends DispatchAction{
 		try {
 			GeneralStrutsForm frm = (GeneralStrutsForm)form;			
 			String path = frm.getGenericTag();
-			path = URLDecoder.decode(path, "UTF-8");
+			String chartset = SystemSingleton.getInstance().getDefaultEncoding();
+			path = URLDecoder.decode(path, chartset);
 			request.getSession().setAttribute(RepositoryEntityRadioBoxDecorator.REPOSITORY_SELECTED_PATH, path);
 		} catch(Exception e) {
 			e.printStackTrace();
@@ -323,7 +493,7 @@ public class GeneralStrutsAction extends DispatchAction{
 	}
 	
 	/**
-	 * This method is displached from the discussion topic TAG LIB 
+	 * This method is dispatched from the discussion topic TAG LIB 
 	 */
 	public ActionForward replyDiscussion(ActionMapping mapping, ActionForm form,
 			 HttpServletRequest request, HttpServletResponse response){
@@ -358,6 +528,34 @@ public class GeneralStrutsAction extends DispatchAction{
 		return forward;		
 	}
 
+
+	public ActionForward removeTopic(ActionMapping mapping, ActionForm form,
+			 HttpServletRequest request, HttpServletResponse response){
+		ActionForward forward = null;
+		DiscussionTopicDelegate dtDel = new DiscussionTopicDelegate();
+		try {
+			String uri = (String)request.getSession().getAttribute("REPLY_FORWARD");			
+			GeneralStrutsForm frm = (GeneralStrutsForm)form;
+			String topicInfo = frm.getGenericTag();
+			if (topicInfo!=null && !topicInfo.trim().equals("")) {
+				UserTO uto = SessionUtil.getCurrentUser(request);
+				dtDel.removeDiscussionTopic(topicInfo, uto);
+				LogUtil.log(this, LogUtil.LOG_INFO, "The topic [" + topicInfo + 
+									"] was removed by user id: [" + uto.getUsername() + 
+									"]", null);				
+			}
+			RequestDispatcher dispatcher = request.getRequestDispatcher("../do/" + uri);   
+			dispatcher.forward(request, response);
+			
+		} catch(Exception e) {
+			this.setErrorFormSession(request, "error.formForum.saveTopic", e);
+		}
+		
+		return forward;		
+	}
+
+	
+	
 	public ActionForward removeLinkRelation(ActionMapping mapping, ActionForm form,
 			 HttpServletRequest request, HttpServletResponse response){
 		PlanningRelationDelegate del = new PlanningRelationDelegate();
@@ -373,12 +571,13 @@ public class GeneralStrutsAction extends DispatchAction{
 			prto.setRelated(new PlanningTO(relatedId));
 			del.removeRelation(prto);
 			if (request.getSession().getAttribute(collectionKey)!=null) {
+				@SuppressWarnings("rawtypes")
 				Vector list = (Vector)request.getSession().getAttribute(collectionKey);
-				Iterator i = list.iterator();
+				@SuppressWarnings("unchecked")
+				Iterator<PlanningRelationTO> i = list.iterator();
 				while (i.hasNext()) {
 					PlanningRelationTO item = (PlanningRelationTO)i.next();
-					if (item.getPlanning().getId().equals(entityId) && 
-							item.getRelated().getId().equals(relatedId)) {
+					if (item.getPlanning().getId().equals(entityId) &&	item.getRelated().getId().equals(relatedId)) {
 						list.remove(item);	
 						break;
 					}
@@ -393,6 +592,7 @@ public class GeneralStrutsAction extends DispatchAction{
 		
 	}
 
+	@SuppressWarnings("unchecked")
 	public ActionForward linkRelation(ActionMapping mapping, ActionForm form,
 			 HttpServletRequest request, HttpServletResponse response){
 		PlanningRelationDelegate del = new PlanningRelationDelegate();
@@ -431,6 +631,7 @@ public class GeneralStrutsAction extends DispatchAction{
 						try {
 							del.insertRelation(prto);
 							if (request.getSession().getAttribute(collectionKey)!=null) {
+								@SuppressWarnings("rawtypes")
 								Vector list = (Vector)request.getSession().getAttribute(collectionKey);
 								list.add(prto);							
 							}
@@ -480,7 +681,7 @@ public class GeneralStrutsAction extends DispatchAction{
 	        	
 	            content = "<table cellpadding=\"0\" border=\"0\" cellspacing=\"0\" width=\"100%\">" +
 	            		  "<tr class=\"tableRowOdd\">" +
-	            		  "<td width=\"50\" rowspan=\"3\"><img width=\"50\" height=\"60\" border=\"0\" src=\"../do/login?operation=getUserPic&id=" + uto.getId() + "\"></td>" +
+	            		  "<td width=\"50\" rowspan=\"3\"><img width=\"50\" height=\"60\" border=\"0\" src=\"../do/login?operation=getUserPic&id=" + uto.getId() + "&ts=" +DateUtil.getNow().toString() + "\"></td>" +
 	            		  "<td width=\"3\">&nbsp;</td>" +
 	            		  "<td class=\"successfullyMessage\"><center>" + uto.getName() + "</center></td>" +
 	            		  "</tr>" +
@@ -525,7 +726,10 @@ public class GeneralStrutsAction extends DispatchAction{
 					
 			    } else {
 			        java.net.URL defaultPic = this.getClass().getClassLoader().getResource("../../images/emptypic.png");
-			        File file = new File(defaultPic.getFile());
+			        String filepath = defaultPic.getFile();
+					String chartset = SystemSingleton.getInstance().getDefaultEncoding();			        
+			        filepath = URLDecoder.decode(filepath, chartset);
+			        File file = new File(filepath);
 			        InputStream is = new FileInputStream(file);
 			        bytes = new byte[(int)file.length()];
 		    
@@ -558,7 +762,38 @@ public class GeneralStrutsAction extends DispatchAction{
 		return null;	    
 	}
 	
-	
+
+   	public ActionForward getBundleMessage(ActionMapping mapping, ActionForm form,
+			HttpServletRequest request, HttpServletResponse response) {
+	    ServletOutputStream sos = null;
+		try {
+			String content = "OK";
+			//example: localhost:8080/pandora/do/login?operation=getBundleMessage&key=label.resHome.grabTask.confirm
+			
+			String key = request.getParameter("key");
+			if (key!=null && !key.trim().equals("")) {
+				content = getBundleMessage(request, key, true);
+		        sos = response.getOutputStream();
+				response.setContentType("text/plain");
+				response.setContentLength(content.length());
+				sos.write(content.getBytes());		        				
+			}
+
+		}catch(Exception e){
+			this.setErrorFormSession(request, "error.generic.showFormError", e);
+		} finally {
+		    try {
+		        if (sos!=null) {
+		            sos.close();
+		        }
+			} catch (Exception e2) {
+			    this.setErrorFormSession(request, "error.generic.showFormError", null);    
+			}
+		}
+		return null;
+   	}
+
+   		
    	/**
    	 * This method get a value from resource bundle and can be used for all decorators.
   	 */
@@ -599,9 +834,9 @@ public class GeneralStrutsAction extends DispatchAction{
    	/**
    	 * Get a list of transferObject and apply the resource bundle to the field tag
    	 */
-   	protected Vector applyBundle(HttpServletRequest request, Vector transferObjectList){
+   	protected Vector<TransferObject> applyBundle(HttpServletRequest request, Vector<TransferObject> transferObjectList){
    		try {
-	    	Iterator s = transferObjectList.iterator();
+	    	Iterator<TransferObject> s = transferObjectList.iterator();
 	    	while(s.hasNext()) {
 	    	    TransferObject to = (TransferObject)s.next();
 	    	    to.setGenericTag(this.getBundleMessage(request, to.getGenericTag(), true));
@@ -615,21 +850,27 @@ public class GeneralStrutsAction extends DispatchAction{
    	
    	/**
    	 * Get the values from form based to the meta fields of planning. 
+   	 * @throws BusinessException 
    	 */
-   	protected void setMetaFieldValuesFromForm(Vector<MetaFieldTO> metaFieldList, HttpServletRequest request, PlanningTO container){
+   	protected void setMetaFieldValuesFromForm(Vector<MetaFieldTO> metaFieldList, HttpServletRequest request, PlanningTO container) throws MetaFieldNumericTypeException{
 		if (metaFieldList!=null) {
 			container.setAdditionalFields(null);
 		    Iterator<MetaFieldTO> i = metaFieldList.iterator();
 		    while(i.hasNext()) {
 		    	MetaFieldTO mto = i.next();
+		    	
 		    	String value = request.getParameter(mto.getHtmlName());
+		    	if (value!=null) {
+		    		//replace the html caracter 'nbsp' to empty string
+		    		value = value.replaceAll("\u00a0", ""); 	
+		    	}
 		    	
 		    	if (mto.getType().intValue()==MetaFieldTO.TYPE_TABLE) {
 		    		
 		    		String numCols = request.getParameter(mto.getHtmlName() + "_NUM_COLS");
 		    		String numRows = request.getParameter(mto.getHtmlName() + "_NUM_ROWS");
 		    		if (numCols!=null && numRows!=null) {
-    					Vector values = new Vector();
+    					Vector<AdditionalTableTO> values = new Vector<AdditionalTableTO>();
     					
 		    			for (int r=1; r<=Integer.parseInt(numRows); r++) {
 		    				for (int c=1; c<=Integer.parseInt(numCols); c++) {
@@ -662,17 +903,29 @@ public class GeneralStrutsAction extends DispatchAction{
 	            		iDate = DateUtil.getDateTime(value, getCalendarMask(request), loc);
 	            		if (iDate!=null) {
 		            		String[] options = mto.getDomain().split("\\|");	            		
-		            		value = DateUtil.getDate(iDate, options[3], loc);        				            			
+		            		value = DateUtil.getDate(iDate, options[3], loc);
 	            		} else {
 	            			value = "";
 	            		}
 	        		}catch(Exception e) {
 	        			value = "";
 	        		}
-	        		container.addAdditionalField(mto, value, iDate);
+	        		container.addAdditionalField(mto, value, iDate, null);
 		    		
-		    	} else {
-			    	container.addAdditionalField(mto, value);		    		
+		    	}else if (mto.getType().intValue()==MetaFieldTO.TYPE_TEXT_BOX_NUMERIC) {
+		    		try{
+		    			String[] options = mto.getDomain().split("\\|");	
+		    			Locale loc = SessionUtil.getCurrentLocale(request);
+		    			DecimalFormat df = (DecimalFormat)NumberFormat.getInstance(loc);
+		    			df.applyPattern(options[3]);
+		    			Float numericValue = (value != null && ! value.equals("") ? df.parse(value).floatValue() : null);
+		    			value = (value != null && !value.equals("") ? df.format(numericValue) : "" );
+		    			container.addAdditionalField(mto, value, numericValue);
+		    		}catch (Exception e) {
+		    			throw new MetaFieldNumericTypeException(mto.getName());
+					}
+		    	}else {
+			    	container.addAdditionalField(mto, (value==null?"":value));		    		
 		    	}
 		    }
 		}
@@ -719,30 +972,41 @@ public class GeneralStrutsAction extends DispatchAction{
 	public ActionForward metaTableAddRow(ActionMapping mapping, ActionForm form,
 			 HttpServletRequest request, HttpServletResponse response){
 		
-		Vector newRow = new Vector();
+		Vector<AdditionalTableTO> newRow = new Vector<AdditionalTableTO>();
 		String fwd = (String)request.getSession().getAttribute("META_FIELD_FORWARD");
 	    try {
 	        GeneralStrutsForm frm = (GeneralStrutsForm)form;
 	        String metaFieldId = frm.getGenericTag();
 	        metaFieldId = metaFieldId.replaceAll("META_DATA_", "");
-	        AdditionalFieldTO afto = frm.getAdditionalField(metaFieldId);
+	        AdditionalFieldTO afto = null;
+
+        	//try to get fields from form...
+			@SuppressWarnings({ "unchecked", "rawtypes" })
+			Vector<MetaFieldTO> metaFieldList = (Vector)request.getSession().getAttribute("metaFieldList");
+			if (metaFieldList!=null) {
+				PlanningTO dummyContainer = new PlanningTO();
+				this.setMetaFieldValuesFromForm(metaFieldList, request, dummyContainer);	    
+				frm.setAdditionalFields(dummyContainer.getAdditionalFields());			
+				afto = frm.getAdditionalField(metaFieldId);
+			}	        
+	        
 	        if (afto!=null && afto.getTableValues()!=null) {
-	        	Vector list = afto.getTableValues();
+	        	Vector<AdditionalTableTO> list = afto.getTableValues();
 	        	
 	        	//get the total number of rows...
 	        	int totalRows = 0;
-	        	Iterator i = list.iterator();
+	        	Iterator<AdditionalTableTO> i = list.iterator();
 	        	while(i.hasNext()) {
-	        		AdditionalTableTO atto = (AdditionalTableTO)i.next();
+	        		AdditionalTableTO atto = i.next();
 	        		if (totalRows<atto.getLine().intValue()) {
 	        			totalRows = atto.getLine().intValue();
 	        		}
 	        	}
 	        	
 	        	//increment a new row based to the first row
-	        	Iterator j = list.iterator();
+	        	Iterator<AdditionalTableTO> j = list.iterator();
 	        	while(j.hasNext()) {
-	        		AdditionalTableTO atto = (AdditionalTableTO)j.next();
+	        		AdditionalTableTO atto = j.next();
         			if (atto.getLine().intValue()==1) {
         				newRow.add(new AdditionalTableTO(atto, totalRows+1));
         			}
@@ -752,10 +1016,13 @@ public class GeneralStrutsAction extends DispatchAction{
 	        	afto.setTableValues(list);
 	        }
 
+				        
 			RequestDispatcher dispatcher = request.getRequestDispatcher("../do/" + fwd);   
 			dispatcher.forward(request, response);
 
-	    } catch(Exception e){
+	    } catch(MetaFieldNumericTypeException e){
+	    	this.setErrorFormSession(request, e.getMessage(), e.getMetaFieldName(), null, null, null, null, e);
+		} catch(Exception e){
 	        this.setErrorFormSession(request, "error.generic.showFormError", e);
 	    }
 		return null;

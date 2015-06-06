@@ -15,8 +15,6 @@ import com.pandora.delegate.PreferenceDelegate;
 import com.pandora.delegate.UserDelegate;
 import com.pandora.exception.BusinessException;
 
-/**
- */
 public class IndexEngineBUS {
 
     private File index;
@@ -88,7 +86,7 @@ public class IndexEngineBUS {
                 }
 
                 //call the data from specific entity!!!!                        
-                Vector vr = kbus.call(initial, finalCursor);
+                Vector<?> vr = kbus.call(initial, finalCursor);
                 
                 long cursor = kbus.add(index, vr, finalCursor);
                 pto.addPreferences(new PreferenceTO(cursorKey, cursor+"", caller));                
@@ -101,11 +99,12 @@ public class IndexEngineBUS {
         }
     }
     
-    
+
 	public static KbIndex getKbClass(String className){
 	    KbIndex response = null;
         try {
-            Class klass = Class.forName(className);
+            @SuppressWarnings("rawtypes")
+			Class klass = Class.forName(className);
             response = (KbIndex)klass.newInstance();
         } catch (Exception e) {
             response = null;
@@ -122,8 +121,7 @@ public class IndexEngineBUS {
 	            for (int i = 0; i<classList.length; i++) {
 	                String classStr = classList[i].trim();
 	                KbIndex kbus = getKbClass(classStr);
-                    if (kbus!=null && kbus.getBusinessClass()!=null 
-                            && (to.getClass().equals(kbus.getBusinessClass()))) {
+                    if (kbus!=null && kbus.getBusinessClass()!=null && (to.getClass().equals(kbus.getBusinessClass()))) {
                         Document doc = kbus.getObjectToIndex(to);
                         if (doc!=null) {
                             kbus.update(index, kbus, to, doc);

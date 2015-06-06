@@ -25,7 +25,7 @@ public class AgilePanelTaskDecorator extends ColumnDecorator {
 		Vector<ResourceTaskTO> list = rwto.getResourceTaskList();
 		if (list!=null) {
 			
-			UserTO uto = (UserTO)this.getPageContext().getSession().getAttribute(UserDelegate.CURRENT_USER_SESSION);
+			UserTO uto = (UserTO)this.getSession().getAttribute(UserDelegate.CURRENT_USER_SESSION);
 			PreferenceTO pto = uto.getPreference();
 			boolean hideCanceledTask = false;
 			try {
@@ -84,7 +84,7 @@ public class AgilePanelTaskDecorator extends ColumnDecorator {
 		String response = "";
 		TaskTO tto = rtto.getTask();
 		TaskDelegate tdel = new TaskDelegate();
-		boolean isDone = tsto.isFinish();
+		boolean isOpen = tsto.isOpen();
 		
 		String username = "";
 		if (showUser) {
@@ -108,8 +108,9 @@ public class AgilePanelTaskDecorator extends ColumnDecorator {
 		response = response.concat("<div id=\""+ rtto.getId() + "\" class=\"agileTaskBox\" " +
 				"onmouseout=\"hideIconTask('EDIT_"+ rtto.getId() + "');hideIconTask('REMOVE_"+ rtto.getId() + "');\" " +
 				"onmouseover=\"showIconTask('EDIT_"+ rtto.getId() + "');showIconTask('REMOVE_"+ rtto.getId() + "');\">");
-		response = response.concat("<table width=\"69\" height=\"75\" border=\"0\" cellspacing=\"0\" cellpadding=\"0\" style=\"table-layout:fixed; background: url(../images/" + cardImg + ") no-repeat top left; border:none\">");
-		
+		response = response.concat("<table width=\"69\" height=\"75\" border=\"0\" cellspacing=\"0\" cellpadding=\"0\" style=\"table-layout:fixed; background: url(../images/" + 
+									cardImg + ") no-repeat top left; border:none\">");
+
 		response = response.concat("<tr height=\"14\" class=\"agilePanelPost\">" +
 				"<td width=\"14\"><div id=\"EDIT_"+ rtto.getId() + "\" class=\"agileIconPost\"><a href=\"javascript:editPostTask('"+ rtto.getId() + "');\">" +
 						"<img src=\"../images/edit.gif\" border=\"0\"></a></div></td>\n");
@@ -121,10 +122,10 @@ public class AgilePanelTaskDecorator extends ColumnDecorator {
 		response = response.concat("&nbsp;</td>\n");
 		
 		response = response.concat("<td width=\"14\"><div id=\"REMOVE_"+ rtto.getId() + "\" class=\"agileIconPost\">");
-		if (isDone) {
-			response = response.concat("&nbsp;");
+		if (isOpen) {
+			response = response.concat("<a href=\"javascript:removePostTask('"+ rtto.getId() + "');\"><img src=\"../images/remove.gif\" border=\"0\"></a>");
 		} else {
-			response = response.concat("<a href=\"javascript:removePostTask('"+ rtto.getId() + "');\"><img src=\"../images/remove.gif\" border=\"0\"></a>");			
+			response = response.concat("&nbsp;");
 		}
 		response = response.concat("</div></td></tr>");
 		response = response.concat("<tr class=\"agilePanelPost\"><td colspan=\"3\">");

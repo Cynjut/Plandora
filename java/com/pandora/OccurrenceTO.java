@@ -6,7 +6,6 @@ import java.util.Vector;
 
 import com.pandora.bus.occurrence.Occurrence;
 import com.pandora.helper.DateUtil;
-import com.pandora.helper.LogUtil;
 
 /**
  */
@@ -20,13 +19,11 @@ public class OccurrenceTO extends PlanningTO {
     
     private String status;
     
-    private boolean visible = false;
-    
     private String statusLabel;
     
     private ProjectTO project;
     
-    private Vector fields;
+    private Vector<OccurrenceFieldTO> fields;
     
     private UserTO handler;
     
@@ -65,9 +62,13 @@ public class OccurrenceTO extends PlanningTO {
                 if (field.getField().equals(fieldKey)) {
                 	
                 	String type = bus.getType(field.getField());
-                	if (type!=null && field.getDateValue()!=null && 
-                			type.equals(FieldValueTO.FIELD_TYPE_DATE)) {
+                	if (type!=null && field.getDateValue()!=null && type.equals(FieldValueTO.FIELD_TYPE_DATE)) {
+                		if (loc==null || mask==null){
+                			loc = new Locale("en", "US");
+                			mask = "MM/dd/yyyy";
+                		}
                 		response = DateUtil.getDate(field.getDateValue(), mask, loc);
+                		
                 	} else {
                 		response = field.getValue();	
                 	}
@@ -79,6 +80,22 @@ public class OccurrenceTO extends PlanningTO {
         return response;
     }
     
+    
+	public Vector<Vector<Object>> getFieldTableValueByKey(String fieldKey, Occurrence bus) {
+		Vector<Vector<Object>> response =null;
+        if (fields!=null) {
+            for (int i = 0; i< fields.size(); i++) {
+                OccurrenceFieldTO field = (OccurrenceFieldTO)fields.elementAt(i);
+                if (field!=null && field.getField()!=null && field.getField().equals(fieldKey)) {
+               		response = field.getTableValues();	
+                    break;
+                }
+            }
+        }
+        return response;
+	}
+    
+    
 
     public Timestamp getFieldDateByKey(String fieldKey, Occurrence bus) {
         Timestamp response = null;
@@ -86,8 +103,7 @@ public class OccurrenceTO extends PlanningTO {
         if (fields!=null) {
             for (int i = 0; i< fields.size(); i++) {
                 OccurrenceFieldTO field = (OccurrenceFieldTO)fields.elementAt(i);
-                if (field.getField().equals(fieldKey)) {
-                	
+                if (field!=null && field.getField()!=null && field.getField().equals(fieldKey)) {
                 	String type = bus.getType(field.getField());
                 	if (type!=null && field.getDateValue()!=null && 
                 			type.equals(FieldValueTO.FIELD_TYPE_DATE)) {
@@ -99,6 +115,21 @@ public class OccurrenceTO extends PlanningTO {
         }
         return response;
     }
+    
+    public OccurrenceFieldTO getField(String fieldKey) {
+    	OccurrenceFieldTO response = null;
+        if (fields!=null) {
+            for (int i = 0; i< fields.size(); i++) {
+                OccurrenceFieldTO field = (OccurrenceFieldTO)fields.elementAt(i);
+                if (field!=null && field.getField()!=null && field.getField().equals(fieldKey)) {                	
+               		response = field;
+                    break;
+                }
+            }
+        }
+        return response;
+    }
+    
     
     public String getFieldToString(){
         String response = "";
@@ -125,7 +156,8 @@ public class OccurrenceTO extends PlanningTO {
 	                String classStr = list[i].trim();
 	                Object bus = null;
 	                try {
-	                    Class klass = Class.forName(classStr);
+	                    @SuppressWarnings("rawtypes")
+						Class klass = Class.forName(classStr);
 	                    bus = klass.newInstance();
 	                } catch (java.lang.NoClassDefFoundError e) {
 	                	bus = null;
@@ -183,15 +215,6 @@ public class OccurrenceTO extends PlanningTO {
     }
 
     
-    /////////////////////////////////        
-    public boolean isVisible() {
-		return visible;
-	}
-	public void setVisible(boolean newValue) {
-		this.visible = newValue;
-	}
-
-
 	/////////////////////////////////         
     public String getStatusLabel() {
         return statusLabel;
@@ -202,17 +225,17 @@ public class OccurrenceTO extends PlanningTO {
     
     
     /////////////////////////////////             
-    public Vector getFields() {
+    public Vector<OccurrenceFieldTO> getFields() {
         return fields;
     }
-    public void setFields(Vector newValue) {
+    public void setFields(Vector<OccurrenceFieldTO> newValue) {
         this.fields = newValue;
     }
 
 
     public void addField(OccurrenceFieldTO ofto) {
         if (this.fields==null) {
-            this.fields = new Vector();
+            this.fields = new Vector<OccurrenceFieldTO>();
         }
         this.fields.add(ofto);        
     }
@@ -234,4 +257,6 @@ public class OccurrenceTO extends PlanningTO {
     public void setLocale(Locale newValue) {
         this.locale = newValue;
     }
+
+
 }

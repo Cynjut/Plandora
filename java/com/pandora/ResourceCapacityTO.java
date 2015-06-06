@@ -24,7 +24,11 @@ public class ResourceCapacityTO extends TransferObject {
     /** Cost (in cent$) of resource per worked hour */
     private Integer costPerHour;
     
-	
+    /** transient attributes */
+    private String projectName;
+    private String resourceUsername;
+    
+    
 	public ResourceCapacityTO(){
 	}
 	
@@ -68,6 +72,7 @@ public class ResourceCapacityTO extends TransferObject {
 		return DateUtil.getDateTime(this.day.toString(), (this.month.intValue()-1)+"", this.year.toString(), "0", "0", "0");
 	}
 	
+	
 	/*
     public String getStringCostPerHour(Locale loc) {
         String resp = "";
@@ -79,6 +84,11 @@ public class ResourceCapacityTO extends TransferObject {
     }
 	*/
 	
+	@Override
+	public String toString() {
+		return getDate() + " => " + capacity;
+	}
+
 	//////////////////////////////////////
 	public String getResourceId() {
 		return resourceId;
@@ -135,4 +145,22 @@ public class ResourceCapacityTO extends TransferObject {
 		this.costPerHour = newValue;
 	}
 
+	
+	//////////////////////////////////////
+	public void setProjectName(String pn) {
+		this.projectName = pn;
+	}
+	public String getProjectName() {
+		return this.projectName;
+	}
+	
+	
+	//////////////////////////////////////
+	public void setResourceUserName(String un) {
+		this.resourceUsername = un;
+	}
+	public String getResourceUserName() {
+		return this.resourceUsername;
+	}
+	
 }

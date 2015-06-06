@@ -4,22 +4,20 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-
 import java.util.Iterator;
 import java.util.Vector;
 
 import com.pandora.DiscussionTopicTO;
 import com.pandora.PlanningTO;
-import com.pandora.UserTO;
 import com.pandora.TransferObject;
+import com.pandora.UserTO;
 import com.pandora.exception.DataAccessException;
-import com.pandora.helper.LogUtil;
 
 public class DiscussionTopicDAO extends DataAccess {
     
 	
-    public Vector getListByPlanning(String planning) throws DataAccessException {
-        Vector response = null;
+    public Vector<DiscussionTopicTO> getListByPlanning(String planning) throws DataAccessException {
+    	Vector<DiscussionTopicTO> response = null;
         Connection c = null;
 		try {
 			c = getConnection();
@@ -33,28 +31,13 @@ public class DiscussionTopicDAO extends DataAccess {
 		}
         return response;
     }
-
-    
-    public Vector<DiscussionTopicTO> getListByUser(UserTO uto) throws DataAccessException {
-        Vector<DiscussionTopicTO> response = null;
-        Connection c = null;
-		try {
-			c = getConnection();
-			response = this.getListByUser(uto, c);
-		} catch(Exception e) {
-			throw new DataAccessException(e);
-		} finally {
-			this.closeConnection(c);
-		}
-        return response;
-    }
     
     
 	/**
      * Get a list of Discussion Data from data base based on current planning object.
      */
-    public Vector getListByPlanning(PlanningTO pto, Connection c) throws DataAccessException {
-        Vector response= new Vector();
+    public Vector<DiscussionTopicTO> getListByPlanning(PlanningTO pto, Connection c) throws DataAccessException {
+        Vector<DiscussionTopicTO> response= new Vector<DiscussionTopicTO>();
 		ResultSet rs = null;
 		PreparedStatement pstmt = null;
 
@@ -78,54 +61,31 @@ public class DiscussionTopicDAO extends DataAccess {
 		} catch (SQLException e) {
 			throw new DataAccessException(e);
 		}finally{
-			try {
-				if(rs != null) rs.close();
-				if(pstmt != null) pstmt.close();
-			} catch (SQLException ec) {
-			    LogUtil.log(this, LogUtil.LOG_ERROR, "DB Closing statement error", ec);
-			} 		
+			super.closeStatement(rs, pstmt);
 		}	 
 		return response;
     }
+
     
-
-    public Vector<DiscussionTopicTO> getListByUser(UserTO uto, Connection c) throws DataAccessException {
-        Vector<DiscussionTopicTO> response= new Vector<DiscussionTopicTO>();
+    public TransferObject getObject(TransferObject to, Connection c) throws DataAccessException {
+    	DiscussionTopicTO response = null;
 		ResultSet rs = null;
-		PreparedStatement pstmt = null;
-
+		PreparedStatement pstmt = null; 
 		try {
-			pstmt = c.prepareStatement("select dt.id,dt.planning_id, dt.content, dt.parent_topic, " +
-					"dt.user_id, dt.creation_date, sub.last_upd, (sub.cnt-1) as reply, tu.username " +
-					"from discussion_topic dt, tool_user tu, " +
-					"(select max(creation_date) as last_upd, count(*) as cnt, " +
-							"planning_id from discussion_topic group by planning_id) as sub " +
-					"where dt.parent_topic is null and sub.planning_id = dt.planning_id " +
-					  "and dt.user_id = tu.id " +
-					  "and dt.planning_id in (select distinct planning_id from discussion_topic where user_id=?)");
-			pstmt.setString(1, uto.getId());
+			pstmt = c.prepareStatement("select dt.id, dt.planning_id, dt.content, dt.parent_topic, " +
+									   "dt.user_id, dt.creation_date, u.username " +
+									   "from discussion_topic dt, tool_user u " +
+									   "where dt.id=? and dt.user_id = u.id");
+			pstmt.setString(1, to.getId());
 			rs = pstmt.executeQuery();
-			while (rs.next()){
-			    DiscussionTopicTO dtto = this.populateByResultSet(rs);
-
-			    dtto.setLastUpd(getTimestamp(rs, "last_upd"));
-			    dtto.setReplyNumber(getInteger(rs, "reply"));
-			    
-			    UserTO user = dtto.getUser();
-			    user.setUsername(getString(rs, "username"));
-			    
-				response.addElement(dtto); 
+			if (rs.next()){
+				response = this.populateByResultSet(rs);
 			} 
 						
 		} catch (SQLException e) {
 			throw new DataAccessException(e);
 		}finally{
-			try {
-				if(rs != null) rs.close();
-				if(pstmt != null) pstmt.close();
-			} catch (SQLException ec) {
-			    LogUtil.log(this, LogUtil.LOG_ERROR, "DB Closing statement error", ec);
-			} 		
+			super.closeStatement(rs, pstmt);
 		}	 
 		return response;
     }
@@ -135,38 +95,80 @@ public class DiscussionTopicDAO extends DataAccess {
      * Insert a list of Discussion Topics into data base. 
      * But first, remove all objects from data base
      */
-    public void insert(Vector topics, PlanningTO me, Connection c) throws DataAccessException {
+    public void insert(Vector<DiscussionTopicTO> topics, PlanningTO me, Connection c) throws DataAccessException {
+    	
         this.removeByPlanning(me, c);
+        
         if (topics!=null) {
-            Iterator i =  topics.iterator();
+            Iterator<DiscussionTopicTO> i =  topics.iterator();
             while(i.hasNext()) {
-                DiscussionTopicTO dtto = (DiscussionTopicTO)i.next();
-                this.insert(dtto, c);
+            	DiscussionTopicTO dtto = i.next();
+            	
+            	//create a clone of discussion topic and save new record without 'parent topic' link...
+            	DiscussionTopicTO clone = dtto.getClone();
+            	clone.setParentTopic(null);
+                this.insert(clone, c);                
+            }
+
+            //after that, save only the links in order to avoid issues with FK constraints.
+            Iterator<DiscussionTopicTO> j =  topics.iterator();
+            while(j.hasNext()) {
+            	DiscussionTopicTO dtto = j.next();
+            	if (dtto.getParentTopic()!=null) {
+            		this.update(dtto, c);	
+            	}
             }
         }
     }
     
-    /**
-     * Remove all topics related with current Planning object
-     */
-    private void removeByPlanning(PlanningTO pto, Connection c) throws DataAccessException {
+
+    
+    @Override
+	public void remove(TransferObject to, Connection c)	throws DataAccessException {
 		PreparedStatement pstmt = null; 
 		try {
-
-			pstmt = c.prepareStatement("delete from discussion_topic where planning_id=?");
-			pstmt.setString(1, pto.getId());
+			
+			pstmt = c.prepareStatement("update discussion_topic set parent_topic=null where parent_topic=?");
+			pstmt.setString(1, to.getId());
+			pstmt.executeUpdate();
+			
+			pstmt = c.prepareStatement("delete from discussion_topic where id=?");
+			pstmt.setString(1, to.getId());
 			pstmt.executeUpdate();
 												
 		} catch (SQLException e) {
 			throw new DataAccessException(e);
 		}finally{
-			try {
-				if(pstmt != null) pstmt.close();
-			} catch (SQLException ec) {
-			    LogUtil.log(this, LogUtil.LOG_ERROR, "DB Closing statement error", ec);
-			} 		
+			super.closeStatement(null, pstmt);
+		}       
+	}
+
+
+	/**
+     * Remove all topics related with current Planning object
+     */
+    private void removeByPlanning(PlanningTO pto, Connection c) throws DataAccessException {
+		PreparedStatement pstmt = null;
+		ResultSet rs = null;
+		try {
+			
+			//get a list of topics to be removed...
+			pstmt = c.prepareStatement("select distinct id from discussion_topic where planning_id=?");
+			pstmt.setString(1, pto.getId());
+			rs = pstmt.executeQuery();
+			while (rs.next()){
+				String item = getString(rs, "id");
+				DiscussionTopicTO toBeRemoved = new DiscussionTopicTO(item);
+				this.remove(toBeRemoved, c);
+			} 
+												
+		} catch (SQLException e) {
+			throw new DataAccessException(e);
+		}finally{
+			super.closeStatement(null, pstmt);
 		}       
     }
+    
     
     
     /**
@@ -197,13 +199,36 @@ public class DiscussionTopicDAO extends DataAccess {
 		} catch (SQLException e) {
 			throw new DataAccessException(e);
 		}finally{
-			try {
-				if(pstmt != null) pstmt.close();
-			} catch (SQLException ec) {
-			    LogUtil.log(this, LogUtil.LOG_ERROR, "DB Closing statement error", ec);
-			} 		
+			super.closeStatement(null, pstmt);
 		}       
     }
+
+
+    public void update(TransferObject to, Connection c) throws DataAccessException {
+		PreparedStatement pstmt = null; 
+		try {
+			DiscussionTopicTO dtto = (DiscussionTopicTO)to;
+			pstmt = c.prepareStatement("update discussion_topic set planning_id=?, content=?, " +
+									   "parent_topic=?, user_id=?, creation_date=? where id=?");
+			pstmt.setString(1, dtto.getPlanningId());
+			pstmt.setString(2, dtto.getContent());
+			if (dtto.getParentTopic()!=null && dtto.getParentTopic().getId()!=null) {
+				pstmt.setString(3, dtto.getParentTopic().getId());	
+			} else {
+				pstmt.setNull(3, java.sql.Types.VARCHAR);
+			}
+			pstmt.setString(4, dtto.getUser().getId());
+			pstmt.setTimestamp(5, dtto.getCreationDate());
+			pstmt.setString(6, dtto.getId());
+			pstmt.executeUpdate();
+
+		} catch (SQLException e) {
+			throw new DataAccessException(e);
+		}finally{
+			super.closeStatement(null, pstmt);
+		}       
+    }
+
     
     
     /**

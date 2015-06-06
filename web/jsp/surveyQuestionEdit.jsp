@@ -66,12 +66,12 @@
 			    <td class="formBody">
 			    	<logic:equal name="surveyQuestionForm" property="editQuestionId" value="">
 					  	<html:select name="surveyQuestionForm" property="type" styleClass="textBox">
-					   		<html:options collection="surveyQuestionTypes" property="id" labelProperty="genericTag"/>
+					   		<html:options collection="surveyQuestionTypes" property="id" labelProperty="genericTag" filter="false"/>
 						</html:select>
 			    	</logic:equal>
 			    	<logic:notEqual name="surveyQuestionForm" property="editQuestionId" value="">
 					  	<html:select name="surveyQuestionForm" property="type" styleClass="textBox" disabled="true">
-					   		<html:options collection="surveyQuestionTypes" property="id" labelProperty="genericTag"/>
+					   		<html:options collection="surveyQuestionTypes" property="id" labelProperty="genericTag" filter="false"/>
 						</html:select>
 			    	</logic:notEqual>
 		   	    </td>
@@ -113,13 +113,13 @@
 		      <td width="120" class="formTitle"><bean:message key="label.formSurvey.question.position"/>:&nbsp;</td>
 		      <td>     
 			  		<html:select name="surveyQuestionForm" property="position" styleClass="textBox">
-						<html:options collection="positionList" property="id" labelProperty="genericTag"/>
+						<html:options collection="positionList" property="id" labelProperty="genericTag" filter="false"/>
 					</html:select>		      		      	
 		      </td>
 		      <td width="200" class="formTitle"><bean:message key="label.formSurvey.mandatory"/>:&nbsp;</td>
 		      <td>     
 			  		<html:select name="surveyQuestionForm" property="mandatory" styleClass="textBox">
-						<html:options collection="mandatoryList" property="id" labelProperty="genericTag"/>
+						<html:options collection="mandatoryList" property="id" labelProperty="genericTag" filter="false"/>
 					</html:select>		      		      	
 		      </td>		      
 		      <td>&nbsp;</td>

@@ -21,6 +21,10 @@ public class ResourceHomeForm extends GeneralStrutsForm {
     /** 'My Requirements' grid identification */
     public static final String REQ_SOURCE = "REQ";
 
+    /** 'My Team' grid identification */
+    public static final String TOPIC_SOURCE = "TPC";
+    
+    
     /** 'My Requirements' grid identification by Refuse form */
     public static final String REFUSE_REQ_SOURCE = "REFUSE_REQ";
 
@@ -73,6 +77,8 @@ public class ResourceHomeForm extends GeneralStrutsForm {
     private String gagclass;
     
     private String showHideGadgetColumn;
+
+    private String htmlEDIIcon;
     
     private String containGagdet;
     
@@ -85,6 +91,8 @@ public class ResourceHomeForm extends GeneralStrutsForm {
     private String shorcutsHtmlBody;
     
     private String expenseReportURL;
+    
+    private String topicComment;
     
     /**
      * Clear values of Form
@@ -325,5 +333,24 @@ public class ResourceHomeForm extends GeneralStrutsForm {
 		this.expenseReportURL = newValue;
 	}
 
+
+    ////////////////////////////////////////////
+	public String getTopicComment() {
+		return topicComment;
+	}
+	public void setTopicComment(String newValue) {
+		this.topicComment = newValue;
+	}
+
+	
+    ////////////////////////////////////////////
+	public String getHtmlEDIIcon() {
+		return htmlEDIIcon;
+	}
+	public void setHtmlEDIIcon(String newValue) {
+		this.htmlEDIIcon = newValue;
+	}
+	
+	
 	
 }

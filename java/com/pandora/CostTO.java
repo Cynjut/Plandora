@@ -83,33 +83,33 @@ public class CostTO extends PlanningTO {
 	}
 	
 	
-	public Integer summarizeInstallments(Timestamp inidate, Timestamp finaldate) {
-		Integer response = null;
+	public Long summarizeInstallments(Timestamp inidate, Timestamp finaldate) {
+		Long response = null;
 		if (installments!=null) {
-			int acc = 0;
+			long acc = 0;
 			for (CostInstallmentTO cito : installments) {
 				if (cito.getValue()!=null && cito.getDueDate()!=null && cito.getCostStatus()!=null) {
 					if ( (inidate == null || !cito.getDueDate().before(inidate)) && 
 						 (finaldate == null || cito.getDueDate().before(finaldate)) &&
 						 !cito.getCostStatus().getStateMachineOrder().equals(CostStatusTO.STATE_MACHINE_CANCELED) &&
 						 !cito.getCostStatus().getStateMachineOrder().equals(CostStatusTO.STATE_MACHINE_WAITING)) {
-						acc+=cito.getValue().intValue();	
+						acc+=cito.getValue().longValue();	
 					}
 				}
 			}
-			response = new Integer(acc);
+			response = new Long(acc);
 		}
 		return response;
 	}
 
-	public Integer getTotalValue() {
-		Integer response = null;
+	public Long getTotalValue() {
+		Long response = null;
 		if (installments!=null) {
-			int acc = 0;
+			long acc = 0;
 			for (CostInstallmentTO cito : installments) {
-				acc+=cito.getValue().intValue();	
+				acc+=cito.getValue().longValue();	
 			}
-			response = new Integer(acc);
+			response = new Long(acc);
 		}
 		return response;
 	}
@@ -140,7 +140,15 @@ public class CostTO extends PlanningTO {
 		}
 		return response ;
 	}
-
+	
+	
+	public String getExpenseId(){
+		String response = "";
+		if (this.expense!=null && this.expense.getId()!=null) {
+			response = this.expense.getId();
+		}
+		return response;
+	}
 	
 	//////////////////////////////////	
 	public Vector<CostInstallmentTO> getInstallments() {

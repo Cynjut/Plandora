@@ -17,6 +17,7 @@ import org.apache.struts.action.ActionMapping;
 import com.pandora.CategoryTO;
 import com.pandora.CostTO;
 import com.pandora.LeaderTO;
+import com.pandora.MetaFieldTO;
 import com.pandora.PreferenceTO;
 import com.pandora.ProjectTO;
 import com.pandora.ResourceCapacityTO;
@@ -29,6 +30,7 @@ import com.pandora.UserTO;
 import com.pandora.bus.PreferenceBUS;
 import com.pandora.delegate.CategoryDelegate;
 import com.pandora.delegate.CostDelegate;
+import com.pandora.delegate.MetaFieldDelegate;
 import com.pandora.delegate.ProjectDelegate;
 import com.pandora.delegate.ResourceCapacityDelegate;
 import com.pandora.delegate.TaskDelegate;
@@ -43,7 +45,9 @@ import com.pandora.helper.StringUtil;
 
 public class CostAction extends GeneralStrutsAction {
 
-	private final static int COLUMN_WIDTH = 110; 
+	private final static int COLUMN_WIDTH         = 110;
+	
+	private final static String META_FIELD_PREFIX = "MF_"; 
 	
 	public ActionForward prepareForm(ActionMapping mapping, ActionForm form,
 			 HttpServletRequest request, HttpServletResponse response){
@@ -53,7 +57,7 @@ public class CostAction extends GeneralStrutsAction {
 			CostForm frm = (CostForm)form;
 			frm.setShowEditCost("off");
 			frm.setExpenseReportURL("");
-
+			
 			UserTO uto = SessionUtil.getCurrentUser(request);			
 			ProjectTO pto = pdel.getProjectObject(new ProjectTO(frm.getProjectId()), false);
 			boolean isAllowed = (pto.isLeader(uto.getId()));
@@ -85,9 +89,10 @@ public class CostAction extends GeneralStrutsAction {
 	
 	public ActionForward showExpenseReport(ActionMapping mapping, ActionForm form,
 			 HttpServletRequest request, HttpServletResponse response){
-		UserDelegate udel = new UserDelegate();		
-		try {
-			CostForm frm = (CostForm)form;
+		UserDelegate udel = new UserDelegate();
+		CostForm frm = (CostForm)form;
+		
+		try {	
 			UserTO root = udel.getRoot();
 			String url = root.getPreference().getPreference(PreferenceTO.EXPENSE_REPORT_URL);
 			url = url.replaceAll("#EXPENSE_ID#", frm.getExpenseId());
@@ -226,10 +231,32 @@ public class CostAction extends GeneralStrutsAction {
 	
 	
 	private void refreshAuxiliaryLists(CostForm frm, HttpServletRequest request) throws Exception {
-
+		MetaFieldDelegate mfdel = new MetaFieldDelegate();
 		frm.setShowEditCost("off");
 		frm.setExpenseReportURL("");
 		
+		Vector<TransferObject> types = new Vector<TransferObject>();
+		types.add(new TransferObject(CostForm.TYPE_PROJECT, super.getBundleMessage(request, "label.cost.type.1")));
+		types.add(new TransferObject(CostForm.TYPE_ACCOUNT_CODE, super.getBundleMessage(request, "label.cost.type.2")));
+		types.add(new TransferObject(CostForm.TYPE_CATEGORY, super.getBundleMessage(request, "label.cost.type.3")));
+
+		if (frm.getProjectId()!=null) {
+			Vector<MetaFieldTO> projMfList = mfdel.getListByProjectAndContainer(frm.getProjectId(), null, MetaFieldTO.APPLY_TO_COST);
+			if (projMfList!=null) {
+				boolean containMetaField = false;
+				for (MetaFieldTO mfto : projMfList) {
+					if (mfto.getType().equals(MetaFieldTO.TYPE_COMBO_BOX) || mfto.getType().equals(MetaFieldTO.TYPE_SQL_COMBO_BOX)) {
+						types.add(new TransferObject(META_FIELD_PREFIX + mfto.getId(), super.getBundleMessage(request, "label.by") + " " + mfto.getName()));
+						containMetaField = true;
+					}
+				}
+
+				if (frm.getType().startsWith(META_FIELD_PREFIX) && !containMetaField) {
+					frm.setType(CostForm.TYPE_PROJECT);
+				}
+			}
+		}
+
 		if (frm.getProjectId()!=null && frm.getType()!=null) {			
 			StringBuffer bodyList = new StringBuffer();
 			StringBuffer leftList = this.getLeftList(frm, request, bodyList);
@@ -237,10 +264,6 @@ public class CostAction extends GeneralStrutsAction {
 			frm.setCostHtmlBody(bodyList.toString());
 		}
 		
-		Vector<TransferObject> types = new Vector<TransferObject>();
-		types.add(new TransferObject(CostForm.TYPE_PROJECT, super.getBundleMessage(request, "label.cost.type.1")));
-		types.add(new TransferObject(CostForm.TYPE_ACCOUNT_CODE, super.getBundleMessage(request, "label.cost.type.2")));
-		types.add(new TransferObject(CostForm.TYPE_CATEGORY, super.getBundleMessage(request, "label.cost.type.3")));
 		request.getSession().setAttribute("costPanelTypes", types);
 
 		Vector<TransferObject> gran = new Vector<TransferObject>();
@@ -261,6 +284,7 @@ public class CostAction extends GeneralStrutsAction {
 		CostDelegate cdel = new CostDelegate();		
 		StringBuffer leftList = new StringBuffer();
 		StringBuffer body = new StringBuffer();
+		StringBuffer script = new StringBuffer();
 		ExpenseReportDecorator expDec = new ExpenseReportDecorator(); 
 		
 		UserTO uto = SessionUtil.getCurrentUser(request);			
@@ -297,75 +321,83 @@ public class CostAction extends GeneralStrutsAction {
 				costList = cdel.getListByAccountCode(to.getId(), iniRange, finalRange);
 				key = to.hashCode()+"";
 			} else if (frm.getType().equals(CostForm.TYPE_CATEGORY)) {
-				costList = cdel.getListByCategory(new CategoryTO(to.getId()), iniRange, finalRange);
+				costList = cdel.getListByCategory(new CategoryTO(to.getId()), new ProjectTO(frm.getProjectId()), iniRange, finalRange);
+			} else if (frm.getType().startsWith(META_FIELD_PREFIX)) {
+				String metaFieldId = frm.getType().replaceAll(META_FIELD_PREFIX, "");
+				costList = cdel.getListByMetaFieldValue(metaFieldId, to.getId(), iniRange, finalRange);
 			}
 
-			HashMap<String, Integer> timesheet = new HashMap<String, Integer>();
-			StringBuffer sbHR = null;
-			if ((frm.getViewMode().equals(CostForm.MODE_ALL) || frm.getViewMode().equals(CostForm.MODE_ONLY_RESOURCES)) && frm.getType().equals(CostForm.TYPE_PROJECT)) {
-				sbHR = this.getHumanResourceCost(frm, to.getId(), uto, timesheet, iniDate, finalDate);
-			}
-			
-			//write the html parent row...
-			leftList.append("<table border=\"0\" cellspacing=\"1\" cellpadding=\"1\">");			
-			leftList.append("<tr class=\"formBody\">");
 			if (costList!=null && costList.size()>0) {
-				leftList.append("<td height=\"23\" width=\"15\"><center><a href=\"javascript:showHideChild('" + key + "')\">" +
-						"<img id=\"IMG_" + key + "\" border=\"0\" src=\"../images/minus.gif\" ></a></center></td>");	
-			} else {
-				leftList.append("<td height=\"23\" width=\"15\">&nbsp;</td>");
-			}
-
-			leftList.append("<td width=\"322\" class=\"capCell\" colspan=\"4\">&nbsp;<b>" + to.getGenericTag() + "</b></td></tr>\n");
-			leftList.append("</table>");
-			
-			//write the html parent sumarized cols...
-			body.append("<table width=\"" + (colNumber * COLUMN_WIDTH) + "\" border=\"0\" cellspacing=\"1\" cellpadding=\"1\">");
-			body.append(getSummarizedLine(costList, frm, timesheet, uto, iniDate, finalDate));
-			body.append("</table>");
-			body.append("<div id=\"DIV_CELL_" + key + "\">");
-			
-			//write the html child rows...
-			leftList.append("<div id=\"DIV_" + key + "\">");
-
-			leftList.append("<table border=\"0\" cellspacing=\"1\" cellpadding=\"1\">");
-			if (frm.getViewMode().equals(CostForm.MODE_ALL) || frm.getViewMode().equals(CostForm.MODE_ONLY_EXPENSES)) {
-				for (CostTO cto: costList) {
-					leftList.append("<tr class=\"formBody\" ");
-					leftList.append("onmouseout=\"hideIconCost('EDIT_"+ cto.getId() + "');hideIconCost('REMOVE_"+ cto.getId() + "');\" " +
-							"onmouseover=\"showIconCost('EDIT_"+ cto.getId() + "');showIconCost('REMOVE_"+ cto.getId() + "');\">"); 
-					leftList.append("<td height=\"24\" width=\"15\"><a id=\"EDIT_"+ cto.getId() + "\" href=\"javascript:editCost('"+ cto.getId() + "');\"><img src=\"../images/edit.gif\" border=\"0\"></a></td>");
-					leftList.append("<td height=\"24\" width=\"15\"><a id=\"REMOVE_"+ cto.getId() + "\" href=\"javascript:removeCost('"+ cto.getId() + "');\"><img src=\"../images/remove.gif\" border=\"0\"></a></td>");
-					leftList.append("<td height=\"24\" width=\"255\" class=\"capCell\">&nbsp;");
-					leftList.append(cto.getName());	
-					leftList.append("&nbsp;</td>\n");
-					leftList.append("<td height=\"24\" width=\"45\" class=\"capCell\"><center>" + expDec.getExpenseLink(cto, uto) + "</center></td>\n</tr>\n");
-					leftList.append("<script>hideIconCost('EDIT_"+ cto.getId() + "');hideIconCost('REMOVE_"+ cto.getId() + "');</script>");
-					
-					//write the html cols of child rows...
-					body.append("<table width=\"" + (colNumber * COLUMN_WIDTH) + "\" border=\"0\" cellspacing=\"1\" cellpadding=\"1\">");				
-					body.append(this.getLine(cto, frm, uto, iniDate, finalDate));
-					body.append("</table>");
-				}				
-			}
-
-			//write the human resource costs, based to the tasks...
-			if (sbHR!=null) {
+				HashMap<String, Integer> timesheet = new HashMap<String, Integer>();
+				StringBuffer sbHR = null;
+				if ((frm.getViewMode().equals(CostForm.MODE_ALL) || frm.getViewMode().equals(CostForm.MODE_ONLY_RESOURCES)) && frm.getType().equals(CostForm.TYPE_PROJECT)) {
+					sbHR = this.getHumanResourceCost(frm, to.getId(), uto, timesheet, iniDate, finalDate);
+				}
+				
+				//write the html parent row...
+				leftList.append("<table border=\"0\" cellspacing=\"1\" cellpadding=\"1\">");			
 				leftList.append("<tr class=\"formBody\">");
-				leftList.append("<td height=\"23\" width=\"15\">&nbsp;</td>");
-				leftList.append("<td height=\"23\" width=\"15\">&nbsp;</td>");
-				leftList.append("<td height=\"23\" colspan=\"2\" class=\"capCell\">&nbsp;<img src=\"../images/roles.gif\" border=\"0\">&nbsp;" + super.getBundleMessage(request, "label.cost.hr") + "&nbsp;</td>\n");
-				leftList.append("</tr>\n");
+				if (costList!=null && costList.size()>0) {
+					leftList.append("<td height=\"23\" width=\"15\"><center><a href=\"javascript:showHideChild('" + key + "')\">" +
+							"<img id=\"IMG_" + key + "\" border=\"0\" src=\"../images/minus.gif\" ></a></center></td>");	
+				} else {
+					leftList.append("<td height=\"23\" width=\"15\">&nbsp;</td>");
+				}
 
+				leftList.append("<td width=\"322\" class=\"capCell\" colspan=\"4\">&nbsp;<b>" + to.getGenericTag() + "</b></td></tr>\n");
+				leftList.append("</table>");
+				
+				//write the html parent sumarized cols...
 				body.append("<table width=\"" + (colNumber * COLUMN_WIDTH) + "\" border=\"0\" cellspacing=\"1\" cellpadding=\"1\">");
-				body.append(sbHR);
+				body.append(getSummarizedLine(costList, frm, timesheet, uto, iniDate, finalDate));
 				body.append("</table>");
+				body.append("<div id=\"DIV_CELL_" + key + "\">");
+				
+				//write the html child rows...
+				leftList.append("<div id=\"DIV_" + key + "\">");
+
+				leftList.append("<table border=\"0\" cellspacing=\"1\" cellpadding=\"1\">");
+				if (costList!=null && frm.getViewMode().equals(CostForm.MODE_ALL) || frm.getViewMode().equals(CostForm.MODE_ONLY_EXPENSES)) {
+					for (CostTO cto: costList) {
+						leftList.append("<tr class=\"formBody\" ");
+						leftList.append("onmouseout=\"hideIconCost('EDIT_"+ cto.getId() + "');hideIconCost('REMOVE_"+ cto.getId() + "');\" " +
+								"onmouseover=\"showIconCost('EDIT_"+ cto.getId() + "');showIconCost('REMOVE_"+ cto.getId() + "');\">"); 
+						leftList.append("<td height=\"24\" width=\"15\"><a id=\"EDIT_"+ cto.getId() + "\" href=\"javascript:editCost('"+ cto.getId() + "');\"><img src=\"../images/edit.gif\" border=\"0\"></a></td>");
+						leftList.append("<td height=\"24\" width=\"15\"><a id=\"REMOVE_"+ cto.getId() + "\" href=\"javascript:removeCost('"+ cto.getId() + "');\"><img src=\"../images/remove.gif\" border=\"0\"></a></td>");
+						leftList.append("<td height=\"24\" width=\"255\" class=\"capCell\">&nbsp;");
+						leftList.append(cto.getName());	
+						leftList.append("&nbsp;</td>\n");
+						leftList.append("<td height=\"24\" width=\"45\" class=\"capCell\"><center>" + expDec.getExpenseLink(cto, uto) + "</center></td>\n</tr>\n");
+						leftList.append("<script>hideIconCost('EDIT_"+ cto.getId() + "');hideIconCost('REMOVE_"+ cto.getId() + "');</script>");
+						
+						//write the html cols of child rows...
+						body.append("<table width=\"" + (colNumber * COLUMN_WIDTH) + "\" border=\"0\" cellspacing=\"1\" cellpadding=\"1\">");				
+						body.append(this.getLine(cto, frm, uto, iniDate, finalDate));
+
+						body.append("</table>");
+					}				
+				}
+
+				script.append("showHideChild('" + key + "');\n");
+				
+				//write the human resource costs, based to the tasks...
+				if (sbHR!=null) {
+					leftList.append("<tr class=\"formBody\">");
+					leftList.append("<td height=\"23\" width=\"15\">&nbsp;</td>");
+					leftList.append("<td height=\"23\" width=\"15\">&nbsp;</td>");
+					leftList.append("<td height=\"23\" colspan=\"2\" class=\"capCell\">&nbsp;<img src=\"../images/roles.gif\" border=\"0\">&nbsp;" + super.getBundleMessage(request, "label.cost.hr") + "&nbsp;</td>\n");
+					leftList.append("</tr>\n");
+
+					body.append("<table width=\"" + (colNumber * COLUMN_WIDTH) + "\" border=\"0\" cellspacing=\"1\" cellpadding=\"1\">");
+					body.append(sbHR);
+					body.append("</table>");
+				}
+				
+				leftList.append("</table></div>");
+				body.append("</div>");				
 			}
-			
-			leftList.append("</table></div>");
-			body.append("</div>");
 		}
-		
+		frm.setCostHtmlScript(script.toString());
 		bodyList.append(body.toString());
 		
 		return leftList;
@@ -374,13 +406,13 @@ public class CostAction extends GeneralStrutsAction {
 	
 	private StringBuffer getHumanResourceCost(CostForm frm, String projectId, UserTO uto, HashMap<String, Integer> timesheet, 
 			Timestamp iniDate, Timestamp finalDate) throws BusinessException{
-		StringBuffer response = null;		
+		StringBuffer response = null;
 		UserDelegate udel = new UserDelegate();
 		TaskDelegate tdel = new TaskDelegate();
 		ResourceCapacityDelegate rcdel = new ResourceCapacityDelegate();
 
-		Vector<ResourceCapacityTO> rescap = rcdel.getListByResourceProject(null, projectId);
-		Vector<TaskTO> taskList = tdel.getTaskListByProject(new ProjectTO(projectId), iniDate, false, false);
+		Vector<ResourceCapacityTO> rescap = rcdel.getListByResourceProject(null, projectId, uto);
+		Vector<TaskTO> taskList = tdel.getTaskListByProject(new ProjectTO(projectId), iniDate, null, false, false);
 		if (taskList!=null && rescap!=null) {
 			this.hashTaskData(frm, uto, timesheet, taskList, rescap);
 			if (timesheet!=null) {
@@ -427,7 +459,7 @@ public class CostAction extends GeneralStrutsAction {
 			String notestr = "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;";
 			
 			Timestamp nextCursor = this.nextCursorDate(cursor, frm);
-			Integer val = cto.summarizeInstallments(cursor, nextCursor);
+			Long val = cto.summarizeInstallments(cursor, nextCursor);
 			if (val!=null) {
 				float value = val.floatValue() / 100;
 				valstr = StringUtil.getCurrencyValue(value, currencyLoc);
@@ -461,15 +493,15 @@ public class CostAction extends GeneralStrutsAction {
 		while (cursor.before(finalDate)) {
 			Timestamp nextCursor = this.nextCursorDate(cursor, frm);
 
-			int acc = 0;
+			long acc = 0;
 			response.append("<td class=\"capCell\" height=\"23\" width=\"" + COLUMN_WIDTH + "\"><b>");
 
 			if (frm.getViewMode().equals(CostForm.MODE_ALL) || frm.getViewMode().equals(CostForm.MODE_ONLY_EXPENSES)) {
 				if (list!=null) {
 					for (CostTO cto : list) {
-						Integer val = cto.summarizeInstallments(cursor, nextCursor);
+						Long val = cto.summarizeInstallments(cursor, nextCursor);
 						if (val!=null) {
-							acc = acc + val.intValue();
+							acc = acc + val.longValue();
 						}
 					}
 				}
@@ -611,6 +643,7 @@ public class CostAction extends GeneralStrutsAction {
 		ProjectDelegate pdel = new ProjectDelegate();
 		CostDelegate cdel = new CostDelegate();
 		CategoryDelegate catdel = new CategoryDelegate();
+		MetaFieldDelegate mfdel = new MetaFieldDelegate();
 		
 		Vector<TransferObject> list = new Vector<TransferObject>();
 		
@@ -629,7 +662,7 @@ public class CostAction extends GeneralStrutsAction {
 			list = cdel.getAccountCodesByLeader(uto);
 			
 		} else if (frm.getType().equals(CostForm.TYPE_CATEGORY)) {
-			Vector<CategoryTO> clist = catdel.getCategoryListByType(CategoryTO.TYPE_COST, new ProjectTO(frm.getProjectId()), true);
+			Vector<CategoryTO> clist = catdel.getCategoryListByType(CategoryTO.TYPE_COST, new ProjectTO(frm.getProjectId()), true);			
 			if (clist!=null) {
 				HashMap<String, String> catHash = new HashMap<String, String>();
 				for (CategoryTO cTO : clist) {
@@ -643,6 +676,10 @@ public class CostAction extends GeneralStrutsAction {
 					}
 				}
 			}
+		} else if (frm.getType().startsWith(META_FIELD_PREFIX)) {
+			String metaFieldId = frm.getType().replaceAll(META_FIELD_PREFIX, "");
+			MetaFieldTO mf = mfdel.getMetaFieldObject(new MetaFieldTO(metaFieldId));
+			list = mf.getDomainList();
 		}
 		
 		return list;
@@ -667,7 +704,7 @@ public class CostAction extends GeneralStrutsAction {
 							if (rtato.getAllocTime()!=null && rtato.getSequence()!=null && rtato.getResourceTask()!=null 
 									&& rtato.getResourceTask().getResource()!=null && rtato.getResourceTask().getResource().getProject()!=null) {
 								
-								Timestamp bucketDate = DateUtil.getChangedDate(rtto.getActualDate(), Calendar.DATE, rtato.getSequence().intValue());
+								Timestamp bucketDate = DateUtil.getChangedDate(rtto.getActualDate(), Calendar.DATE, (rtato.getSequence().intValue()-1));
 								String key = this.formatDate(bucketDate, frm, uto.getCalendarMask(), uto.getLocale());
 								
 								Integer newVal = new Integer(0);
@@ -678,11 +715,13 @@ public class CostAction extends GeneralStrutsAction {
 									newVal = new Integer((int)((rtato.getAllocTime().floatValue() / 60) * cost.intValue())); 
 								}
 								
-								if (timesheet.get(key)!=null) {
-									Integer currentval = timesheet.get(key);
-									timesheet.put(key, new Integer(currentval.intValue() + newVal.intValue()));
-								} else {
-									timesheet.put(key, newVal);
+								if (newVal!=null && newVal.intValue()>0) {
+									if (timesheet.get(key)!=null) {
+										Integer currentval = timesheet.get(key);
+										timesheet.put(key, new Integer(currentval.intValue() + newVal.intValue()));
+									} else {
+										timesheet.put(key, newVal);
+									}									
 								}
 							}
 						}

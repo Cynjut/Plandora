@@ -1,6 +1,7 @@
 package com.pandora.gui.struts.action;
 
 import java.io.PrintWriter;
+import java.util.Calendar;
 import java.util.Iterator;
 import java.util.Vector;
 
@@ -20,11 +21,13 @@ import com.pandora.ProjectTO;
 import com.pandora.RequirementTO;
 import com.pandora.ResourceTO;
 import com.pandora.ResourceTaskTO;
+import com.pandora.TeamInfoTO;
 import com.pandora.TransferObject;
 import com.pandora.UserTO;
 import com.pandora.bus.gadget.Gadget;
 import com.pandora.bus.gadget.GadgetBUS;
 import com.pandora.delegate.CostDelegate;
+import com.pandora.delegate.DiscussionDelegate;
 import com.pandora.delegate.DiscussionTopicDelegate;
 import com.pandora.delegate.GadgetDelegate;
 import com.pandora.delegate.PreferenceDelegate;
@@ -33,10 +36,11 @@ import com.pandora.delegate.RequirementDelegate;
 import com.pandora.delegate.ResourceTaskDelegate;
 import com.pandora.delegate.UserDelegate;
 import com.pandora.exception.BusinessException;
-import com.pandora.gui.struts.form.ExpenseForm;
 import com.pandora.gui.struts.form.ResourceHomeForm;
 import com.pandora.gui.taglib.decorator.TaskGridPinDecorator;
 import com.pandora.gui.taglib.form.HeaderFooterGrid;
+import com.pandora.gui.taglib.form.Shortcut;
+import com.pandora.helper.DateUtil;
 import com.pandora.helper.HtmlUtil;
 import com.pandora.helper.SessionUtil;
 
@@ -50,12 +54,12 @@ public class ResourceHomeAction extends GeneralStrutsAction {
 	 */
 	public ActionForward prepareForm(ActionMapping mapping, ActionForm form,
 								 HttpServletRequest request, HttpServletResponse response){
-
+		String additionalWidth = "10";
 		String forward = "showResourceHome";
-		DiscussionTopicDelegate dtdel = new DiscussionTopicDelegate();
 		try {
 		    //get current user connected
 		    UserTO uto = SessionUtil.getCurrentUser(request);
+		    request.getSession().setAttribute("REPLY_FORWARD", "manageResourceHome?operation=showFormAfterPostRemove");
 		    
 		    //clear current form
 		    ResourceHomeForm rhfrm =(ResourceHomeForm)form; 
@@ -67,6 +71,9 @@ public class ResourceHomeAction extends GeneralStrutsAction {
 
 		    rhfrm.setTaskPanelStyle("on"); rhfrm.setPendingPanelStyle("on"); rhfrm.setRequestPanelStyle("on");
 		    rhfrm.setProjectPanelStyle("on"); rhfrm.setForumPanelStyle("on");		        
+		    
+		    Shortcut sc = new Shortcut();
+		    rhfrm.setHtmlEDIIcon(sc.getEDIIcon(uto, "home_show"));
 		    
 		    String visibleStatus = uto.getPreference().getPreference(PreferenceTO.PANEL_HIDDEN);
 		    if (visibleStatus!=null) {
@@ -93,7 +100,7 @@ public class ResourceHomeAction extends GeneralStrutsAction {
 			ProjectDelegate prjdel = new ProjectDelegate();
 			Vector<ProjectTO> prjList = prjdel.getProjectListByUser(uto);
 			prjList = this.filterProjects(prjList, uto);
-			request.getSession().setAttribute("projectList", prjList);
+			request.getSession().setAttribute("myProjectList", prjList);
 
 			//get all Requirements from data base and put into http session (to be displayed by combo)
 			this.refreshRequirements(request, form, uto);
@@ -101,22 +108,39 @@ public class ResourceHomeAction extends GeneralStrutsAction {
 			//get all Tasks from data base and put into http session (to be displayed by combo)
 			this.refreshTasks(request, form, uto);
 
-			//get all Forums from data base and put into http session (to be displayed by combo)
-			Vector<DiscussionTopicTO> discList = dtdel.getListByUser(uto);
-			request.getSession().setAttribute("discussionTopicList", discList);
+			//get all Team Info from data base and put into http session (to be displayed by combo)
+			this.refreshTeamInfo(request, uto);
 
 			//get all pending costs...
 			this.refreshCosts(request);
 
-			this.refreshGadgets(request, rhfrm, uto);
+			this.refreshGadgets(request, response, rhfrm, uto);
 			rhfrm.setShowHideGadgetLabel(this.getBundleMessage(request, "label.manageOption.gadget.showhide"));
-		    rhfrm.setShorcutsHtmlBody(this.getHtmlShortcuts(request, rhfrm, uto));
+			
+			if (rhfrm.getShowHideGadgetColumn().equals("on") && !rhfrm.getGadgetHtmlBody().trim().equals("")) {
+				additionalWidth = uto.getPreference().getPreference(PreferenceTO.GADGET_WIDTH);
+			}
+		    rhfrm.setShorcutsHtmlBody(Shortcut.getHtmlShortcuts(uto, additionalWidth));
 		    
 		} catch(Exception e){
 		    this.setErrorFormSession(request, "error.showResHomeForm", e);
 		}
 
 		return mapping.findForward(forward);
+	}
+
+
+	private void refreshTeamInfo(HttpServletRequest request, UserTO uto) throws BusinessException {
+		DiscussionDelegate dtdel = new DiscussionDelegate();
+		
+		int maxDays = 7;
+		String max = uto.getPreference().getPreference(PreferenceTO.HOME_TOPICLIST_NUMLINE);
+		if (max!=null) {
+			maxDays = Integer.parseInt(max);
+		}
+		
+		Vector<TeamInfoTO> discList = dtdel.getTeamInfo(uto, DateUtil.getChangedDate(DateUtil.getNow(), Calendar.DATE, -maxDays));
+		request.getSession().setAttribute("teamInfoList", discList);
 	}
 
 	
@@ -147,6 +171,19 @@ public class ResourceHomeAction extends GeneralStrutsAction {
 		return mapping.findForward("showResourceHome");
 	}
 
+	
+	public ActionForward showFormAfterPostRemove(ActionMapping mapping, ActionForm form,
+			 HttpServletRequest request, HttpServletResponse response){
+		try {
+			UserTO uto = SessionUtil.getCurrentUser(request);
+			refreshTeamInfo(request, uto);			
+		} catch(Exception e){
+			this.setErrorFormSession(request, "error.formSurvey.showForm", e);
+		}
+		return mapping.findForward("showResourceHome");
+	}
+
+	
 	public ActionForward showWorkflow(ActionMapping mapping, ActionForm form,
 			 HttpServletRequest request, HttpServletResponse response){
 	    ResourceHomeForm rhfrm = (ResourceHomeForm)form;
@@ -260,7 +297,7 @@ public class ResourceHomeAction extends GeneralStrutsAction {
 			pto.addPreferences(pto);
             pdel.insertOrUpdate(pto);	            
 		
-            this.refreshGadgets(request, rhfrm, uto);
+            this.refreshGadgets(request, response, rhfrm, uto);
             
 		} catch(Exception e){
 		    this.setErrorFormSession(request, "error.showResHomeForm", e);
@@ -284,6 +321,48 @@ public class ResourceHomeAction extends GeneralStrutsAction {
 	    return null;
 	}
 
+
+	public ActionForward replyInfoTeamTopic(ActionMapping mapping, ActionForm form,
+			 HttpServletRequest request, HttpServletResponse response){
+		DiscussionTopicDelegate ddel = new DiscussionTopicDelegate();
+		String forward = "showResourceHome";
+		
+		try { 
+			ResourceHomeForm frm =(ResourceHomeForm)form;
+			String planningId = request.getParameter("planning");
+			if (planningId!=null) {
+					
+				//show reply popup...
+				forward = "infoTopicReply";
+				frm.setPlanningId(planningId);
+				
+			} else {
+				
+				//save new comment...
+				planningId = frm.getPlanningId();
+				String comment = frm.getTopicComment();
+				if (comment!=null && !comment.equals("") &&	planningId!=null && !planningId.equals("")) {
+					
+					UserTO uto = SessionUtil.getCurrentUser(request);
+					String parentTopicId = null;
+					DiscussionTopicTO parentTopic = ddel.getTopic(planningId);
+					if (parentTopic!=null) {
+						parentTopicId = parentTopic.getId();
+						planningId = parentTopic.getPlanningId();
+					}
+					ddel.replyDiscussionTopic(planningId, parentTopicId, frm.getTopicComment(), uto);
+					this.setSuccessFormSession(request, "message.saveTopic");
+					this.refreshTeamInfo(request, uto);
+				}	
+				frm.clear();
+			}
+		} catch(Exception e){
+			this.setErrorFormSession(request, "error.formForum.saveTopic", e);
+		}
+		
+		return mapping.findForward(forward);
+	}
+
 	
 	public ActionForward refreshList(ActionMapping mapping, ActionForm form,
 			 HttpServletRequest request, HttpServletResponse response){
@@ -304,10 +383,13 @@ public class ResourceHomeAction extends GeneralStrutsAction {
 
 			    } else if (rhfrm.getSource().equals(ResourceHomeForm.TSK_SOURCE)){	        
 			        this.refreshTasks(request, form, uto);
+			        
+			    } else if (rhfrm.getSource().equals(ResourceHomeForm.TOPIC_SOURCE)){	        
+			        this.refreshTeamInfo(request, uto);			        
 			    }		    	
 		    }
 			
-		    this.refreshGadgets(request, rhfrm, uto);
+		    this.refreshGadgets(request, response, rhfrm, uto);
 		    
 		} catch(Exception e){
 		    this.setErrorFormSession(request, "error.showResHomeForm", e);
@@ -452,7 +534,7 @@ public class ResourceHomeAction extends GeneralStrutsAction {
 	}
 
 	
-	private void refreshGadgets(HttpServletRequest request, ResourceHomeForm frm, UserTO uto) throws BusinessException {
+	private void refreshGadgets(HttpServletRequest request, HttpServletResponse response, ResourceHomeForm frm, UserTO uto) throws BusinessException {
 		StringBuffer content =  new StringBuffer("");
 		
 		UserDelegate udel = new UserDelegate();
@@ -476,7 +558,7 @@ public class ResourceHomeAction extends GeneralStrutsAction {
 						content.append(HeaderFooterGrid.printHeaderBeforeBody("100%", false));
 						content.append("<table width=\"95%\" border=\"0\" cellspacing=\"0\" cellpadding=\"0\">\n");
 						content.append("  <tr><td>&nbsp;</td>");
-						content.append("  <td width=\"20\"><a href=\"#\" onclick=\"callGadget_" + gad.getId() + "('" + gad.getId() + "','" + gadWidth + "','" + (gad.getHeight()+15) + "');\");\"><img align=\"center\"" + HtmlUtil.getHint(lblRefresh) + " border=\"0\" src=\"../images/rgadget.gif\" ></a></td>");
+						content.append("  <td width=\"20\"><a href=\"#\" onclick=\"callGadget_" + gad.getId() + "('" + gad.getId() + "','" + gadWidth + "','" + (gad.getHeight()+15) + "');\"><img align=\"center\"" + HtmlUtil.getHint(lblRefresh) + " border=\"0\" src=\"../images/rgadget.gif\" ></a></td>");
 						
 						//maximized form icon
 						content.append(this.getMaximizedGadgetHtml(gad, request));	
@@ -492,7 +574,7 @@ public class ResourceHomeAction extends GeneralStrutsAction {
 
 						content.append("<table width=\"95%\" height=\"" + (gad.getHeight()-15) + "\" border=\"0\" cellspacing=\"0\" cellpadding=\"0\">\n");
 						content.append("  <tr><td>");
-						content.append(gad.gadgetToHtml(request, Integer.parseInt(gadWidth)-10, (gad.getHeight()), loadingLabel)); 
+						content.append(gad.gadgetToHtml(request, response, Integer.parseInt(gadWidth)-10, (gad.getHeight()), loadingLabel)); 
 						content.append("  </br></td></tr></table>\n");
 						
 						content.append("</div><div class=\"panelfooter\"></div>");
@@ -542,12 +624,13 @@ public class ResourceHomeAction extends GeneralStrutsAction {
 		request.getSession().setAttribute("myRequirementList", reqList);
 		
 		//if current user is a leader into any project show a list of pending requirements...
+		rhfrm.setShowPendingReq("off");
 		if (uto instanceof LeaderTO) {
-		    rhfrm.setShowPendingReq("on");
 		    Vector<RequirementTO> pendReqList = rdel.getPendingListByUser(uto, false);
-			request.getSession().setAttribute("pendRequirementList", pendReqList);		                
-        } else {
-		    rhfrm.setShowPendingReq("off");
+		    if (pendReqList!=null) {
+		    	request.getSession().setAttribute("pendRequirementList", pendReqList);
+		    	rhfrm.setShowPendingReq((pendReqList.size()>0)?"on":"off");
+		    }
 		}
 	}	
 	
@@ -631,53 +714,5 @@ public class ResourceHomeAction extends GeneralStrutsAction {
 		return null;
 	}
 	
-	
-	private String getHtmlShortcuts(HttpServletRequest request, ResourceHomeForm rhfrm, UserTO uto){
-		String response = "";
-		String[] url = {"", "", ""};
-		
-		for (int i=0; i<3 ;i++) {
-			url[i] = uto.getPreference().getPreference(PreferenceTO.SHORTCUT_URL + (i+1));
-			
-			if (url[i]!=null && !url[i].equals("")) {
-				
-				String altValue = uto.getPreference().getPreference(PreferenceTO.SHORTCUT_NAME + (i+1));
-				
-				String image = "table.png";
-				String img = uto.getPreference().getPreference(PreferenceTO.SHORTCUT_ICON + (i+1));
-				if (img!=null && !img.trim().equals("")) {
-					if (img.equals("1")) {
-						image = "report.gif";
-					} else if (img.equals("2")) {
-						image = "bsc.gif";
-					} else if (img.equals("3")) {
-						image = "form.png";
-					} else if (img.equals("4")) {
-						image = "table.png";
-					} else if (img.equals("5")) {
-						image = "alert-task.gif";
-					} else if (img.equals("6")) {
-						image = "fav-task.gif";
-					}
-				}
-					
-				response += "<td valign=\"middle\" align=\"right\" width=\"20\">";
-				response += 	"<a href=\"javascript:goToForm('" + url[i] + "');\" border=\"0\"> \n";
-				response += 		"<img border=\"0\" " + HtmlUtil.getHint(altValue) + " align=\"center\" src=\"../images/" + image + "\" >";
-				response += 	"</a>"; 				
-				response += "</td>";
-			}
-		}
-		
-		if (!response.trim().equals("")){
-			String width = "10";
-			if (rhfrm.getShowHideGadgetColumn().equals("on") && !rhfrm.getGadgetHtmlBody().trim().equals("")) {
-				width = uto.getPreference().getPreference(PreferenceTO.GADGET_WIDTH);
-			}
-			response += "<td width=\"" + width + "\">&nbsp;</td>";				
-		}
-		
-		return response;
-	}
 	
 }

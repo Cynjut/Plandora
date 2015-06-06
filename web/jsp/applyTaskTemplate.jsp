@@ -61,7 +61,31 @@
 			showHide("resourceAllocationBox"); 
 		}	
 	}
-    
+	
+	
+	function renderDiagram(){
+		with(document.forms["applyTaskTemplateForm"]){
+   			operation.value = "renderImage";
+   		}
+		var ajaxRequestObj = ajaxSyncInit();
+		ajaxSyncProcess(document.forms["applyTaskTemplateForm"], callBackRenderDiagram, "", "", ajaxRequestObj);		
+	}
+	
+	
+	function callBackRenderDiagram(dummy1, dummy2, objRequest) {			
+		if(isSyncAjax(objRequest)){
+			document.getElementById("ajaxResponse").innerHTML = ""; //hide ajax icon
+			var content = objRequest.responseText;
+			if (content) {
+				var diagObj = document.getElementById("workFlowDiagram");
+				if (diagObj) {
+					diagObj.src = content;
+				}
+			}
+		}  
+	}
+	
+	
 </script>
 
 <html:form action="applyTaskTemplate">
@@ -76,10 +100,13 @@
 	<br />		
 	<table width="100%" border="0" cellspacing="0" cellpadding="0">
 	<tr><td width="10">&nbsp;</td>
-		<td class="formBody" valign="top" rowspan="3">
+		<td class="formBody" width="400px" valign="top" rowspan="3">
 
 			<display:headerfootergrid width="100%" type="HEADER">
 				<bean:message key="label.formApplyTaskTemplate.diagram"/>
+				<logic:present name="applyTaskTemplateForm" property="projectName">
+					- <bean:write name="applyTaskTemplateForm" property="projectName" filter="false"/>   
+				</logic:present>	
 			</display:headerfootergrid>
 				
 			<table width="98%" border="0" cellspacing="0" cellpadding="0">
@@ -90,8 +117,8 @@
 		    <tr class="pagingFormBody">
 		      <td width="10">&nbsp;</td>
 		      <td class="formBody">
-					<div id="workFlowDiagramDiv" style="width:360px; height:430px; overflow: scroll;">
-						<img border="0" id="workFlowDiagram" src="../do/applyTaskTemplate?operation=renderImage&bgcolor=EFEFEF" usemap="#workFlowDiagramMap" />
+					<div id="workFlowDiagramDiv" style="width:380px; height:430px; overflow: scroll;">
+						<img border="0" id="workFlowDiagram" src="../images/indicator.gif" usemap="#workFlowDiagramMap" />
 					</div>
 					<map name="workFlowDiagramMap">
 						<bean:write name="applyTaskTemplateForm" property="htmlMap" filter="false"/>
@@ -106,17 +133,13 @@
 
 			<display:headerfootergrid type="FOOTER">
 				<table width="98%" border="0" cellspacing="0" cellpadding="0"><tr>
+				  <td>&nbsp;</td>				
 				  <td width="120">
 					  <html:button property="saveWorkflow" styleClass="button" onclick="javascript:buttonClick('applyTaskTemplateForm', 'saveWorkflow');">
 						<bean:message key="title.formApplyTaskTemplate.create"/>
 					  </html:button>    
 				  </td>
 				  <td>&nbsp;</td>
-				  <td width="120">
-					  <html:button property="reset" styleClass="button" onclick="centralizeDiagram();">
-						<bean:message key="title.formApplyTaskTemplate.centralize"/>
-					  </html:button>    
-				  </td>
 				</tr></table>	  
 			</display:headerfootergrid> 
 			
@@ -126,14 +149,14 @@
 
 			<display:headerfootergrid width="100%" type="HEADER">
 				<bean:message key="title.formApplyTaskTemplate"/> 
-		      	  <bean:write name="applyTaskTemplateForm" property="categoryName" />
+		      	  <bean:write name="applyTaskTemplateForm" property="categoryName" filter="false" />
 			</display:headerfootergrid>
 		
 			<table width="98%" border="0" cellspacing="0" cellpadding="0">
 		    <tr class="pagingFormBody">
 		      <td width="10">&nbsp;</td>
-		      <td width="68" class="formTitle"><bean:message key="label.formApplyTaskTemplate.name"/>:&nbsp;</td>
-		      <td width="470" class="formBody">
+		      <td width="80" class="formTitle"><bean:message key="label.formApplyTaskTemplate.name"/>:&nbsp;</td>
+		      <td class="formBody">
 		        <html:text name="applyTaskTemplateForm" property="name" styleClass="textBox" size="55" maxlength="50"/>
 		      </td>
 		      <td width="10">&nbsp;</td>
@@ -142,7 +165,7 @@
 		      <td>&nbsp;</td>
 		      <td class="formTitle"><bean:message key="label.formApplyTaskTemplate.desc"/>:&nbsp;</td>
 		      <td class="formBody">
-		   		<html:textarea name="applyTaskTemplateForm" property="description" styleClass="textBox" cols="65" rows="4" />
+		   		<html:textarea name="applyTaskTemplateForm" property="description" styleClass="textBox" cols="95" rows="3" />
 		      </td>
 		      <td>&nbsp;</td>
 		    </tr>
@@ -152,26 +175,37 @@
 			    <logic:equal name="applyTaskTemplateForm" property="nodeType" value="1">	
 				    <tr class="pagingFormBody">
 				      <td width="10">&nbsp;</td>
-				      <td width="70" class="formTitle"><bean:message key="label.formApplyTaskTemplate.project"/>:&nbsp;</td>
+				      <td width="80" class="formTitle"><bean:message key="label.formApplyTaskTemplate.project"/>:&nbsp;</td>
 				      <td width="170" class="formBody">
 					  		<html:select name="applyTaskTemplateForm" property="projectId" styleClass="textBox" onkeypress="javascript:changeProject();" onchange="javascript:changeProject();">
-					             <html:options collection="projectList" property="id" labelProperty="name"/>
+					             <html:options collection="projectList" property="id" labelProperty="name" filter="false" />
 							</html:select>
 				      </td>
-				      <td width="70" class="formTitle"><bean:message key="label.formApplyTaskTemplate.category"/>:&nbsp;</td>
+				      <td width="100" class="formTitle"><bean:message key="label.formApplyTaskTemplate.category"/>:&nbsp;</td>
 				      <td class="formBody">
 					  		<html:select name="applyTaskTemplateForm" property="categoryId" styleClass="textBox">
-					             <html:options collection="categoryList" property="id" labelProperty="name"/>
+					             <html:options collection="categoryList" property="id" labelProperty="name" filter="false" />
 							</html:select>
 				      </td>
 				      <td width="10">&nbsp;</td>
 				    </tr>		
+				    <tr class="pagingFormBody">
+				      <td>&nbsp;</td>
+				      <td class="formTitle"><bean:message key="label.formApplyTaskTemplate.iteration"/>:&nbsp;</td>
+				      <td class="formBody" colspan="3">
+					  		<html:select name="applyTaskTemplateForm" property="iterationId" styleClass="textBox">
+					             <html:options collection="iterationList" property="id" labelProperty="name" filter="false" />
+							</html:select>
+				      </td>
+				      <td width="10">&nbsp;</td>
+				    </tr>		
+					
 				</logic:equal>	
 			    
 			    <logic:equal name="applyTaskTemplateForm" property="nodeType" value="2">	
 				    <tr class="pagingFormBody">
 				      <td width="10">&nbsp;</td>
-				      <td width="70" class="formTitle"><bean:message key="label.formApplyTaskTemplate.question"/>:&nbsp;</td>
+				      <td width="80" class="formTitle"><bean:message key="label.formApplyTaskTemplate.question"/>:&nbsp;</td>
 				      <td colspan="3" class="formBody">
 				      		<html:text name="applyTaskTemplateForm" property="questionContent" styleClass="textBox" size="55" maxlength="255"/>
 				      </td>
@@ -187,7 +221,7 @@
 				<table width="98%" border="0" cellspacing="0" cellpadding="0">	
 				<tr class="pagingFormBody">
 					<td width="10">&nbsp;</td>	
-					<td width="70">&nbsp;</td>
+					<td width="80">&nbsp;</td>
 				    <td class="formBody" colspan="5">
 			    	    <html:checkbox name="applyTaskTemplateForm" property="isParentTask" styleClass="textBox" onclick="javascript:setCurrentTaskParent();"/><bean:message key="title.formApplyTaskTemplate.parentTask"/>
 			      	</td>
@@ -199,11 +233,11 @@
 				<table width="98%" border="0" cellspacing="0" cellpadding="0">			  				
 				    <tr class="pagingFormBody">
 				      <td width="10">&nbsp;</td>
-				      <td width="70" class="formTitle"><bean:message key="label.formApplyTaskTemplate.resource"/>:&nbsp;</td>
-				      <td class="formBody">
+				      <td width="80" class="formTitle"><bean:message key="label.formApplyTaskTemplate.resource"/>:&nbsp;</td>
+				      <td width="170" class="formBody">
 							
 					  		<html:select name="applyTaskTemplateForm" property="resourceId" styleClass="textBox">
-					             <html:options collection="resourceList" property="id" labelProperty="name"/>
+					             <html:options collection="resourceList" property="id" labelProperty="name" filter="false"/>
 							</html:select>
 							
 				      </td>
@@ -212,8 +246,8 @@
 							<plandora-html:calendar name="applyTaskTemplateForm" property="initDate" styleClass="textBoxDisabled" />		    	    
 				      </td>
 				      <td width="100" class="formTitle"><bean:message key="label.manageTask.estTime"/>:&nbsp;</td>
-				      <td class="formBody">
-							<html:text name="applyTaskTemplateForm" property="estimatedTime" styleClass="textBox" size="4" maxlength="4"/> <bean:message key="label.hour"/>		    	    
+				      <td width="80" class="formBody">
+							<html:text name="applyTaskTemplateForm" property="estimatedTime" styleClass="textBox" size="6" maxlength="5"/> <bean:message key="label.hour"/>		    	    
 				      </td>
 				      <td>&nbsp;</td>
 				    </tr>
@@ -231,15 +265,14 @@
 					<tr class="pagingFormBody">
 						<td>&nbsp;</td>	
 						<td>&nbsp;</td>
-					    <td colspan="4" class="formBody">
-							<display:table border="1" width="90%" name="resourceAllocated" scope="session">
-								  <display:column property="label" title="label.name" />					  
-								  <display:column width="25%" property="startDate" align="center" title="label.manageTask.initDate" decorator="com.pandora.gui.taglib.decorator.GridDateDecorator" tag="2;0" />
-				  				  <display:column width="20%" property="estimatedTimeInHours" align="center" title="label.manageTask.grid.estTime" decorator="com.pandora.gui.taglib.decorator.GridFloatDecorator" tag="h"/>
-								  <display:column width="2%" property="resource.id" title="grid.title.empty" decorator="com.pandora.gui.taglib.decorator.ResourceTaskRemoveDecorator" />
-							</display:table>			    
+					    <td colspan="5" class="formBody">
+							<plandora-html:ptable width="90%" name="resourceAllocated" frm="applyTaskTemplateForm">
+								  <plandora-html:pcolumn property="label" title="label.name" />					  
+								  <plandora-html:pcolumn width="25%" property="startDate" align="center" title="label.manageTask.initDate" decorator="com.pandora.gui.taglib.decorator.GridDateDecorator" tag="2;0" />
+				  				  <plandora-html:pcolumn width="20%" property="estimatedTimeInHours" align="center" title="label.manageTask.grid.estTime" decorator="com.pandora.gui.taglib.decorator.GridFloatDecorator" tag="h"/>
+								  <plandora-html:pcolumn width="2%" property="resource.id" title="grid.title.empty" decorator="com.pandora.gui.taglib.decorator.ResourceTaskRemoveDecorator" />
+							</plandora-html:ptable>			    
 			      		</td>
-			      		<td>&nbsp;</td>
 						<td>&nbsp;</td>
 					</tr>				
 				</table> 
@@ -290,12 +323,12 @@
 			<table width="98%" border="0" cellspacing="0" cellpadding="0">
 			<tr class="formBody">
 				<td>			
-					<display:table border="1" width="100%" name="nodeTemplateList" scope="session" pagesize="4">
-						<display:column width="2%" property="id" align="center" title="grid.title.empty" decorator="com.pandora.gui.taglib.decorator.NodeTemplateTypeDecorator" />				
-						<display:column width="35%" property="name" align="left" title="label.formApplyTaskTemplate.name" />
-						<display:column property="description" maxWords="7" align="left" title="label.formApplyTaskTemplate.desc" />
-						<display:column width="2%" property="id" title="grid.title.empty" decorator="com.pandora.gui.taglib.decorator.GridEditDecorator" tag="'applyTaskTemplateForm', 'editTemplateNode'" />
-					</display:table>		
+					<plandora-html:ptable width="100%" name="nodeTemplateList" frm="applyTaskTemplateForm" pagesize="5">
+						<plandora-html:pcolumn width="2%" property="id" align="center" title="grid.title.empty" decorator="com.pandora.gui.taglib.decorator.NodeTemplateTypeDecorator" />				
+						<plandora-html:pcolumn width="35%" property="name" align="left" title="label.formApplyTaskTemplate.name" />
+						<plandora-html:pcolumn property="description" maxWords="10" align="left" title="label.formApplyTaskTemplate.desc" />
+						<plandora-html:pcolumn width="2%" property="id" title="grid.title.empty" decorator="com.pandora.gui.taglib.decorator.GridEditDecorator" tag="'applyTaskTemplateForm', 'editTemplateNode'" />
+					</plandora-html:ptable>	
 				</td>
 			</tr> 
 			</table>
@@ -337,6 +370,6 @@
 				showHide("resourceAllocationBox");
 			}				
 		}
+		renderDiagram();
 	}
-	centralizeDiagram();	
 </script>

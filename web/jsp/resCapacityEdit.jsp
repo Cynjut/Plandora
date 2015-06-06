@@ -28,15 +28,30 @@
 	        }
 		}
 
+		function removeCapacity(){
+	    	with(document.forms["resCapacityEditForm"]){
+		        if ( confirm("<bean:message key="validate.resCapacity.remove"/>")) {
+		        	if (validate()) {
+			        	operation.value = "removeCapacity";
+			        	closeMessage();
+			        	submit();
+		         	}	    		
+	         	}
+	        }
+		}
+		
+		
+
 		function validate(){
 	    	with(document.forms["resCapacityEditForm"]){
+		    	
 				if (cost.value == ""){
 					alert("<bean:message key="validate.resCapacity.blankCost"/>");
 					return false;
 				} else if (capacity.value == ""){
 					alert("<bean:message key="validate.resCapacity.blankCapacity"/>");
 					return false;
-	         	} else if (!isAllDigits(capacity.value)){
+	         	} else if (!isFloatNumber(capacity.value, (commaDecimalSeparator.value=="on"))){
 					alert("<bean:message key="validate.resCapacity.invalidCapacity"/>");
 					return false;
 	         	} else if (!isCurrency(cost.value)){
@@ -50,6 +65,7 @@
 
 	<html:form  action="showResCapacityEdit">
 		<html:hidden name="resCapacityEditForm" property="operation"/>
+		<html:hidden name="resCapacityEditForm" property="commaDecimalSeparator"/>
 			
 		<br>
 		
@@ -79,7 +95,7 @@
 		       	<td width="100" class="formTitle"><bean:message key="label.resCapacity.project"/>:&nbsp;</td>
 			    <td class="formBody" colspan="2">
 				  	<html:select name="resCapacityEditForm" property="editProjectId" styleClass="textBox">
-				   		<html:options collection="ResCapEditProjectList" property="id" labelProperty="name"/>
+				   		<html:options collection="ResCapEditProjectList" property="id" labelProperty="name" filter="false"/>
 					</html:select>
 		   	    </td>
 		    </tr>			
@@ -89,7 +105,7 @@
 		       	<td width="100" class="formTitle"><bean:message key="label.resCapacity.resource"/>:&nbsp;</td>
 			    <td class="formBody" colspan="2">
 				  	<html:select name="resCapacityEditForm" property="editResourceId" styleClass="textBox">
-				   		<html:options collection="ResCapEditResourceList" property="id" labelProperty="name"/>
+				   		<html:options collection="ResCapEditResourceList" property="id" labelProperty="name" filter="false"/>
 					</html:select>
 		   	    </td>
 		    </tr>			
@@ -103,7 +119,13 @@
 
 		    <tr class="pagingFormBody">
 		      <td class="formTitle"><bean:message key="title.resCapacity.value"/>:&nbsp;</td>
-		      <td colspan="2"><html:text name="resCapacityEditForm" property="capacity" styleClass="textBox" size="8" maxlength="10"/></td>
+		      <td colspan="2">
+		      	<html:text name="resCapacityEditForm" property="capacity" styleClass="textBox" size="8" maxlength="10"/>
+				<span class="formTitle">
+				     &nbsp;<bean:message key="label.hour"/>
+				     &nbsp;<bean:write name="resCapacityEditForm" property="granularityLabel" filter="false" /> 
+				</span>
+		      </td>			  
 		    </tr>   
 		    
 		    <tr class="pagingFormBody">
@@ -136,7 +158,14 @@
 		    	    <bean:message key="button.cancel"/>
 			      </html:button>    
 		      </td>      
-		      <td>&nbsp;</td>      
+		      <td>&nbsp;</td>
+		      <td width="100">      
+				  <logic:equal name="resCapacityEditForm" property="canRemoveCap" value="1">
+		      	  	  <html:button property="remove" styleClass="button" onclick="javascript:removeCapacity();">
+	    	    		  <bean:message key="label.grid.remove"/>
+		      		  </html:button>    
+				  </logic:equal>
+			  </td>
 		      <td width="10">&nbsp;</td>      
 		    </tr>
 			</table>  	

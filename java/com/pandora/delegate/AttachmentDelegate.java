@@ -2,7 +2,9 @@ package com.pandora.delegate;
 
 import java.util.Vector;
 
+import com.pandora.AttachmentHistoryTO;
 import com.pandora.AttachmentTO;
+import com.pandora.ProjectTO;
 import com.pandora.bus.AttachmentBUS;
 import com.pandora.exception.BusinessException;
 
@@ -18,13 +20,16 @@ public class AttachmentDelegate extends GeneralDelegate {
         bus.insertAttachment(ato);
     }
 
+    public ProjectTO getAttachmentProject(String relatedPlanningId) throws Exception {
+    	return bus.getAttachmentProject(relatedPlanningId);
+    }
     
     public void updateAttachment(AttachmentTO ato) throws BusinessException {
         bus.updateAttachment(ato);
     }
 
 
-    public Vector getAttachmentByPlanning(String planningId) throws BusinessException {
+    public Vector<AttachmentTO> getAttachmentByPlanning(String planningId) throws BusinessException {
         return bus.getAttachmentList(planningId);
     }
 
@@ -39,7 +44,7 @@ public class AttachmentDelegate extends GeneralDelegate {
     }
 
     
-    public Vector getHistory(String attachmentId)  throws BusinessException  {
+    public Vector<AttachmentHistoryTO> getHistory(String attachmentId)  throws BusinessException  {
         return bus.getHistory(attachmentId);
     }    
     
@@ -47,5 +52,10 @@ public class AttachmentDelegate extends GeneralDelegate {
     public AttachmentTO getAttachmentFile(AttachmentTO ato) throws BusinessException {
         return bus.getAttachmentFile(ato);
     }
+
+
+	public Vector<AttachmentTO> getAttachmentByProject(String projectId) throws BusinessException {
+        return bus.getAttachmentByProject(projectId);
+	}
 
 }

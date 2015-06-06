@@ -6,6 +6,7 @@ import org.apache.taglibs.display.ColumnDecorator;
 
 import com.pandora.ProjectTO;
 import com.pandora.RepositoryFileTO;
+import com.pandora.bus.SystemSingleton;
 import com.pandora.helper.HtmlUtil;
 
 public class RepositoryEntryLogDecorator extends ColumnDecorator {
@@ -17,11 +18,16 @@ public class RepositoryEntryLogDecorator extends ColumnDecorator {
 			if(!item.getName().equals("..")) {
 				String path = item.getPath();
 				ProjectTO pto = (ProjectTO)item.getPlanning();
-				path = path.replaceAll(pto.getRepositoryURL(), "");
+				
+				if (pto!=null && pto.getRepositoryURL()!=null) {
+					path = path.replaceAll(pto.getRepositoryURL(), "");	
+				}
+				
 				if (path.startsWith("/")){
 					path = path.substring(1);
 				}
-				path = URLEncoder.encode(path, "UTF-8");
+				String encoding = SystemSingleton.getInstance().getDefaultEncoding();					
+				path = URLEncoder.encode(path, encoding);
 				
 				String projId = pto.getId();
 				String rev = item.getRevision()+"";

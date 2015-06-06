@@ -14,10 +14,28 @@ import com.pandora.exception.BusinessException;
 
 public class RepositoryDelegate extends GeneralDelegate {
 
-    /** The Business object related with current delegate */    
-    RepositoryBUS bus = new RepositoryBUS();
-
+    public static final String ACTION_CUST_CDWL_ON   = "CDWL_ON";
     
+    public static final String ACTION_CUST_CDWL_OFF  = "CDWL_OFF";
+    
+    public static final String ACTION_PUBLIC_DWL_ON  = "PDWL_ON";
+    
+    public static final String ACTION_PUBLIC_DWL_OFF = "PDWL_OFF";
+    
+    public static final String ACTION_CUSTOMER_DWL   = "CUST_DWL";
+    
+    public static final String ACTION_UPLOAD_FILE    = "UPL_FILE";
+    
+    public static final String ACTION_UPLOAD_FOLDER  = "UPL_FOLD";
+    
+    public static final String ACTION_COMMIT         = "COMMIT";  
+    
+    public static final String ACTION_SAVE_ARTIFACT  = "SAVE_ATF";
+    
+    
+    /** The Business object related with current delegate */    
+    private RepositoryBUS bus = new RepositoryBUS();
+
     /**
      * Get a list of logs of a file from repository, based to the project, a current path and a specific revision 
      */
@@ -26,6 +44,10 @@ public class RepositoryDelegate extends GeneralDelegate {
 	}
 
     
+	public Vector<RepositoryFilePlanningTO> getEntitiesFromFile(RepositoryFileTO rfto) throws BusinessException {
+		return bus.getEntitiesFromFile(rfto);
+	}
+	
     /**
      * Get a list of files from repository, based to the project, a current path and a specific revision 
      */
@@ -47,7 +69,12 @@ public class RepositoryDelegate extends GeneralDelegate {
 	public RepositoryFileTO getFileInfo(ProjectTO pto, String pathName, String rev) throws Exception {
 		return bus.getFileInfo(pto, pathName, rev);
 	}
+
 	
+	public void removeFile(ProjectTO pto, String path, String rev) throws Exception {
+		bus.removeFile(pto, path, rev);
+	}
+
 	
 	/**
 	 * Get information about a specific file based to a project 
@@ -57,18 +84,26 @@ public class RepositoryDelegate extends GeneralDelegate {
 		return bus.getFileFromDB(pto, pathName);
 	}
 
+	public RepositoryFileProjectTO getFileFromDBbyId(ProjectTO pto, String id) throws BusinessException {
+		return bus.getFileFromDBbyId(pto, id);
+	}	
+	
 	
 	public boolean canUploadFile(ProjectTO pto) throws Exception {
 		return bus.canUploadFile(pto);
 	}
+	
+	public boolean canRemoveFile(ProjectTO pto) throws Exception {
+		return bus.canRemoveFile(pto);
+	}	
 	
 	public Vector<RepositoryFilePlanningTO> getFilesFromPlanning(PlanningTO pto) throws BusinessException {
 		return bus.getFilesFromPlanning(pto);
 	}
 	
 
-	public void updateRepositoryFilePlan(String path, String entityId, ProjectTO pto, String artifactTemplateType, boolean removeIfAlreadyExists) throws BusinessException {
-		bus.updateRepositoryFilePlan(path, entityId, pto, artifactTemplateType, removeIfAlreadyExists);
+	public void updateRepositoryFilePlan(String path, String entityId, ProjectTO pto, boolean removeIfAlreadyExists) throws BusinessException {
+		bus.updateRepositoryFilePlan(path, entityId, pto, removeIfAlreadyExists);
 	}
 
 	public void breakRepositoryEntityLink(String pathId, String entityId) throws BusinessException {
@@ -76,10 +111,15 @@ public class RepositoryDelegate extends GeneralDelegate {
 	}
 	
 	
-	public void updateDisabledStatus(ProjectTO pto, String path, boolean disabled, String artifactTemplateType) throws BusinessException {
-		bus.updateDisabledStatus(pto, path, disabled, artifactTemplateType);
+	public void updateDisabledStatus(ProjectTO pto, String path, boolean disabled) throws BusinessException {
+		bus.updateDisabledStatus(pto, path, disabled);
 	}
 
+	
+	public void updateDownloadableStatus(ProjectTO pto, String fileId, boolean isDownloadable) throws BusinessException {
+		bus.updateDownloadableStatus(pto, fileId, isDownloadable);
+	}
+	
 	
 	public Vector<RepositoryFileTO> getFilesToCustomerView(ProjectTO pto) throws BusinessException {
 		return bus.getFilesToCustomerView(pto);
@@ -98,4 +138,18 @@ public class RepositoryDelegate extends GeneralDelegate {
 	public void createFolder(UserTO handler, String path, String projectId, String logMessage) throws Exception {
 		bus.createFolder(handler, path, projectId, logMessage);			
 	}
+
+
+	public void insertHistory(UserTO handler, ProjectTO pto, RepositoryFileTO file, String repAction, String comment) throws BusinessException {
+		bus.insertHistory(handler, pto, file, repAction, comment);			
+	}
+
+
+	public void insertHistory(UserTO handler, ProjectTO pto, String path, String repAction, String comment) throws BusinessException {
+		RepositoryFileTO rfto = new RepositoryFileTO();
+		rfto.setPath(path);
+		this.insertHistory(handler, pto, rfto, repAction, comment);
+	}
+
+
 }

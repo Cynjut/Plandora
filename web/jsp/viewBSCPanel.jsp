@@ -32,8 +32,36 @@
 		window.location = "../do/viewBSC?operation=prepareForm&projectId=" + prjId;	
 	}
 	
-	function showChart(kpi){
-		window.location = "../do/viewBSCPanel?operation=showChart&kpiId=" + kpi;	
+	function showChart(kpi, prjId){
+		window.location = "../do/viewBSCPanel?operation=showChart&kpiId=" + kpi + "&projectId=" + prjId;	
+	}
+
+
+	function reloadFields(gadId, fieldListIds) {	
+		var concatValues = "";
+		var idList = fieldListIds.split(';');
+		if (idList) {
+			for(var i=0; i<=idList.length; i++) {
+				if (idList[i] && idList[i]!="") {
+					var fieldVal = document.getElementById(idList[i]).value;					
+					concatValues = concatValues + idList[i] + "|" + fieldVal + "|";				
+				}
+			}		
+		}
+		with(document.forms["viewBSCPanelForm"]){
+   			operation.value = "refreshGadgetFields";
+   			genericTag.value = gadId + "|" + concatValues;
+   		}
+	    var ajaxRequestObj = ajaxSyncInit();         
+		ajaxSyncProcess(document.forms["viewBSCPanelForm"], callBackReloadFields, gadId + "|" + concatValues, true, ajaxRequestObj);		
+	}
+
+	function callBackReloadFields(gadgetFieldId, dummy, objRequest) {
+		if(isSyncAjax(objRequest)){
+	       	document.getElementById("ajaxResponse").innerHTML = ""; //hide ajax icon  
+			var content = objRequest.responseText;
+			document.getElementById("GADGET_PROPERTY_ID").innerHTML = content; 
+	    }  
 	}
 	
 </script>
@@ -42,7 +70,7 @@
 <html:hidden name="viewBSCPanelForm" property="operation"/>
 <html:hidden name="viewBSCPanelForm" property="projectId"/>
 
-<br>
+<plandora-html:shortcut name="viewBSCPanelForm" property="goToBscForm" fieldList="projectId"/>
 
 	<table width="100%" border="0" cellspacing="0" cellpadding="0">
 	<tr><td>
@@ -69,7 +97,7 @@
 	        <td class="formTitle"><bean:message key="label.viewBSCPanel.category"/>:&nbsp;</td>
 			<td>
 		  		<html:select name="viewBSCPanelForm" property="categoryId" styleClass="textBox">
-		             <html:options collection="categoryList" property="id" labelProperty="name"/>
+		             <html:options collection="categoryList" property="id" labelProperty="name" filter="false"/>
 				</html:select>		
 			</td>
 			<td>&nbsp;</td>		

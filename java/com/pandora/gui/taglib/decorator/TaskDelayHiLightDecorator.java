@@ -31,7 +31,7 @@ public class TaskDelayHiLightDecorator extends ColumnDecorator {
         String c1 = "", c2 = "";
         int words = 0;
         
-        UserTO uto = (UserTO)this.getPageContext().getSession().getAttribute(UserDelegate.CURRENT_USER_SESSION);
+        UserTO uto = (UserTO)this.getSession().getAttribute(UserDelegate.CURRENT_USER_SESSION);
         ResourceTaskTO rtto = (ResourceTaskTO)this.getObject();
         content = (String)columnValue;
         TaskStatusTO tsto = rtto.getTaskStatus();

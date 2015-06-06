@@ -33,14 +33,15 @@ public class ReportTO extends TransferObject {
     public static final String REPORT_EXPORT_PDF = "PDF";
     public static final String REPORT_EXPORT_RTF = "RTF";
     public static final String REPORT_EXPORT_ODT = "ODT";
+    public static final String REPORT_EXPORT_JPG = "JPG";
 
-    /** Finantial perspective  */
-    public static final String FINANTIAL_PERSP = "1";
-    /** Finantial perspective  */
+    /** Financial perspective  */
+    public static final String FINANCIAL_PERSP = "1";
+    /** Financial perspective  */
     public static final String CUSTOMER_PERSP  = "2";
-    /** Finantial perspective  */
+    /** Financial perspective  */
     public static final String PROCESS_PERSP   = "3";
-    /** Finantial perspective  */
+    /** Financial perspective  */
     public static final String LEARNING_PERSP  = "4";
 
     
@@ -50,6 +51,8 @@ public class ReportTO extends TransferObject {
     public static final Integer DATE_DATA_TYPE     = new Integer(1);
     /** The dataType of report result is a Currency */
     public static final Integer CURRENCY_DATA_TYPE = new Integer(2);
+    /** The dataType of report result is a Currency */
+    public static final Integer PERCENTUAL_DATA_TYPE = new Integer(3);
     
     
     public static final Locale KPI_DEFAULT_LOCALE = new Locale("en", "US");
@@ -59,9 +62,14 @@ public class ReportTO extends TransferObject {
     /** The Name of Report */
     private String name;
     
-    /** Type of report (diarily, monthly, weekly) */
-    private Integer type;
+    private String description;
     
+    /** Type of report (daily, monthly, weekly) */
+    private Integer type;
+
+    /** Type of KPI (custom KPI, CPI, SPI, etc) */
+    private Integer kpiType;
+
     /** BSC Report Perspective id: Financial, Process, Customer or Training */ 
     private String reportPerspectiveId;
     
@@ -76,6 +84,7 @@ public class ReportTO extends TransferObject {
     
     /** Project related */
     private ProjectTO project;
+    private Vector<ProjectTO> appliedProjectList = null;
     
     /** Timestamp of report ending */
     private Timestamp finalDate;
@@ -228,6 +237,7 @@ public class ReportTO extends TransferObject {
         this.executionHour = newValue;
     }
     
+    
     ////////////////////////////////////////    
     public Timestamp getFinalDate() {
         return finalDate;
@@ -244,6 +254,7 @@ public class ReportTO extends TransferObject {
         this.lastExecution = newValue;
     }
     
+    
     ////////////////////////////////////////    
     public String getName() {
         return name;
@@ -251,6 +262,7 @@ public class ReportTO extends TransferObject {
     public void setName(String newValue) {
         this.name = newValue;
     }
+
     
     ////////////////////////////////////////    
     public ProjectTO getProject() {
@@ -259,6 +271,7 @@ public class ReportTO extends TransferObject {
     public void setProject(ProjectTO newValue) {
         this.project = newValue;
     }
+
     
     ////////////////////////////////////////    
     public String getReportPerspectiveId() {
@@ -386,7 +399,38 @@ public class ReportTO extends TransferObject {
 	}
 	public void setToleranceType(String newValue) {
 		this.toleranceType = newValue;
+	}
+
+	
+    ///////////////////////////////////////////////////     
+	public Vector<ProjectTO> getAppliedProjectList() {
+		return appliedProjectList;
+	}
+	public void addAppliedProjectList(ProjectTO item) {
+		if (this.appliedProjectList==null) {
+			this.appliedProjectList = new Vector<ProjectTO>();
+		}
+		this.appliedProjectList.add(item);
+	}
+	public void clearAppliedProjectList() {
+		this.appliedProjectList = null;		
+	}
+
+
+    ////////////////////////////////////////
+	public String getDescription() {
+		return description;
 	}   
+	public void setDescription(String newValue) {
+		this.description = newValue;
+	}
 	
-	
+
+    ////////////////////////////////////////
+    public Integer getKpiType() {
+        return kpiType;
+    }
+    public void setKpiType(Integer newValue) {
+        this.kpiType = newValue;
+    }
 }

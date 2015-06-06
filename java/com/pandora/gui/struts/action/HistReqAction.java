@@ -43,7 +43,7 @@ public class HistReqAction extends GeneralStrutsAction {
 			
 			//get all Information about request history 
 			RequirementDelegate rdel = new RequirementDelegate();
-			Vector reqList = rdel.getHistory(frm.getReqId());
+			Vector<RequirementHistoryTO> reqList = rdel.getHistory(frm.getReqId());
 			request.getSession().setAttribute("reqHistoryList", reqList);
 			Locale loc = SessionUtil.getCurrentLocale(request);
 			
@@ -75,7 +75,8 @@ public class HistReqAction extends GeneralStrutsAction {
 	    	RequirementTO rto = rdel.getRequirement(new RequirementTO(frm.getReqId()));
 	    	
 	    	Locale loc = SessionUtil.getCurrentLocale(request);
-	    	Vector reqList = (Vector)request.getSession().getAttribute("reqHistoryList");
+	    	@SuppressWarnings("rawtypes")
+			Vector reqList = (Vector)request.getSession().getAttribute("reqHistoryList");
 
 			//get data about current requester
 			UserDelegate udel = new UserDelegate();
@@ -88,8 +89,12 @@ public class HistReqAction extends GeneralStrutsAction {
 			String selectedItem = frm.getSelectedIndex();
 			if (selectedItem!=null) {
 			    int index = Integer.parseInt(selectedItem);
-			    RequirementHistoryTO rhto = (RequirementHistoryTO)reqList.get(index);
-			    frm.setHistoryComment(this.getComments(rhto, loc, cto));
+			    if (index>=0 && reqList.size()>index) {
+				    RequirementHistoryTO rhto = (RequirementHistoryTO)reqList.get(index);
+				    frm.setHistoryComment(this.getComments(rhto, loc, cto));			    	
+			    } else {
+			    	LogUtil.log(this, LogUtil.LOG_ERROR, "the index of history cannot be [" + index + "]", null);    	
+			    }
 			}
 			
 						

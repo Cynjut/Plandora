@@ -4,7 +4,7 @@
 <%@ taglib uri="/WEB-INF/lib/display" prefix="display" %>
 
 <html>
-	<title><bean:message key="title.requestHistoryWindow"/> <bean:write name="histReqForm" property="reqId" /></title>
+	<title><bean:message key="title.requestHistoryWindow"/> <bean:write name="histReqForm" property="reqId" filter="false"/></title>
 	<head>
 		<link href="../css/styleDefault.css" id="style" TYPE="text/css" rel="STYLESHEET">
 		<link rel="shortcut icon" type="image/x-icon" href="../images/favicon.ico" />
@@ -23,10 +23,10 @@
 	</tr>
 	</table>
 	
-	<table class="table" width="100%" border="1" bordercolor="#10389C" cellspacing="1" cellpadding="2">
+	<table class="table" width="100%" border="1" height="95%" bordercolor="#10389C" cellspacing="1" cellpadding="2">
 		<tr class="tableRowEven">
-		   <td colspan="2">
-				<html:textarea name="histReqForm" property="historyComment" styleClass="textBox" cols="102" rows="18" readonly="true" />
+		   <td>
+				<html:textarea name="histReqForm" property="historyComment" styleClass="fullTextArea" readonly="true" />
 		   </td>
 		</tr>	
 	</table>

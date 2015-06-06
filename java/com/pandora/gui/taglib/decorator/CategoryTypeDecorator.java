@@ -13,6 +13,10 @@ public class CategoryTypeDecorator extends ColumnDecorator {
      * @see org.apache.taglibs.display.ColumnDecorator#decorate(java.lang.Object)
      */
     public String decorate(Object columnValue) {
+		return this.getType();
+    }
+
+	private String getType() {
 		String text = "";
 		CategoryTO cto = (CategoryTO)this.getObject();
 	    
@@ -36,14 +40,16 @@ public class CategoryTypeDecorator extends ColumnDecorator {
 		    } else if (cto.getType().equals(CategoryTO.TYPE_ARTIFACT)) {
 		    	text = this.getBundleMessage("label.category.type.8");        		        
 		    } else if (cto.getType().equals(CategoryTO.TYPE_COST)) {
-		    	text = this.getBundleMessage("label.category.type.9");        		        
+		    	text = this.getBundleMessage("label.category.type.9");
+		    } else if (cto.getType().equals(CategoryTO.TYPE_OCCURRENCE)) {
+		    	text = this.getBundleMessage("label.category.type.10");        		        
 		    }
 		    
 		} else {
 		    text = this.getBundleMessage("label.category.type.0");
 		}
 		return text;
-    }
+	}
 
     /* (non-Javadoc)
      * @see org.apache.taglibs.display.ColumnDecorator#decorate(java.lang.Object, java.lang.String)
@@ -56,7 +62,7 @@ public class CategoryTypeDecorator extends ColumnDecorator {
      * @see org.apache.taglibs.display.ColumnDecorator#contentToSearching(java.lang.Object)
      */
     public String contentToSearching(Object columnValue) {
-    	return columnValue+"";
+    	return this.getType();
     }
 
     

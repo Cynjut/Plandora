@@ -68,6 +68,7 @@ public class InvoiceItemAction extends GeneralStrutsAction {
 
 	
 	
+	@SuppressWarnings("unchecked")
 	public ActionForward saveInvoiceItem(ActionMapping mapping, ActionForm form,
 			HttpServletRequest request, HttpServletResponse response){
 		try {
@@ -87,12 +88,6 @@ public class InvoiceItemAction extends GeneralStrutsAction {
 			    ito.setId("NEW_" + (iList.size()+1));
 			    ito.setInvoice(new InvoiceTO(frm.getInvoiceId()));
 			    this.fillInvoiceItem(frm, loc, ito);
-			    
-			    if (iList==null){
-			    	iList = new Vector<InvoiceItemTO>();
-			    } else {
-			        request.getSession().removeAttribute("invoiceItemList");
-			    }
 			    
 			    iList.addElement(ito);
 			    request.getSession().setAttribute("invoiceItemList", iList);		    					
@@ -126,7 +121,8 @@ public class InvoiceItemAction extends GeneralStrutsAction {
 	
 	private InvoiceItemTO getInvoiceItem(String iiId, HttpServletRequest request){
 		InvoiceItemTO response = null;
-	    Vector<InvoiceItemTO> iList = (Vector<InvoiceItemTO>)request.getSession().getAttribute("invoiceItemList");
+	    @SuppressWarnings("unchecked")
+		Vector<InvoiceItemTO> iList = (Vector<InvoiceItemTO>)request.getSession().getAttribute("invoiceItemList");
 	    if (iList!=null) {
 		    Iterator<InvoiceItemTO> i = iList.iterator();
 		    while(i.hasNext()) {
@@ -142,11 +138,12 @@ public class InvoiceItemAction extends GeneralStrutsAction {
 
 	
 	public void summarize(HttpServletRequest request) throws BusinessException{
-		int total = 0;
+		long total = 0;
 		UserDelegate udel = new UserDelegate();
 		Locale loc = udel.getCurrencyLocale();
 		
-	    Vector<InvoiceItemTO> iList = (Vector<InvoiceItemTO>)request.getSession().getAttribute("invoiceItemList");
+	    @SuppressWarnings("unchecked")
+		Vector<InvoiceItemTO> iList = (Vector<InvoiceItemTO>)request.getSession().getAttribute("invoiceItemList");
 	    if (iList!=null) {
 		    Iterator<InvoiceItemTO> i = iList.iterator();
 		    while(i.hasNext()) {

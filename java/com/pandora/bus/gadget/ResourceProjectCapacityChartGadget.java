@@ -12,6 +12,7 @@ import com.pandora.FieldValueTO;
 import com.pandora.TransferObject;
 import com.pandora.delegate.DbQueryDelegate;
 import com.pandora.exception.BusinessException;
+import com.pandora.helper.DBUtil;
 import com.pandora.helper.DateUtil;
 
 public final class ResourceProjectCapacityChartGadget extends ChartGadget {
@@ -20,7 +21,7 @@ public final class ResourceProjectCapacityChartGadget extends ChartGadget {
 
 	private static final String RES_PRJ_CAP_INTERVAL = "INTERVAL";
 
-	private HashMap granularity = new HashMap();
+	private HashMap<String,Integer> granularity = new HashMap<String,Integer>();
 
 	
 	public String getUniqueName(){
@@ -60,13 +61,13 @@ public final class ResourceProjectCapacityChartGadget extends ChartGadget {
 	}
     
     public Vector getFields(){
-    	Vector response = new Vector();
+    	Vector<FieldValueTO> response = new Vector<FieldValueTO>();
 
     	try {
-        	Vector userlist = super.getAtiveUsers(super.handler.getId());
+        	Vector<TransferObject> userlist = super.getAtiveUsers(super.handler.getId());
         	response.add(new FieldValueTO(RES_PRJ_CAP_RESOURCE, "label.manageOption.gadget.resprjcap.resource", userlist));
         	
-            Vector intervList = new Vector();
+            Vector<TransferObject> intervList = new Vector<TransferObject>();
             intervList.add(new TransferObject("1", "label.manageOption.gadget.resprjcap.interval.1"));
             intervList.add(new TransferObject("2", "label.manageOption.gadget.resprjcap.interval.2"));
             intervList.add(new TransferObject("3", "label.manageOption.gadget.resprjcap.interval.3"));
@@ -84,8 +85,8 @@ public final class ResourceProjectCapacityChartGadget extends ChartGadget {
 	public String generate(Vector selectedFields)  throws BusinessException {
         DbQueryDelegate qdel = new DbQueryDelegate();            			
         String response = "";
-        HashMap projectList = new HashMap();
-        Vector projectNames = new Vector();
+        HashMap<String, String> projectList = new HashMap<String, String>();
+        Vector<String> projectNames = new Vector<String>();
         
         try {
         	String resourceId = super.getSelected(RES_PRJ_CAP_RESOURCE, selectedFields);
@@ -123,7 +124,7 @@ public final class ResourceProjectCapacityChartGadget extends ChartGadget {
         	
     		//get data related to allocation from data base...
             int[] types = new int[] {Types.VARCHAR, Types.TIMESTAMP};
-            Vector params = new Vector();
+            Vector<Object> params = new Vector<Object>();
             params.addElement(resourceId);
             params.addElement(iniRange);
             String sqlData = "";
@@ -131,12 +132,13 @@ public final class ResourceProjectCapacityChartGadget extends ChartGadget {
             
             sqlData = "select sub.name, sum(sub.alloc_time) as alloc_time, sub.bucket_date from ( ";
             sqlData = sqlData + "select a.alloc_time, p.name, p.id, ";
+            sqlData = sqlData + DBUtil.addDate(dbname, "rt.actual_date", "a.sequence-1") + " as bucket_date ";
             
-            if (dbname.equalsIgnoreCase("MySQL")) {
-            	sqlData = sqlData + "ADDDATE(rt.actual_date, a.sequence-1) as bucket_date ";
-    		} else {
-    			sqlData = sqlData + "rt.actual_date+ cast((a.sequence-1) || ' day' as interval) as bucket_date ";
-    		}
+            //if (dbname.equalsIgnoreCase("MySQL")) {
+            //	sqlData = sqlData + "ADDDATE(rt.actual_date, a.sequence-1) as bucket_date ";
+    		//} else {
+    		//	sqlData = sqlData + "rt.actual_date+ cast((a.sequence-1) || ' day' as interval) as bucket_date ";
+    		//}
             
             sqlData = sqlData + "from resource_task_alloc a, task t, resource_task rt, project p " +
 		    	        "where a.task_id = t.id  " +
@@ -151,11 +153,11 @@ public final class ResourceProjectCapacityChartGadget extends ChartGadget {
             		  "group by sub.name, sub.bucket_date " +
 	        		  "order by sub.bucket_date ";                        
 
-            Vector dbAllocList = qdel.performQuery(sqlData, types, params);
+            Vector<Vector<Object>> dbAllocList = qdel.performQuery(sqlData, types, params);
             if (dbAllocList!=null) {
             	
             	for (int i=1; i<dbAllocList.size(); i++) {
-            		Vector item = (Vector)dbAllocList.elementAt(i);
+            		Vector<Object> item = (Vector<Object>)dbAllocList.elementAt(i);
             		
             		String projectName = (String)item.elementAt(0);
             		String allocTimeStr = (String)item.elementAt(1);
@@ -181,8 +183,6 @@ public final class ResourceProjectCapacityChartGadget extends ChartGadget {
 	                	} catch(ArrayIndexOutOfBoundsException e) {
 	                		System.out.println("index:" + index + " slot: " + slot + " prj:" + item.elementAt(0) + " dt:" + tm + " gran.list:" + this.granularity);
 	                	}
-        			} else {
-        				System.out.println("index is null. dt:" + tm + " gran.list:" + this.granularity);	                	
         			}
             	}
 
@@ -190,7 +190,7 @@ public final class ResourceProjectCapacityChartGadget extends ChartGadget {
             		String projectName = (String)projectNames.elementAt(i);
             		labels[i] = projectName;
             	}
-            
+                        	
         		//draw the chart
                 response = "{ \n" + 
                 		getJSonTitle() + "," +

@@ -34,7 +34,7 @@ public class RequirementGridPriorityDecorator extends ColumnDecorator {
      * @see org.apache.taglibs.display.ColumnDecorator#contentToSearching(java.lang.Object)
      */
     public String contentToSearching(Object columnValue) {
-    	return columnValue+"";
+		return this.getBundleMessage("label.requestPriority." + columnValue);
     }
     
 }

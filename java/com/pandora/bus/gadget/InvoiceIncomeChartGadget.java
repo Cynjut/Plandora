@@ -156,8 +156,6 @@ public class InvoiceIncomeChartGadget extends ChartGadget {
                             	} catch(ArrayIndexOutOfBoundsException e) {
                             		System.out.println("index:" + index + " slot: " + slot + " dt:" + item.elementAt(1) + " gran.list:" + this.granularity);
                             	}
-                			} else {
-                				System.out.println("index is null. dt:" + tm + " gran.list:" + this.granularity);
                 			}                    		
                     	}
                 	}

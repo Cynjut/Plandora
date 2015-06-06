@@ -23,7 +23,7 @@ public class ProjectGridByTemplate extends ColumnDecorator {
 			if (pto.getRoleIntoProject().equals(LeaderTO.ROLE_LEADER+"") || 
 				    pto.getRoleIntoProject().equals(RootTO.ROLE_ROOT+"")){
 				
-				Vector list = ttdel.getTemplateListByProject(pto.getId(), false);
+				Vector<TemplateTO> list = ttdel.getTemplateListByProject(pto.getId(), false);
 				
 				if (list!=null && list.size()>0){
 

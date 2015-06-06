@@ -17,7 +17,7 @@ var BUL_YEARSCROLL = true;
 
 var calendars = [];
 var RE_NUM = /^\-?\d+$/;
-var dateMask = 'dd/MM/yyyy'; //default value
+var dateMask = 'yyyy/MM/dd'; //default value
 
 function calendar1(obj_target, dtMask) {
 
@@ -52,8 +52,8 @@ function cal_popup1 (str_date) {
 	if (!this.dt_current) return;
 
 	var obj_calwindow = window.open(
-		'../jscript/calendar.html?datetime=' + this.dt_current.valueOf()+ '&id=' + this.id,
-		'Calendar', 'width=210,height='+(this.time_comp ? 205 : 180)+
+		'../jscript/calendar.jsp?datetime=' + this.dt_current.valueOf()+ '&id=' + this.id,
+		'Calendar', 'width=220,height='+(this.time_comp ? 205 : 180)+
 		',status=no,resizable=no,top=200,left=200,dependent=yes,alwaysRaised=yes'
 	);
 	obj_calwindow.opener = window;

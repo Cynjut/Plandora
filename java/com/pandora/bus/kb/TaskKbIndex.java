@@ -18,33 +18,36 @@ import com.pandora.delegate.ResourceTaskDelegate;
 import com.pandora.exception.BusinessException;
 import com.pandora.helper.DateUtil;
 
-/**
- */
+
 public class TaskKbIndex extends KbIndex {
 
-    
+    @Override
     public String getUniqueName() {
         return "TaskKbIndex";
     }
 
     
+    @Override
     public String getContextLabel() {
         return "label.viewKb.Task";
     }
     
     
+    @Override
     public Timestamp getCreationDate(Object to){
         ResourceTaskTO rtto = (ResourceTaskTO)to;
         return rtto.getTask().getCreationDate();
     }
     
     
+    @Override
     public String getProjectId(Object to){
         ResourceTaskTO rtto = (ResourceTaskTO)to;
         ProjectTO pto = rtto.getTask().getProject();
         return pto.getId();
     }    
     
+    @Override
     public long getId(Object to) {
         long response = -1;
         ResourceTaskTO rtto = (ResourceTaskTO)to;
@@ -59,9 +62,10 @@ public class TaskKbIndex extends KbIndex {
     }
     
     
-    public Vector call(long initialCursor, long finalCursor) throws Exception {
+    @Override
+    public Vector<?> call(long initialCursor, long finalCursor) throws Exception {
         ResourceTaskBUS rtbus = new ResourceTaskBUS();
-        Vector vr = null;
+        Vector<?> vr = null;
         try {
             vr = rtbus.getListUntilID(initialCursor+"", finalCursor+"");
         } catch (BusinessException e) {
@@ -70,7 +74,7 @@ public class TaskKbIndex extends KbIndex {
         return vr;
     }
         
-    
+    @Override
     public long getMaxId() throws Exception {
         long response = -1;
         try {        
@@ -83,6 +87,7 @@ public class TaskKbIndex extends KbIndex {
     }
     
     
+    @Override
     public Document getObjectToIndex(Object to) throws Exception {
         ResourceTaskDelegate del = new ResourceTaskDelegate(); 
         Document response = new Document();
@@ -91,11 +96,11 @@ public class TaskKbIndex extends KbIndex {
         
         TaskTO tto = rtto.getTask();
 
-        Vector hist = del.getHistory(tto.getId(), rtto.getResource().getId());
+        Vector<TaskHistoryTO> hist = del.getHistory(tto.getId(), rtto.getResource().getId());
         if (hist!=null) {
-            Iterator i = hist.iterator();
+            Iterator<TaskHistoryTO> i = hist.iterator();
             while(i.hasNext()){
-                TaskHistoryTO thto = (TaskHistoryTO)i.next();
+                TaskHistoryTO thto = i.next();
                 history = history.concat("<li>");
                 if (thto.getComment()!=null) {
                     history = history.concat(thto.getComment());    
@@ -133,17 +138,19 @@ public class TaskKbIndex extends KbIndex {
         return response;
     }
     
-    public Class getBusinessClass() throws Exception {
+    @SuppressWarnings("rawtypes")
+	public Class getBusinessClass() throws Exception {
         return ResourceTaskTO.class;
     }
     
+    
     private String getAdditionalFields(TaskTO tto){
         String response = null;
-        Vector addFields = tto.getAdditionalFields();
+        Vector<AdditionalFieldTO> addFields = tto.getAdditionalFields();
         if (addFields!=null) {
-            Iterator i = addFields.iterator();
+            Iterator<AdditionalFieldTO> i = addFields.iterator();
             while(i.hasNext()) {
-                AdditionalFieldTO af = (AdditionalFieldTO)i.next();
+                AdditionalFieldTO af = i.next();
                 response = response + "<li>" + " " + af.getValue() + "</li>";
             }
         }

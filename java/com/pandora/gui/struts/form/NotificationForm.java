@@ -42,6 +42,7 @@ public class NotificationForm extends GeneralStrutsForm {
     
     private String minute;
     
+    private boolean hideClosedAgents;
     
     /**
      * Clear values of Notification Form
@@ -61,6 +62,11 @@ public class NotificationForm extends GeneralStrutsForm {
         this.setSaveMethod(null, null);
     }    
 
+
+    public void reset(ActionMapping mapping, HttpServletRequest request) {
+    	this.hideClosedAgents = false;
+	}
+    
     
     ///////////////////////////////////////////    
     public String getDescription() {
@@ -155,6 +161,16 @@ public class NotificationForm extends GeneralStrutsForm {
         this.minute = newValue;
     }
     
+    
+    //////////////////////////////////////////  
+	public boolean getHideClosedAgents() {
+		return hideClosedAgents;
+	}
+	public void setHideClosedAgents(boolean newValue) {
+		this.hideClosedAgents = newValue;
+	}
+	
+	
 	/**
 	 * Validate the form.
 	 */

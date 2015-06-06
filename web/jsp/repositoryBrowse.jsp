@@ -3,6 +3,7 @@
 <%@ taglib uri="/WEB-INF/lib/struts-bean" prefix="bean" %>
 <%@ taglib uri="/WEB-INF/lib/display" prefix="display" %>
 <%@ taglib uri="/WEB-INF/lib/struts-logic" prefix="logic" %>
+<%@ taglib uri="/WEB-INF/lib/plandora-html" prefix="plandora-html" %>
 
 <html>	
 	<body>
@@ -28,15 +29,15 @@
 				<tr class="formBody">
 					<td>
 						<div id="BROWSE_REPOSISTORY_BODY" style="width:570px; height:300px; overflow: scroll;">
-							<display:table border="1" width="100%" name="repositoryFileList" scope="session" pagesize="0">
-								<display:column width="10" property="isDirectory" align="center" title="grid.title.empty" decorator="com.pandora.gui.taglib.decorator.RepositoryEntryTypeDecorator" />								
-								<display:column width="10" property="isDirectory" align="center" title="grid.title.empty" decorator="com.pandora.gui.taglib.decorator.RepositoryEntityCheckBoxDecorator" />
-								<display:column property="name" align="left" title="label.formRepository.name" decorator="com.pandora.gui.taglib.decorator.RepositoryEntryNameDecorator" tag="browse" />					  
-								<display:column width="100" property="author" align="center" title="label.formRepository.author"/>					  
-								<display:column width="80" property="fileSize" title="label.formRepository.size" />			  
-								<display:column width="50" property="revision" title="label.formRepository.revision" />
-								<display:column width="130" align="center" property="creationDate" title="label.formRepository.date" decorator="com.pandora.gui.taglib.decorator.GridDateDecorator" tag="2;2" />
-							</display:table>		
+							<plandora-html:ptable width="100%" name="repositoryFileList" ajax="false" frm="repositoryViewerForm" pagesize="0">
+								<plandora-html:pcolumn width="10" property="isDirectory" align="center" title="grid.title.empty" decorator="com.pandora.gui.taglib.decorator.RepositoryEntryTypeDecorator" />								
+								<plandora-html:pcolumn width="10" property="isDirectory" align="center" title="grid.title.empty" decorator="com.pandora.gui.taglib.decorator.RepositoryEntityCheckBoxDecorator" />
+								<plandora-html:pcolumn property="name" align="left" title="label.formRepository.name" decorator="com.pandora.gui.taglib.decorator.RepositoryEntryNameDecorator" tag="browse" />					  
+								<plandora-html:pcolumn width="100" property="author" align="center" title="label.formRepository.author"/>					  
+								<plandora-html:pcolumn width="80" property="fileSize" title="label.formRepository.size" />			  
+								<plandora-html:pcolumn width="50" property="revision" title="label.formRepository.revision" />
+								<plandora-html:pcolumn width="130" align="center" property="creationDate" title="label.formRepository.date" decorator="com.pandora.gui.taglib.decorator.GridDateDecorator" tag="2;2" />
+							</plandora-html:ptable>		
 						</div>					
 					</td>
 				</tr>

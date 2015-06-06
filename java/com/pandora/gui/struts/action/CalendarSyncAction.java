@@ -19,6 +19,7 @@ import com.pandora.PreferenceTO;
 import com.pandora.ProjectTO;
 import com.pandora.UserTO;
 import com.pandora.bus.CalendarSyncInterface;
+import com.pandora.bus.SystemSingleton;
 import com.pandora.delegate.OccurrenceDelegate;
 import com.pandora.delegate.ProjectDelegate;
 import com.pandora.delegate.UserDelegate;
@@ -66,7 +67,7 @@ public class CalendarSyncAction extends GeneralStrutsAction {
 				String allClasses = root.getPreference().getPreference(PreferenceTO.CALEND_SYNC_BUS_CLASS);
 				
 				OccurrenceDelegate del = new OccurrenceDelegate();
-				Vector v = del.getOccurenceList(projectId, false);
+				Vector<OccurrenceTO> v = del.getOccurenceList(projectId, false);
 				for (int i = 0; i < v.size(); i++) {
 					OccurrenceTO oto = (OccurrenceTO) v.elementAt(i);
 					loc = oto.getLocale();
@@ -74,7 +75,7 @@ public class CalendarSyncAction extends GeneralStrutsAction {
 					Object bus = OccurrenceTO.getClass(allClasses, oto.getSource());
 					String mask = this.getResources(request).getMessage("calendar.format", loc);
 					
-					if (bus!=null && oto.isVisible()) { //only public events and milestones
+					if (bus!=null && oto.getVisible()) { //only public events and milestones
 
 						CalendarSyncTO csto = ((CalendarSyncInterface)bus).populateCalendarFields(oto, mask, loc);
 
@@ -136,7 +137,8 @@ public class CalendarSyncAction extends GeneralStrutsAction {
 			ServletOutputStream sos;
 			try {
 				sos = response.getOutputStream();
-				response.setContentType("text/calendar; charset=UTF-8");
+				String chartset = SystemSingleton.getInstance().getDefaultEncoding();
+				response.setContentType("text/calendar; charset=" + chartset);
 				response.setHeader("Content-Disposition", "attachment; filename=\"basic.ics");
 				response.setContentLength(header.length());
 				String content = header.toString();

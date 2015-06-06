@@ -6,6 +6,8 @@ public class CustomNodeTemplateTO extends TransferObject {
 	
 	private String nodeTemplateId;
 	
+	private String iterationId;
+	
 	private String planningId;
 	
 	private String templateId;
@@ -43,6 +45,7 @@ public class CustomNodeTemplateTO extends TransferObject {
 			this.setProjectId(subnode.getProject().getId());			
 			this.setResource(subnode.getResourceId());
 			this.setQuestionContent(null);
+			this.setIterationId(subnode.getIterationId());
 			
 		} else if (node instanceof DecisionNodeTemplateTO) {
 			DecisionNodeTemplateTO subnode = (DecisionNodeTemplateTO) node;
@@ -175,7 +178,15 @@ public class CustomNodeTemplateTO extends TransferObject {
 	public void setDecisionAnswer(String newValue) {
 		this.decisionAnswer = newValue;
 	}
-	
+
+
+	/////////////////////////////////////////	
+	public String getIterationId() {
+		return iterationId;
+	}
+	public void setIterationId(String newValue) {
+		this.iterationId = newValue;
+	}
 	
 }
 

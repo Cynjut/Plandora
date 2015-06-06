@@ -25,13 +25,13 @@
 		}
 	}
 
-	function selectedPlanning(reqId){
+	function selectedPlanning(planId){
     	with(document.forms["taskForm"]){
-			requirementId.value = reqId;
+			requirementId.value = planId;
 			callAction(id.value, "taskForm", "refreshRequirementAfterSearch");
 		}
 	}
-	
+
 	function addResource(){
 		var ok = true;
 		//check if start date and estimated time was filled		
@@ -179,7 +179,7 @@
 		<html:hidden name="taskForm" property="resourceId"/>
 	</logic:equal>
 	
-	<br>
+	<plandora-html:shortcut name="taskForm" property="goToTaskForm" fieldList="projectId"/>
 	
 	<table width="100%" border="0" cellspacing="0" cellpadding="0">
 	<tr><td width="10">&nbsp;</td><td>
@@ -206,7 +206,7 @@
 	      <td class="formTitle"><bean:message key="label.manageTask.category"/>:&nbsp;</td>
 	      <td class="formBody">
 		  	<html:select name="taskForm" property="categoryId" styleClass="textBox">
-				<html:options collection="categoryList" property="id" labelProperty="name"/>
+				<html:options collection="categoryList" property="id" labelProperty="name" filter="false"/>
 			</html:select>
 	      </td>	      
 	      <td>&nbsp;</td>
@@ -230,7 +230,7 @@
 		                  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
 		                  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
 		             </option>		  		
-					<html:options collection="taskAvailable" property="id" labelProperty="name"/>
+					<html:options collection="taskAvailable" property="id" labelProperty="name" filter="false"/>
 				</html:select>
        	   </td>
            <td>&nbsp;</td>
@@ -325,7 +325,7 @@
 					<td width="120" class="formTitle"><bean:message key="label.manageTask.projResource"/>:&nbsp;</td>
 				    <td class="formBody">
 				  		<html:select name="taskForm" property="resourceId" styleClass="textBox">
-							<html:options collection="resourceAvailable" property="id" labelProperty="name"/>
+							<html:options collection="resourceAvailable" property="id" labelProperty="name" filter="false"/>
 						</html:select>
 		      		</td>
 					<td width="10">&nbsp;</td>
@@ -349,12 +349,12 @@
 					<td width="10">&nbsp;</td>	
 					<td width="120">&nbsp;</td>
 					<td class="formBody">
-						<display:table border="1" width="80%" name="resourceAllocated" scope="session">
-							  <display:column property="label" title="label.name" />					  
-							  <display:column width="30%" property="startDate" align="center" title="label.manageTask.initDate" decorator="com.pandora.gui.taglib.decorator.GridDateDecorator" tag="2;0" />
-							  <display:column width="10%" property="estimatedTimeInHours" align="center" title="label.manageTask.grid.estTime" decorator="com.pandora.gui.taglib.decorator.GridFloatDecorator" tag="h"/>
-							  <display:column width="2%" property="resource.id" title="grid.title.empty" decorator="com.pandora.gui.taglib.decorator.ResourceTaskRemoveDecorator" />
-						</display:table>			    
+						<plandora-html:ptable width="80%" name="resourceAllocated" scope="session" frm="taskForm">
+							  <plandora-html:pcolumn property="label" title="label.name" />					  
+							  <plandora-html:pcolumn width="30%" property="startDate" align="center" title="label.manageTask.initDate" decorator="com.pandora.gui.taglib.decorator.GridDateDecorator" tag="2;0" />
+							  <plandora-html:pcolumn width="10%" property="estimatedTimeInHours" align="center" title="label.manageTask.grid.estTime" decorator="com.pandora.gui.taglib.decorator.GridFloatDecorator" tag="h"/>
+							  <plandora-html:pcolumn width="2%" property="resource.id" title="grid.title.empty" decorator="com.pandora.gui.taglib.decorator.ResourceTaskRemoveDecorator" />
+						</plandora-html:ptable>			    
 					</td>
 					<td width="10">&nbsp;</td>
 				</tr>
@@ -425,7 +425,7 @@
 			<table width="98%" border="0" cellspacing="0" cellpadding="0"><tr>
 			  <td width="120">
 				  <html:button property="save" styleClass="button" onclick="javascript:saveTask();">
-					<bean:write name="taskForm" property="saveLabel" />
+					<bean:write name="taskForm" property="saveLabel" filter="false"/>
 				  </html:button>    
 			  </td>
 			  <td width="120">
@@ -461,17 +461,17 @@
 		<table width="98%" border="0" cellspacing="0" cellpadding="0">
 		<tr class="formBody">
 			<td>
-				<display:table border="1" width="100%" name="manageTaskList" scope="session" pagesize="7">
-					  <display:column width="2%" property="id" align="center" title="grid.title.empty" decorator="com.pandora.gui.taglib.decorator.TaskGridStatusDecorator" />
-					  <display:column width="5%" property="id" align="center" title="grid.title.empty" decorator="com.pandora.gui.taglib.decorator.GridMindMapLinkDecorator" />
-					  <display:column property="name" title="label.manageTask.name" decorator="com.pandora.gui.taglib.decorator.TaskTreeDecorator" />
-					  <display:column width="25%" property="id" align="center" title="label.manageTask.taskStatus" decorator="com.pandora.gui.taglib.decorator.TaskGridStatusDecorator" tag="LABEL" />
-					  <display:column width="15%" property="category.name" align="center" title="label.manageTask.category" />
-					  <display:column width="10%" property="id" align="center" title="label.manageTask.grid.iteration" decorator="com.pandora.gui.taglib.decorator.IterationLinkDecorator" />						  
-					  <display:column width="5%" align="center" property="requirementId" title="label.gridReqNum" decorator="com.pandora.gui.taglib.decorator.GridMindMapLinkDecorator" />						  
-					  <display:column width="2%" property="id" align="center" title="grid.title.empty" decorator="com.pandora.gui.taglib.decorator.GridEditDecorator" tag="'taskForm', 'editTask'" />
-					  <display:column width="2%" property="id" align="center" title="grid.title.empty" decorator="com.pandora.gui.taglib.decorator.CancelTaskDecorator" />						  
-				</display:table>		
+				<plandora-html:ptable width="100%" name="manageTaskList" scope="session" pagesize="7" frm="taskForm" >
+					  <plandora-html:pcolumn width="2%" property="id" align="center" title="grid.title.empty" decorator="com.pandora.gui.taglib.decorator.TaskGridStatusDecorator" />
+					  <plandora-html:pcolumn width="5%" property="id" align="center" title="grid.title.empty" decorator="com.pandora.gui.taglib.decorator.GridMindMapLinkDecorator" />
+					  <plandora-html:pcolumn property="name" title="label.manageTask.name" decorator="com.pandora.gui.taglib.decorator.TaskTreeDecorator" />
+					  <plandora-html:pcolumn width="25%" property="id" align="center" title="label.manageTask.taskStatus" decorator="com.pandora.gui.taglib.decorator.TaskGridStatusDecorator" tag="LABEL" />
+					  <plandora-html:pcolumn width="15%" property="category.name" align="center" title="label.manageTask.category" />
+					  <plandora-html:pcolumn width="10%" property="id" align="center" title="label.manageTask.grid.iteration" decorator="com.pandora.gui.taglib.decorator.IterationLinkDecorator" />						  
+					  <plandora-html:pcolumn width="5%" align="center" property="requirementId" title="label.gridReqNum" decorator="com.pandora.gui.taglib.decorator.GridMindMapLinkDecorator" />						  
+					  <plandora-html:pcolumn width="2%" property="id" align="center" title="grid.title.empty" decorator="com.pandora.gui.taglib.decorator.GridEditDecorator" tag="'taskForm', 'editTask'" />
+					  <plandora-html:pcolumn width="2%" property="id" align="center" title="grid.title.empty" decorator="com.pandora.gui.taglib.decorator.CancelTaskDecorator" />						  
+				</plandora-html:ptable>		
 			</td>
 		</tr> 
 		</table>

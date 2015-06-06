@@ -22,13 +22,14 @@
 	</tr>
 	</table>
 	
-	<table class="table" width="100%" border="1" bordercolor="#10389C" cellspacing="1" cellpadding="2">
+	<table class="table" width="100%" height="95%" border="1" bordercolor="#10389C" cellspacing="1" cellpadding="2">
 		<tr class="tableRowEven">
-		   <td colspan="2">
-				<html:textarea name="histAttachForm" property="historyContent" styleClass="textBox" cols="80" rows="8" readonly="true" />
+		   <td>
+				<html:textarea name="histAttachForm" property="historyContent" styleClass="fullTextArea" readonly="true" />
 		   </td>
 		</tr>	
-	</table>
+	</table>	
+	
 		      		
 	<table width="100%" border="0" cellspacing="0" cellpadding="0">
 		<tr class="formLabel">

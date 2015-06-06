@@ -6,6 +6,7 @@ import java.util.Iterator;
 import java.util.Locale;
 import java.util.Vector;
 
+import com.pandora.DBQueryResult;
 import com.pandora.NotificationTO;
 import com.pandora.RootTO;
 import com.pandora.bus.DbQueryBUS;
@@ -20,28 +21,29 @@ import com.pandora.helper.LogUtil;
  */
 public class NotificationBUS  extends GeneralBusiness {
 
-    /** The Data Acess Object related with current business entity */
+    /** The Data Access Object related with current business entity */
     NotificationDAO dao = new NotificationDAO();
 
     
-    public void performNotification() throws BusinessException{ 
-        Vector response = new Vector();
+    @SuppressWarnings("unchecked")
+	public void performNotification() throws BusinessException{ 
+        Vector<NotificationTO> response = new Vector<NotificationTO>();
         long elapsedTime = 0;
         try {
-            response = dao.getList();
+            response = dao.getList(false);
             Timestamp current = DateUtil.getNow();
             
-            Iterator i = response.iterator();
+            Iterator<NotificationTO> i = response.iterator();
             while(i.hasNext()) {
                 NotificationTO nto = (NotificationTO) i.next();
                 
-                //define how much times the notificator should retry if some error occurs..
+                //define how much times the agents should retry if some error occurs..
                 int totalRetry = 1;
                 if (nto.getRetryNumber()!=null && nto.getRetryNumber().intValue()>0) {
                     totalRetry = nto.getRetryNumber().intValue();
                 }
                     
-                //check if the notificator is enable and it's time to send
+                //check if the agent is enable and it's time to send
                 if (nto.getFinalDate()==null && (nto.getNextNotification()==null || current.after(nto.getNextNotification()))) {                    
                     
                     int retry = 1;
@@ -54,7 +56,8 @@ public class NotificationBUS  extends GeneralBusiness {
                         try {
                             //get the specific business object
                             String busClassName = nto.getNotificationClass();
-                            Class busClass = Class.forName(busClassName);
+                            @SuppressWarnings("rawtypes")
+							Class busClass = Class.forName(busClassName);
                             Notification nbus = (Notification)busClass.newInstance();
                             
                             String sql = nto.getSqlStement();
@@ -62,9 +65,15 @@ public class NotificationBUS  extends GeneralBusiness {
                             
                             //run the SQL statement related to the notification
                             DbQueryBUS dbBus = new DbQueryBUS();
-                            Vector notifResponse = null;
+                            Vector<Vector<Object>> notifResponse = null;
                             if (nbus.isQuery()) {
-                            	notifResponse = dbBus.performQuery(sql, null, null);
+                            	DBQueryResult r = dbBus.performQuery(sql, null, null);
+                            	nbus.columnNames = r.getColumns();
+                            	
+                            	notifResponse = new Vector<Vector<Object>>();
+                            	notifResponse.add(r.getColumns());
+                            	notifResponse.addAll(r.getData());
+                            	
                             } else {
                             	notifResponse = dbBus.executeQuery(sql);
                             }
@@ -97,10 +106,11 @@ public class NotificationBUS  extends GeneralBusiness {
     }
 
     
-    public Vector getNotificationList() throws BusinessException {
-        Vector response = new Vector();
+    
+    public Vector<NotificationTO> getNotificationList(boolean hideClosedAgents) throws BusinessException {
+        Vector<NotificationTO> response = new Vector<NotificationTO>();
         try {
-            response = dao.getList();
+            response = dao.getList(hideClosedAgents);
         } catch (DataAccessException e) {
             throw new BusinessException(e);
         }
@@ -169,7 +179,7 @@ public class NotificationBUS  extends GeneralBusiness {
             String logMessage = "wasn't sent. There is NOTHING to send!";
             if (hasDispatched) {
                 if (notifSentOk) {
-                    logMessage = "was sent successfuly";
+                    logMessage = "was performed successfully";
                 } else {
                     logMessage = "failed";
                 }

@@ -10,17 +10,17 @@ public class InvoiceItemTO extends TransferObject {
 	
 	private Integer type;
 	 
-	private Integer price;
+	private Long price;
 	 
 	private Integer amount;
 
 	private Integer typeIndex;
 	 
 	
-	public int calculatePrice(){
-		int total = 0;
+	public long calculatePrice(){
+		long total = 0;
 		if (price!=null && typeIndex!=null) {
-			total = price.intValue() * typeIndex.intValue();
+			total = price.longValue() * typeIndex.intValue();
 		}
 		return total;
 	}
@@ -54,10 +54,10 @@ public class InvoiceItemTO extends TransferObject {
 	
 	
 	/////////////////////////////////	
-	public Integer getPrice() {
+	public Long getPrice() {
 		return price;
 	}
-	public void setPrice(Integer newValue) {
+	public void setPrice(Long newValue) {
 		this.price = newValue;
 	}
 	

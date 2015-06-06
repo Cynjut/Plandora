@@ -1,6 +1,9 @@
 package com.pandora;
 
-public class BSCReportTO extends TransferObject {
+import java.text.Collator;
+
+
+public class BSCReportTO extends TransferObject implements Comparable<TransferObject> {
 
 	private static final long serialVersionUID = 1L;
 	
@@ -13,6 +16,14 @@ public class BSCReportTO extends TransferObject {
 	private Integer kpiWeight;
 	
 	private ReportResultTO result;
+
+	
+	public int compareTo(TransferObject o) {
+		Collator cot = Collator.getInstance();  
+		String token1 = getProjectName() + "_" + getStrategyName(); 
+		String token2 = ((BSCReportTO)o).getProjectName() + "_" + ((BSCReportTO)o).getStrategyName();
+		return cot.compare(token1, token2);  
+	}	
 	
 
 	public String getProjectName() {
@@ -111,6 +122,4 @@ public class BSCReportTO extends TransferObject {
 		this.result = newValue;
 	}
 
-	
-	
 }

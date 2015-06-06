@@ -1,6 +1,7 @@
 package com.pandora.delegate;
 
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Vector;
 
 import com.pandora.LeaderTO;
@@ -111,12 +112,18 @@ public class ProjectDelegate extends GeneralDelegate {
 
     
     /* (non-Javadoc)
+     * @see com.pandora.bus.ProjectBUS.getProjectListForWork(com.pandora.UserTO, boolean, boolean)
+     */
+    public Vector<ProjectTO> getProjectListForWork(UserTO uto, boolean isAlloc, boolean nonClosed) throws BusinessException{
+        return bus.getProjectListForWork(uto, isAlloc, nonClosed);
+    }
+
+    /* (non-Javadoc)
      * @see com.pandora.bus.ProjectBUS.getProjectListForWork(com.pandora.UserTO, boolean)
      */
     public Vector<ProjectTO> getProjectListForWork(UserTO uto, boolean isAlloc) throws BusinessException{
-        return bus.getProjectListForWork(uto, isAlloc);
-    }
-
+        return bus.getProjectListForWork(uto, isAlloc, true);
+    }    
     
     /* (non-Javadoc)
      * @see com.pandora.bus.ProjectBUS.applyRepositoryPolicies(com.pandora.integration.RepositoryMessageIntegration)
@@ -134,4 +141,17 @@ public class ProjectDelegate extends GeneralDelegate {
 		return bus.getAllProjectsByParent(pto, considerOnlyNonClosed);
 	}
 
+	
+    public boolean containsProject(Vector<ProjectTO> projects, ProjectTO pto){
+    	boolean contains = false;
+    	Iterator<ProjectTO> it = projects.iterator();
+    	while(it.hasNext()){
+    		if(pto.getId().equals(it.next().getId())){
+    			contains = true;
+    			break;
+    		}
+    	}
+    	return contains;
+    }
+	
 }

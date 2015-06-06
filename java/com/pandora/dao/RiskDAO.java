@@ -25,12 +25,17 @@ import com.pandora.helper.DateUtil;
  */
 public class RiskDAO extends PlanningDAO {
 
-    public Vector<RiskTO> getListByProjectId(String projectId) throws DataAccessException { 
+	AdditionalFieldDAO afdao = new AdditionalFieldDAO();
+	
+	DiscussionTopicDAO dtdao = new DiscussionTopicDAO();
+
+    
+    public Vector<RiskTO> getListByProjectId(String projectId, String userId) throws DataAccessException { 
         Vector<RiskTO> response = null;
         Connection c = null;
 		try {
 			c = getConnection();
-			response = this.getListByProjectId(projectId, c);
+			response = this.getListByProjectId(projectId, userId, c);
 		} catch(Exception e) {
 			throw new DataAccessException(e);
 		} finally {
@@ -40,8 +45,8 @@ public class RiskDAO extends PlanningDAO {
     }
     
     
-    public Vector getListUntilID(String initialId, String finalId) throws DataAccessException { 
-        Vector response = null;
+    public Vector<RiskTO> getListUntilID(String initialId, String finalId) throws DataAccessException { 
+        Vector<RiskTO> response = null;
         Connection c = null;
 		try {
 			c = getConnection();
@@ -55,8 +60,8 @@ public class RiskDAO extends PlanningDAO {
     }     
     
     
-    private Vector getListUntilID(String initialId, String finalId, Connection c) throws DataAccessException{
-        Vector response = new Vector();
+    private Vector<RiskTO> getListUntilID(String initialId, String finalId, Connection c) throws DataAccessException{
+        Vector<RiskTO> response = new Vector<RiskTO>();
 		ResultSet rs = null;
 		PreparedStatement pstmt = null;
 		
@@ -64,10 +69,10 @@ public class RiskDAO extends PlanningDAO {
 		    String sql = "select r.id, p.description, p.creation_date, p.final_date, " +
 					   "r.project_id, r.category_id, r.name, r.probability, r.impact, r.tendency, " +
 					   "r.responsible, r.risk_status_id, r.strategy, r.contingency, rs.name as STATUS_NAME," +
-					   "r.impact_cost, r.impact_time, r.impact_quality, r.impact_scope, r.risk_type, rs.status_type " +
+					   "r.impact_cost, r.impact_time, r.impact_quality, r.impact_scope, r.risk_type, rs.status_type, p.visible " +
 					   "from risk r, planning p, risk_status rs " +
 					   "where r.id= p.id and r.risk_status_id = rs.id " +
-				   	   "and r.id > " + initialId + " and r.id <= " + finalId;
+				   	   "and r.id > '" + initialId + "' and r.id <= '" + finalId + "'";
 			pstmt = c.prepareStatement(sql);
 			rs = pstmt.executeQuery();
 			while (rs.next()){
@@ -84,25 +89,37 @@ public class RiskDAO extends PlanningDAO {
     }
     
     
-    public Vector<RiskTO> getListByProjectId(String projectId, Connection c) throws DataAccessException {
+    public Vector<RiskTO> getListByProjectId(String projectId, String userId, Connection c) throws DataAccessException {
 		Vector<RiskTO> response= new Vector<RiskTO>();
 		ResultSet rs = null;
 		PreparedStatement pstmt = null;
+		RiskHistoryDAO histDao = new RiskHistoryDAO();
 		
 		try {
-		    pstmt = c.prepareStatement("select r.id, p.description, p.creation_date, p.final_date, " +
+			String userWhere = "";
+			if (userId != null){
+				userWhere = " and ( e.id = ? or p.visible = '1' ) ";
+			}
+			
+		    pstmt = c.prepareStatement("select distinct r.id, p.description, p.creation_date, p.final_date, " +
 			    						   "r.project_id, r.category_id, r.name, r.probability, r.impact, r.tendency, " +
 			    						   "r.responsible, r.risk_status_id, r.strategy, r.contingency, " +
 			    						   "c.name as CATEGORY_NAME, rs.name as STATUS_NAME, pr.name as PROJECT_NAME, " +
 			    						   "r.impact_cost, r.impact_time, r.impact_quality, r.impact_scope, r.risk_type, " +
-			    						   "rs.status_type " +
-		    						   "from risk r, planning p, category c, risk_status rs, project pr " +
+			    						   "rs.status_type, p.visible " +
+		    						   "from risk r, planning p, category c, risk_status rs, project pr, leader e " +
 		            				   "where r.id= p.id and r.category_id = c.id and r.risk_status_id = rs.id " +
-		            				   	   "and r.project_id = pr.id and r.project_id=?");
+		            				   "and pr.id = e.project_id and r.project_id = pr.id " +
+		            				   "and r.project_id=? " + userWhere );
+		    
 			pstmt.setString(1, projectId);	
+			if (userWhere!=null && !userWhere.equals("")){
+				pstmt.setString(2, userId);	
+			}
 			rs = pstmt.executeQuery();
 			while (rs.next()) {
 			    RiskTO rto = this.populateObjectByResultSet(rs, c);
+			    rto.setLastComment(histDao.getLastCommentByRisk(rto.getId(), c));
 			    
 			    CategoryTO cto = rto.getCategory();
 			    cto.setName(getString(rs, "CATEGORY_NAME"));
@@ -124,7 +141,8 @@ public class RiskDAO extends PlanningDAO {
     public TransferObject getObject(TransferObject to, Connection c) throws DataAccessException {
         RiskTO response= null;
 		ResultSet rs = null;
-		PreparedStatement pstmt = null; 
+		PreparedStatement pstmt = null;
+		RiskHistoryDAO histDao = new RiskHistoryDAO();
 
 		try {
 
@@ -133,7 +151,7 @@ public class RiskDAO extends PlanningDAO {
 						   "r.project_id, r.category_id, r.name, r.probability, r.impact, r.tendency, " +
 						   "r.responsible, r.risk_status_id, r.strategy, r.contingency, rs.name as STATUS_NAME, " +
 						   "pr.name as PROJECT_NAME, r.impact_cost, r.impact_time, r.impact_quality, r.impact_scope, " +
-						   "r.risk_type, rs.status_type, c.name as CATEGORY_NAME " +
+						   "r.risk_type, rs.status_type, c.name as CATEGORY_NAME, p.visible " +
 					   "from risk r, planning p, risk_status rs, project pr, category c " +
 					   "where r.id= p.id and r.risk_status_id = rs.id and pr.id = r.project_id " +
  				   	   		"and r.id=? and r.category_id = c.id");		
@@ -141,12 +159,17 @@ public class RiskDAO extends PlanningDAO {
 			rs = pstmt.executeQuery();						
 			if (rs.next()){
 				response = this.populateObjectByResultSet(rs, c);
-
+				response.setLastComment(histDao.getLastCommentByRisk(filter.getId(), c));
+				
 			    CategoryTO cto = response.getCategory();
 			    cto.setName(getString(rs, "CATEGORY_NAME"));
 				
 			    ProjectTO pto = response.getProject();
 			    pto.setName(getString(rs, "PROJECT_NAME"));
+			    
+			    //get the additional fields and discussion topics
+			    response.setAdditionalFields(afdao.getListByPlanning(response, null, c));
+			    response.setDiscussionTopics(dtdao.getListByPlanning(response, c));			    
 			} 
 						
 		} catch (SQLException e) {
@@ -353,7 +376,7 @@ public class RiskDAO extends PlanningDAO {
         RiskHistoryDAO hdao = new RiskHistoryDAO();
         
         RiskHistoryTO hto = new RiskHistoryTO();
-        hto.setContent(rto.getFieldToString());
+        hto.setContent(rto.getLastComment());
 	    hto.setCreationDate(DateUtil.getNow());
 	    hto.setRiskId(rto.getId());
 	    hto.setRiskStatusId(rto.getStatus().getId());
@@ -366,6 +389,14 @@ public class RiskDAO extends PlanningDAO {
 	    hto.setProbability(rto.getProbability());
 	    hto.setImpact(rto.getImpact());
 	    hto.setTendency(rto.getTendency());
+	    
+	    hto.setName(rto.getName());
+	    hto.setDescription(rto.getDescription());
+	    hto.setContingency(rto.getContingency());
+	    hto.setResponsible(rto.getResponsible());
+	    hto.setCategoryId(rto.getCategory().getId());
+	    hto.setStrategy(rto.getStrategy());
+	    hto.setRiskType(rto.getRiskType());
 	    
         hdao.insert(hto, c);	        
     }
@@ -411,6 +442,13 @@ public class RiskDAO extends PlanningDAO {
         } else {
         	response.setRiskType(RiskTO.RISK_TYPE_THREAT);
         }
+        
+        String visibleStr = getString(rs, "visible");
+		if (visibleStr != null) {
+			response.setVisible(visibleStr.equals("1"));
+		} else {
+			response.setVisible(false);
+		}
 
 	    //get the additional fields
 	    response.setAdditionalFields(afdao.getListByPlanning(response, null, c));

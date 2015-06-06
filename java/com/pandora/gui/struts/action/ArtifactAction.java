@@ -1,5 +1,8 @@
 package com.pandora.gui.struts.action;
 
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
+
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -13,6 +16,7 @@ import com.pandora.ProjectTO;
 import com.pandora.RepositoryFileTO;
 import com.pandora.TaskTO;
 import com.pandora.UserTO;
+import com.pandora.bus.SystemSingleton;
 import com.pandora.bus.artifact.HtmlArtifactExport;
 import com.pandora.bus.snip.SnipArtifact;
 import com.pandora.bus.snip.SnipArtifactBUS;
@@ -42,11 +46,14 @@ public class ArtifactAction extends GeneralStrutsAction {
 			frm.setShowSaveAsPopup("off");
 			frm.setOnlyFolders("on");
 			frm.setMultiple("off");
+			frm.setId("");
 	        frm.setSaveMethod(UserForm.UPDATE_METHOD, SessionUtil.getCurrentUser(request));
 	        request.getSession().removeAttribute(RepositoryEntityRadioBoxDecorator.REPOSITORY_SELECTED_PATH);
 
 	        frm.setSnipList(this.getSnipList(request));
-	        frm.setSnipHtmlDimension(this.getSnipDimension());
+	        frm.setHtmlAfterSnipSelect(this.getHtmlAfterSnipSelect(frm.getProjectId(), frm.getPlanningId()));
+	        frm.setSnipHtmlOption(this.getSnipOptions(frm.getProjectId(), frm.getPlanningId()));
+	        frm.setHmtlShowChanges(null);
 	        
 	        UserTO uto = SessionUtil.getCurrentUser(request);
 	        frm.setLang(uto.getLocale().getLanguage());
@@ -73,7 +80,58 @@ public class ArtifactAction extends GeneralStrutsAction {
 	}
 
 
-	private String getSnipDimension() throws BusinessException {
+	private String getShowChanges(String projectId, String path) {
+		String thePath = "";
+		try {
+			thePath = URLEncoder.encode(path, SystemSingleton.getInstance().getDefaultEncoding());
+		} catch (UnsupportedEncodingException e) {
+			e.printStackTrace();
+		}
+		
+		return "displayMessage('../do/showRepositoryViewer?operation=showLogFile&path=" + thePath + 
+				               "&projectId=" + projectId + "&logrev=null',620,460);";
+	}
+
+
+	private String getHtmlAfterSnipSelect(String projectId, String planningId) throws BusinessException {
+		String response = "";
+		UserDelegate udel = new UserDelegate();
+		UserTO root = udel.getRoot();
+		
+		response = response + "var w = 450;\n";
+		response = response + "var h = 350;\n";
+		
+		String classList = root.getPreference().getPreference(PreferenceTO.SNIP_ARTIFACT_BUS_CLASS);
+		if (classList!=null) {
+			String[] list = classList.split(";");
+			if (list!=null) {
+				for (int i=0; i<list.length; i++) {
+					SnipArtifact sa = SnipArtifactBUS.getSnipArtifactClass(list[i].trim());
+					if (sa!=null) {
+						if (i>0) {
+							response = response + " else \n";	
+						}					
+						response = response + "if (value == '" + sa.getClass().getName() + "') {\n";
+						response = response + "   w = " + sa.getWidth() + "; h = " + sa.getHeight() + ";\n";
+						response = response + "}\n";
+					} else {
+						System.out.println("the snip [" + list[i].trim() + "]as not found. Check the 'snip classes field' at root option form.");
+					}					
+				}
+			}
+		}
+		
+		response = response + "displayMessage(\"../do/showSnipArtifact?operation=prepareForm&planningId=" + 
+							  (planningId!=null?planningId:"") + "&projectId=" + 
+							  projectId + "&snip=\" + value, w, h);\n";
+		
+		response = response + "return true;\n";
+		
+		return response;
+	}
+	
+	
+	private String getSnipOptions(String projectId, String planningId) throws BusinessException {
 		String response = "";
 		UserDelegate udel = new UserDelegate();
 		UserTO root = udel.getRoot();
@@ -84,18 +142,24 @@ public class ArtifactAction extends GeneralStrutsAction {
 			if (list!=null) {
 				for (int i=0; i<list.length; i++) {
 					SnipArtifact sa = SnipArtifactBUS.getSnipArtifactClass(list[i].trim());
-					if (i>0) {
-						response = response + " else ";	
-					}					
-					response = response + "if (value == '" + sa.getClass().getName() + "') {\n";
-					response = response + "   w = " + sa.getWidth() + "; h = " + sa.getHeight() + ";\n";
-					response = response + "}";					
+					if (sa!=null) {
+						response = response + sa.getId() + "_width : \"" + sa.getWidth() + "\",\n";
+						response = response + sa.getId() + "_height : \"" + sa.getHeight() + "\",\n";						
+					} else {
+						System.out.println("the snip [" + list[i].trim() + "]as not found. Check the 'snip classes field' at root option form.");
+					}
 				}
 			}
 		}
+		
+		response = response + "projectId : \"" + projectId + "\",\n";
+		if (planningId!=null) {
+			response = response + "planningId : \"" + planningId + "\",\n";	
+		}
+		
 		return response;
 	}
-
+	
 
 	private String getSnipList(HttpServletRequest request) throws BusinessException {
 		String response = "";
@@ -112,7 +176,11 @@ public class ArtifactAction extends GeneralStrutsAction {
 						response = response + ";";	
 					}
 					SnipArtifact sa = SnipArtifactBUS.getSnipArtifactClass(list[i].trim());
-					response = response + super.getBundleMessage(request, sa.getUniqueName()) + "=" + sa.getClass().getName();
+					if (sa!=null) {
+						response = response + super.getBundleMessage(request, sa.getUniqueName()) + "=" + sa.getClass().getName();						
+					} else {
+						System.out.println("the snip [" + list[i].trim() + "]as not found. Check the 'snip classes field' at root option form.");
+					}
 				}
 				response = response + "\"";
 			}
@@ -151,6 +219,11 @@ public class ArtifactAction extends GeneralStrutsAction {
 			frm.setMultiple("off");
 	        frm.setSaveMethod(UserForm.UPDATE_METHOD, SessionUtil.getCurrentUser(request));
 	        frm.setBackToCaller(null);
+	        frm.setId("");
+	        
+	        frm.setSnipList(this.getSnipList(request));
+	        frm.setHtmlAfterSnipSelect(this.getHtmlAfterSnipSelect(frm.getProjectId(), frm.getPlanningId()));
+	        frm.setSnipHtmlOption(this.getSnipOptions(frm.getProjectId(), frm.getPlanningId()));
 	        
 	        request.getSession().removeAttribute(RepositoryEntityRadioBoxDecorator.REPOSITORY_SELECTED_PATH);
 	        
@@ -165,6 +238,11 @@ public class ArtifactAction extends GeneralStrutsAction {
 		        	String payload = new String(rfto.getFileInBytes());
 		        	frm.setBody(payload);
 		        	frm.setName(rfto.getName());
+			        frm.setHmtlShowChanges(this.getShowChanges(frm.getProjectId(), frm.getEditPath()));
+			        
+			        if (rfto.getArtifact()!=null) {
+			        	frm.setId(rfto.getArtifact().getId());	
+			        }
 		        }
 			}			
 			

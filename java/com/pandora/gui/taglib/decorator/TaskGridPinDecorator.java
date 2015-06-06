@@ -1,13 +1,14 @@
 package com.pandora.gui.taglib.decorator;
 
-import org.apache.taglibs.display.ColumnDecorator;
 import java.util.StringTokenizer;
 
-import com.pandora.delegate.UserDelegate;
+import org.apache.taglibs.display.ColumnDecorator;
+
 import com.pandora.PreferenceTO;
 import com.pandora.ResourceTaskTO;
 import com.pandora.TaskTO;
 import com.pandora.UserTO;
+import com.pandora.delegate.UserDelegate;
 import com.pandora.helper.HtmlUtil;
 
 public class TaskGridPinDecorator extends ColumnDecorator {
@@ -21,7 +22,7 @@ public class TaskGridPinDecorator extends ColumnDecorator {
 		String imgName = "empty.gif";
         String type = "0";
         
-		UserTO uto = (UserTO)this.getPageContext().getSession().getAttribute(UserDelegate.CURRENT_USER_SESSION);        
+		UserTO uto = (UserTO)this.getSession().getAttribute(UserDelegate.CURRENT_USER_SESSION);        
 		ResourceTaskTO rtto = (ResourceTaskTO)this.getObject();
 		TaskTO tto = rtto.getTask();
 		

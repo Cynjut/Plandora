@@ -14,6 +14,7 @@ import com.pandora.TransferObject;
 import com.pandora.delegate.DbQueryDelegate;
 import com.pandora.delegate.ProjectDelegate;
 import com.pandora.exception.BusinessException;
+import com.pandora.helper.DBUtil;
 import com.pandora.helper.DateUtil;
 
 public final class BillableTaskChartGadget extends ChartGadget {
@@ -22,7 +23,7 @@ public final class BillableTaskChartGadget extends ChartGadget {
 	
 	private static final String BILLABLE_TASK_INTEVAL = "INTERVAL";
 	
-	private HashMap granularity = new HashMap();
+	private HashMap<String, Integer> granularity = new HashMap<String, Integer>();
 	
 	
 	public String getUniqueName(){
@@ -122,7 +123,7 @@ public final class BillableTaskChartGadget extends ChartGadget {
             
             if (pto!=null) {
                 int[] types = new int[] {Types.TIMESTAMP};
-                Vector params = new Vector();
+                Vector<Timestamp> params = new Vector<Timestamp>();
                 params.addElement(iniRange);
                 
                 DbQueryDelegate qdel = new DbQueryDelegate();
@@ -131,11 +132,13 @@ public final class BillableTaskChartGadget extends ChartGadget {
                 String sql = "select sub.category_billable, sub.bucket_date, sub.alloc_time, sub.billable from (" +
                 		"select c.billable as category_billable, a.alloc_time, rt.billable, ";
                 
-        		if (dbname.equalsIgnoreCase("MySQL")) {
-        			sql = sql + "ADDDATE(rt.actual_date, a.sequence-1) as bucket_date ";
-        		} else {
-        			sql = sql + "rt.actual_date+ cast((a.sequence-1) || ' day' as interval) as bucket_date ";
-        		}
+                sql = sql + DBUtil.addDate(dbname, "rt.actual_date", "a.sequence-1") + " as bucket_date ";
+                
+        		//if (dbname.equalsIgnoreCase("MySQL")) {
+        		//	sql = sql + "ADDDATE(rt.actual_date, a.sequence-1) as bucket_date ";
+        		//} else {
+        		//	sql = sql + "rt.actual_date+ cast((a.sequence-1) || ' day' as interval) as bucket_date ";
+        		//}
                 		
                 sql = sql +	"from resource_task_alloc a, task t, resource_task rt, category c " +
                 		"where a.project_id in (" + super.getProjectIn( pto.getId() )+ ") " +
@@ -181,8 +184,6 @@ public final class BillableTaskChartGadget extends ChartGadget {
 	                        	} catch(ArrayIndexOutOfBoundsException e) {
 	                        		System.out.println("index:" + index + " slot: " + slot + " dt:" + item.elementAt(1) + " gran.list:" + this.granularity);
 	                        	}
-                			} else {
-                				System.out.println("index is null. dt:" + tm + " gran.list:" + this.granularity);
                 			}
                     	}
                 	}
@@ -196,6 +197,15 @@ public final class BillableTaskChartGadget extends ChartGadget {
                 	getJSonYLegend("(h)") + "," + 
                 	getBarStackValues(billVals, labels) + "," +
                 	getJSonAxis(xaxis, null, "x_axis") + "," + getJSonAxis(null, billVals, "y_axis") + "}";
+                
+        		//draw the bars
+                /*
+                response = "{ \n" + 
+                	getJSonTitle() + "," +
+                	getJSonYLegend("(h)") + "," +                	
+                	getJSonAxis(xaxis, null, "x_axis") + "," + getJSonAxis(null, billVals, null, "y_axis", false) + "," +                	
+                	getBarsValues(billVals, labels, null) + "}";
+                */
             } else {
             	
             	//empty chart...

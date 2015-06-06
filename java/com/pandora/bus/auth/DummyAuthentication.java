@@ -1,6 +1,7 @@
 package com.pandora.bus.auth;
 
 import com.pandora.UserTO;
+import com.pandora.bus.PasswordEncrypt;
 import com.pandora.exception.BusinessException;
 
 public class DummyAuthentication extends Authentication {
@@ -21,5 +22,11 @@ public class DummyAuthentication extends Authentication {
 	public String getUniqueName() {
 		return "DUMMY";
 	}
+	
+	@Override
+	public String encrypt(String rawPassword) throws BusinessException {
+		return PasswordEncrypt.getInstance().encrypt(rawPassword);
+	}
+	
 
 }

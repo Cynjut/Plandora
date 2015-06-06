@@ -2,6 +2,7 @@ package com.pandora.delegate;
 
 import java.util.Vector;
 
+import com.pandora.ArtifactTO;
 import com.pandora.ArtifactTemplateTO;
 import com.pandora.ProjectTO;
 import com.pandora.UserTO;
@@ -25,9 +26,8 @@ public class ArtifactTemplateDelegate extends GeneralDelegate {
     }
 
     
-	public void commitArtifact(String path, String fileName, String exportType, String body, String planningId, String templateId, 
-			String projectId, String logMessage, String user, String pass, UserTO handler) throws MaxSizeAttachmentException, BusinessException {
-		bus.commitArtifact(path, fileName, exportType, body, planningId, templateId, projectId, logMessage, user, pass, handler);
+	public void commitArtifact(ArtifactTO artifact) throws MaxSizeAttachmentException, BusinessException {
+		bus.commitArtifact(artifact);
 	}
 
 }

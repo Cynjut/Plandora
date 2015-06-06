@@ -3,6 +3,7 @@ package com.pandora.bus.alert;
 import java.util.Iterator;
 import java.util.Vector;
 
+import com.pandora.NotificationFieldTO;
 import com.pandora.RootTO;
 import com.pandora.bus.EventBUS;
 import com.pandora.helper.LogUtil;
@@ -18,15 +19,15 @@ public class HttpNotification extends Notification {
     /* (non-Javadoc)
      * @see com.pandora.bus.alert.Notification#sendNotification(java.util.Vector, java.util.Vector)
      */    
-    public boolean sendNotification(Vector fields, Vector sqlData) throws Exception {    
+    public boolean sendNotification(Vector<NotificationFieldTO> fields, Vector<Vector<Object>> sqlData) throws Exception {
         EventBUS bus = new EventBUS();
         PosterUtil poster = new PosterUtil();
         
         String url = this.getParamByKey(HTTP_URL, fields);
         
-		Iterator i = sqlData.iterator();
+		Iterator<Vector<Object>> i = sqlData.iterator();
 		while(i.hasNext()) {
-		    Vector sqlDataItem = (Vector)i.next();
+		    Vector<Object> sqlDataItem = i.next();
 		
 		    url = super.replaceByToken(sqlDataItem, url);
 	        poster.setURL(url);
@@ -50,8 +51,8 @@ public class HttpNotification extends Notification {
     /* (non-Javadoc)
      * @see com.pandora.bus.alert.Notification#getFieldLabels()
      */
-    public Vector getFieldLabels() {
-        Vector list = new Vector();
+    public Vector<String> getFieldLabels() {
+        Vector<String> list = new Vector<String>();
         list.add("notification.http.url");
         return list;
     }
@@ -60,8 +61,8 @@ public class HttpNotification extends Notification {
     /* (non-Javadoc)
      * @see com.pandora.bus.alert.Notification#getFieldTypes()
      */    
-    public Vector getFieldTypes() {
-        Vector list = new Vector();
+    public Vector<String> getFieldTypes() {
+        Vector<String> list = new Vector<String>();
         list.add("1");
         return list;
     }
@@ -70,8 +71,8 @@ public class HttpNotification extends Notification {
     /* (non-Javadoc)
      * @see com.pandora.bus.alert.Notification#getFieldKeys()
      */    
-    public Vector getFieldKeys() {
-        Vector list = new Vector();
+    public Vector<String> getFieldKeys() {
+        Vector<String> list = new Vector<String>();
         list.add(HTTP_URL);
         return list;
     }

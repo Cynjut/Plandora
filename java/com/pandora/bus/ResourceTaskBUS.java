@@ -2,9 +2,11 @@ package com.pandora.bus;
 
 import java.sql.Timestamp;
 import java.util.Calendar;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Vector;
 
+import com.pandora.AdditionalFieldTO;
 import com.pandora.CategoryTO;
 import com.pandora.LeaderTO;
 import com.pandora.PlanningRelationTO;
@@ -13,6 +15,7 @@ import com.pandora.RequirementTO;
 import com.pandora.ResourceTO;
 import com.pandora.ResourceTaskAllocTO;
 import com.pandora.ResourceTaskTO;
+import com.pandora.TaskHistoryTO;
 import com.pandora.TaskStatusTO;
 import com.pandora.TaskTO;
 import com.pandora.UserTO;
@@ -20,6 +23,7 @@ import com.pandora.bus.kb.IndexEngineBUS;
 import com.pandora.dao.ResourceTaskDAO;
 import com.pandora.dao.TaskDAO;
 import com.pandora.dao.TaskHistoryDAO;
+import com.pandora.delegate.CategoryDelegate;
 import com.pandora.delegate.ResourceTaskDelegate;
 import com.pandora.delegate.TaskDelegate;
 import com.pandora.delegate.TaskStatusDelegate;
@@ -29,9 +33,10 @@ import com.pandora.exception.DataAccessException;
 import com.pandora.exception.InvalidTaskStateTransitionException;
 import com.pandora.exception.InvalidTaskTimeException;
 import com.pandora.exception.InvalidUserRoleException;
+import com.pandora.exception.MandatoryMetaFieldBusinessException;
+import com.pandora.exception.MandatoryMetaFieldDataException;
 import com.pandora.exception.TasksDiffRequirementException;
-import com.pandora.exception.ZeroCapacityDBException;
-import com.pandora.exception.ZeroCapacityException;
+import com.pandora.exception.WaitPredecessorUpdateException;
 import com.pandora.helper.DateUtil;
 
 /**
@@ -39,15 +44,26 @@ import com.pandora.helper.DateUtil;
  */
 public class ResourceTaskBUS extends GeneralBusiness {
 
-    /** The Data Acess Object reclated with current business entity */
+    /** The Data Access Object related with current business entity */
     ResourceTaskDAO dao = new ResourceTaskDAO();
     
 
+	public HashMap<String, ResourceTaskAllocTO> getHashAlloc(String projectFilter, String resourceFilter, Timestamp iniDate, Timestamp finalDate) throws BusinessException {
+		HashMap<String, ResourceTaskAllocTO> response = new HashMap<String, ResourceTaskAllocTO>();
+        try {
+        	response = dao.getHashAlloc(projectFilter, resourceFilter, iniDate, finalDate);
+        } catch (DataAccessException e) {
+            throw new  BusinessException(e);
+        }                
+		return response;
+	}
+
+	
     /**
      * Get all taskResources related with a task object.
      */
-    public Vector getListByTask(TaskTO tto) throws BusinessException {
-        Vector list = null;
+    public Vector<ResourceTaskTO> getListByTask(TaskTO tto) throws BusinessException {
+        Vector<ResourceTaskTO> list = null;
         try {
             list = dao.getListByTask(tto, false);
             return list;
@@ -59,7 +75,7 @@ public class ResourceTaskBUS extends GeneralBusiness {
     /**
      * Get all taskResources related with a project object and some search criteria. 
      */
-    public Vector<ResourceTaskTO> getListByProject(ProjectTO pto, String statusSel, String resourceSel, boolean isProjectHierarchy) throws BusinessException {
+    public Vector<ResourceTaskTO> getListByProject(ProjectTO pto, String statusSel, String resourceSel, String dateRangeSel, boolean isProjectHierarchy) throws BusinessException {
         ProjectBUS pbus = new ProjectBUS();
         Vector<ResourceTaskTO> list = new Vector<ResourceTaskTO>();
         try {
@@ -70,12 +86,12 @@ public class ResourceTaskBUS extends GeneralBusiness {
                 Iterator<ProjectTO> i = childs.iterator();
                 while(i.hasNext()){
                     ProjectTO childProj = (ProjectTO)i.next();
-                    Vector<ResourceTaskTO> tskOfChild = this.getListByProject(childProj, statusSel, resourceSel, isProjectHierarchy);
+                    Vector<ResourceTaskTO> tskOfChild = this.getListByProject(childProj, statusSel, resourceSel, dateRangeSel, isProjectHierarchy);
                     list.addAll(tskOfChild);
                 }        		
         	}
                         
-            Vector<ResourceTaskTO> tskOfParent = dao.getListByProject(pto, statusSel, resourceSel);
+            Vector<ResourceTaskTO> tskOfParent = dao.getListByProject(pto, statusSel, resourceSel, dateRangeSel);
             list.addAll(tskOfParent);
             
             return list;
@@ -88,15 +104,15 @@ public class ResourceTaskBUS extends GeneralBusiness {
     /**
      * Update a list of Resource Task object into data base.
      */
-    public void removeAllAndInsert(TaskTO tto, Vector v) throws BusinessException {     
+    public void removeAllAndInsert(TaskTO tto, Vector<ResourceTaskTO> v) throws BusinessException {     
         try {
                         
-            //get a current list of Resource Task From database (including cancelled resourceTask objects)
-            Vector currentList = dao.getListByTask(tto, false);
+            //get a current list of Resource Task From database (including canceled resourceTask objects)
+            Vector<ResourceTaskTO> currentList = dao.getListByTask(tto, false);
             
-            Vector removeList = this.minus(currentList, v, true);
-            Vector insertList = this.minus(v, currentList, false);
-            Vector updateList = this.merge(currentList, v);
+            Vector<ResourceTaskTO> removeList = this.minus(currentList, v, true);
+            Vector<ResourceTaskTO> insertList = this.minus(v, currentList, false);
+            Vector<ResourceTaskTO> updateList = this.merge(currentList, v);
                         
             //insert, insert or update data of resource task into database
             dao.updateLists(tto, removeList, insertList, updateList);
@@ -124,8 +140,8 @@ public class ResourceTaskBUS extends GeneralBusiness {
     /**
      * Get a list of resource tasks based on resource object and project object.
      */
-    public Vector getTaskListByResourceProject(ResourceTO rto, ProjectTO pto) throws BusinessException {
-        Vector response = new Vector();
+    public Vector<ResourceTaskTO> getTaskListByResourceProject(ResourceTO rto, ProjectTO pto) throws BusinessException {
+        Vector<ResourceTaskTO> response = new Vector<ResourceTaskTO>();
         try {
             response = dao.getTaskListByResourceProject(rto, pto);
         } catch (DataAccessException e) {
@@ -152,11 +168,11 @@ public class ResourceTaskBUS extends GeneralBusiness {
         	    		response.getTask().getDecisionNode()!=null) {
 
         	    	boolean lastNotClosedTask = true;
-                    Vector allocs = rtto.getTask().getAllocResources();
+                    Vector<ResourceTaskTO> allocs = rtto.getTask().getAllocResources();
                 	if (allocs.size()>1) {
-                		Iterator i = allocs.iterator();
+                		Iterator<ResourceTaskTO> i = allocs.iterator();
                 		while (i.hasNext()) {
-                			ResourceTaskTO dummy = (ResourceTaskTO)i.next();
+                			ResourceTaskTO dummy = i.next();
                 			if (!dummy.getResource().getId().equals(rtto.getResource().getId())) {
                 				TaskStatusTO tsto = dummy.getTaskStatus();
                 				if (!tsto.isFinish()) {
@@ -184,16 +200,17 @@ public class ResourceTaskBUS extends GeneralBusiness {
     /**
      * Calculate the number of slots for a bunch of ResourceTask objects.
      */
-    public Vector generateAllocation(Vector resourceTaskList) throws BusinessException{
-        Vector response = null;
+    public Vector<ResourceTaskTO> generateAllocation(Vector<ResourceTaskTO> resourceTaskList) throws BusinessException{
+        Vector<ResourceTaskTO> response = null;
         
         if (resourceTaskList!=null){
-            Iterator i = resourceTaskList.iterator();
+            Iterator<ResourceTaskTO> i = resourceTaskList.iterator();
             while(i.hasNext()){
-                ResourceTaskTO rtto = (ResourceTaskTO)i.next();
+                ResourceTaskTO rtto = i.next();
+                
                 //re-build the list of resourceTask allocations (if necessary)...
                 rtto = this.generateAllocation(rtto);
-                if (response==null) response = new Vector();
+                if (response==null) response = new Vector<ResourceTaskTO>();
                 response.addElement(rtto);
             }
         }
@@ -206,7 +223,7 @@ public class ResourceTaskBUS extends GeneralBusiness {
      * should have and generate a list of allocation objects into it.
      */
     public ResourceTaskTO generateAllocation(ResourceTaskTO rtto) throws BusinessException{
-        Vector allocList = new Vector();
+        Vector<ResourceTaskAllocTO> allocList = new Vector<ResourceTaskAllocTO>();
         Calendar c = Calendar.getInstance();
         int seq = 0;
         
@@ -221,7 +238,7 @@ public class ResourceTaskBUS extends GeneralBusiness {
                 int capacity = rtto.getResource().getCapacityPerDay(cursor).intValue();
                 
                 if (capacity==0) {
-                	throw new ZeroCapacityException("The capacity of resource [" + rtto.getResource().getId() + "] is zero at [" + cursor.toString() + "]" );
+                	capacity = ResourceTO.DEFAULT_FULLDAY_CAPACITY;
                 }
                 
                 c.setTimeInMillis(cursor.getTime());
@@ -253,19 +270,24 @@ public class ResourceTaskBUS extends GeneralBusiness {
         return rtto;
     }
 
+
+    public void updateResourceTask(ResourceTaskTO rtto) throws BusinessException {
+    	try {
+    		dao.update(rtto);	
+    	}catch(Exception e){
+    		throw new  BusinessException(e);    		
+    	}
+	}
+
    
     /**
      * Change the status of Task.
      */
-    public void changeTaskStatus(ResourceTaskTO rtto, Integer newState, String comment, Vector additionalFields, boolean isMTClosingAllowed) throws BusinessException{
+    public void changeTaskStatus(ResourceTaskTO rtto, Integer newState, String comment, Vector<AdditionalFieldTO> additionalFields, boolean isMTClosingAllowed) throws BusinessException{
         TaskBUS tbus = new TaskBUS();        
         try {
 
 		    TaskTO tto = rtto.getTask();
-
-		    if (tbus.isBlocked(tto)) {
-		    	throw new BusinessException("The task cannot be updated because it is waiting for the conclusion of a predecessor task.");
-		    }
 		    
 		    //for tasks "not open" the 'actual time' should be > 0
             if (newState.equals(TaskStatusTO.STATE_MACHINE_CLOSE) || newState.equals(TaskStatusTO.STATE_MACHINE_CANCEL)) {
@@ -278,12 +300,16 @@ public class ResourceTaskBUS extends GeneralBusiness {
             		rtto.setEstimatedTime(rtto.getActualTime());
             	}
 		    }
-		    
+
 		    //if the current status is OPEN but the actual time was changed...improve the status to on-Progress
             if ((newState.equals(TaskStatusTO.STATE_MACHINE_OPEN) || newState.equals(TaskStatusTO.STATE_MACHINE_REOPEN)) 
             		&& rtto.getActualTime().intValue()>0) {
                 newState = TaskStatusTO.STATE_MACHINE_PROGRESS; 
             }
+
+		    if (tbus.isBlocked(tto) && !newState.equals(TaskStatusTO.STATE_MACHINE_OPEN)) {
+		    	throw new WaitPredecessorUpdateException();
+		    }
             
 		    //Cancel status could be used only by leader...
 		    if (newState.equals(TaskStatusTO.STATE_MACHINE_CANCEL) && !(rtto.getHandler() instanceof LeaderTO)){
@@ -332,16 +358,18 @@ public class ResourceTaskBUS extends GeneralBusiness {
 	        IndexEngineBUS ind = new IndexEngineBUS();
 	        ind.update(rtto);
 
-        } catch (ZeroCapacityException e) {
-        	throw new ZeroCapacityException(e);
-        } catch (ZeroCapacityDBException e) {
-        	throw new ZeroCapacityException(e);
+        } catch (WaitPredecessorUpdateException e) {
+        	throw new WaitPredecessorUpdateException(e);
         } catch (TasksDiffRequirementException e) {
         	throw new TasksDiffRequirementException();
         } catch (InvalidTaskTimeException e) {
         	throw new InvalidTaskTimeException();
         } catch (AcceptTaskInsertionException e) {
             throw new InvalidUserRoleException(e);
+        } catch (MandatoryMetaFieldBusinessException e) {
+        	throw e;
+        } catch (MandatoryMetaFieldDataException e) {
+            throw new MandatoryMetaFieldBusinessException(e, e.getAfto());
         } catch (DataAccessException e) {
             throw new  BusinessException(e);
         } catch (Exception e) {
@@ -451,20 +479,20 @@ public class ResourceTaskBUS extends GeneralBusiness {
     /**
      * Perform the operation of minus between two vectors.
      */
-    private Vector minus(Vector v1, Vector v2, boolean isRemoving){
-        Vector response = null;
+    private Vector<ResourceTaskTO> minus(Vector<ResourceTaskTO> v1, Vector<ResourceTaskTO> v2, boolean isRemoving){
+        Vector<ResourceTaskTO> response = null;
         boolean find = false;
         
         if (v1!=null){
-            Iterator i = v1.iterator();
+            Iterator<ResourceTaskTO> i = v1.iterator();
             while (i.hasNext()){
                 find = false;
-                ResourceTaskTO rtto1 = (ResourceTaskTO)i.next();
+                ResourceTaskTO rtto1 = i.next();
                 rtto1.setId(rtto1.getTask().getId() + "|" + rtto1.getResource().getId() + "|" + rtto1.getTask().getProject().getId());
                 if (v2!=null){
-                    Iterator j = v2.iterator();
+                    Iterator<ResourceTaskTO> j = v2.iterator();
                     while (j.hasNext()){
-	                    ResourceTaskTO rtto2 = (ResourceTaskTO)j.next();
+	                    ResourceTaskTO rtto2 = j.next();
 	                    rtto2.setId(rtto2.getTask().getId() + "|" + rtto2.getResource().getId() + "|" + rtto2.getTask().getProject().getId());
 	                    if (rtto2.getHandler()!=null) rtto1.setHandler(rtto2.getHandler());
 	                    if (rtto1.getId().equals(rtto2.getId())){
@@ -479,7 +507,7 @@ public class ResourceTaskBUS extends GeneralBusiness {
                     boolean ok = true;
                     
                     if (isRemoving) {
-                        //if is removing...verify if current Resource Task is currentlly with open status
+                        //if is removing...verify if current Resource Task is currently with open status
                     	Integer state = rtto1.getTaskStatus().getStateMachineOrder(); 
                         if (!state.equals(TaskStatusTO.STATE_MACHINE_OPEN) && 
                         		!state.equals(TaskStatusTO.STATE_MACHINE_REOPEN)){
@@ -488,7 +516,7 @@ public class ResourceTaskBUS extends GeneralBusiness {
                     }
 
                     if (ok){
-                        if (response==null) response = new Vector();
+                        if (response==null) response = new Vector<ResourceTaskTO>();
                         response.addElement(rtto1);                        
                     }
                 }
@@ -499,25 +527,25 @@ public class ResourceTaskBUS extends GeneralBusiness {
     }
     
     
-    private Vector merge(Vector v1, Vector v2) {
-        Vector response = null;
+    private Vector<ResourceTaskTO> merge(Vector<ResourceTaskTO> v1, Vector<ResourceTaskTO> v2) {
+        Vector<ResourceTaskTO> response = null;
         
         if (v1!=null && v2!=null){
-            Iterator i = v1.iterator();
+            Iterator<ResourceTaskTO> i = v1.iterator();
             while (i.hasNext()){
-                ResourceTaskTO rtto1 = (ResourceTaskTO)i.next();
+                ResourceTaskTO rtto1 = i.next();
                 rtto1.setId(rtto1.getTask().getId() + "|" + rtto1.getResource().getId() + "|" + rtto1.getTask().getProject().getId());
 
-                Iterator j = v2.iterator();
+                Iterator<ResourceTaskTO> j = v2.iterator();
                 while (j.hasNext()){
-                    ResourceTaskTO rtto2 = (ResourceTaskTO)j.next();
+                    ResourceTaskTO rtto2 = j.next();
                     rtto2.setId(rtto2.getTask().getId() + "|" + rtto2.getResource().getId() + "|" + rtto2.getTask().getProject().getId());
                     if (rtto1.getId().equals(rtto2.getId())){
                         
                         //only resourceTask with Open, Close and Cancel status should be updated...
                         Integer state = rtto2.getTaskStatus().getStateMachineOrder();
                         if (state.equals(TaskStatusTO.STATE_MACHINE_OPEN) || state.equals(TaskStatusTO.STATE_MACHINE_REOPEN)) { 
-                            if (response==null) response = new Vector();
+                            if (response==null) response = new Vector<ResourceTaskTO>();
                             rtto2.setTask(rtto1.getTask());
                             response.addElement(rtto2);
                             break;                            
@@ -543,7 +571,7 @@ public class ResourceTaskBUS extends GeneralBusiness {
      */
     public Integer getStatusOfAllocResource(TaskTO tto){
         Integer response = new Integer(0); 
-        Vector list = tto.getAllocResources();
+        Vector<ResourceTaskTO> list = tto.getAllocResources();
         boolean isIntermediate = false;
         boolean isInitial = false;        
 
@@ -559,9 +587,9 @@ public class ResourceTaskBUS extends GeneralBusiness {
         //check if status of all resourceTasks objects is Open or In-Progress        
         if (list!=null) {
             if (list.size()>1){
-                Iterator i = list.iterator();
+                Iterator<ResourceTaskTO> i = list.iterator();
                 while(i.hasNext()){
-                    ResourceTaskTO rtto = (ResourceTaskTO)i.next();
+                    ResourceTaskTO rtto = i.next();
                     response = getStatusOfAllocResource(rtto);
 
                     //if (response.equals(TaskStatusTO.STATE_MACHINE_CANCEL) ||
@@ -620,15 +648,15 @@ public class ResourceTaskBUS extends GeneralBusiness {
 
 
     /**
-     * Return the lattest or newest date from the resourceTask list.
+     * Return the latest or newest date from the resourceTask list.
      */
-    public Timestamp getDateFromResTaskList(Vector resTaskList, boolean isInitial) {
+    public Timestamp getDateFromResTaskList(Vector<ResourceTaskTO> resTaskList, boolean isInitial) {
         Timestamp ts = null;
         
         if (resTaskList!=null){
-            Iterator j = resTaskList.iterator();
+            Iterator<ResourceTaskTO> j = resTaskList.iterator();
             while(j.hasNext()){
-                ResourceTaskTO rtto = (ResourceTaskTO)j.next();
+                ResourceTaskTO rtto = j.next();
                 Timestamp currDate = rtto.getInitialDate();
                 if (ts==null) ts=currDate;
 
@@ -674,8 +702,8 @@ public class ResourceTaskBUS extends GeneralBusiness {
     /**
      * Get a list of Task History objects from data base, based on task id and resource id.
      */
-    public Vector getHistory(String taskId, String resourceId) throws BusinessException {
-        Vector response = new Vector();
+    public Vector<TaskHistoryTO> getHistory(String taskId, String resourceId) throws BusinessException {
+        Vector<TaskHistoryTO> response = new Vector<TaskHistoryTO>();
         try {
             TaskHistoryDAO dao = new TaskHistoryDAO();
             response = dao.getListByResourceTask(taskId, resourceId);
@@ -754,25 +782,25 @@ public class ResourceTaskBUS extends GeneralBusiness {
     }
 
     
-	public Vector getTasksWithoutReq(String projectId, String iteration, boolean hideOldIterations) throws BusinessException {
+	public Vector<ResourceTaskTO> getTasksWithoutReq(String projectId, String iteration, boolean hideOldIterations) throws BusinessException {
 		TaskDelegate tdel = new TaskDelegate();
 		ProjectBUS pbus = new ProjectBUS();
-		Vector response = new Vector();
+		Vector<ResourceTaskTO> response = new Vector<ResourceTaskTO>();
 		
         //get the tasks of child projects
-        Vector childs = pbus.getProjectListByParent(new ProjectTO(projectId), true);
-        Iterator i = childs.iterator();
+        Vector<ProjectTO> childs = pbus.getProjectListByParent(new ProjectTO(projectId), true);
+        Iterator<ProjectTO> i = childs.iterator();
         while(i.hasNext()){
-            ProjectTO childProj = (ProjectTO)i.next();
-            Vector tskOfChild = this.getTasksWithoutReq(childProj.getId(), iteration, hideOldIterations);
+            ProjectTO childProj = i.next();
+            Vector<ResourceTaskTO> tskOfChild = this.getTasksWithoutReq(childProj.getId(), iteration, hideOldIterations);
             response.addAll(tskOfChild);
         }
                     
-		Vector list = tdel.getTaskListByRequirement(null, new ProjectTO(projectId), true, false);
+		Vector<TaskTO> list = tdel.getTaskListByRequirement(null, new ProjectTO(projectId), true, false);
         if (list!=null) {
-            Iterator j = list.iterator();
+            Iterator<TaskTO> j = list.iterator();
             while (j.hasNext()) {
-                TaskTO tto = (TaskTO)j.next();
+                TaskTO tto = j.next();
                 if (tto.getRequirement()==null) {
                 	if (iteration.equals("-1") || !hideOldIterations ||  
                 			(hideOldIterations && tto.getIteration()!=null && tto.getIteration().equals(iteration))) {
@@ -786,8 +814,8 @@ public class ResourceTaskBUS extends GeneralBusiness {
 	}    
 	
     
-    public Vector getListUntilID(String initialId, String finalId) throws BusinessException {
-        Vector response = new Vector();
+    public Vector<ResourceTaskTO> getListUntilID(String initialId, String finalId) throws BusinessException {
+        Vector<ResourceTaskTO> response = new Vector<ResourceTaskTO>();
         try {
             response = dao.getListUntilID(initialId, finalId);
         } catch (DataAccessException e) {
@@ -830,27 +858,25 @@ public class ResourceTaskBUS extends GeneralBusiness {
 	}
 
 
-	public Vector getNotClosedTasksUnderMacroTask(TaskTO subTask) throws BusinessException {
+	public Vector<TaskTO> getNotClosedTasksUnderMacroTask(TaskTO subTask) throws BusinessException {
 		TaskDAO tdao = new TaskDAO();
-		Vector response = new Vector();
+		Vector<TaskTO> response = new Vector<TaskTO>();
 		
         try {
-        	
     	    TaskTO parenttask = subTask.getParentTask();
     	    if (parenttask!=null) {
     	    
     	    	tdao.loadSubTasksList(parenttask);
     	    	if (parenttask.getChildTasks()!=null) {
-    		    	Iterator j = parenttask.getChildTasks().values().iterator();
+    		    	Iterator<TaskTO> j = parenttask.getChildTasks().values().iterator();
     		    	while(j.hasNext()) {
-    		    		TaskTO t = (TaskTO)j.next();
+    		    		TaskTO t = j.next();
     		    		if (t.getFinalDate()==null && !t.getId().equals(subTask.getId())) {
     		    			response.addElement(t);	
     		    		}
     		    	}	
     		   }
     	    }
-    	    
         } catch (DataAccessException e) {
             throw new  BusinessException(e);
         }
@@ -866,6 +892,41 @@ public class ResourceTaskBUS extends GeneralBusiness {
         } catch (DataAccessException e) {
             throw new  BusinessException(e);
         }    	
+    }
+
+    public ResourceTaskTO changeProject(String projectId, ResourceTaskTO rtto) throws BusinessException{
+    	 try {
+    		 
+    		 if(!projectId.equals(rtto.getTask().getProject().getId())){
+    			 CategoryDelegate cdel = new CategoryDelegate();
+    			 
+    			 CategoryTO ctoold = cdel.getCategory(rtto.getTask().getCategory());
+        		 
+        		 ProjectTO pto = new ProjectTO(projectId);
+     		     Vector<CategoryTO> catlist = cdel.getCategoryListByType(CategoryTO.TYPE_TASK, pto, false);
+     		     
+     		     CategoryTO ctonew = null;
+     		     Iterator<CategoryTO> itCatList = catlist.iterator();
+     		     while(itCatList.hasNext()){
+     		    	 CategoryTO cto = itCatList.next();
+     		    	 if(cto.getName().equals(ctoold.getName())){
+     		    		 ctonew = cto;
+     		    		 break;
+     		    	 }
+     		     }
+    			 
+     		     if(ctonew == null){
+     		    	 ctonew = new CategoryTO("0");
+     		     }
+     		     
+             	 dao.changeProject(projectId, rtto, ctonew);
+             	 TaskTO tto = rtto.getTask();
+             	 tto.setCategory(ctonew);
+    		 }
+         } catch (DataAccessException e) {
+             throw new  BusinessException(e);
+         }    
+    	 return rtto;
     }
 
 }

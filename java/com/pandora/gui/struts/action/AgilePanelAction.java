@@ -18,6 +18,8 @@ import com.pandora.ProjectTO;
 import com.pandora.RequirementStatusTO;
 import com.pandora.RequirementWithTasksTO;
 import com.pandora.ResourceTO;
+import com.pandora.ResourceTaskTO;
+import com.pandora.TaskTO;
 import com.pandora.TransferObject;
 import com.pandora.UserTO;
 import com.pandora.bus.PreferenceBUS;
@@ -30,6 +32,7 @@ import com.pandora.delegate.OccurrenceDelegate;
 import com.pandora.delegate.ProjectDelegate;
 import com.pandora.delegate.RequirementDelegate;
 import com.pandora.delegate.ResourceTaskDelegate;
+import com.pandora.delegate.TaskDelegate;
 import com.pandora.delegate.UserDelegate;
 import com.pandora.exception.BusinessException;
 import com.pandora.gui.struts.form.AgilePanelForm;
@@ -79,6 +82,46 @@ public class AgilePanelAction extends GeneralStrutsAction {
 		return mapping.findForward("showAgilePanelReq");
 	}
 
+	
+	public ActionForward removeResTask(ActionMapping mapping, ActionForm form,
+			HttpServletRequest request, HttpServletResponse response){
+		TaskDelegate tdel = new TaskDelegate();
+		TaskAction tact = new TaskAction();
+		String forward = "showAgilePanel";
+		
+		try {
+			AgilePanelForm frm =(AgilePanelForm)form;
+			TaskTO tto = new TaskTO(frm.getTaskId());
+			tto = tdel.getTaskObject(tto);
+			tto.setHandler(SessionUtil.getCurrentUser(request));
+			
+			Vector<ResourceTaskTO> allocs = tto.getAllocResources();
+			if (allocs!=null) {
+				if (tto.getTemplateInstanceId()!=null && allocs.size()==1) {
+					this.setErrorFormSession(request, "message.agilePanelForm.removeWorkflowTaskErr", null);
+					
+				} else {
+					allocs = tact.removeResourceAllocFromList(allocs, frm.getResourceId(), request);
+					if (allocs!=null) {
+						tto.setAllocResources(allocs);
+						tdel.updateTask(tto, false);
+					} else {
+						this.setErrorFormSession(request, "message.agilePanelForm.removeResTaskErr", null);
+					}
+				}				
+			}
+			
+			
+			frm.setMaximizedGadgetId("");				
+			this.loadPreferences(form, request);
+			this.refreshLists(form, request);			
+
+		} catch(Exception e) {
+			this.setErrorFormSession(request, "error.generic.showFormError", e);
+		}
+		return mapping.findForward(forward);
+	}
+	
 	
 	public ActionForward closeMaximizeGadget(ActionMapping mapping, ActionForm form,
 			HttpServletRequest request, HttpServletResponse response){
@@ -175,7 +218,7 @@ public class AgilePanelAction extends GeneralStrutsAction {
 				frm.getIterationSelected(), frm.getHideFinishedReq(), frm.getHideOldIterations());
 
 		if (!frm.getHideTasksWithoutReq()) {
-			RequirementWithTasksTO rwto = this.getTasksWithoutReq(frm, reqList);		
+			RequirementWithTasksTO rwto = this.getTasksWithoutReq(frm);		
 			reqList.addElement(rwto);
 		}
 		
@@ -196,12 +239,11 @@ public class AgilePanelAction extends GeneralStrutsAction {
 	}
 
 
-	private RequirementWithTasksTO getTasksWithoutReq(AgilePanelForm frm, Vector reqList)
-			throws BusinessException {
+	private RequirementWithTasksTO getTasksWithoutReq(AgilePanelForm frm) throws BusinessException {
 		RequirementWithTasksTO response = new RequirementWithTasksTO();
 		
 		ResourceTaskDelegate rtdel = new ResourceTaskDelegate();
-		Vector list = rtdel.getTasksWithoutReq(frm.getProjectId(), frm.getIterationSelected(), frm.getHideOldIterations());
+		Vector<ResourceTaskTO> list = rtdel.getTasksWithoutReq(frm.getProjectId(), frm.getIterationSelected(), frm.getHideOldIterations());
 		
 		RequirementStatusTO rsto = new RequirementStatusTO();
 		rsto.setStateMachineOrder(RequirementStatusTO.STATE_MACHINE_CLOSE);
@@ -254,7 +296,7 @@ public class AgilePanelAction extends GeneralStrutsAction {
 		Gadget gad = GadgetBUS.getGadgetClass("com.pandora.bus.gadget.IterationBurndownChartGadget");
 		
 		int gadWidth = 385;
-		content.append(gad.gadgetToHtml(request, gadWidth, 120, loadingLabel));
+		content.append(gad.gadgetToHtml(request, null, gadWidth, 120, loadingLabel));
 		frm.setGadgetHtmlBody("<td width=\"" + gadWidth + "\" valign=\"top\" align=\"center\">" + content.toString() + "</td>");
 
 		String iconsHtml = resHome.getMaximizedGadgetHtml(gad, request);

@@ -2,21 +2,21 @@ package com.pandora.bus;
 
 import java.util.Vector;
 
+import com.pandora.DiscussionTopicTO;
+import com.pandora.UserTO;
 import com.pandora.dao.DiscussionTopicDAO;
 import com.pandora.exception.BusinessException;
 import com.pandora.exception.DataAccessException;
-import com.pandora.UserTO;
-import com.pandora.DiscussionTopicTO;
 import com.pandora.helper.DateUtil;
 
 public class DiscussionTopicBUS extends GeneralBusiness {
 
-    /** The Data Acess Object related with current business entity */
+    /** The Data Access Object related with current business entity */
     private DiscussionTopicDAO dao = new DiscussionTopicDAO();
 	
     
-    public Vector getListByPlanning(String planningId) throws BusinessException{
-        Vector response = new Vector();
+    public Vector<DiscussionTopicTO> getListByPlanning(String planningId) throws BusinessException{
+    	Vector<DiscussionTopicTO> response = new Vector<DiscussionTopicTO>();
         try {
             response = dao.getListByPlanning(planningId);
         } catch (DataAccessException e) {
@@ -39,17 +39,29 @@ public class DiscussionTopicBUS extends GeneralBusiness {
         } catch (DataAccessException e) {
             throw new  BusinessException(e);
         }           
-    }    
+    }
 
-    
-    public Vector<DiscussionTopicTO> getListByUser(UserTO uto) throws BusinessException{
-        Vector<DiscussionTopicTO> response = new Vector<DiscussionTopicTO>();
+
+	public DiscussionTopicTO getTopic(String id) throws BusinessException {
+		DiscussionTopicTO response = null;
         try {
-            response = dao.getListByUser(uto);
+        	DiscussionTopicTO dtto = new DiscussionTopicTO(id);
+            response = (DiscussionTopicTO) dao.getObject(dtto);
         } catch (DataAccessException e) {
             throw new  BusinessException(e);
         }
-        return response;
-    }
-    
+		return response;
+	}
+
+
+	public void removeDiscussionTopic(String topicId, UserTO uto) throws BusinessException {
+        try {
+        	DiscussionTopicTO dtto = new DiscussionTopicTO();
+        	dtto.setId(topicId);
+        	dtto.setUser(uto);
+            dao.remove(dtto);
+        } catch (DataAccessException e) {
+            throw new  BusinessException(e);
+        }           
+	}        
 }

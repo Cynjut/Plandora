@@ -5,8 +5,6 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.Vector;
 
-import com.pandora.helper.HtmlUtil;
-
 public class SurveyTO extends TransferObject {
 
 	private static final long serialVersionUID = 1L;
@@ -27,15 +25,15 @@ public class SurveyTO extends TransferObject {
 	
 	private Timestamp publishingDate;
 
-	private Vector questionList;
+	private Vector<SurveyQuestionTO> questionList;
 	
 	private String anonymousKey;
 	
 	private UserTO owner;
 	
-	private ArrayList questionsToBeUpdated = new ArrayList();
+	private ArrayList<String> questionsToBeUpdated = new ArrayList<String>();
 	
-	private ArrayList questionsToBeRemoved = new ArrayList();
+	private ArrayList<String> questionsToBeRemoved = new ArrayList<String>();
 	
 	
 	public SurveyTO() {
@@ -49,9 +47,9 @@ public class SurveyTO extends TransferObject {
 	public boolean checkAnswer() {
 		boolean response = false;
 		if (questionList!=null) {
-			Iterator i = questionList.iterator();
+			Iterator<SurveyQuestionTO> i = questionList.iterator();
 			while(i.hasNext()) {
-				SurveyQuestionTO qto = (SurveyQuestionTO)i.next();
+				SurveyQuestionTO qto = i.next();
 				if (qto.getRelatedAnswer()!=null) {
 					response = true;
 					break;
@@ -135,10 +133,10 @@ public class SurveyTO extends TransferObject {
 
 	
 	///////////////////////////////////
-	public Vector getQuestionList() {
+	public Vector<SurveyQuestionTO> getQuestionList() {
 		return questionList;
 	}
-	public void setQuestionList(Vector newValue) {
+	public void setQuestionList(Vector<SurveyQuestionTO> newValue) {
 		this.questionList = newValue;
 	}
 
@@ -162,23 +160,20 @@ public class SurveyTO extends TransferObject {
 
 	
 	///////////////////////////////////
-	public ArrayList getQuestionsToBeUpdated() {
+	public ArrayList<String> getQuestionsToBeUpdated() {
 		return questionsToBeUpdated;
 	}
-	public void setQuestionsToBeUpdated(ArrayList newValue) {
+	public void setQuestionsToBeUpdated(ArrayList<String> newValue) {
 		this.questionsToBeUpdated = newValue;
 	}
 
 	
 	///////////////////////////////////
-	public ArrayList getQuestionsToBeRemoved() {
+	public ArrayList<String> getQuestionsToBeRemoved() {
 		return questionsToBeRemoved;
 	}
-	public void setQuestionsToBeRemoved(ArrayList newValue) {
+	public void setQuestionsToBeRemoved(ArrayList<String> newValue) {
 		this.questionsToBeRemoved = newValue;
 	}
-
-	
-	
 	
 }

@@ -18,7 +18,7 @@ import javax.sql.DataSource;
 import com.pandora.TransferObject;
 import com.pandora.bus.SystemSingleton;
 import com.pandora.exception.DataAccessException;
-import com.pandora.exception.ZeroCapacityDBException;
+import com.pandora.exception.MandatoryMetaFieldDataException;
 import com.pandora.helper.LogUtil;
 
 /**
@@ -55,22 +55,41 @@ public class DataAccess {
 		
         try {
             
-            //get the context
-     	    Context initCtx = new InitialContext();
-     	    Context envCtx = (Context) initCtx.lookup("java:comp/env");
+        	if (datasource!=null && !datasource.trim().equals("")) {
+        		
+                //get the context
+         	    Context initCtx = new InitialContext();
+         	    Context envCtx = (Context) initCtx.lookup("java:comp/env");
 
-     	    //retrieve the data source object
-     	    DataSource ds = (DataSource) envCtx.lookup(datasource);
+         	    //retrieve the data source object
+         	    DataSource ds = (DataSource) envCtx.lookup(datasource);
 
-     	    //get a clean connection from pool
-     	    con = ds.getConnection();
-			con.setAutoCommit(isAutoCommit);
+         	    //get a clean connection from pool
+         	    con = ds.getConnection();
+         	    
+        	} else {
+        		
+        		String jdbcDriver = SystemSingleton.getInstance().getJdbcDriver();
+        		String jdbcHost = SystemSingleton.getInstance().getJdbcHost();
+        		String jdbcUser = SystemSingleton.getInstance().getJdbcUser();
+        		String jdbcPass = SystemSingleton.getInstance().getJdbcPass();
 
+    		    Class.forName(jdbcDriver);
+    		    con = DriverManager.getConnection(jdbcHost, jdbcUser, jdbcPass);
+        	}
+		    
+        	if (con!=null) {
+        		con.setAutoCommit(isAutoCommit);	
+        	}
+			
         } catch (SQLException e) {
 			throw new DataAccessException(e);
         } catch (NamingException e) {
          	throw new DataAccessException(e);
-        }
+        } catch (ClassNotFoundException e) {
+         	throw new DataAccessException(e);
+		}
+        
 		return con;
 	}
 
@@ -205,8 +224,8 @@ public class DataAccess {
 			} catch (SQLException er) {
 				LogUtil.log(this, LogUtil.LOG_ERROR, "", er);
 			}
-			if (e instanceof ZeroCapacityDBException) {
-				throw (ZeroCapacityDBException)e;
+			if (e instanceof MandatoryMetaFieldDataException) {
+				throw (MandatoryMetaFieldDataException)e;
 			} else {
 				throw new DataAccessException(e);	
 			}

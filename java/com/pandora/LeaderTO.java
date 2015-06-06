@@ -32,6 +32,7 @@ public class LeaderTO extends ResourceTO {
         this.setId(parent.getId());
         this.setProject(parent.getProject());
         this.setArea(parent.getArea());
+        this.setCompany(parent.getCompany());
         this.setColor(parent.getColor());
         this.setBirth(parent.getBirth());
         this.setAuthenticationMode(parent.getAuthenticationMode());
@@ -71,6 +72,7 @@ public class LeaderTO extends ResourceTO {
         this.setDepartment(parent.getDepartment());
         this.setEmail(parent.getEmail());
         this.setBirth(parent.getBirth());
+        this.setCompany(parent.getCompany());        
         this.setFunction(parent.getFunction());
         this.setName(parent.getName());
         this.setPassword(parent.getPassword());

@@ -2,18 +2,11 @@ package com.pandora.bus.convert;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Iterator;
 
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.util.PDFImageWriter;
 
-import com.anotherbigidea.flash.movie.ImageUtil;
-import com.anotherbigidea.flash.movie.Movie;
-import com.anotherbigidea.flash.movie.Shape;
 import com.pandora.AttachmentTO;
 import com.pandora.PreferenceTO;
 import com.pandora.UserTO;

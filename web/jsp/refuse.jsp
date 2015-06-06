@@ -12,7 +12,7 @@
 	  	<logic:equal name="refuseForm" property="refuseType" value="TSK">
 	      	<bean:message key="label.refuse.cancTask"/>
 	  	</logic:equal>
-		<bean:write name="refuseForm" property="refusedId" />
+		<bean:write name="refuseForm" property="refusedId" filter="false"/>
 	</title>
 	<head>
 		<link href="../css/styleDefault.css" id="style" TYPE="text/css" rel="STYLESHEET">

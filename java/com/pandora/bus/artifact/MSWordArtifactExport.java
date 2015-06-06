@@ -1,49 +1,38 @@
 package com.pandora.bus.artifact;
 
 import java.io.ByteArrayInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.UnsupportedEncodingException;
-import java.net.URLEncoder;
 
-import org.apache.poi.xwpf.usermodel.UnderlinePatterns;
-import org.apache.poi.xwpf.usermodel.XWPFDocument;
-import org.apache.poi.xwpf.usermodel.XWPFParagraph;
-import org.apache.poi.xwpf.usermodel.XWPFRun;
-import org.apache.poi.xwpf.usermodel.XWPFTable;
-import org.apache.poi.xwpf.usermodel.XWPFTableRow;
 import org.w3c.dom.Document;
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
 import org.w3c.tidy.Tidy;
 
+import com.pandora.bus.SystemSingleton;
 import com.pandora.helper.XmlDomParse;
 
 public class MSWordArtifactExport extends ArtifactExport {
 	
-	private final static int FLAT_RUNNER = 0;
+	//private final static int FLAT_RUNNER = 0;
 	
-	private final static int H3_RUNNER   = 1;
+	//private final static int H3_RUNNER   = 1;
 	
 	@Override
 	public byte[] export(String header, String body, String footer) throws Exception {
 		ByteArrayInputStream bis = new ByteArrayInputStream(body.getBytes());
 		FileOutputStream fos = new FileOutputStream("simpleTable.docx");
-		XWPFDocument doc = new XWPFDocument();
+		//XWPFDocument doc = new XWPFDocument();
 		byte[] response = null;
 		
 		try {			
 			Tidy tidy = new Tidy();             
 			Document docHtml = tidy.parseDOM(bis, null);
 			XmlDomParse.write(docHtml, "artifact.xml");
-			NodeList list = docHtml.getElementsByTagName("body");
-			if (list!=null) {
-				Node bodyNode = list.item(0);				
-				this.format(doc, bodyNode);				
-		        doc.write(fos);
-		        fos.close();		   				
-			}
+			//NodeList list = docHtml.getElementsByTagName("body");
+			//if (list!=null) {
+				//Node bodyNode = list.item(0);				
+				//this.format(doc, bodyNode);				
+		        //doc.write(fos);
+		        //fos.close();		   				
+			//}
 			
 		} catch(Exception e){
 			e.printStackTrace();
@@ -82,7 +71,7 @@ public class MSWordArtifactExport extends ArtifactExport {
 
 	@Override
 	public String getExtension() {
-		return ".doc";
+		return ".docx";
 	}
 	
 
@@ -91,7 +80,7 @@ public class MSWordArtifactExport extends ArtifactExport {
 		return "label.artifactTag.export.msword";
 	}
 	
-
+/*
 	private void format(XWPFDocument doc, Node node) throws Exception{
 
 		boolean isEmpty = false;
@@ -197,7 +186,8 @@ public class MSWordArtifactExport extends ArtifactExport {
 				
 			} else if (n.getNodeType()==3) {				
 				String content = n.getNodeValue();
-				if (content!=null && !URLEncoder.encode(content, "UTF-8").equals("%C2%A0") ) {
+				String encoding = SystemSingleton.getInstance().getDefaultEncoding();
+				if (content!=null && !URLEncoder.encode(content, encoding).equals("%C2%A0") ) {
 					XWPFRun r1 = this.getRunner(parag, runnerType);										
 					r1.setText(content);
 					isEmpty = false;
@@ -216,7 +206,8 @@ public class MSWordArtifactExport extends ArtifactExport {
 			Node c = nodes.item(i);
 			if (c.getNodeType()==3) {
 				String content = c.getNodeValue();
-				if (content!=null && !URLEncoder.encode(content, "UTF-8").equals("%C2%A0") ) {
+				String encoding = SystemSingleton.getInstance().getDefaultEncoding();				
+				if (content!=null && !URLEncoder.encode(content, encoding).equals("%C2%A0") ) {
 					response = content;
 				}
 			}			
@@ -313,7 +304,7 @@ public class MSWordArtifactExport extends ArtifactExport {
 			}
 		}
 		
-		return response;
-		
+		return response;		
 	}
+*/
 }

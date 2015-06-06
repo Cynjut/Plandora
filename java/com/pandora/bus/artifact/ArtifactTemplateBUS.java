@@ -1,7 +1,11 @@
 package com.pandora.bus.artifact;
 
+import java.util.ArrayList;
 import java.util.Vector;
 
+import org.w3c.dom.Document;
+
+import com.pandora.ArtifactTO;
 import com.pandora.ArtifactTemplateTO;
 import com.pandora.PreferenceTO;
 import com.pandora.ProjectTO;
@@ -21,6 +25,7 @@ import com.pandora.exception.MaxSizeAttachmentException;
 import com.pandora.exception.RepositoryPolicyException;
 import com.pandora.helper.DateUtil;
 import com.pandora.helper.StringUtil;
+import com.pandora.helper.XmlDomParse;
 import com.pandora.integration.RepositoryMessageIntegration;
 
 public class ArtifactTemplateBUS extends GeneralBusiness {
@@ -48,16 +53,16 @@ public class ArtifactTemplateBUS extends GeneralBusiness {
 			String body = atto.getBody();
 			response = this.parseKeyWords(body, project, uto, name);
 						
-        } catch (DataAccessException e) {
+        } catch (Exception e) {
             throw new BusinessException(e);
         }
 		return response;
 	}
 
 
-	public void commitArtifact(String path, String fileName, String exportType, String body, String planningId, String templateId, 
-			String projectId, String logMessage, String user, String pass, UserTO handler) throws MaxSizeAttachmentException, BusinessException {
+	public void commitArtifact(ArtifactTO ato) throws MaxSizeAttachmentException, BusinessException {
 		RepositoryBUS rbus = new RepositoryBUS();
+		ArtifactBUS abus = new ArtifactBUS();
 		ProjectBUS pbus = new ProjectBUS();
 
 		byte[] fileData = null;
@@ -65,32 +70,33 @@ public class ArtifactTemplateBUS extends GeneralBusiness {
 		ProjectTO pto = null;
 		ArtifactExport ae = null;
 		String filePath = "";
+		String fileName = ato.getFileName();
 		
-        try {		
-			if (path!=null && !path.equals("")) {
-				filePath = filePath + path + "/";
+        try {
+			if (ato.getPath()!=null && !ato.getPath().equals("")) {
+				filePath = filePath + ato.getPath() + "/";
 			} 
 			filePath = filePath + fileName;
 
 			//get related artifact class converter and clean the extension of file path and name  
-			ae = getArtifactExpClass(exportType);
+			ae = getArtifactExpClass(ato.getExportType());
 			fileName = fileName.replaceAll(ae.getExtension(), "");
 			filePath = filePath.replaceAll(ae.getExtension(), "");
 			
-			ArtifactTemplateTO atto = (ArtifactTemplateTO) dao.getObject(new ArtifactTemplateTO(templateId));
-			pto = pbus.getProjectObject(new ProjectTO(projectId), true);
+			ArtifactTemplateTO atto = (ArtifactTemplateTO) dao.getObject(new ArtifactTemplateTO(ato.getTemplateId()));
+			pto = pbus.getProjectObject(new ProjectTO(ato.getProjectId()), true);
 			
 			//perform the key-word transformation into header and footer
 			String header = atto.getHeader();
-			header = this.parseKeyWords(header, pto, handler, fileName);
+			header = this.parseKeyWords(header, pto, ato.getHandler(), fileName);
 			String footer = atto.getFooter();
-			footer = this.parseKeyWords(footer, pto, handler, fileName);
+			footer = this.parseKeyWords(footer, pto, ato.getHandler(), fileName);
 
 			//check the commit policies...
-			this.checkRepositoryPolicy(pto, logMessage, user, filePath, handler);
+			this.checkRepositoryPolicy(pto, ato.getLogMessage(), ato.getUser(), filePath, ato.getHandler());
 
 			//transform the artifact content to selected format...			
-			fileData = ae.export(header, body, footer);
+			fileData = ae.export(header, ato.getBody(), footer);
 
 			//get max artifact size from system config...
 			size = this.getMaxArtifactSize();
@@ -102,20 +108,26 @@ public class ArtifactTemplateBUS extends GeneralBusiness {
             throw new BusinessException(e);
         }
 
-		//check max size of file...        
+        //check max size of file...        
 		if (fileData!=null && size>0 && fileData.length>size) {
 			throw new MaxSizeAttachmentException("The size of artifact has exceeded the maximum size (" + size + " bytes).");	
 		}
 
-        try {
-			//TODO para commit no SVN ainda falta a atualizacao de um arquivo existente. 
-			rbus.commitFile(pto, path, fileName + ae.getExtension(), RepositoryFileTO.REPOSITORY_HEAD, 
-					logMessage, ae.getContentType(), fileData, user, pass);
+		try {
+        	if (fileData!=null && size>0 && fileData.length<size) {
+    			rbus.commitFile(pto, ato.getPath(), fileName + ae.getExtension(), RepositoryFileTO.REPOSITORY_HEAD, 
+    					ato.getLogMessage(), ae.getContentType(), fileData, ato.getUser(), ato.getPass());
 
-			//create a link between repository file and planningId (if necessary)
-			if (planningId!=null && !planningId.trim().equals("")) {
-				rbus.updateRepositoryFilePlan(filePath + ae.getExtension(), planningId, pto, ae.getClass().getName(), false);
-			}
+    			//insert a new ArtifactTO into data base
+    			abus.updateArtifact(filePath + ae.getExtension(), ato);
+    				
+    			//create a link between repository file and planningId (if necessary)
+    			if (ato.getPlanningId()!=null && !ato.getPlanningId().trim().equals("")) {
+    				rbus.updateRepositoryFilePlan(filePath + ae.getExtension(), ato.getPlanningId(), pto, false);
+    			}        		
+        	} else {
+        		throw new BusinessException("An error occurrs during commit generation. The file could not be converted to selected format.");	
+        	}
 
         } catch (Exception e) {
             throw new BusinessException(e);
@@ -126,11 +138,11 @@ public class ArtifactTemplateBUS extends GeneralBusiness {
 	/**
 	 * Static method used to return a instance of artifact export class 
 	 */
-	@SuppressWarnings("unchecked")
 	public static ArtifactExport getArtifactExpClass(String className){
 		ArtifactExport response = null;
         try {
-            Class klass = Class.forName(className);
+            @SuppressWarnings("rawtypes")
+			Class klass = Class.forName(className);
             response = (ArtifactExport)klass.newInstance();
         } catch (Exception e) {
             response = null;
@@ -139,24 +151,38 @@ public class ArtifactTemplateBUS extends GeneralBusiness {
 	}
 	
 	
-	private String parseKeyWords(String body, ProjectTO project, UserTO uto, String fileName) throws BusinessException {
+	private String parseKeyWords(String body, ProjectTO project, UserTO uto, String fileName) throws Exception {
 		StringBuffer response = new StringBuffer();
 		int f =0;
 		
 		if (body!=null) {
 			body = this.preProcess(body, project, uto, fileName);
-
+			String enc = uto.getBundle().getMessage(uto.getLocale(), "encoding");
+			
 			int cutCursor = 0;
-			int i = body.indexOf("?#");
+			int i = body.indexOf("<DB_CONTENT");
 			while (i>0) {
-				f = body.indexOf("#", i+2);
-				if (f>0 && f > i+2) {
-					String token = body.substring(i+2, f);
-					String content = this.peformToken(token);
+				f = body.indexOf("</DB_CONTENT>", i+13);
+				if (f>0 && f > i+13) {
+					String token = body.substring(i, f+13);
+
+					String sql = null;
+					String type = null;
+					Document d = null;
+					try {
+						d = XmlDomParse.getXmlDom("<?xml version=\"1.0\" encoding=\"" + enc + "\" standalone=\"yes\"?>" + token);
+						sql = d.getFirstChild().getTextContent();
+						type = XmlDomParse.getAttributeTextByTag(d.getFirstChild(), "type");
+					} catch (Exception e){
+						e.printStackTrace();
+					}
+
+					String content = this.peformToken(sql, type, d, project, uto);
 					response.append(body.substring(cutCursor, i));
 					response.append(content);
-					cutCursor = f + 1;
-					i = body.indexOf("?#", f);
+					//response.append(body.substring(f+13));
+					cutCursor = f + 13;
+					i = body.indexOf("<DB_CONTENT", cutCursor);
 				} else {
 					i = -1;
 				}
@@ -168,27 +194,22 @@ public class ArtifactTemplateBUS extends GeneralBusiness {
 	}	
 	
 	
-	private String peformToken(String token) throws BusinessException{
+	private String peformToken(String sql, String type, Document d, ProjectTO pto, UserTO uto) throws BusinessException{
 		StringBuffer response = new StringBuffer("");
 		DbQueryDelegate db = new DbQueryDelegate();
 		
-		String[] tokens = token.split("\\|");
-		if (tokens.length>=2) {
-			String type = tokens[1].trim();
-			Vector<Vector<Object>> list = db.performQuery(tokens[0].trim());
+		if (sql!=null && sql.trim().length()>0 && type!=null) {
+			
+			Vector<Vector<Object>> list = db.performQuery(sql);
 			if (list.size()>1) {
+				
 				if (type.equalsIgnoreCase("TABLE")) {
-					for (int i=1; i<list.size(); i++) {
-						Vector<Object> row = (Vector<Object>)list.elementAt(i);					
-						response.append("<tr>");
-						for (int j=0; j<row.size(); j++) {
-							response.append("<td>" + row.elementAt(j) + "</td>");	
-						}
-						response.append("</tr>");
-					}
+					response.append(this.performTableToken(d, list));
+					
+				} else if (type.equalsIgnoreCase("TABLE_V")) {
+					response.append(this.performVTableToken(d, list));
 					
 				} else if (type.equalsIgnoreCase("OL") || type.equalsIgnoreCase("UL")) {
-					
 					response.append("<" + type + ">");
 					for (int i=1; i<list.size(); i++) {
 						Vector<Object> row = (Vector<Object>)list.elementAt(i);
@@ -213,6 +234,98 @@ public class ArtifactTemplateBUS extends GeneralBusiness {
 		
 		return content;
 	}
+
+	private StringBuffer performTableToken(Document d, Vector<Vector<Object>> list) {
+		StringBuffer response = new StringBuffer("");
+		
+		String header = this.getHeader(d, response);
+		for (int i=1; i<list.size(); i++) {
+			Vector<Object> row = (Vector<Object>)list.elementAt(i);					
+			response.append("<tr>");
+			for (int j=0; j<row.size(); j++) {
+				response.append("<td>" + row.elementAt(j) + "</td>");	
+			}
+			response.append("</tr>");
+		}		
+		
+		if (header!=null && !header.trim().equals("")) {
+			response.append("</table>");
+		}
+		
+		return response;
+	}
+
+	private StringBuffer performVTableToken(Document d, Vector<Vector<Object>> list) {
+		StringBuffer response = new StringBuffer("");
+		
+		ArrayList<String> titles = new ArrayList<String>();
+		if (d!=null) {
+			String titLbl = XmlDomParse.getAttributeTextByTag(d.getFirstChild(), "titles");
+			if (titLbl!=null && !titLbl.trim().equals("")) {
+				String[] titLbls = titLbl.split("\\|");
+				if (titLbls!=null && titLbls.length>0) {
+					for(int t=0; t<titLbls.length; t++) {
+						titles.add(titLbls[t]);				
+					}							
+				}
+			}
+		}
+		
+		for (int i=1; i<list.size(); i++) {
+			response.append("<table border=\"1\" cellspacing=\"0\" cellpadding=\"0\"><tbody>");			
+			Vector<Object> row = (Vector<Object>)list.elementAt(i);					
+			for (int j=0; j<row.size(); j++) {
+				response.append("<tr>");				
+				if (titles.size()>j) {
+					response.append("<td><b>" + titles.get(j) + "</b></td>");	
+				} else {
+					response.append("<td>&nbsp;</td>");
+				}
+				response.append("<td>" + row.elementAt(j) + "</td>");
+				response.append("</tr>");
+			}
+			response.append("</table></br>");			
+		}
+		
+		return response;
+	}
+
+
+	private String getHeader(Document d, StringBuffer response) {
+		String header = null;
+		if (d!=null) {
+			header = XmlDomParse.getAttributeTextByTag(d.getFirstChild(), "header");
+			if (header!=null && !header.trim().equals("")) {
+				String[] headers = header.split("\\|");
+				if (headers!=null && headers.length>0) {
+					response.append("<table><tr>");
+					for(int h=0; h<=headers.length; h++) {
+						response.append("<td><h3>" + headers[h] + "</h3></td>");				
+					}
+					response.append("</tr>");								
+				} else {
+					header = null;
+				}
+			}
+		}
+		return header;
+	}
+	
+	/*
+	private String getSQL(String rowSql, ProjectTO pto, UserTO uto) throws BusinessException {
+		ProjectDelegate pdel = new ProjectDelegate();
+		String response = rowSql;
+
+		response = response.replaceAll("?" + ReportTO.PROJECT_ID, "'" + pto.getId() + "'");
+		response = response.replaceAll("?" + ReportTO.USER_ID, "'" + uto.getId() + "'");
+		if (rowSql.indexOf(ReportTO.PROJECT_DESCENDANT)>-1) {
+			String childList = pdel.getProjectIn(pto.getId());
+			response = response.replaceAll("?" + ReportTO.PROJECT_DESCENDANT, childList);
+		}
+		
+		return response;
+	}
+	*/
 	
 	
 	private void checkRepositoryPolicy(ProjectTO pto, String logMessage, String author,

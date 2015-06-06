@@ -15,7 +15,7 @@ public class AgilePanelReqDecorator extends ColumnDecorator {
 			RequirementStatusTO rsto = rwto.getRequirementStatus();
 
 			RequirementGridEditDecorator editReq = new RequirementGridEditDecorator();
-	   		editReq.init(super.getPageContext(), null);
+	   		editReq.init(super.getSession(), null);
 	   		editReq.initRow(rwto, 0, 0);
 	   		String editImg = editReq.decorate(rwto.getId(), "REQ");
 

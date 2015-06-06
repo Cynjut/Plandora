@@ -164,7 +164,7 @@ public class CostAndBudgetGadget extends ChartGadget {
             	this.initArray(slotNumber);
                 xaxis = this.getXAxisLabel(intervType, slotNumber, iniRange);
 
-                Vector<ResourceCapacityTO> rescap = rcdel.getListByResourceProject(null, pto.getId());
+                Vector<ResourceCapacityTO> rescap = rcdel.getListByResourceProject(null, pto.getId(), null);
             	this.populateMaterialCosts(pto, mask, iniRange, DateUtil.getNow());
                 this.populateHumanCosts(pto, mask, rescap);
                 this.populateBudget(pto, mask);
@@ -206,8 +206,8 @@ public class CostAndBudgetGadget extends ChartGadget {
 					for (InvoiceItemTO iito : itemList) {
 						if (iito.getAmount()!=null && iito.getPrice()!=null && iito.getType()!=null) {
 							if (iito.getType().intValue()!=3 && iito.getType().intValue()!=4) { //except taxes and disconts...
-								int val = iito.getAmount().intValue() * iito.getPrice().intValue();
-								this.putValueIntoArray(mask, ito.getDueDate(), new Integer(val), 2);	
+								long val = iito.getAmount().intValue() * iito.getPrice().longValue();
+								this.putValueIntoArray(mask, ito.getDueDate(), new Long(val), 2);	
 							}
 						}
 					}
@@ -221,7 +221,7 @@ public class CostAndBudgetGadget extends ChartGadget {
 		TaskDelegate tdel = new TaskDelegate();
 		CostDelegate cdel = new CostDelegate();
 		
-		Vector<TaskTO> taskList = tdel.getTaskListByProject(pto, null, false, true);
+		Vector<TaskTO> taskList = tdel.getTaskListByProject(pto, null, null, false, true);
 		if (taskList!=null) {
 			for (TaskTO tto : taskList) {
 				Vector<ResourceTaskTO> list = tto.getAllocResources();
@@ -241,9 +241,9 @@ public class CostAndBudgetGadget extends ChartGadget {
 									
 									if(tm!=null) {
 										Integer cost = cdel.getCost(rescapList, tm, pto, rtto.getResource());
-										Integer newVal = null;
+										Long newVal = null;
 										if (cost!=null) {
-											newVal = new Integer((int)((alloc.getAllocTime().floatValue() / 60) * cost.intValue())); 
+											newVal = new Long((int)((alloc.getAllocTime().floatValue() / 60) * cost.intValue())); 
 										}
 										
 										if (newVal!=null) {
@@ -281,7 +281,7 @@ public class CostAndBudgetGadget extends ChartGadget {
 	}
 	
 	
-	private void putValueIntoArray(String mask, Timestamp tm, Integer val, int idx){
+	private void putValueIntoArray(String mask, Timestamp tm, Long val, int idx){
 		SimpleDateFormat df = new SimpleDateFormat(mask, this.handler.getLocale());			
 		Integer slot = (Integer)this.granularity.get(df.format(tm));
 		

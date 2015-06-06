@@ -1,0 +1,208 @@
+<html>
+<html>
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+	<title>Plandora Project - The Project</title>
+
+	<meta name="description" content="This page contain the Plandora Project history and a mini tutorial teaching how to install the tool in your company." />
+	<meta name="keywords" content="Plandora, Pandora, CRM, Gest&atilde;o de Relacionamento com o Cliente, Customer Relationship Management, Planejamento de Projeto, Project Management, Gantt Chart, Carta Gantt, Agile Model, SCRUM, Modelos &Atilde;geis, Base de Conhecimento, RUP, Desenvolvimento Iterativo, workflow, modeling, ticket, requirement, requisitos, an&aacute;lise de sistemas, KPI, Indicador Chave de Desempenho, Key Performance Indicator, Struts, MySQL, cmmi, ISO9000, PMI, XP, Java, Jude, Tomcat, web based tool, BSC, Balanced Scorecard, ToDo List, Incident Management, Problem Management, Change Management, Gerencia de Problemas, Gerencia de Incidentes, Gerencia de Mudan&ccedil;as, ITIL, Meta Form, Meta Field, Customized Reports, MS-Project, GanttProject, Diagrama gantt, gantt Diagram, Mps.Br, Melhoria de Processos do Software Brasileiro" />
+	<meta name="abstract" content="Plandora, Pandora, CRM, Gest&atilde;o de Relacionamento com o Cliente, Customer Relationship Management, Planejamento de Projeto, Project Management, Gantt Chart, Carta Gantt, Agile Model, SCRUM, Modelos &Atilde;geis, Base de Conhecimento, RUP, Desenvolvimento Iterativo, workflow, modeling, ticket, requirement, requisitos, an&aacute;lise de sistemas, KPI, Indicador Chave de Desempenho, Key Performance Indicator, Struts, MySQL, cmmi, ISO9000, PMI, XP, Java, Jude, Tomcat, web based tool, BSC, Balanced Scorecard, ToDo List, Incident Management, Problem Management, Change Management, Gerencia de Problemas, Gerencia de Incidentes, Gerencia de Mudan&ccedil;as, ITIL, Meta Form, Meta Field, Customized Reports, MS-Project, GanttProject, Diagrama gantt, gantt Diagram, Mps.Br, Melhoria de Processos do Software Brasileiro" />
+	<meta name="author" content="Plandora Project Team" />
+	<meta name="classification" content="Open source project" />
+	<meta name="googlebot" content="INDEX, FOLLOW" />
+	<meta name="distribution" content="Global" />
+	<meta name="robots" content="ALL" />
+	<meta name="rating" content="General" />
+	
+	<link rel="stylesheet" href="style.css" type="text/css" media="screen">
+
+<script type="text/javascript">
+
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-21327131-1']);
+  _gaq.push(['_trackPageview']);
+
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+
+</script>
+</head>
+
+<body style="background: rgb(170, 170, 170)">
+
+<div id="page">
+
+	<div id="header">
+		<div id="headering">
+			<div><img class="alignleft" src="logo-pequeno.png"></div>
+			<div style="background: transparent url(degrade.jpg) repeat scroll 0%; margin-left: 220; height: 50px; width: 530">&nbsp;</div>			
+		</div>
+	</div>
+
+	<div id="pagebar">
+	<li class="page_item"><a href="index.html">Home</a></li>
+	<li class="page_item"><a href="project.htm" title="Project">Project</a></li>
+	<li class="page_item"><a href="screenshot.htm" title="Screenshots">Screenshots</a></li>
+	<li class="page_item"><a href="contact.htm" title="Contact">Contact</a></li>
+	<li class="page_item"><a href="presentation.htm" title="Screencasts">Screencasts</a></li>
+	</div>
+
+	<div id="grad" style="background: transparent url(topgrad.jpg) repeat scroll 0%; height: 65px; width: 100%">
+		&nbsp;
+	</div>
+	
+	<br><br>
+	
+	<div id="contentfull">
+	
+						
+			<div class="post">
+				<h2>History</h2>
+				<div class="entry" align="justify">
+					<p>The Plandora project was born to be a tool to help the software development process, from the customer requirement until the task conclusion, and consequently gather the "history" of a project. The Plandora system can be useful for teams that have problems with resource bottle-necks, parallel projects, critical deadlines, necessity for scope documentation of tasks and requirements, etc.</p>
+					<p>The project started in December, 2003 with the requirement phase. In August, 2004 with the system analysis documents almost finished and some source-code implemented (infra-structure classes, build files, libs, etc) the project was available on <a href="http://sourceforge.net/projects/plandora/">SourceForge.net</a> under an LGPL license (totally free for any purpose)</p>
+					<p>It is important to note that a workflow tool is only a support instrument and demands a process with at least a little discipline. By the way, for projects with chaotic structure (without any process or any formal development) the adoption of a workflow tool could potentially cause problems for development team. We consider the term "development process" a work routine (not necessarily a standard methodology such as PMI, XP, CMMI, RUP, etc) which is something formalized, comprehended and accepted by the team.</p>
+				</div>		
+			</div>
+
+			
+			<div class="post">
+				<h2>Infra Structure</h2>
+				
+				<div class="entry" align="justify">
+					<p>The list bellow is the development infra-structure adopted:</p>
+					<li> Java language (j2sdk1.6.X)</li>
+					<li> jakarta-tomcat-6.X</li>
+					<li> IDE Eclipse 3.0 - using tomcat pluggin to enhance the debugging (com.sysdeo.eclipse.tomcat_3.0.0.beta)</li>
+					<li> MySQL 5.5</li>
+					<li> iReport 4.1</li>
+					<li> JDBC (using only SQL ANSI. It wasn't used native SQL, triggers or store procedures)</li>
+					<li> JSP, Struts, tagLibs </li>
+					<li> JUDE as CASE tool to UML documentation</li>
+				</div>
+			</div>
+
+			<div class="post">
+				<h2>Documents</h2>
+				<div class="entry" align="justify">
+					<li> UML modeling:</li>
+					<ul>
+						<li> <a href="docs/usecase.jpg">Use Case diagram</a></li>
+						<li> Class diagram</li>
+						<li> Sequence diagram (for the use cases with more complexity)</li>
+						<li> State diagram</li>
+					</ul>	
+					<li> Creation of <a href="docs/datadictionary.html">Data Dictionary</a> mapping the <a href="docs/mer.png">Data Model</a>.</li>
+				</div>
+			</div>			
+
+			<div class="post">
+				<h2>Installation Process</h2>
+				<div class="entry" align="justify">
+					<p>This chapter will teach you to install the Plandora. The Plandora is a web tool, client-server and for this reason, it demands a little more complex configuration, but should not be a big deal.</p>
+					<p>First of all, you should have two things: a web server and a database. In developing time, the Plandora uses the Tomcat and MySQL respectively, but you can host the Plandora into another web server (Servlet compatible). Bearing in mind that you can choose another web server but you may find some initial difficulty, especially in data source configuration because this 'setup package' only contains the configuration for Tomcat. Nevertheless, feel free to choose another database but remember that Plandora was tested only in MySQL.</p>
+					
+					<p>This release package contains:</p>
+					<ul>
+				
+					<li>plandora-vX.X.X.zip: 
+						This zip file might contains:
+						<ul>
+							<li>pandora.war: which will be used to 'publish' the tool into web server.</li>
+							<li>MYSQL.sql: DON'T USE THIS SCRIPT if you have a previous Plandora! This file contains the SQL script for creation of table and some basic data. You should use this script only for a NEW installation. </li>
+							<li>READ-ME_FOR_MIGRATION_FROM_v1.12.0: If you are updating your Plandora version from version 1.12.0, read this file to learn how to migrate to version 1.12.0 preserving the current data.</li>							
+							<li>server.xml or context.xml: This file should be used for data source configuration purposes of Plandora into Tomcat </li>
+							<li>release_notes.txt: The release notes file about the current version</li>							
+						</ul>
+					</li>
+					<li>plandoraInterface.jar: This file can be used by developers in order to extend Plandora features or to customize specific points of system (ex.: notificator, knowledge base, project occurrence, etc)</p>					
+					<li>other_db_scrips_BETA.zip: this zip file contain SQL scripts to other databases (Postgres, HSQL, etc). The default database of Plandora is MySQL but it is able to use other databases.</p>
+					<li>plandora-source-X.X.X: 
+						The source files of tool </li>					
+					<li>READ_ME_XXX.txt</li>
+					</ul>
+
+				</br>
+				<b>FIRST STEP: Getting the Tomcat and MySQL</b>
+
+				<p>Both tools are open source and for this reason, it can be downloaded from the Internet freely and used without any cost. These tools are strongly consolidated and are of stable implementation.
+				We recommend using the version 5.5.30 for Tomcat and 5.0 for MySQL. These versions were stressed and successfully used during the tests.</p>
+	
+				<p>The link to perform the Tomcat download is the Jakarta web site (a community that is part of Apache Group, which implements and controls the Tomcat besides many other interesting tools):
+				http://archive.apache.org/dist/jakarta/tomcat-5/ </p>
+
+				<p>The link to perform the MySQL download of MySQL is the MySQL website: http://dev.mysql.com/downloads/mirrors.html </p>
+
+				<p>After downloading, you should install everything into the machine that will be the Plandora server. You can install the Data Base and Web Server in the same machine or separately. This decision should be based on your needs. Feel free to choose what best fits your needs.</p>
+				<p>For Windows installation, the Tomcat is a simple Zip file. To perform the installation, unzip the file into your machine's file system.</p>
+				<p>For Windows MySQL, there is a Setup application, which after execution, requires some information such as: database user and password and database type (choose the 'WebApplication' type)</p>
+				<p>Obs.: After the Windows installation, the MySQL will be installed as a Windows Service. This feature makes startup, shutdown, managing, logs, etc, easier.</p>
+
+				</br>
+				<b>SECOND STEP: Running the data base script</b>	
+
+				<p>You should open the 'client screen' of MySQL. If you have used the Windows installation, this 'client screen' is accessible through 'Start' button ('MySQL Command Line Client'). After opening it, the 'client screen' will ask for a database password. You should enter the same password that you have created previously. Then, the database will display the prompt ("mysql>").</p>
+				<p>Then, type:   create database plandora; <br> 
+					And you might receive the response: Query OK, 1 row affected (0.01 sec)</p>
+				<p>With this command, you've just created a new 'database' object, and it is ready for data insertion.</p>
+				<p>Then, type:   use plandora; <br> And you might receive the response:	Database changed</p>
+				<p>This line means that you are saying to the database that everything that you will do from now on, will be done within the database called 'plandora' which was previously created.</p>
+				<p>In order to complete the process, you should create the Plandora tables and insert some basic data, but bear in mind that if you are updating the version of Plandora DON'T USE THE 'MYSQL.sql' script. You must use the apropriate script to upgrade the tool version and preserve the current data. On the other hand, if you are performing a new installation, use the 'MYSQL.sql' script unziping the file 'Plandora-vX.X.X.zip' to a known place and typing this command into MySQL client: source [path_where_you_unziped]/mysql.sql;</p>
+				<p>Wait until all data population is done. After that, close the client screen through the command: quit</p>
+
+				</br>
+				<b>THIRD STEP: Starting the Tomcat</b>	
+
+				<p>Copy the file mysql-connector-java-5.1.10-bin to the folder common/lib/ of Tomcat. This is the library for MySQL data base access used by Tomcat. This lib is called ConnectorJ and can be dowloaded at http://dev.mysql.com/downloads/connector/j/5.1.html</p>
+				<p>The next step is to setup the Data Source. Tomcat will need this information for connection purposes and to supply a connection to the application. Actually the Tomcat takes the control of the data base 'connection pool'. </p>
+				<p>For <B>Tomcat 5.0.x</B> you should copy the server.xml (that comes with the installation package) to the folder conf/ of Tomcat.</p>
+				<p>For <B>Tomcat 5.3.x or higher</B> you SHOULD NOT copy the server.xml but you should edit the context.xml (get the example file that comes with the installation package) file into the folder conf/ of Tomcat.</p>
+				<p><B>Note 1:</B> In both cases, it is necessary to change the fields <i>user</i> and <i>password</i> to the appropriate user settings that you have created during the Data Base installation.
+				<p><B>Note 2:</B> Also check if the field <i>url</i> contain the appropriate value. The standard files consider the name of database, "plandora" (<i>jdbc:mysql://localhost:3306/plandora</i>), but maybe you prefer to change this configuration. Regardless, it is very important to <b>keep</b> the name of the tag resource with value <i>jdbc/plandora</i>.
+				<p>After unzipping the file 'plandora-vX.X.X.zip', the file 'pandora.war' will be created. Copy to folder /webapps of Tomcat. After that, start the Tomcat through 'startup.bat' (windows) or './startup.sh' (Linux) that is placed into Tomcat bin/ folder. After a few seconds (and many screen messages), the message below should pop up on the Tomcat console: 'INFO: Server startup in xxxx ms'. When this message pops up, it means that Tomcat is already started up and your machine is now a Web Server.</p>
+				<p>In order to test, open a browser and type into 'Location Bar': "http://localhost:8080". Notice that we excluded the fragment 'www' because we are accessing locally. If a standard page of Tomcat pops ups, it's working!
+				<p><B>Note 3:</B> If you are running Plandora at Centos 5.4, also consider checking the JAVA_OPTS parameters of Tomcat (see more about it <a href="https://sourceforge.net/projects/plandora/forums/forum/396145/topic/1995755">here</a>).</p>
+				<p><B>Note 4:</B> If you are running Plandora at Tomcat 6.0.14, eventually consider placing the context.xml at /META-INF folder. (see more about it <a href="https://sourceforge.net/projects/plandora/forums/forum/396145/topic/4091013/">here</a>).</p>
+				<p><B>Note 5:</B> If you are running Tomcat in combination with Ubuntu and MySQL, please consider <a href="http://stackoverflow.com/questions/6571872/connecting-tomcat-6-and-mysql-5-plandora-project-management-software">this post</a>.</p>
+				<p><B>Note 6:</B> If you are running Tomcat at Linux, please consider the parameter -Djava.awt.headless=true during Tomcat configuration to prevent bugs in Plandora report feature. More infomation <a href="http://sourceforge.net/tracker/index.php?func=detail&aid=3407176&group_id=115872&atid=672961">here</a>.</p>
+				<p><B>Note 7:</B> If you are running Tomcat at Fedora 15, please check if all libs have been installed. More infomation <a href="http://sourceforge.net/projects/plandora/forums/forum/396145/topic/4943658">here</a>.</p>
+				
+				</br>
+				<b>LAST STEP: Starting the Plandora</b>	
+
+				<p>If everything is working with Tomcat, it should have been exploded the file pandora.war (that you have been put into /webapps folder) in a 'pandora' folder into the /webapps. This compartment is called 'application deploy'. Make sure that the Plandora deploy happened, and then, open a browser and type:
+				http://localhost:8080/pandora/do/login?operation=prepareLogin</p>
+				<p>It should display the login form of Plandora. Use the user 'root' without password to create new users and projects.</p>
+				<p>There are some users for testing. All of them have no password. You can remove or change if you want. Remember, from now on (until you shutdown your Tomcat ;-) ) your machine is a web server that can be accessed by other machines in your network (or even by the Internet depending on your network settings) through the IP number or the machine name.</p>
+				<p>To do this, type the address below in another machine (client machine) in order to access Plandora:</p>
+				<p>http://[name_of_plandora_server]:8080/pandora/do/login?operation=prepareLogin</p>
+								
+				<p>Have a nice project!</p>
+				
+				</div>		
+			</div>			
+
+			<div class="post">
+				<h2>Thanks</h2>
+				<div class="entry" align="justify">
+					<p>We want to thank everyone that helps or supports this project in any way (technically or not).
+					Special thanks to our families, ELUMAR de s&aacute;, BETO figueiredo, KLEBER gargitter, rodrigo CAMPUSANO, Javier DIAZ, Juan OTTH, Roc&iacute;o VILLALBA, Tiago PICON,
+					LUCAS godoy, MAX Rozenson, Greg HARRIS, UELI hugenschmidt, CRYSTAL prado, the guys of VERISOFT group, COMPERA team, UNISOMA team and the SOURCEFORGE team. </p>
+				</div>
+			</div>
+			
+	</div>
+
+
+	<div id="footer">
+		<p>
+			Plandora Project - Americana-Campinas - 2004-2014<br>
+		</p>
+	</div>
+
+</div>
+</body>
+</html>

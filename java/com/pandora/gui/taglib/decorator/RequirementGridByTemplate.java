@@ -25,7 +25,7 @@ public class RequirementGridByTemplate extends ColumnDecorator {
 			if (state==null || state.equals(RequirementStatusTO.STATE_MACHINE_WAITING)){
 				
 				ProjectTO pto = rto.getProject();
-				Vector list = ttdel.getTemplateListByProject(pto.getId(), false);	
+				Vector<TemplateTO> list = ttdel.getTemplateListByProject(pto.getId(), false);	
 				if (list!=null && list.size()>0) {
 
 				    String altValue = this.getBundleMessage("label.grid.requestform.accept.template");

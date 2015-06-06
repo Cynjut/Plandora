@@ -29,7 +29,7 @@ public class ProjectForm extends GeneralStrutsForm{
     /** Name field of project form */
     private String name;
     
-    /** Descriptiom field of project form */
+    /** Description field of project form */
     private String description;
     
     /** Parent Project id related */
@@ -56,6 +56,10 @@ public class ProjectForm extends GeneralStrutsForm{
     /** The Creation date of project */
     private Timestamp creationDate;
     
+    private String budget;
+    
+    private String budgetCurrencySymbol;
+    
     private String canAlloc;
     
     private String repositoryUser;
@@ -71,9 +75,11 @@ public class ProjectForm extends GeneralStrutsForm{
     
     private boolean allowBillable = false;
     
-    private HashMap repositoryPolicies;
+    private HashMap<String,RepositoryPolicyTO> repositoryPolicies;
     
     private String showRepositoryUserPwd = "on";
+    
+    private String htmlQualifications = "";
     
     
 	public void reset(ActionMapping mapping, HttpServletRequest request) {
@@ -101,7 +107,9 @@ public class ProjectForm extends GeneralStrutsForm{
         repositoryClass = null;
         estimatedClosureDate = null;
         showRepositoryUserPwd = "on";
+        budget=null;
         this.setSaveMethod(null, null);
+        this.setAdditionalFields(null);
     } 
     
     
@@ -134,10 +142,10 @@ public class ProjectForm extends GeneralStrutsForm{
 	
 	
     ///////////////////////////////////////////    
-	public void setRepositoryPolicies(HashMap policies) {
+	public void setRepositoryPolicies(HashMap<String,RepositoryPolicyTO> policies) {
 		this.repositoryPolicies = policies;
 	}
-	public HashMap getRepositoryPolicies() {
+	public HashMap<String,RepositoryPolicyTO> getRepositoryPolicies() {
 		return this.repositoryPolicies;
 	}
 
@@ -340,7 +348,34 @@ public class ProjectForm extends GeneralStrutsForm{
 		setRepositoryPolicy(RepositoryPolicyTO.POLICY_ENTITY_REF, newValue?"on":"off");
 	}
 	
+	
+    //////////////////////////////////////////////	
+	public void setBudget(String newValue) {
+		budget = newValue;
+	}
+	public String getBudget() {
+		return budget;
+	}
 
+	
+    //////////////////////////////////////////////
+	public void setBudgetCurrencySymbol(String newValue) {
+		budgetCurrencySymbol = newValue;
+	}
+	public String getBudgetCurrencySymbol() {
+		return budgetCurrencySymbol;
+	}
+	
+	
+    //////////////////////////////////////////////
+	public String getHtmlQualifications() {
+		return htmlQualifications;
+	}
+	public void setHtmlQualifications(String newValue) {
+		this.htmlQualifications = newValue;
+	}
+
+	
 	/**
 	 * Validate the form.
 	 */
@@ -425,5 +460,6 @@ public class ProjectForm extends GeneralStrutsForm{
 
 		return errors;
 	}
+
 
 }

@@ -12,6 +12,7 @@ import com.novell.ldap.LDAPConnection;
 import com.novell.ldap.LDAPException;
 import com.pandora.EventTO;
 import com.pandora.UserTO;
+import com.pandora.bus.SystemSingleton;
 import com.pandora.delegate.UserDelegate;
 import com.pandora.exception.BusinessException;
 
@@ -58,8 +59,10 @@ public final class SessionUtil {
 			}
 
 			//keep event max log = 200 records...
-			if (events.size()==200) {
-				events.remove(0);
+			if (events.size()>200) {
+				for (int i=0; i<events.size()-200; i++) {
+					events.remove(0);
+				}
 			}
 			
 			EventTO eto = new EventTO();
@@ -121,12 +124,14 @@ public final class SessionUtil {
 	public static String getUri(HttpServletRequest request){
 	    String hst = request.getServerName();
 	    String prt = request.getServerPort()+"";
+		String protoc = SystemSingleton.getInstance().getSystemProtocol();
+	    
 	    if (!prt.equals("0")) {
 	        prt = ":" + prt; 
 	    } else {
 	        prt = "";
 	    }
-	    return hst + prt;
+	    return protoc + "://" + hst + prt;
 	}
 	
 	
@@ -163,5 +168,5 @@ public final class SessionUtil {
 
         return strRetVal.toUpperCase();
 	}
-	
+    
 }

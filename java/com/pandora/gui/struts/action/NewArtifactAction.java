@@ -35,49 +35,17 @@ public class NewArtifactAction extends GeneralStrutsAction {
 
 	
 	
-	/*	
-	private void saveArtifact(String gadId, HttpServletRequest request) throws BusinessException{
-		PreferenceDelegate pdel = new PreferenceDelegate();
-		
-		Vector gadList = this.getAll();		
-		if (gadList!=null) {
-			Iterator i = gadList.iterator();
-			while(i.hasNext()) {				
-				Gadget gad = (Gadget)i.next();
-				if (gad.getId().equals(gadId)) {
-			
-					UserTO uto = SessionUtil.getCurrentUser(request);
-					
-					String value = uto.getPreference().getPreference(gad.getId() + ".enabled");
-					if (value!=null && value.equals("0")){
-						value = "1";
-					} else {
-						value = "0";
-					}
-					
-					PreferenceTO pto = new PreferenceTO(gad.getId() + ".enabled", value, uto );
-					uto.getPreference().addPreferences(pto);
-					pto.addPreferences(pto);
-		            pdel.insertOrUpdate(pto);
-		            
-		            break;
-				}
-			}
-		}
-	}
-	*/
-	
 	public StringBuffer getArtifactBody(GeneralStrutsForm frm, HttpServletRequest request) throws BusinessException, UnsupportedEncodingException{
-		ArtifactTemplateDelegate atdel = new ArtifactTemplateDelegate();
 		StringBuffer response = new StringBuffer();
 		String categoryId = frm.getGenericTag();
 		response.append("<table width=\"100%\" border=\"0\" cellspacing=\"0\" cellpadding=\"0\">\n");
 
-		Vector list = (Vector)request.getSession().getAttribute("ARTIFACT_LIST");
+		@SuppressWarnings("unchecked")
+		Vector<ArtifactTemplateTO> list = (Vector<ArtifactTemplateTO>)request.getSession().getAttribute("ARTIFACT_LIST");
 		if (list!=null) {
-			Iterator i = list.iterator();
+			Iterator<ArtifactTemplateTO> i = list.iterator();
 			while(i.hasNext()) {
-				ArtifactTemplateTO atto = (ArtifactTemplateTO)i.next();
+				ArtifactTemplateTO atto = i.next();
 				if (categoryId.equals("") || atto.getCategory().getId().equals(categoryId)) {
 					response.append("<tr><td>");
 					response.append(this.getHtmlArtifact(atto, request));
@@ -122,18 +90,18 @@ public class NewArtifactAction extends GeneralStrutsAction {
 
 
 	private StringBuffer getArtifactList(NewArtifactForm frm, HttpServletRequest request) throws BusinessException, UnsupportedEncodingException {
-		Vector categoryList = new Vector();
-		HashMap hm = new HashMap();		
+		Vector<CategoryTO> categoryList = new Vector<CategoryTO>();
+		HashMap<String,CategoryTO> hm = new HashMap<String,CategoryTO>();		
 		ArtifactTemplateDelegate atdel = new ArtifactTemplateDelegate();
 		
 		StringBuffer response = new StringBuffer();
 		response.append("<table width=\"100%\" border=\"0\" cellspacing=\"0\" cellpadding=\"0\">\n");
 
-		Vector list = atdel.getListByProject(frm.getProjectId());
+		Vector<ArtifactTemplateTO> list = atdel.getListByProject(frm.getProjectId());
 		if (list!=null) {
-			Iterator i = list.iterator();
+			Iterator<ArtifactTemplateTO> i = list.iterator();
 			while(i.hasNext()) {	
-				ArtifactTemplateTO atto = (ArtifactTemplateTO)i.next();
+				ArtifactTemplateTO atto = i.next();
 				String catlabel = atto.getCategory().getName();
 				CategoryTO cto = (CategoryTO)hm.get(catlabel);
 				if (cto==null) {

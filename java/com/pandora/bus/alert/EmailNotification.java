@@ -10,7 +10,10 @@ import javax.mail.Session;
 import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeMessage;
 
+import com.pandora.FieldValueTO;
+import com.pandora.NotificationFieldTO;
 import com.pandora.RootTO;
+import com.pandora.TransferObject;
 import com.pandora.bus.EventBUS;
 import com.pandora.helper.DateUtil;
 import com.pandora.helper.LogUtil;
@@ -21,7 +24,8 @@ import com.sun.mail.smtp.SMTPTransport;
  * by email.
  * 
  * In sendNotification the fields vector must contain the following values:
- * <li>host name or ip</li>
+ * <li>host name or ip or name</li>
+ * <li>host SMTP port</li>
  * <li>SMTP user account</li>
  * <li>SMTP user password</li>
  * <li>Destination email</li>
@@ -39,6 +43,7 @@ public class EmailNotification extends Notification {
 	private static final String SMTP_MAILER = "smtpsend";	
 	
 	private static final String EMAIL_HOST        = "EMAIL_HOST";
+	private static final String EMAIL_PORT        = "EMAIL_PORT";
 	private static final String EMAIL_USER        = "EMAIL_USER";
 	private static final String EMAIL_PASSWORD    = "EMAIL_PASSWORD";
 	private static final String EMAIL_DESTINATION = "EMAIL_DESTINATION";
@@ -51,8 +56,9 @@ public class EmailNotification extends Notification {
     /* (non-Javadoc)
      * @see com.pandora.bus.alert.Notification#sendNotification(java.util.Vector, java.util.Vector)
      */
-    public boolean sendNotification(Vector fields, Vector sqlData) throws Exception {
+	public boolean sendNotification(Vector<NotificationFieldTO> fields, Vector<Vector<Object>> sqlData) throws Exception {
 		String host = this.getParamByKey(EMAIL_HOST, fields);
+		String port = this.getParamByKey(EMAIL_PORT, fields);
 		String smtpUser = this.getParamByKey(EMAIL_USER, fields);
 		String smtpPass = this.getParamByKey(EMAIL_PASSWORD, fields);
 		String destination = this.getParamByKey(EMAIL_DESTINATION, fields);
@@ -64,6 +70,7 @@ public class EmailNotification extends Notification {
 
 		Properties props = new Properties();
 		props.put("mail.smtp.host", host);
+		props.put("mail.smtp.port", port);
 		props.put("mail.smtp.auth", "true");
 		Session session = Session.getInstance(props, null);
 
@@ -77,16 +84,18 @@ public class EmailNotification extends Notification {
 		    }
 		    text = text + "\n" + content;
 		    
-		    Vector sqlDataItem = (Vector)sqlData.elementAt(1);
-		    this.sendMessage(session, destination, text, sender, subject, host, smtpUser, smtpPass, sqlDataItem);
+		    if (sqlData!=null && sqlData.size()>1) {
+			    Vector<Object> sqlDataItem = (Vector<Object>)sqlData.elementAt(1);
+			    this.sendMessage(session, destination, text, sender, subject, host, port, smtpUser, smtpPass, sqlDataItem);		    	
+		    }
 		    
 		} else {
 			boolean isFirst = true;
-			Iterator i = sqlData.iterator();
+			Iterator<Vector<Object>> i = sqlData.iterator();
 			while(i.hasNext()) {
-			    Vector sqlDataItem = (Vector)i.next();
+			    Vector<Object> sqlDataItem = (Vector<Object>)i.next();
 			    if (!isFirst) {
-			    	this.sendMessage(session, destination, text, sender, subject, host, smtpUser, smtpPass, sqlDataItem);	
+			    	this.sendMessage(session, destination, text, sender, subject, host, port, smtpUser, smtpPass, sqlDataItem);	
 			    } else {
 			    	isFirst = false;
 			    }
@@ -97,59 +106,31 @@ public class EmailNotification extends Notification {
         return true;
     }
 
-    /* (non-Javadoc)
-     * @see com.pandora.bus.alert.Notification#getFieldLabels()
-     */
-    public Vector getFieldLabels() {
-        Vector list = new Vector();
-        list.add("notification.email.from");
-        list.add("notification.email.to");
-        list.add("notification.email.title");
-        list.add("notification.email.body");
-        list.add("notification.email.host");
-        list.add("notification.email.user");
-        list.add("notification.email.pass");
-        list.add("notification.email.group");
-        list.add("notification.email.format");
-        return list;
-    }
-
- 
-    /* (non-Javadoc)
-     * @see com.pandora.bus.alert.Notification#getFieldTypes()
-     */
-    public Vector getFieldTypes() {
-        Vector list = new Vector();
-        list.add("1");
-        list.add("1");
-        list.add("1");
-        list.add("1");
-        list.add("1");
-        list.add("1");
-        list.add("3");
-        list.add("2");
-        list.add("2");
-        return list;
-    }
-
     
     /* (non-Javadoc)
-     * @see com.pandora.bus.alert.Notification#getFieldKeys()
-     */
-    public Vector getFieldKeys() {
-        Vector list = new Vector();
-        list.add(EMAIL_SENDER);
-        list.add(EMAIL_DESTINATION);
-        list.add(EMAIL_SUBJECT);
-        list.add(EMAIL_TEXT);
-        list.add(EMAIL_HOST);
-        list.add(EMAIL_USER);
-        list.add(EMAIL_PASSWORD);
-        list.add(EMAIL_GROUP);
-        list.add(EMAIL_TEXT_FORMAT);
-        return list;        
-    }
+     * @see com.pandora.bus.alert.Notification#getFields()
+     */        
+    public Vector<FieldValueTO> getFields(){
+        Vector<FieldValueTO> response = new Vector<FieldValueTO>();
+        
+        response.add(new FieldValueTO(EMAIL_SENDER, "notification.email.from", FieldValueTO.FIELD_TYPE_TEXT, 100, 50));
+        response.add(new FieldValueTO(EMAIL_DESTINATION, "notification.email.to", FieldValueTO.FIELD_TYPE_TEXT, 100, 50));
+        response.add(new FieldValueTO(EMAIL_SUBJECT, "notification.email.title", FieldValueTO.FIELD_TYPE_TEXT, 100, 50));
+        response.add(new FieldValueTO(EMAIL_TEXT, "notification.email.body", FieldValueTO.FIELD_TYPE_AREA, 85, 4));
+        response.add(new FieldValueTO(EMAIL_HOST, "notification.email.host", FieldValueTO.FIELD_TYPE_TEXT, 50, 30));
+        response.add(new FieldValueTO(EMAIL_PORT, "notification.email.port", FieldValueTO.FIELD_TYPE_TEXT, 10, 5));
+        response.add(new FieldValueTO(EMAIL_USER, "notification.email.user", FieldValueTO.FIELD_TYPE_TEXT, 50, 30));
+        response.add(new FieldValueTO(EMAIL_PASSWORD, "notification.email.pass", FieldValueTO.FIELD_TYPE_PASS, 50, 20));
 
+        Vector<TransferObject> boolList = new Vector<TransferObject>();
+        boolList.add(new TransferObject("OK", "OK"));
+        boolList.add(new TransferObject("NOK", "-"));
+        response.add(new FieldValueTO(EMAIL_GROUP, "notification.email.group", boolList));
+        response.add(new FieldValueTO(EMAIL_TEXT_FORMAT, "notification.email.format", boolList));
+
+        return response;
+    }
+    
     
     /* (non-Javadoc)
      * @see com.pandora.bus.alert.Notification#getUniqueName()
@@ -168,7 +149,7 @@ public class EmailNotification extends Notification {
     
     
     private void sendMessage(Session session, String destination, String text, 
-            String sender, String subject, String host, String smtpUser, String smtpPass, Vector sqlDataItem) throws Exception {
+            String sender, String subject, String host, String port, String smtpUser, String smtpPass, Vector<Object> sqlDataItem) throws Exception {
     
 		//replace the wildcards with the fields...
 		destination = super.replaceByToken(sqlDataItem, destination);
@@ -176,16 +157,16 @@ public class EmailNotification extends Notification {
 		subject = super.replaceByToken(sqlDataItem, subject);		
 		text = super.replaceByToken(sqlDataItem, text);
 	    
-	    this.sendMessage(session, destination, text, sender, subject, host, smtpUser, smtpPass);        
+	    this.sendMessage(session, destination, text, sender, subject, host, port, smtpUser, smtpPass);        
     }
     
     
     private void sendMessage(Session session, String destination, String text, 
-            String sender, String subject, String host, String smtpUser, String smtpPass) 
+            String sender, String subject, String host, String port, String smtpUser, String smtpPass) 
     throws Exception {
     	EventBUS bus = new EventBUS();
 		try {
-			String logMsg = "sender:[" + sender + "] destination:[" + destination + "] subject:[" + subject + "] host:[" + host + "] smtpUser:[" + smtpUser + "]"; 
+			String logMsg = "sender:[" + sender + "] destination:[" + destination + "] subject:[" + subject + "] host:[" + host + "] port:[" + port + "] smtpUser:[" + smtpUser + "]"; 
             bus.insertEvent(LogUtil.LOG_INFO, LogUtil.SUMMARY_NOTIFIC, logMsg, RootTO.ROOT_USER, null);
 			
 			// Create the message to be sent
@@ -209,7 +190,7 @@ public class EmailNotification extends Notification {
 			// Create the SMTP Transport
 		    SMTPTransport transport = (SMTPTransport)session.getTransport("smtp");
 		    try {
-			    transport.connect(host, smtpUser, smtpPass);		    	
+			    transport.connect(host, Integer.parseInt(port), smtpUser, smtpPass);		    	
 			    // Send the message
 			    transport.sendMessage(message, message.getAllRecipients());
 		    } finally {
@@ -222,4 +203,19 @@ public class EmailNotification extends Notification {
 	}
     
 
+    /* (non-Javadoc)
+     * @see com.pandora.bus.alert.Notification#getFieldKeys()
+     */    
+    public Vector<String> getFieldKeys() {
+        return null;
+    }
+
+    
+    /* (non-Javadoc)
+     * @see com.pandora.bus.alert.Notification#getFieldLabels()
+     */
+    public Vector<String> getFieldLabels() {
+        return null;
+    }
+    
 }

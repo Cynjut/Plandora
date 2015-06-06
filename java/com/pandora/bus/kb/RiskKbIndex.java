@@ -16,19 +16,23 @@ import com.pandora.helper.DateUtil;
 
 public class RiskKbIndex extends KbIndex {
 
+    @Override
     public String getUniqueName() {
         return "RiskKbIndex";
     }
 
+    @Override
     public String getContextLabel() {
         return "label.viewKb.Risk";
     }
 
+    @Override
     public Timestamp getCreationDate(Object to){
         RiskTO rto = (RiskTO)to;
         return rto.getCreationDate();
     }
     
+    @Override
     public String getProjectId(Object to){
         RiskTO rto = (RiskTO)to;
         return rto.getProject().getId();
@@ -44,9 +48,10 @@ public class RiskKbIndex extends KbIndex {
         return response;
     }
 
-    public Vector call(long initialCursor, long finalCursor) throws Exception {
+    @Override
+	public Vector<?> call(long initialCursor, long finalCursor) throws Exception {
         RiskBUS bus = new RiskBUS();
-        Vector vr = null;
+        Vector<RiskTO> vr = null;
         try {
             vr = bus.getListUntilID(initialCursor+"", finalCursor+"");
         } catch (BusinessException e) {
@@ -56,6 +61,7 @@ public class RiskKbIndex extends KbIndex {
 
     }        
  
+    @Override
     public long getMaxId() throws Exception {
         long response = -1;
         try {        
@@ -68,18 +74,19 @@ public class RiskKbIndex extends KbIndex {
     }
     
     
+    @Override
     public Document getObjectToIndex(Object to) throws Exception {
         Document response = new Document();
         RiskDelegate del = new RiskDelegate();
         RiskTO rto = (RiskTO)to;
         String content = "", history = ""; 
     
-        Vector hist = del.getHistory(rto.getId());
+        Vector<RiskHistoryTO> hist = del.getHistory(rto.getId());
         if (hist!=null) {
         	history = history.concat("</p>");
-            Iterator i = hist.iterator();
+            Iterator<RiskHistoryTO> i = hist.iterator();
             while(i.hasNext()){
-                RiskHistoryTO rhto = (RiskHistoryTO)i.next();
+                RiskHistoryTO rhto = i.next();
                 history = history.concat("<li>");
                 if (rhto.getContent()!=null) {
                     history = history.concat(rhto.getContent());    
@@ -108,7 +115,8 @@ public class RiskKbIndex extends KbIndex {
     }
     
     
-    public Class getBusinessClass() throws Exception {
+    @SuppressWarnings("rawtypes")
+	public Class getBusinessClass() throws Exception {
         return RiskTO.class;
     }
     

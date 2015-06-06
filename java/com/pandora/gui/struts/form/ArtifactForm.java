@@ -33,7 +33,11 @@ public class ArtifactForm extends HosterRepositoryForm {
     
     private String snipList = "include_img=include_img;include_sql=include_sql;include_table=include_table";
     
-    private String snipHtmlDimension;
+    private String htmlAfterSnipSelect;
+    
+    private String snipHtmlOption;
+    
+    private String hmtlShowChanges;
     
     
     //////////////////////////////////////////
@@ -124,11 +128,20 @@ public class ArtifactForm extends HosterRepositoryForm {
 	
 	
     //////////////////////////////////////////	
-	public String getSnipHtmlDimension() {
-		return snipHtmlDimension;
+	public String getHtmlAfterSnipSelect() {
+		return htmlAfterSnipSelect;
 	}
-	public void setSnipHtmlDimension(String newValue) {
-		this.snipHtmlDimension = newValue;
+	public void setHtmlAfterSnipSelect(String newValue) {
+		this.htmlAfterSnipSelect = newValue;
+	}
+	
+	
+	//////////////////////////////////////////
+	public String getSnipHtmlOption() {
+		return snipHtmlOption;
+	}
+	public void setSnipHtmlOption(String newValue) {
+		this.snipHtmlOption = newValue;
 	}
 	
 	
@@ -159,6 +172,15 @@ public class ArtifactForm extends HosterRepositoryForm {
 	}
 	
 	
+	//////////////////////////////////////////		
+	public String getHmtlShowChanges() {
+		return hmtlShowChanges;
+	}
+	public void setHmtlShowChanges(String newValue) {
+		this.hmtlShowChanges = newValue;
+	}
+	
+	
 	public void clear(){
         name = null;        
         description= null;
@@ -166,6 +188,7 @@ public class ArtifactForm extends HosterRepositoryForm {
         planningId=null;
         templateId=null;
         backToCaller = "";
+        hmtlShowChanges = "";
         body = "";
         showSaveAsPopup = "off";  
         lang = "en";

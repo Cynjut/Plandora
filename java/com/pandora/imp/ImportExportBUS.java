@@ -2,6 +2,7 @@ package com.pandora.imp;
 
 import java.util.Vector;
 
+import com.pandora.FieldValueTO;
 import com.pandora.UserTO;
 import com.pandora.bus.GenericPlugin;
 import com.pandora.exception.BusinessException;
@@ -17,7 +18,7 @@ public abstract class ImportExportBUS extends GenericPlugin {
 	
     public abstract String getLabel() throws BusinessException;
 
-    public abstract Vector getFields() throws BusinessException;
+    public abstract Vector<FieldValueTO> getFields() throws BusinessException;
     
     
     
@@ -31,7 +32,8 @@ public abstract class ImportExportBUS extends GenericPlugin {
 	public static ImportExportBUS getClass(String className){
 		ImportExportBUS response = null;
         try {
-            Class klass = Class.forName(className);
+            @SuppressWarnings("rawtypes")
+			Class klass = Class.forName(className);
             response = (ImportExportBUS)klass.newInstance();
         } catch (java.lang.NoClassDefFoundError e) {
         	response = null;

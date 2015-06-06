@@ -35,7 +35,7 @@ public abstract class Converter {
 	
 	
 	protected void convertJpgToSwf(ByteArrayOutputStream baos, String folder, String key) throws Exception {
-		ArrayList tempFiles = new ArrayList();
+		ArrayList<String> tempFiles = new ArrayList<String>();
 		
 		try {
 			File f = new File(folder);
@@ -87,17 +87,17 @@ public abstract class Converter {
 	}
 
 
-	private void removeTempFiles(ArrayList tempFiles) {
+	private void removeTempFiles(ArrayList<String> tempFiles) {
 		try {
 			
 			//delete the temporary files
-			Iterator i = tempFiles.iterator();
+			Iterator<String> i = tempFiles.iterator();
 			while(i.hasNext()) {
 				String tempfilePath = (String)i.next();
 				File f = new File(tempfilePath);
 				f.delete();
 			}
-			
+
 		} catch (Exception e){
 			e.printStackTrace();
 		}

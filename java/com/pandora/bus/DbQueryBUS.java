@@ -3,6 +3,8 @@ package com.pandora.bus;
 import java.util.ArrayList;
 import java.util.Vector;
 
+import com.pandora.DBQueryParam;
+import com.pandora.DBQueryResult;
 import com.pandora.dao.DbQueryDAO;
 import com.pandora.exception.BusinessException;
 import com.pandora.exception.DataAccessException;
@@ -19,8 +21,8 @@ public class DbQueryBUS extends GeneralBusiness {
     /**
      * Perform statement into data base
      */    
-    public Vector<Vector<Object>> performQuery(String sql, int[] types, Vector params) throws BusinessException{
-        Vector<Vector<Object>> response = new Vector<Vector<Object>>();
+    public DBQueryResult performQuery(String sql, int[] types, Vector params) throws BusinessException{
+    	DBQueryResult response = new DBQueryResult();
         try {
             response = dao.performQuery(sql, types, params);
         } catch (DataAccessException e) {
@@ -58,7 +60,7 @@ public class DbQueryBUS extends GeneralBusiness {
     }    
 
     
-	public Vector executeQuery(ArrayList sql, ArrayList params) throws BusinessException {
+	public Vector executeQuery(ArrayList<String> sql, ArrayList<DBQueryParam> params) throws BusinessException {
         Vector response = new Vector();
         try {
             DbQueryDAO dao = new DbQueryDAO();

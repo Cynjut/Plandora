@@ -1,19 +1,18 @@
 package com.pandora.gui.taglib.decorator;
 
-import java.util.Vector;
 import java.util.Iterator;
+import java.util.Vector;
 
 import org.apache.taglibs.display.ColumnDecorator;
 
-import com.pandora.delegate.TaskDelegate;
-
-import com.pandora.ProjectTO;
 import com.pandora.PlanningRelationTO;
+import com.pandora.ProjectTO;
 import com.pandora.ResourceTO;
 import com.pandora.ResourceTaskTO;
 import com.pandora.RootTO;
-import com.pandora.TaskTO;
 import com.pandora.TaskStatusTO;
+import com.pandora.TaskTO;
+import com.pandora.delegate.TaskDelegate;
 import com.pandora.helper.HtmlUtil;
 
 

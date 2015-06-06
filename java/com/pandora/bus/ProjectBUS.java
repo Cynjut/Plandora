@@ -1,7 +1,6 @@
 package com.pandora.bus;
 
-import java.io.BufferedReader;
-import java.io.StringReader;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Vector;
@@ -18,6 +17,7 @@ import com.pandora.RepositoryPolicyTO;
 import com.pandora.RequirementTO;
 import com.pandora.ResourceTO;
 import com.pandora.ResourceTaskTO;
+import com.pandora.TransferObject;
 import com.pandora.UserTO;
 import com.pandora.dao.CustomerDAO;
 import com.pandora.dao.ProjectDAO;
@@ -25,6 +25,7 @@ import com.pandora.dao.ProjectStatusDAO;
 import com.pandora.dao.ResourceDAO;
 import com.pandora.delegate.InvoiceDelegate;
 import com.pandora.delegate.PlanningDelegate;
+import com.pandora.delegate.ProjectDelegate;
 import com.pandora.delegate.RepositoryDelegate;
 import com.pandora.delegate.RequirementDelegate;
 import com.pandora.delegate.ResourceTaskDelegate;
@@ -32,6 +33,8 @@ import com.pandora.exception.BusinessException;
 import com.pandora.exception.DataAccessException;
 import com.pandora.exception.IncompatibleUsrsBetweenPrjException;
 import com.pandora.exception.InvalidProjectUserReplaceException;
+import com.pandora.exception.MandatoryMetaFieldBusinessException;
+import com.pandora.exception.MandatoryMetaFieldDataException;
 import com.pandora.exception.ProjectCannotBeClosedException;
 import com.pandora.helper.DateUtil;
 import com.pandora.helper.LogUtil;
@@ -85,7 +88,7 @@ public class ProjectBUS extends GeneralBusiness {
      */
     public Vector<ProjectTO> getProjectListByUser(UserTO uto) throws BusinessException{
         Vector<ProjectTO> response = new Vector<ProjectTO>();
-        try {
+        try {        	
             response = this.sortProjects(dao.getProjectAllocation(uto, null));
         } catch (DataAccessException e) {
             throw new  BusinessException(e);
@@ -145,7 +148,7 @@ public class ProjectBUS extends GeneralBusiness {
 			Iterator<ProjectTO> i = childList.iterator();
 			while(i.hasNext()) {
 				ProjectTO child = i.next();
-				response = response + ", " + getProjectIn(child.getId());
+				response = response + ", " + getProjectIn(child.getId(), considerOnlyNonClosed);
 			}
 		}
 		return response;    	
@@ -194,6 +197,8 @@ public class ProjectBUS extends GeneralBusiness {
             //insert a mew project!           
             dao.insert(pto);
             
+        } catch (MandatoryMetaFieldDataException e) {
+        	throw new MandatoryMetaFieldBusinessException(e, e.getAfto());            
         } catch (DataAccessException e) {
             throw new BusinessException(e);
         }        
@@ -219,13 +224,13 @@ public class ProjectBUS extends GeneralBusiness {
             }
                         
             //setting project status to Close or Abort state => set a final date for project
-            if (newStatus.equals(ProjectStatusTO.STATE_MACHINE_CLOSE_ABORT)){
+            if (newStatus!=null && newStatus.equals(ProjectStatusTO.STATE_MACHINE_CLOSE_ABORT)){
                 pto.setFinalDate(DateUtil.getNow());
             }
             
             //if the updating process is changing the current state and the current state is 
             //Close or Abort throws an exception
-            if (!currStatus.equals(newStatus)){
+            if (currStatus!=null && !currStatus.equals(newStatus)){
                 if (currStatus.equals(ProjectStatusTO.STATE_MACHINE_CLOSE_ABORT)){
                     throw new BusinessException("The current status of project (Close or Abort) cannot be changed.");    
                 }
@@ -234,8 +239,8 @@ public class ProjectBUS extends GeneralBusiness {
             //if the updating process is changing the current state to Close or Abort and the 
             //current project contain open tasks, throws an exception          
             ResourceTaskDelegate rtdel = new ResourceTaskDelegate();
-            Vector<ResourceTaskTO> openTasks = rtdel.getListByProject(pto, "-1" , "-1", true); //get tasks of any resource, with status different of "Finished"
-            if (newStatus.equals(ProjectStatusTO.STATE_MACHINE_CLOSE_ABORT) && (openTasks!=null && openTasks.size()>0)){
+            Vector<ResourceTaskTO> openTasks = rtdel.getListByProject(pto, "-1" , "-1", null, true); //get tasks of any resource, with status different of "Finished"
+            if (newStatus!=null && newStatus.equals(ProjectStatusTO.STATE_MACHINE_CLOSE_ABORT) && (openTasks!=null && openTasks.size()>0)){
             	String list = ""; 
             	int item = 0;
             	Iterator<ResourceTaskTO> i = openTasks.iterator();
@@ -252,7 +257,7 @@ public class ProjectBUS extends GeneralBusiness {
 
             InvoiceDelegate idel = new InvoiceDelegate();
             Vector<InvoiceTO> invlist = idel.getInvoiceList(pto.getId(), false);
-            if (newStatus.equals(ProjectStatusTO.STATE_MACHINE_CLOSE_ABORT) && (invlist!=null && invlist.size()>0)){
+            if (newStatus!=null && newStatus.equals(ProjectStatusTO.STATE_MACHINE_CLOSE_ABORT) && (invlist!=null && invlist.size()>0)){
             	boolean open = false;
             	Iterator<InvoiceTO> i = invlist.iterator();
             	while(i.hasNext()) {
@@ -272,7 +277,7 @@ public class ProjectBUS extends GeneralBusiness {
             
             RequirementDelegate rdel = new RequirementDelegate();
             Vector<RequirementTO> reqlist = rdel.getListByProject(pto, "-1", "-1", "-2", "-1", "-1");
-            if (newStatus.equals(ProjectStatusTO.STATE_MACHINE_CLOSE_ABORT) && (reqlist!=null && reqlist.size()>0)){
+            if (newStatus!=null && newStatus.equals(ProjectStatusTO.STATE_MACHINE_CLOSE_ABORT) && (reqlist!=null && reqlist.size()>0)){
             	boolean open = false;
             	Iterator<RequirementTO> i = reqlist.iterator();
             	while(i.hasNext()) {
@@ -295,7 +300,9 @@ public class ProjectBUS extends GeneralBusiness {
             //Este tipo de checagem deve ser colocado no caso de INSERT tmb. 
 
             dao.update(pto);
-            
+        
+        } catch (MandatoryMetaFieldDataException e) {
+        	throw new MandatoryMetaFieldBusinessException(e, e.getAfto());
         } catch (DataAccessException e) {
             throw new BusinessException(e);
         }                
@@ -313,12 +320,12 @@ public class ProjectBUS extends GeneralBusiness {
         pto = this.checkProjectUsers(currProject, newProject);
         
         //check if a customer that must be removed, has Requirements into project
-        Vector removeCustList = pto.getRemoveCustomers();
+        Vector<CustomerTO> removeCustList = pto.getRemoveCustomers();
         if (removeCustList!=null && removeCustList.size()>0){
             Iterator<CustomerTO> i = removeCustList.iterator();
             while(i.hasNext()){
                 CustomerTO cto = i.next();
-                Vector list;
+                Vector<RequirementTO> list;
                 try {
                     list = rbus.getListByUserProject(cto, pto, false);
                 } catch (BusinessException e) {
@@ -331,12 +338,12 @@ public class ProjectBUS extends GeneralBusiness {
         }
 
         //check if a resource that must be removed, has tasks into project
-        Vector removeResList = pto.getRemoveResources();
+        Vector<ResourceTO> removeResList = pto.getRemoveResources();
         if (removeResList!=null && removeResList.size()>0){
-            Iterator i = removeResList.iterator();
+            Iterator<ResourceTO> i = removeResList.iterator();
             while(i.hasNext()){
-                ResourceTO rto = (ResourceTO)i.next();
-                Vector list;
+                ResourceTO rto = i.next();
+                Vector<ResourceTaskTO> list;
                 try {
                     list = rtbus.getTaskListByResourceProject(rto, pto);
                 } catch (BusinessException e) {
@@ -365,10 +372,10 @@ public class ProjectBUS extends GeneralBusiness {
     } 
     
     
-    public Vector<ProjectTO> getProjectListForWork(UserTO uto, boolean isAlloc) throws BusinessException{
+    public Vector<ProjectTO> getProjectListForWork(UserTO uto, boolean isAlloc, boolean nonClosed) throws BusinessException{
         Vector<ProjectTO> response = new Vector<ProjectTO>();
         try {
-            response = dao.getProjectListForWork(uto, isAlloc);
+            response = dao.getProjectListForWork(uto, isAlloc, nonClosed);
         } catch (DataAccessException e) {
             throw new  BusinessException(e);
         }
@@ -389,6 +396,7 @@ public class ProjectBUS extends GeneralBusiness {
 
 	
 	public String applyRepositoryPolicies(RepositoryMessageIntegration rep, boolean internalCommit) throws BusinessException {
+		ProjectDelegate prdel = new ProjectDelegate();
 		try {			
 			LogUtil.log(this, LogUtil.LOG_INFO, "request commit: [" + rep.getComment() + 
 					"] [" + rep.getFiles() + "] [" + rep.getProjectId() + "] [" + 
@@ -418,9 +426,9 @@ public class ProjectBUS extends GeneralBusiness {
 				if (ppto!=null && ppto.getValue().equals("on")) {
 					if (pto.getAllocUsers()!=null) {
 						boolean isOk = false;
-						Iterator i = pto.getAllocUsers().iterator();
+						Iterator<UserTO> i = pto.getAllocUsers().iterator();
 						while(i.hasNext()) {
-							UserTO uto = (UserTO)i.next();
+							UserTO uto = i.next();
 							if (rep.getAuthor()!=null && uto.getUsername().equals(rep.getAuthor().trim())) {
 								if (uto instanceof ResourceTO) {
 									isOk = true;
@@ -473,37 +481,39 @@ public class ProjectBUS extends GeneralBusiness {
 					//verify if entity exists...
 					PlanningDelegate pdel = new PlanningDelegate();
 					PlanningTO entity = pdel.getSpecializedObject(new PlanningTO(entityId));
-					if (entity==null && (entity.getType().equals(PlanningRelationTO.ENTITY_TASK) 
-							|| entity.getType().equals(PlanningRelationTO.ENTITY_REQ))) {
+					if (entity==null) {
 						return "1040";
+					} else {
+						if (!entity.getType().equals(PlanningRelationTO.ENTITY_TASK) && 
+							!entity.getType().equals(PlanningRelationTO.ENTITY_OCCU) &&
+							!entity.getType().equals(PlanningRelationTO.ENTITY_RISK) &&
+							!entity.getType().equals(PlanningRelationTO.ENTITY_REQ)) {
+							return "1040";	
+						}
 					}
 					
-					//get the path files to be commited...
-					String files = rep.getFiles();
-					if (files!=null && !files.trim().equals("")) {
-						if (!internalCommit) {
-							RepositoryDelegate rdel = new RepositoryDelegate();
-							BufferedReader br = new BufferedReader(new StringReader(files));
-							if (br!=null) {
-								String strLine = "";
-								while( (strLine = br.readLine()) != null) {
-									String[] filesToken = strLine.split("  ");
-									if (filesToken!=null && filesToken.length>1) {
-										String stat = filesToken[0];
-										String path = filesToken[filesToken.length-1];
-										if (stat!=null && path!=null && !path.trim().equals("")) {
-											rdel.updateRepositoryFilePlan(path, entityId, null, null, (stat.trim().equalsIgnoreCase("D")));	
-										}
-									} else {
-										return "1050";		
-									}
-								}							
-							} else {
-								return "1050";
-							}							
+					ProjectTO entityProj = entity.getPlanningProject(); 
+					if (entityProj!=null) {
+						String projectList = prdel.getProjectIn(pto.getId(), true);
+						if (projectList.indexOf("'" + entityProj.getId() + "'")==-1) {
+							return "1045";	
 						}
 					} else {
-						return "1050";
+						return "1045";
+					}
+					
+					
+					//get the path files to be commited...
+					if (!internalCommit) {
+						ArrayList<TransferObject> fileList = rep.getParsedFiles(); 	
+						if (fileList!=null) {
+							RepositoryDelegate rdel = new RepositoryDelegate();
+							for (TransferObject afile : fileList) {
+								rdel.updateRepositoryFilePlan(afile.getGenericTag(), entityId, null, (afile.getId().equalsIgnoreCase("D")));									
+							}
+						} else {
+							return "1050";
+						}								
 					}
 				}
 			}
@@ -687,7 +697,7 @@ public class ProjectBUS extends GeneralBusiness {
     	Vector<ProjectTO> childProjWithoutParent = new Vector<ProjectTO>();
 
         if (unorderedList!=null && unorderedList.size()>0){
-
+        	
             //get the root projects from list...
             Iterator<ProjectTO> i = unorderedList.iterator();
             while(i.hasNext()){
@@ -708,7 +718,7 @@ public class ProjectBUS extends GeneralBusiness {
             if (response.size()==0){
                 response = unorderedList;
             } else {
-                //if there are remaining child projects not considered...('orfa')
+                //if there are remaining child projects not considered...('orfan')
                 if (response.size()<unorderedList.size()){
                     Vector<ProjectTO> diff = StringUtil.minus(unorderedList, response);
                     response.addAll(diff);

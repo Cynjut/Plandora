@@ -12,6 +12,7 @@ import org.apache.struts.action.ActionMapping;
 
 import com.pandora.CategoryTO;
 import com.pandora.CustomerTO;
+import com.pandora.DiscussionTopicTO;
 import com.pandora.ProjectTO;
 import com.pandora.RequirementStatusTO;
 import com.pandora.RequirementTO;
@@ -30,7 +31,7 @@ public class AgilePanelReqAction extends GeneralStrutsAction {
 			HttpServletRequest request, HttpServletResponse response){
 		try {
 			AgilePanelReqForm frm = (AgilePanelReqForm)form;
-			Vector list = this.getCategoryByProject(frm.getReqProjectId());
+			Vector<CategoryTO> list = this.getCategoryByProject(frm.getReqProjectId());
 			if (list!=null) {
 				request.getSession().setAttribute("agilePanelReqCategoryList", list);	
 			} else {
@@ -49,7 +50,7 @@ public class AgilePanelReqAction extends GeneralStrutsAction {
 			String projectId = request.getParameter("reqProjectId");
 			
 			String content = "";
-			Vector list = this.getCategoryByProject(projectId);
+			Vector<CategoryTO> list = this.getCategoryByProject(projectId);
 			if (list!=null) {
 				content = HtmlUtil.getComboBox("categoryId", list, "textBox", null);	
 			}
@@ -89,7 +90,7 @@ public class AgilePanelReqAction extends GeneralStrutsAction {
 			if (frm.getIteration()!=null && !frm.getIteration().equals("-1")) {
 				rto.setIteration(frm.getIteration());	
 			}
-			rto.setDiscussionTopics(new Vector());
+			rto.setDiscussionTopics(new Vector<DiscussionTopicTO>());
 			rdel.insertRequirement(rto);
 
 			this.setSuccessFormSession(request, "message.insertReq");
@@ -103,8 +104,8 @@ public class AgilePanelReqAction extends GeneralStrutsAction {
 	}
 	
 	
-	private Vector getCategoryByProject(String projectId){
-		Vector list = null;		
+	private Vector<CategoryTO> getCategoryByProject(String projectId){
+		Vector<CategoryTO> list = null;		
 		try {
 			ProjectTO pto = new ProjectTO(projectId);
 			CategoryDelegate cdel = new CategoryDelegate();

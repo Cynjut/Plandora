@@ -62,7 +62,7 @@ public class IterationLinkDecorator extends ColumnDecorator {
 	    				
 	    			} else {
 	    				
-	        			Vector values = (Vector)this.getPageContext().getSession().getAttribute("iterationList");
+	        			Vector values = (Vector)this.getSession().getAttribute("iterationList");
 	        			content = HtmlUtil.getComboBox("cb_" + tto.getId() + "_iteration", getIterationList(values), "textBox", tto.getIteration());
 	    			}
 	    		}				
@@ -99,7 +99,7 @@ public class IterationLinkDecorator extends ColumnDecorator {
     	TaskTO tto = null;
         if (obj instanceof TaskTO) {
             tto = (TaskTO)this.getObject();
-        } else {
+        } else if (obj instanceof ResourceTaskTO) {
             ResourceTaskTO rtto = (ResourceTaskTO)this.getObject();
             tto = rtto.getTask();
         }
@@ -107,17 +107,17 @@ public class IterationLinkDecorator extends ColumnDecorator {
     }
 		
     
-	private Vector getIterationList(Vector iterations){
-		Vector response = new Vector();
+	private Vector<OccurrenceTO> getIterationList(Vector<OccurrenceTO> iterations){
+		Vector<OccurrenceTO> response = new Vector<OccurrenceTO>();
 		
 		OccurrenceTO oto = new OccurrenceTO("-1");
 		oto.setGenericTag("");
 		response.addElement(oto);
 		
 		if (iterations!=null) {
-			Iterator i = iterations.iterator();
+			Iterator<OccurrenceTO> i = iterations.iterator();
 			while(i.hasNext()) {
-				OccurrenceTO o = (OccurrenceTO)i.next();
+				OccurrenceTO o = i.next();
 				o.setGenericTag(o.getName());
 				response.add(o);
 			}			

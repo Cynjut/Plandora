@@ -1,9 +1,7 @@
 package com.pandora.bus;
 
-import java.io.UnsupportedEncodingException;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import com.pandora.helper.Base64Coder;
+import org.apache.commons.codec.binary.Base64;
+import org.apache.commons.codec.digest.DigestUtils;
 
 import com.pandora.exception.BusinessException;
 
@@ -26,24 +24,9 @@ public final class PasswordEncrypt {
 	 * @throws BusinessException
 	 */
 	public synchronized String encrypt(String rawPassword) throws BusinessException {
-		MessageDigest md = null;
-		
-		try {
-			md = MessageDigest.getInstance("SHA");
-		} catch (NoSuchAlgorithmException e) {
-			throw new BusinessException(e.getMessage());
-		}
-		
-		try {
-			md.update(rawPassword.getBytes("UTF-8"));
-		} catch (UnsupportedEncodingException e) {
-			throw new BusinessException(e.getMessage());
-		}
-
-		byte[] raw = md.digest();
-		String hash = Base64Coder.encodeString(new String(raw));
-		
-		return hash;
+		byte[] raw = DigestUtils.sha(rawPassword.getBytes());
+		byte[] encoded = Base64.encodeBase64(raw);
+		return  new String(encoded);
 	}
 
 	

@@ -32,7 +32,7 @@ public class NodeTemplateTO extends TransferObject {
 	/** This attribute is used only to Workflow Saving feature **/
 	private Integer instanceId;
 		
-	private boolean isFromCached = false;
+	protected boolean isFromCached = false;
 	
 	private boolean isParentTask;
 	
@@ -53,7 +53,7 @@ public class NodeTemplateTO extends TransferObject {
 		isFromCached = false;
 	}
 	
-	
+
 	/////////////////////////////////
 	public String getName() {
 		return name;
@@ -162,17 +162,17 @@ public class NodeTemplateTO extends TransferObject {
 	}
 
 	public String getHtmlMapCoords(boolean showHRef) {
-		HashMap cache = new HashMap();
+		HashMap<String,String> cache = new HashMap<String,String>();
 		return this.getHtmlMapCoords(cache, showHRef);
 	}
 	
 	public NodeTemplateTO getNode(String nodeId, boolean getTheParent) {
-		HashMap cache = new HashMap();
+		HashMap<String,String> cache = new HashMap<String,String>();
 		return this.getNode(cache, nodeId, null, getTheParent);
 	}
 	
 	
-	private String getHtmlMapCoords(HashMap cache, boolean showHRef) {
+	private String getHtmlMapCoords(HashMap<String,String> cache, boolean showHRef) {
 		String response = "";
 		
 		if (cache.get(this.getId())==null) {
@@ -206,7 +206,7 @@ public class NodeTemplateTO extends TransferObject {
 		return response;
 	}
 	
-	private NodeTemplateTO getNode(HashMap cache, String nodeId, NodeTemplateTO parent, boolean getTheParent) {
+	private NodeTemplateTO getNode(HashMap<String,String> cache, String nodeId, NodeTemplateTO parent, boolean getTheParent) {
 		NodeTemplateTO response = null;
 		
 		if (cache.get(this.getId())==null) {

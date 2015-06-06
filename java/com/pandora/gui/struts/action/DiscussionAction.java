@@ -10,6 +10,7 @@ import org.apache.struts.action.ActionForward;
 import org.apache.struts.action.ActionMapping;
 
 import com.pandora.CategoryTO;
+import com.pandora.DiscussionTO;
 import com.pandora.ProjectTO;
 import com.pandora.UserTO;
 import com.pandora.delegate.CategoryDelegate;
@@ -25,15 +26,12 @@ public class DiscussionAction extends GeneralStrutsAction {
 			HttpServletRequest request, HttpServletResponse response){
 		
 		String forward = "showDiscussion";
-
-		//this.clearForm(form, request);
 		
 		UserTO uto = SessionUtil.getCurrentUser(request);
 		DiscussionForm frm = (DiscussionForm)form;
 		frm.setSaveMethod(RiskForm.INSERT_METHOD, uto);
 	
 	    this.refresh(mapping, form, request, response);    
-	    //this.refreshAuxiliarList(mapping, form, request, response);
 	    
 		return mapping.findForward(forward);		
 	}
@@ -47,8 +45,8 @@ public class DiscussionAction extends GeneralStrutsAction {
 			DiscussionForm frm = (DiscussionForm)form;
 		    DiscussionDelegate ddel = new DiscussionDelegate();
 		    ProjectTO pto = null;
-		    Vector cList = new Vector();
-		    Vector dList = new Vector();
+		    Vector<CategoryTO> cList = new Vector<CategoryTO>();
+		    Vector<DiscussionTO> dList = new Vector<DiscussionTO>();
 		    
 		    if (frm.getProjectId()!=null && !frm.getProjectId().equals("")) {
 		    	pto = new ProjectTO(frm.getProjectId());	

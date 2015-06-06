@@ -24,8 +24,8 @@ public class KPICsvExportBUS extends ExportBUS {
 	/* (non-Javadoc)
      * @see com.pandora.imp.ExportBUS#getFields()
      */
-    public Vector getFields() throws BusinessException {    	
-    	Vector list = new Vector();
+    public Vector<FieldValueTO> getFields() throws BusinessException {    	
+    	Vector<FieldValueTO> list = new Vector<FieldValueTO>();
 	    CategoryDelegate cdel = new CategoryDelegate();
 	    
 	    
@@ -128,7 +128,7 @@ public class KPICsvExportBUS extends ExportBUS {
 	        
 	    	finalDate = DateUtil.getChangedDate(finalDate, Calendar.DATE, +1);
 	    	
-	    	Vector listFinan = rdel.getReportListBySearch(iniDate, finalDate, ReportTO.FINANTIAL_PERSP, pto.getId(), categoryId);
+	    	Vector listFinan = rdel.getReportListBySearch(iniDate, finalDate, ReportTO.FINANCIAL_PERSP, pto.getId(), categoryId);
 		    Vector listCust = rdel.getReportListBySearch(iniDate, finalDate, ReportTO.CUSTOMER_PERSP, pto.getId(), categoryId);
 		    Vector listProc = rdel.getReportListBySearch(iniDate, finalDate, ReportTO.PROCESS_PERSP, pto.getId(), categoryId);
 		    Vector listLearn = rdel.getReportListBySearch(iniDate, finalDate, ReportTO.LEARNING_PERSP, pto.getId(), categoryId);

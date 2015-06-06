@@ -3,6 +3,7 @@
 <%@ taglib uri="/WEB-INF/lib/struts-bean" prefix="bean" %>
 <%@ taglib uri="/WEB-INF/lib/display" prefix="display" %>
 <%@ taglib uri="/WEB-INF/lib/struts-logic" prefix="logic" %>
+<%@ taglib uri="/WEB-INF/lib/plandora-html" prefix="plandora-html" %>
 
 
 <html:form action="showBrowseArtifact">
@@ -32,7 +33,7 @@
 				<td class="formTitle" width="80"><bean:message key="label.formRepository.type"/>:&nbsp;</td>
 				<td colspan="3" class="formBody" width="330">
 			  		<html:select name="browseArtifactForm" property="artifactSaveType" styleClass="textBox">
-			             <html:options collection="artifactExportList" property="id" labelProperty="genericTag"/>
+			             <html:options collection="artifactExportList" property="id" labelProperty="genericTag" filter="false"/>
 					</html:select>
 				</td>
 				<td class="formTitle">&nbsp;</td>
@@ -70,13 +71,13 @@
 					<logic:equal name="browseArtifactForm" property="showUserPwd" value="off">
 						<div id="BROWSE_REPOSISTORY_BODY" style="width:440px; height:170px; overflow: scroll;">					
 					</logic:equal>	
-						<display:table border="1" width="100%" name="artifactsFolderList" scope="session" pagesize="0">
-							<display:column width="10" property="isDirectory" align="center" title="grid.title.empty" decorator="com.pandora.gui.taglib.decorator.RepositoryEntryTypeDecorator" />
-							<display:column width="10" property="isDirectory" align="center" title="grid.title.empty" decorator="com.pandora.gui.taglib.decorator.RepositoryEntityRadioBoxDecorator" />
-							<display:column property="name" align="left" title="label.formRepository.name" decorator="com.pandora.gui.taglib.decorator.RepositoryEntryNameDecorator" tag="browse" />					  
-							<display:column width="50" property="revision" title="label.formRepository.revision" />
-							<display:column width="130" align="center" property="creationDate" title="label.formRepository.date" decorator="com.pandora.gui.taglib.decorator.GridDateDecorator" tag="2;2" />
-						</display:table>		
+						<plandora-html:ptable width="100%" name="artifactsFolderList" ajax="false" frm="browseArtifactForm" pagesize="0">
+							<plandora-html:pcolumn width="10" property="isDirectory" align="center" title="grid.title.empty" decorator="com.pandora.gui.taglib.decorator.RepositoryEntryTypeDecorator" />
+							<plandora-html:pcolumn width="10" property="isDirectory" align="center" title="grid.title.empty" decorator="com.pandora.gui.taglib.decorator.RepositoryEntityRadioBoxDecorator" />
+							<plandora-html:pcolumn property="name" align="left" title="label.formRepository.name" decorator="com.pandora.gui.taglib.decorator.RepositoryEntryNameDecorator" tag="browse" />					  
+							<plandora-html:pcolumn width="50" property="revision" title="label.formRepository.revision" />
+							<plandora-html:pcolumn width="130" align="center" property="creationDate" title="label.formRepository.date" decorator="com.pandora.gui.taglib.decorator.GridDateDecorator" tag="2;2" />
+						</plandora-html:ptable>							
 					</div>					
 				</td>
 			</tr>

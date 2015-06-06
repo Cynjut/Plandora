@@ -14,7 +14,9 @@ import com.pandora.NodeTemplateTO;
 import com.pandora.ProjectTO;
 import com.pandora.ResourceTO;
 import com.pandora.ResourceTaskTO;
+import com.pandora.RootTO;
 import com.pandora.StepNodeTemplateTO;
+import com.pandora.UserTO;
 import com.pandora.bus.TaskNodeTemplateBUS;
 import com.pandora.delegate.UserDelegate;
 import com.pandora.exception.BusinessException;
@@ -24,6 +26,8 @@ public class ApplyTaskTemplateForm extends GeneralStrutsForm {
 	private static final long serialVersionUID = 1L;
 
 	private String projId; //the project the was selected when the template form was called
+	
+	private String iterationId;
 	
 	private String projectId;
 	
@@ -57,6 +61,8 @@ public class ApplyTaskTemplateForm extends GeneralStrutsForm {
 	
     /** if current node is a parent task... */
     private boolean isParentTask;
+    
+    private String projectName;
 	
 	
     public void reset(ActionMapping mapping, HttpServletRequest request) {
@@ -75,6 +81,7 @@ public class ApplyTaskTemplateForm extends GeneralStrutsForm {
 	    this.setDescription(null);
 	    this.setCategoryId(null);
 	    this.setProjectId(null);
+	    this.setIterationId(null);
 	    this.setResourceId(null);
 	    this.setEstimatedTime(null);
 	    this.setInitDate(null);
@@ -134,6 +141,15 @@ public class ApplyTaskTemplateForm extends GeneralStrutsForm {
     }
     
     
+	////////////////////////////////////       
+	public String getIterationId() {
+		return iterationId;
+	}
+	public void setIterationId(String newValue) {
+		this.iterationId = newValue;
+	}
+
+
 	////////////////////////////////////    
     public String getTemplateId() {
         return templateId;
@@ -232,10 +248,20 @@ public class ApplyTaskTemplateForm extends GeneralStrutsForm {
 		this.isParentTask = newValue;
 	}
 
+	
+	/////////////////////////////////////////	
+	public String getProjectName() {
+		return projectName;
+	}
+	public void setProjectName(String newValue) {
+		this.projectName = newValue;
+	}
+
 
 	/**
 	 * Validate the form.
 	 */
+	@SuppressWarnings("rawtypes")
 	public ActionErrors validate(ActionMapping arg0, HttpServletRequest request) {
 		ActionErrors errors = new ActionErrors();
 	
@@ -256,7 +282,8 @@ public class ApplyTaskTemplateForm extends GeneralStrutsForm {
 
 			    if (!this.isParentTask) {
 
-			    	Vector resList = (Vector)request.getSession().getAttribute("resourceAllocated");
+					@SuppressWarnings("unchecked")
+					Vector<ResourceTaskTO> resList = (Vector)request.getSession().getAttribute("resourceAllocated");
 				    if (resList==null || resList.size()==0){
 				       errors.add("ResourceList", new ActionError("validate.formApplyTaskTemplate.resource") );
 				       
@@ -266,7 +293,7 @@ public class ApplyTaskTemplateForm extends GeneralStrutsForm {
 					    NodeTemplateTO parent = this.currentRoot.getNode(this.id, true);			    	
 					    if (me!=null && parent!=null) {
 					    	String parentType = parent.getNodeType();
-					    	Vector dateList = null;
+					    	Vector<String> dateList = null;
 						    if (parentType.equals(NodeTemplateTO.NODE_TEMPLATE_STEP)) {
 						    	dateList = getStartDate(parent);
 						    	
@@ -280,9 +307,9 @@ public class ApplyTaskTemplateForm extends GeneralStrutsForm {
 						    	for (int i=0; i<dateList.size(); i++) {
 									String date = (String)dateList.elementAt(i);
 									Timestamp refDate = TaskNodeTemplateBUS.getDateOfResourceList(date);								
-								    Iterator j = resList.iterator();
+								    Iterator<ResourceTaskTO> j = resList.iterator();
 								    while(j.hasNext()){
-								        ResourceTaskTO buff = (ResourceTaskTO)j.next();
+								        ResourceTaskTO buff = j.next();
 								        if (buff.getStartDate().before(refDate)) {
 								        	errors.add("ResourceList", new ActionError("validate.formApplyTaskTemplate.invalidDate", buff.getResource().getName()) );
 								            break;
@@ -306,7 +333,7 @@ public class ApplyTaskTemplateForm extends GeneralStrutsForm {
 						    	
 						    	//validate if the 'start date' of current node are latest than the next node of tree
 						    	NodeTemplateTO next = me.getNextNode();
-						    	Vector dateList = getStartDate(next);
+						    	Vector<String> dateList = getStartDate(next);
 							    if (dateList!=null && dateList.size()>0) {
 							    	for (int i=0; i<dateList.size(); i++) {
 										String date = (String)dateList.elementAt(i);
@@ -315,9 +342,9 @@ public class ApplyTaskTemplateForm extends GeneralStrutsForm {
 											refDate = TaskNodeTemplateBUS.getDateOfResourceList(date);
 										}
 										
-									    Iterator j = resList.iterator();
+									    Iterator<ResourceTaskTO> j = resList.iterator();
 									    while(j.hasNext()){
-									        ResourceTaskTO buff = (ResourceTaskTO)j.next();
+									        ResourceTaskTO buff = j.next();
 									        if (refDate.before(buff.getStartDate())) {
 									        	errors.add("ResourceList", new ActionError("validate.formApplyTaskTemplate.invalidDate2", buff.getResource().getName()) );
 									            break;
@@ -331,22 +358,24 @@ public class ApplyTaskTemplateForm extends GeneralStrutsForm {
 
 				    //check if the allocated resources are related to the project of template node selected  
 				    UserDelegate udel = new UserDelegate();
-				    Iterator j = resList.iterator();
+				    Iterator<ResourceTaskTO> j = resList.iterator();
 				    while(j.hasNext()){
-				        ResourceTaskTO buff = (ResourceTaskTO)j.next();
+				        ResourceTaskTO buff = j.next();
+				        UserTO uto = null;
 				        ResourceTO projectResource = buff.getResource();
 				        projectResource.setProject(new ProjectTO(this.projectId));
-					    try {
+					    try { 
+					    	uto = udel.getUser(projectResource);
 					    	projectResource = udel.getResource(projectResource);
 						} catch (BusinessException e) {
 							projectResource = null;
 						}
-				        if (projectResource==null) {
+				        if (projectResource==null && !uto.getUsername().equals(RootTO.ROOT_USER)) {
 				        	errors.add("ResourceList", new ActionError("validate.formApplyTaskTemplate.resourceProj", buff.getResource().getName()) );			        	
 				            break;
 				        }
 				    }
-				    
+
 			    } else {
 			    	//check if the current node is before the decision and states a "parent task"
 			    	if (me!=null) {
@@ -372,8 +401,8 @@ public class ApplyTaskTemplateForm extends GeneralStrutsForm {
 	}
     
 	
-	private Vector getStartDate(NodeTemplateTO node){
-		Vector response = new Vector();
+	private Vector<String> getStartDate(NodeTemplateTO node){
+		Vector<String> response = new Vector<String>();
 		StepNodeTemplateTO step = (StepNodeTemplateTO)node;
 		if (step.getResourceId()!=null) {
 			String[] resources = step.getResourceId().split(";");

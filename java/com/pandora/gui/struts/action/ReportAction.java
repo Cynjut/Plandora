@@ -1,5 +1,6 @@
 package com.pandora.gui.struts.action;
 
+import java.sql.Timestamp;
 import java.util.Locale;
 import java.util.Vector;
 
@@ -10,16 +11,18 @@ import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionForward;
 import org.apache.struts.action.ActionMapping;
 
-import java.sql.Timestamp;
-
 import com.pandora.CategoryTO;
+import com.pandora.PreferenceTO;
 import com.pandora.ProjectTO;
 import com.pandora.ReportTO;
 import com.pandora.TransferObject;
+import com.pandora.UserTO;
 import com.pandora.delegate.CategoryDelegate;
+import com.pandora.delegate.PreferenceDelegate;
 import com.pandora.delegate.ProjectDelegate;
 import com.pandora.delegate.ReportDelegate;
 import com.pandora.exception.BusinessException;
+import com.pandora.exception.DuplicatedKpiTypeException;
 import com.pandora.gui.struts.form.CustReqForm;
 import com.pandora.gui.struts.form.GeneralStrutsForm;
 import com.pandora.gui.struts.form.ReportForm;
@@ -39,6 +42,12 @@ public class ReportAction extends GeneralStrutsAction {
 			 HttpServletRequest request, HttpServletResponse response) {
 	    String forward = "showReport";
 	    this.clearForm(form, request);	  
+	    ReportForm frm = (ReportForm)form;
+	    
+	    UserTO uto = SessionUtil.getCurrentUser(request);	    
+	    String hideClosed = uto.getPreference().getPreference(PreferenceTO.REPORT_HIDE_CLOSED);
+	    frm.setHideClosedReport(hideClosed!=null && hideClosed.equals("on"));
+	    
 	    this.refresh(mapping, form, request, response);
 	    return mapping.findForward(forward);
 	}
@@ -90,17 +99,17 @@ public class ReportAction extends GeneralStrutsAction {
 		try {
 			ReportForm rfrm = (ReportForm)form;
 			ReportDelegate rdel = new ReportDelegate();
-			
-			//clear form and messages
-			this.clearMessages(request);
-			this.clearForm(rfrm, request);
-			
+				
 			//create an ReportTO object based on html fields
 			ReportTO rto = new ReportTO();
 			rto.setId(rfrm.getId());
 			
 			//close a report into data base
 			rdel.removeReport(rto);
+			
+			//clear form and messages
+			this.clearMessages(request);
+			this.clearForm(rfrm, request);
 			
 			//set success message into http session
 			this.setSuccessFormSession(request, "message.removeReport");
@@ -147,10 +156,12 @@ public class ReportAction extends GeneralStrutsAction {
 			
 			//refresh lists on form...
 			this.refresh(mapping, form, request, response);
-			
+		
+		} catch(DuplicatedKpiTypeException e){
+			this.setErrorFormSession(request, "error.duplicatedkpi", e);
 		} catch(BusinessException e){
 		    this.setErrorFormSession(request, errorMsg, e);
-		} catch(NullPointerException e){
+		} catch(Exception e){
 		    this.setErrorFormSession(request, errorMsg, e);		    
 		}
 		return mapping.findForward(forward);		
@@ -163,30 +174,44 @@ public class ReportAction extends GeneralStrutsAction {
 	public ActionForward refresh(ActionMapping mapping, ActionForm form,
 			 HttpServletRequest request, HttpServletResponse response) {
 	    String forward = "showReport";
+	    PreferenceDelegate pfdel = new PreferenceDelegate();
+	    
 		try {
 		    ReportForm repFrm = (ReportForm)form;
 		    
 			//get all Projects from data base and put into http session (to be displayed by combo)
 			ProjectDelegate pdel = new ProjectDelegate();
-			Vector prjList = pdel.getProjectList();
+			Vector<ProjectTO> prjList = pdel.getProjectList();
 			
-			Vector allProjects = new Vector();
+			Vector<ProjectTO> allProjects = new Vector<ProjectTO>();
 			if (!repFrm.getBoolIsKpiForm()) {
 				ProjectTO allproject = new ProjectTO("0");
 				allproject.setName(this.getBundleMessage(request, "label.all"));
-				allProjects.addElement(allproject);			    
+				allProjects.addElement(allproject);
+			} else {
+				ProjectTO bellowproject = new ProjectTO("-1");
+				bellowproject.setName(this.getBundleMessage(request, "label.manageReport.project.multiple"));
+				allProjects.addElement(bellowproject);			    					
 			}
+			
 			allProjects.addAll(prjList);
 			
 			request.getSession().setAttribute("projectList", allProjects);
 
+		    //save the new preference
+		    UserTO uto = SessionUtil.getCurrentUser(request);
+		    PreferenceTO pto = new PreferenceTO(PreferenceTO.REPORT_HIDE_CLOSED, repFrm.getHideClosedReport()?"on":"off", uto);
+			uto.getPreference().addPreferences(pto);
+			pto.addPreferences(pto);
+			pfdel.insertOrUpdate(pto);
+			
 			//get all Reports from data base and put into http session (to be displayed by combo)			
 			ReportDelegate rdel = new ReportDelegate();
-			Vector repList = rdel.getListBySource(repFrm.getBoolIsKpiForm(), null, null, true); //Note: show reports of all categories 
+			Vector<ReportTO> repList = rdel.getListBySource(repFrm.getBoolIsKpiForm(), null, null, !repFrm.getHideClosedReport()); //Note: show reports of all categories 
 		    request.getSession().setAttribute("reportList", repList);
 		    
 		    //create a list of all perspective ids of KPIs (to be displayed by combo)
-		    Vector perList = new Vector();		    
+		    Vector<TransferObject> perList = new Vector<TransferObject>();		    
 		    if (repFrm.getBoolIsKpiForm()) {
 			    for (int i= 1; i<=4; i++){
 			        TransferObject to = new TransferObject();
@@ -199,7 +224,7 @@ public class ReportAction extends GeneralStrutsAction {
 
 
 		    //create a list of all tolerance units ids of KPIs (to be displayed by combo)
-		    Vector toleranceUnitList = new Vector();		    
+		    Vector<TransferObject> toleranceUnitList = new Vector<TransferObject>();		    
 		    for (int i= 1; i<=2; i++){
 		        TransferObject to = new TransferObject();
 		        to.setId(i+"");
@@ -208,7 +233,7 @@ public class ReportAction extends GeneralStrutsAction {
 		    }		        
 		    request.getSession().setAttribute("toleranceUnitList", toleranceUnitList);
 		    
-		    Vector toleranceScaleList = new Vector();		    
+		    Vector<TransferObject> toleranceScaleList = new Vector<TransferObject>();		    
 		    for (int i= 1; i<=3; i++){
 		        TransferObject to = new TransferObject();
 		        to.setId(i+"");
@@ -218,7 +243,7 @@ public class ReportAction extends GeneralStrutsAction {
 		    request.getSession().setAttribute("toleranceScaleList", toleranceScaleList);
 		    
 		    //create a list of all available hours (to be displayed by combo)
-		    Vector hourList = new Vector();
+		    Vector<TransferObject> hourList = new Vector<TransferObject>();
 		    if (repFrm.getBoolIsKpiForm()) {		    
 			    for (int i= 0; i<=23; i++){
 			        TransferObject to = new TransferObject();
@@ -230,8 +255,8 @@ public class ReportAction extends GeneralStrutsAction {
 		    request.getSession().setAttribute("hoursList", hourList);
 
 		    //create a list of all allowed data types (to be displayed by combo)
-		    Vector dataTypeList = new Vector();	    
-		    for (int i= 0; i<=2; i++){
+		    Vector<TransferObject> dataTypeList = new Vector<TransferObject>();	    
+		    for (int i= 0; i<=3; i++){
 		        TransferObject to = new TransferObject();
 		        to.setId(i+"");
 		        to.setGenericTag(this.getBundleMessage(request, "label.manageReport.dataType." + i));
@@ -239,7 +264,7 @@ public class ReportAction extends GeneralStrutsAction {
 		    }
 		    request.getSession().setAttribute("dataTypeList", dataTypeList);
 
-		    Vector profileList = new Vector();	    
+		    Vector<TransferObject> profileList = new Vector<TransferObject>();	    
 		    for (int i=0; i<=4; i++){
 		        TransferObject to = new TransferObject();
 		        to.setId(i+"");
@@ -248,6 +273,14 @@ public class ReportAction extends GeneralStrutsAction {
 		    }
 		    request.getSession().setAttribute("profileList", profileList);
 
+		    Vector<TransferObject> kpiTypeList = new Vector<TransferObject>();	    
+		    for (int i=0; i<=5; i++){
+		        TransferObject to = new TransferObject();
+		        to.setId(i+"");
+		        to.setGenericTag(this.getBundleMessage(request, "label.manageReport.kpiType." + i));
+		        kpiTypeList.addElement(to);
+		    }
+		    request.getSession().setAttribute("kpiTypeList", kpiTypeList);		    
 		    
 			//get all Categories from data base and put into http session (to be displayed by combo)
 		    this.refreshCategory(mapping, form, request, response);
@@ -274,8 +307,13 @@ public class ReportAction extends GeneralStrutsAction {
 			} else {
 			    categoryType = CategoryTO.TYPE_REPORT;
 			}
-			Vector categoryListFrmDB = cdel.getCategoryListByType(categoryType, new ProjectTO(repFrm.getProjectId()), false);		    
+			Vector<CategoryTO> categoryListFrmDB = cdel.getCategoryListByType(categoryType, new ProjectTO(repFrm.getProjectId()), false);		    
 			request.getSession().setAttribute("categoryList", categoryListFrmDB);
+			
+			if (repFrm.getProjectId()!=null && !repFrm.getProjectId().equals("-1")) {
+				repFrm.setAppliedProjectList(repFrm.getProjectId());
+			}
+			
 			
 		} catch(BusinessException e){
 		    this.setErrorFormSession(request, "error.showReportForm", e);
@@ -316,10 +354,17 @@ public class ReportAction extends GeneralStrutsAction {
         Locale loc = SessionUtil.getCurrentLocale(request);
         rfrm.setExecutionHour(rto.getExecutionHour()+"");
         rfrm.setId(rto.getId());
+        rfrm.setDescription(rto.getDescription());
         rfrm.setProjectId(rto.getProject().getId());
         rfrm.setReportPerspectiveId(rto.getReportPerspectiveId());
         rfrm.setSqlStement(rto.getSqlStement());
         rfrm.setType(rto.getType()+"");
+        
+        rfrm.setKpiType(null);	
+        if (rto.getKpiType()!=null) {
+        	rfrm.setKpiType(rto.getKpiType()+"");	
+        }
+        
 		rfrm.setName(rto.getName());
 		rfrm.setReportFileName(rto.getReportFileName());
 		rfrm.setDataType(rto.getDataType()+"");
@@ -335,22 +380,32 @@ public class ReportAction extends GeneralStrutsAction {
 		    rfrm.setCategoryId("-1");   
 		}
 		
+		String appliedProjList = "";
+		if (rto.getAppliedProjectList()!=null) {
+			if (rfrm.getBoolIsKpiForm() && rto.getProject().getId().equals("0")) {
+				rfrm.setProjectId("-1");	
+			}
+			for (ProjectTO p : rto.getAppliedProjectList()) {
+				if (!appliedProjList.equals("")) {
+					appliedProjList = appliedProjList + "; ";	
+				}
+				appliedProjList = appliedProjList + p.getId();
+			}
+		}
+		rfrm.setAppliedProjectList(appliedProjList);
+		
 		rfrm.setGoal(rto.getGoal());
 		rfrm.setTolerance(rto.getTolerance());
 		if (rto.getToleranceType()!=null) {
-			if (rto.getToleranceType().equals("1") || 
-						rto.getToleranceType().equals("2") || 
-						rto.getToleranceType().equals("3")) {
+			if (rto.getToleranceType().equals("1") || rto.getToleranceType().equals("2") ||	rto.getToleranceType().equals("3")) {
 				rfrm.setToleranceUnit("1");
 			} else {
 				rfrm.setToleranceUnit("2");
 			}
 			
-			if (rto.getToleranceType().equals("1") || 
-					rto.getToleranceType().equals("4")) {
+			if (rto.getToleranceType().equals("1") || rto.getToleranceType().equals("4")) { 
 				rfrm.setToleranceScale("1");
-			} else if (rto.getToleranceType().equals("2") || 
-					rto.getToleranceType().equals("5")) {
+			} else if (rto.getToleranceType().equals("2") || rto.getToleranceType().equals("5")) {
 				rfrm.setToleranceScale("2");
 			} else {
 				rfrm.setToleranceScale("3");
@@ -367,6 +422,7 @@ public class ReportAction extends GeneralStrutsAction {
      */
     private ReportTO getTransferObjectFromActionForm(ReportForm rfrm, HttpServletRequest request) {
         Locale loc = SessionUtil.getCurrentLocale(request);
+        
         ReportTO response = new ReportTO(rfrm.getId());
         if (rfrm.getExecutionHour()!=null && !rfrm.getExecutionHour().equals("")) {
             response.setExecutionHour(new Integer(rfrm.getExecutionHour()));    
@@ -376,6 +432,7 @@ public class ReportAction extends GeneralStrutsAction {
         if (rfrm.getLastExecution()!=null && !rfrm.getLastExecution().equals("")) {
             response.setLastExecution(DateUtil.getDateTime(rfrm.getLastExecution(), super.getCalendarMask(request), loc));    
         }
+        response.setDescription(rfrm.getDescription());
         response.setName(rfrm.getName());
         response.setReportFileName(rfrm.getReportFileName());
         response.setProject(new ProjectTO(rfrm.getProjectId()));
@@ -386,6 +443,12 @@ public class ReportAction extends GeneralStrutsAction {
         } else {
             response.setType(new Integer("0"));
         }
+        
+        response.setKpiType(null);
+        if (rfrm.getKpiType()!=null && !rfrm.getKpiType().equals("")) {
+            response.setKpiType(new Integer(rfrm.getKpiType()));    
+        }
+        
         if (rfrm.getDataType()!=null && !rfrm.getDataType().equals("")) {
             response.setDataType(new Integer(rfrm.getDataType()));    
         } else {
@@ -414,7 +477,22 @@ public class ReportAction extends GeneralStrutsAction {
 		} else {
 			response.setToleranceType((Integer.parseInt(rfrm.getToleranceScale())+3)+"");
 		}
-        		
+        
+		response.clearAppliedProjectList();
+		if (rfrm.getBoolIsKpiForm() && rfrm.getAppliedProjectList()!=null && !rfrm.getAppliedProjectList().trim().equals("")) {
+			if (rfrm.getProjectId().equals("-1")) {
+				response.setProject(new ProjectTO("0"));		
+			}
+			String[] list = rfrm.getAppliedProjectList().split(";");
+			for(int i=0; i<list.length; i++) {
+				if (list[i]!=null && !list[i].trim().equals("")) {
+					response.addAppliedProjectList(new ProjectTO(list[i].trim()));	
+				}
+			}				
+		} else {
+			response.addAppliedProjectList(new ProjectTO(rfrm.getProjectId()));
+		}
+			
         return response;
     }
 

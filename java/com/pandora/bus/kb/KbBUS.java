@@ -11,6 +11,7 @@ import org.apache.lucene.document.Document;
 import org.apache.lucene.index.CorruptIndexException;
 import org.apache.lucene.queryParser.ParseException;
 import org.apache.lucene.queryParser.QueryParser;
+import org.apache.lucene.search.Hit;
 import org.apache.lucene.search.Hits;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
@@ -26,16 +27,14 @@ import com.pandora.delegate.UserDelegate;
 import com.pandora.exception.BusinessException;
 
 
-/**
- * 
- */
 public class KbBUS extends GeneralBusiness {
     
     
-    public Vector search(String subject) throws BusinessException{
+
+	public Vector<KbDocumentTO> search(String subject) throws BusinessException{
         IndexSearcher searcher = null;
         UserDelegate udel = new UserDelegate();
-        Vector response = new Vector();
+        Vector<KbDocumentTO> response = new Vector<KbDocumentTO>();
         ProjectDelegate pdel = new ProjectDelegate();
         
         UserTO root = udel.getRoot();
@@ -45,25 +44,35 @@ public class KbBUS extends GeneralBusiness {
         try {
             searcher = new IndexSearcher(indexLocation);
         } catch (Exception e) {  
-            
+            e.printStackTrace();
         }
-                   
+
+       /*
+        try {
+			computeTopTermQuery();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+        */
 	    Hits hits = this.query(subject, searcher);
 	    if (hits!=null && hits.length()>0) {
-	        HashMap projList = pdel.getProjectListToHash(false);
+	        HashMap<String, ProjectTO> projList = pdel.getProjectListToHash(false);
 	        
-	        for (int j=0 ; j<hits.length(); j++) {
-	            Document doc;
+	        @SuppressWarnings("unchecked")
+			Iterator<Hit> i = hits.iterator();
+	        
+            while (i.hasNext()){
+            	Hit hit = i.next();
+  	            Document doc;
 	            try {
-	                doc = hits.doc(j);
-	                                            
-	                KbDocumentTO kbDoc = new KbDocumentTO(doc);
+	                doc = hit.getDocument();	                
+	                KbDocumentTO kbDoc = new KbDocumentTO(doc, hit.getScore());
 	                response.add(kbDoc);
 	
 	                //link a project object with KbDocument
-	                Object obj = projList.get(doc.get(KbIndex.KB_PROJECT_ID));
-	                if (obj!=null) {
-	                    kbDoc.setProject((ProjectTO)obj);
+	                ProjectTO prj = projList.get(doc.get(KbIndex.KB_PROJECT_ID));
+	                if (prj!=null) {
+	                    kbDoc.setProject(prj);
 	                }
 	            
 	            } catch (CorruptIndexException e1) {
@@ -71,7 +80,8 @@ public class KbBUS extends GeneralBusiness {
 	            } catch (IOException e1) {
 	                e1.printStackTrace();
 	            }                        
-	        }
+                  
+            }
 	    }
         
         return response;
@@ -105,11 +115,11 @@ public class KbBUS extends GeneralBusiness {
         String response = "(" + KbIndex.KB_PROJECT_ID + ":\"" + projectId + "\"";
         
         ProjectBUS pbus = new ProjectBUS();
-        Vector childList = pbus.getProjectListByParent(new ProjectTO(projectId), false);
+        Vector<ProjectTO> childList = pbus.getProjectListByParent(new ProjectTO(projectId), false);
         if (childList!=null) {
-            Iterator i = childList.iterator();
+            Iterator<ProjectTO> i = childList.iterator();
             while(i.hasNext()) {
-                ProjectTO child = (ProjectTO)i.next();
+                ProjectTO child = i.next();
                 response = response + this.getProjectSearchSintax(child);
             }
         }
@@ -119,11 +129,11 @@ public class KbBUS extends GeneralBusiness {
     private String getProjectSearchSintax(ProjectTO project) throws BusinessException{
     	String response = "";
         ProjectBUS pbus = new ProjectBUS();
-        Vector childList = pbus.getProjectListByParent(project, false);
+        Vector<ProjectTO> childList = pbus.getProjectListByParent(project, false);
         if (childList!=null) {
-            Iterator i = childList.iterator();
+            Iterator<ProjectTO> i = childList.iterator();
             while(i.hasNext()) {
-                ProjectTO child = (ProjectTO)i.next();
+                ProjectTO child = i.next();
                 response = response + getProjectSearchSintax(child);
             }
         }
@@ -139,7 +149,7 @@ public class KbBUS extends GeneralBusiness {
         try {
             
             QueryParser qp = new QueryParser(KbIndex.KB_CONTENT, analyzer);
-            Query q = qp.parse(subject);
+            Query q = qp.parse(subject);            
             hits = searcher.search(q);
                                    
         } catch (ParseException e) {
@@ -150,5 +160,33 @@ public class KbBUS extends GeneralBusiness {
         return hits;
     }
 
-
+/*
+    private void computeTopTermQuery() throws Exception {
+    	UserDelegate udel = new UserDelegate();
+        HashMap<String,Integer> frequencyMap = new HashMap<String,Integer>();
+        ArrayList<String> termlist = new ArrayList<String>();
+        
+        UserTO root = udel.getRoot();
+        PreferenceTO pref = root.getPreference();        
+        String indexLocation = pref.getPreference(PreferenceTO.KB_INDEX_FOLDER);
+        
+        IndexReader reader = IndexReader.open(indexLocation);
+        TermEnum terms = reader.terms();
+        while (terms.next()) {
+          Term term = terms.term();
+          String termText = term.text();
+          int frequency = reader.docFreq(term);
+          frequencyMap.put(termText, frequency);
+          termlist.add(termText);
+        }
+        reader.close();
+        
+        StringBuilder termBuf = new StringBuilder();
+        BooleanQuery q = new BooleanQuery();
+        for (String t : termlist) {
+        	System.out.println(">>> " + t + " : " + frequencyMap.get(t));
+        }
+      }    
+ */
+    
 }

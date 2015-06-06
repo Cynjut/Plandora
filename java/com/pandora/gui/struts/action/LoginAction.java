@@ -9,11 +9,14 @@ import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionForward;
 import org.apache.struts.action.ActionMapping;
 
+import com.pandora.MetaFormTO;
 import com.pandora.PreferenceTO;
 import com.pandora.RootTO;
+import com.pandora.SurveyTO;
 import com.pandora.TransferObject;
 import com.pandora.UserTO;
 import com.pandora.delegate.MetaFormDelegate;
+import com.pandora.delegate.PreferenceDelegate;
 import com.pandora.delegate.SurveyDelegate;
 import com.pandora.delegate.UserDelegate;
 import com.pandora.exception.BusinessException;
@@ -77,16 +80,20 @@ public class LoginAction extends GeneralStrutsAction{
 		        request.getSession().removeAttribute(UserDelegate.CURRENT_USER_SESSION);
 		        request.getSession().setAttribute(UserDelegate.CURRENT_USER_SESSION, childUser);
 
-				Vector v = mfrmDel.getMetaFormList();
+				Vector<MetaFormTO> v = mfrmDel.getMetaFormList();
 				request.getSession().setAttribute("metaFormList", v);			
 
 			    request.getSession().removeAttribute(ShowSurveyAction.PARTIAL_ANSWERS);
 				request.getSession().removeAttribute(UserDelegate.USER_SURVEY_LIST);
-				Vector vs = sDel.getSurveyListByUser(childUser, false);
+				Vector<SurveyTO> vs = sDel.getSurveyListByUser(childUser, true);
 				if (vs!=null && vs.size()>0) {
 					request.getSession().setAttribute(UserDelegate.USER_SURVEY_LIST, vs);					
 				}
 
+				if (uto.getUsername().equalsIgnoreCase("root")) {
+					this.saveWebAppPath(request, uto);	
+				}
+				
 		        //go to...
 		        forward = "home";
 
@@ -130,8 +137,11 @@ public class LoginAction extends GeneralStrutsAction{
 		//get user from http session
 		UserTO uto = SessionUtil.getCurrentUser(request);
 		
+		if (uto!=null) {
+			
+		}
 		//check the new version of Plandora
-		if (uto.getUsername().equals(RootTO.ROOT_USER)) {
+		if (uto!=null && uto.getUsername().equals(RootTO.ROOT_USER)) {
 			this.getNextPlandoraVersion(request, uto);
 		}
 		
@@ -172,5 +182,13 @@ public class LoginAction extends GeneralStrutsAction{
 		} catch(Exception e){
 			e.printStackTrace();
 		}
+	}
+	
+	private void saveWebAppPath(HttpServletRequest request, UserTO uto) throws BusinessException{		
+	    PreferenceDelegate pdel = new PreferenceDelegate();	    
+	    PreferenceTO pref = uto.getPreference();
+	    String path = this.getServlet().getServletContext().getRealPath("/WEB-INF/");
+		pref.addPreferences(new PreferenceTO(PreferenceTO.GENERAL_WEBAPP_PATH, path, uto));
+		pdel.insertOrUpdate(pref);				
 	}
 }

@@ -16,6 +16,8 @@ import com.pandora.NodeTemplateTO;
 
 public class WorkflowUtil {
 
+	private static final int MAX_WIDTH_NODE = 100;
+	
 	/**
 	 * The constructor was set to private to avoid instancing creation  
 	 */
@@ -29,9 +31,9 @@ public class WorkflowUtil {
 	
 	public static int paintSquare(Graphics g, int x, int y, NodeTemplateTO node, Color bgColor, String tag){
 		int response = y;
-		ArrayList content = new ArrayList();
+		ArrayList<String> content = new ArrayList<String>();
 		
-		int maxWidth = crop(g, node.getName(), 100, content) + 10;
+		int maxWidth = crop(g, node.getName(), MAX_WIDTH_NODE, content) + 10;
 		int maxHeight = content.size() * 15;
 	
 		int left = (int)(x - 20 - (maxWidth/2));
@@ -46,7 +48,7 @@ public class WorkflowUtil {
 		
 		g.drawRoundRect(left-10, y, (int)(maxWidth+55), (maxHeight+10), 20, 20 );
 		
-		//set the current coordenates of block
+		//set the current coordinates of block
 		node.setCoords((left-10) + "," + y + "," + (int)(maxWidth+45+left) + "," +(maxHeight+20+y));
 
 		//paint multiline content
@@ -74,7 +76,7 @@ public class WorkflowUtil {
 
 	public static int paintDecision(Graphics g, int x, int y, DecisionNodeTemplateTO node, String yesLabel, String noLabel){
 		int response = y;
-		ArrayList content = new ArrayList();
+		ArrayList<String> content = new ArrayList<String>();
 		String answer = node.getDecisionAnswer();
 		
 		g.drawLine(x-40, y+20, x, y);
@@ -82,37 +84,42 @@ public class WorkflowUtil {
 		g.drawLine(x+40, y+20, x, y+40);
 		g.drawLine(x, y+40, x-40, y+20);
 				
-		//set the current coordenates of block
+		//set the current coordinates of block
 		node.setCoords((x-40) + "," + y + "," + (x+40) + "," +(y+40));
 
-		crop(g, node.getQuestionContent(), 120, content);
-		paintMultilineText(g, content, x, y+40);
+		crop(g, node.getQuestionContent(), 160, content);
+		paintMultilineText(g, content, x+100, y-15);
 		
 		//draw 'Yes' label
-		g.drawString(yesLabel, x-65, y+15);
+		g.drawString(yesLabel, x+10, y+54);
 		if (answer!=null && answer.equals(DecisionNodeTemplateTO.LABEL_YES)){
 			Rectangle2D dimen = g.getFontMetrics().getStringBounds(yesLabel, g);
-			g.drawRect(x-65, y+16, (int)dimen.getWidth(), 1);
+			g.drawRect(x+10, y+55, (int)dimen.getWidth(), 1);
 		}
 
 		//draw 'No' label
-		g.drawString(noLabel, x+45, y+15);		
+		g.drawString(noLabel, x+45, y+35);		
 		if (answer!=null && answer.equals(DecisionNodeTemplateTO.LABEL_NO)){
 			Rectangle2D dimen = g.getFontMetrics().getStringBounds(noLabel, g);
-			g.drawRect(x+45, y+16, (int)dimen.getWidth(), 1);
+			g.drawRect(x+45, y+36, (int)dimen.getWidth(), 1);
 		}
 		
 		//'yes' branch..
-		g.drawLine(x-40, y+20, x-70, y+20);
-		g.drawLine(x-80, y+30, x-80, y+40);
-		g.drawArc(x-80, y+20, 20, 20, 90, 90);
-		paintArrow(g, x-80, y+40);
+		//g.drawLine(x-40, y+20, x-70, y+20);
+		//g.drawLine(x-80, y+30, x-80, y+40);
+		//g.drawArc(x-80, y+20, 20, 20, 90, 90);
+		//g.drawLine(x, y+40, x, y+40);
+		paintArrow(g, x, y+40);
 		
 		//'no' branch..
-		g.drawLine(x+40, y+20, x+70, y+20);
-		g.drawLine(x+80, y+30, x+80, y+40);
-		g.drawArc(x+60, y+20, 20, 20, 0, 90);
-		paintArrow(g, x+80, y+40);
+		//g.drawLine(x+40, y+20, x+70, y+20);
+		//g.drawLine(x+80, y+30, x+80, y+40);
+		//g.drawArc(x+60, y+20, 20, 20, 0, 90);
+		//paintArrow(g, x+80, y+40);
+		g.drawLine(x+40, y+20, x+150, y+20);
+		g.drawLine(x+160, y+30, x+160, y+40);
+		g.drawArc(x+140, y+20, 20, 20, 0, 90);
+		paintArrow(g, x+160, y+40);
 		
 		return response + 70;
 	}
@@ -154,7 +161,7 @@ public class WorkflowUtil {
 	}
 
 	
-	private static void paintMultilineText(Graphics g, ArrayList content, int x, int y){
+	private static void paintMultilineText(Graphics g, ArrayList<String> content, int x, int y){
 		for (int i=0; i<content.size(); i++) {
 			Rectangle2D dimen = g.getFontMetrics().getStringBounds((String)content.get(i), g);
 			g.drawString((String)content.get(i), (int)(x - (dimen.getWidth()/2)), y + 17 + (i * 15));	
@@ -162,7 +169,7 @@ public class WorkflowUtil {
 	}
 	
 	
-	private static int crop(Graphics g, String rawContent, int maxWidth, ArrayList content) {
+	private static int crop(Graphics g, String rawContent, int maxWidth, ArrayList<String> content) {
 		int response = maxWidth;
 		
 		if (rawContent!=null) {
@@ -191,7 +198,7 @@ public class WorkflowUtil {
 				}
 			}
 			
-			//put the residual string at last line...
+			//put the remaining (residual) string at last line...
 			if (!currentLine.trim().equals("")) {
 				content.add(currentLine);	
 			}

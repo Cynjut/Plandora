@@ -1,0 +1,394 @@
+
+/* Begin Typography & Colors */
+body {
+	font-size: 62.5%; 
+	font-family: Verdana, Arial, Sans-Serif;
+	background-color: #AAAAAA;
+	color: #333;
+	text-align: center;
+	}
+
+#topbar {
+	margin: 0;
+	max-width:750px;
+	height:25px;
+	line-height:23px;
+	background:#FFFFE6;
+	overflow:hidden;
+	border-bottom: 1px black solid;
+	}	
+	
+
+#topbar a, #topbar {
+	font-family: Verdana, Arial, Sans-Serif;
+	text-align: right;
+	padding-right: 5px;
+
+}	
+
+	
+#page {
+	background-color: white;
+	border: 1px solid #00FF00;
+	text-align: left;
+	width: 750px;
+	}
+
+#header {
+	background-color: #00FF00;
+	border-bottom: 1px black solid;
+	}
+
+#content {
+	float: left;
+	padding: 0 0 20px 45px;
+	margin: -70px 0 0 0;
+	width: 450px;	
+	}
+
+#contentfull {
+	float: left;
+	padding: 0 0 20px 45px;
+	margin: -70px 0 0 0;
+	width: 650px;	
+	}
+
+
+#content .entry {
+	line-height: 1.4em;
+	}
+
+
+.alt {
+	background-color: #f5fff5;
+	border-top: 1px solid #ccc;
+	border-bottom: 1px solid #ccc;
+	border-left: 1px solid #ccc;
+	border-right: 1px solid #ccc;
+	padding: 10px 10px 10px 10px;
+	}
+
+
+h1, h1 a, h1 a:hover, h1 a:visited, .description {
+	text-decoration: none;
+	color: #c0c0c0;
+	}
+
+h2, h2 a, h2 a:visited, h3, h3 a, h3 a:visited {
+	color: #000;
+	}
+
+h2, h2 a, h2 a:hover, h2 a:visited, h3, h3 a, h3 a:hover, h3 a:visited, #sidebar h2, #wp-calendar caption, cite {
+	text-decoration: none;
+	}
+
+.entry p a:visited {
+	color: #00FF00;
+	}
+
+.commentlist li, #commentform input, #commentform textarea {
+	font: 0.9em Verdana, Arial, Sans-Serif;
+	}
+	
+.commentlist li {
+	font-weight: bold;
+	}
+
+.commentlist cite, .commentlist cite a {
+	font-weight: bold;
+	font-style: normal;
+	font-size: 8px;
+	}
+
+.commentlist p {
+	font-weight: normal;
+	line-height: 1.5em;
+	text-transform: none;
+	}
+	
+p.about {
+	text-align: center;
+	background-color: #F5FfF5;
+	font-size: 10px;
+	font-family: Arial, Verdana, Sans-Serif;
+}
+
+#commentform p {
+	font-family: Verdana, Arial, Sans-Serif;
+	}
+
+.commentmetadata {
+	font-weight: normal;
+	font-size: 9px;
+	}
+
+
+small, #sidebar ul ul li, #sidebar ul ol li, .nocomments, .postmetadata, blockquote, strike {
+	color: #777;
+	}
+	
+code {
+	font: 10px 'Courier New', Courier, Fixed;
+	}
+	
+
+acronym, abbr, span.caps {
+	font-size: 9px;
+	letter-spacing: .07em;
+	}
+
+a, h2 a:hover, h3 a:hover {
+	color: #008000;
+	text-decoration: none;
+	}
+
+a:hover {
+	color: #008000;
+	text-decoration: underline;
+	}
+	
+/* End Typography & Colors */
+
+
+
+
+
+
+
+#header {
+	padding: 0;
+	margin: 0 auto;
+	height: 50px;
+	width: 100%;
+	background-color: #FFFFFF;
+	}
+
+#headering {
+	margin: 0;
+	height: 50px;
+	width: 100%;
+}
+
+h2, h3 {
+	font-family: Verdana, Arial, Sans-Serif;
+	font-weight: bold;
+	font-size: 15px;
+	}
+
+h1 {
+	font-family: Verdana, Arial, Sans-Serif;
+	font-weight: bold;
+	font-size: 16px;
+	text-align: center;
+	}
+
+.description {
+	font-size: 10px;
+	text-align: center;
+	}
+
+
+#pagebar {
+	width: 750px;
+	height: 20px;
+	border-bottom: 1px black solid;
+
+}
+
+#pagebar a {
+	font-family: Verdana, Arial, Sans-Serif;
+	color: #333;
+	font-size: 10px;
+	display: block;
+	float: left;
+	padding: 3px 15px 0px 15px;
+	border-right: 1px #CECECE solid;
+	text-align: center;
+	height: 16px;
+}
+
+#pagebar a:hover {
+	background-color: #CECECE;
+	text-decoration: none; 
+}
+
+#pagebar li {
+	list-style:none;
+}
+
+li.page_item {
+	display: inline;
+}
+
+.post {
+	margin: 0 0 30px;
+	
+	}
+	
+.entry {
+	font-size:11px;
+	font-family:  Verdana;
+	overflow: hidden;
+}
+
+small {
+	font-family: Verdana, Helvetica, Sans-Serif;
+	font-size: 9px;
+	line-height: 10px;
+	}
+	
+.center {
+	text-align: center;
+	}
+
+hr {
+	height: 2px;
+	color: #999999;
+	background-color: #999999;
+	border: 0;
+	}
+
+.alignleft {
+	float: left
+	}
+	
+img.alignleft {
+	padding: 4px;
+	margin: 0px 7px 2px 0;
+	display: inline;
+	}
+
+
+/* Begin side bar list */	
+
+#sidebar
+{
+	padding: 20px 0 10px 0;
+	margin: -60px 0 0 530px;
+	width: 200px;
+	}
+
+#sidebar form {
+	margin: 0;
+	}
+
+html>body .entry ul {
+	margin-left: 0px;
+	padding: 0 0 0 30px;
+	list-style: none;
+	padding-left: 10px;
+	text-indent: -10px;
+	} 
+
+html>body .entry li {
+	margin: 7px 0 8px 10px;
+	}
+
+.entry ul li:before, #sidebar ul ul li:before {
+	content: "* ";
+	
+	}
+
+.entry ol {
+	padding: 0 0 0 35px;
+	margin: 0;
+	}
+
+.entry ol li {
+	margin: 0;
+	padding: 0;
+	}
+
+.postmetadata ul, .postmetadata li {
+	display: inline;
+	list-style-type: none;
+	list-style-image: none;
+	}
+	
+#sidebar ul, #sidebar ul ol {
+	margin: 0;
+	padding: 0;
+	}
+
+#sidebar ul li {
+	list-style-type: none;
+	list-style-image: none;
+	margin-bottom: 20px;
+	}
+
+#sidebar ul p, #sidebar ul select {
+	margin: 4px 0 8px;
+	}
+
+#sidebar ul ul, #sidebar ul ol, #sidebar ul div {
+	background-color: #eee;
+	border: 1px #008000 solid;
+	padding-bottom: 6px;
+	padding-left: 3px;
+}
+
+#sidebar ul ul ul, #sidebar ul ol {
+	margin: 0 0 0 10px;
+	border: none;
+	}
+
+ol li, #sidebar ul ol li {
+	list-style: decimal outside;
+	}
+
+#sidebar ul ul li, #sidebar ul ol li {
+	margin: 3px 0 0;
+	padding: 0;
+	}
+/* End side bar list */	
+
+
+/* Begin Structure */
+body {
+	margin: 0;
+	padding: 0; 
+	}
+
+#page {
+	background-color: white;
+	margin: 0px auto;
+	padding: 0px;
+	width: 750px;
+	border: 0;
+	}
+	
+.widecolumn .post {
+	margin: 0;
+	}
+
+.postmetadata {
+	clear: both;
+}
+.narrowcolumn .postmetadata {
+	padding-top: 5px;
+	}
+
+.widecolumn .postmetadata {
+	margin: 30px 0;
+	}
+	
+/* End Structure */
+
+#footer {
+	background-color: #eee;
+	}
+
+#footer {
+	padding: 0;
+	margin: 0 auto;
+	width: 750px;
+	clear: both;
+	border-top: 1px black solid;
+	}
+
+#footer p {
+	margin: 0;
+	margin-right: 20px;
+	padding: 0px 0;
+	text-align: right;
+	}

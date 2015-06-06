@@ -21,13 +21,13 @@ public class RequirementGridShowResourcesDecorator extends ColumnDecorator {
 		String content = "";
 		RequirementTO rto = (RequirementTO)this.getObject();
 		
-		Vector list = rto.getResourceTaskList();
+		Vector<ResourceTaskTO> list = rto.getResourceTaskList();
 		if (list!=null){
 		    
-		    Vector filtered = this.filterUniqueResource(list);
-		    Iterator i = filtered.iterator();
+		    Vector<String> filtered = this.filterUniqueResource(list);
+		    Iterator<String> i = filtered.iterator();
 		    while(i.hasNext()){
-		        String name = (String)i.next();
+		        String name = i.next();
 		        if (!content.equals("")){
 		            content = content + " / ";
 		        }
@@ -52,14 +52,14 @@ public class RequirementGridShowResourcesDecorator extends ColumnDecorator {
      * @param listS
      * @return
      */
-    private Vector filterUniqueResource(Vector list){
-        Vector filtered = new Vector();
-	    Iterator i = list.iterator();
+    private Vector<String> filterUniqueResource(Vector<ResourceTaskTO> list){
+        Vector<String> filtered = new Vector<String>();
+	    Iterator<ResourceTaskTO> i = list.iterator();
 	    while(i.hasNext()){
-	        ResourceTaskTO rtto = (ResourceTaskTO)i.next();
+	        ResourceTaskTO rtto = i.next();
 	        boolean found = false;
 	        String currName = rtto.getResource().getUsername();
-	        Iterator j = filtered.iterator();
+	        Iterator<String> j = filtered.iterator();
 	        while(j.hasNext()){
 	            String username = (String)j.next();
 	            if (username.equals(currName)){

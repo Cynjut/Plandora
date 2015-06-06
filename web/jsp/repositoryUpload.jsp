@@ -3,16 +3,6 @@
 <%@ taglib uri="/WEB-INF/lib/display" prefix="display" %>
 <%@ taglib uri="/WEB-INF/lib/struts-logic" prefix="logic" %>
 
-<script language="javascript">
-        
-	function uploadFile(){
-		with(document.forms["repositoryUploadForm"]){
-	    	operation.value = "save";
-	    	closeMessage();
-	    	submit();			
-		}	
-	}
-</script>
 
 <html:form action="repositoryUpload" enctype="multipart/form-data"> 
 	<html:hidden name="repositoryUploadForm" property="operation"/>
@@ -56,7 +46,7 @@
 			  <td width="80" class="formTitle"><bean:message key="label.formRepository.file"/>:&nbsp;</td>
 			  <td class="formBody">
 					<html:file name="repositoryUploadForm" property="theFile" styleClass="textBox"/>
-					<bean:message key="title.formAttachment.maxSizeWarning"/>&nbsp;(<bean:write name="repositoryUploadForm" property="maxFileSize" /> KB)
+					<bean:message key="title.formAttachment.maxSizeWarning"/>&nbsp;(<bean:write name="repositoryUploadForm" property="maxFileSize" filter="false"/> KB)
 			  </td>
 			  <td width="10">&nbsp;</td>
 			</tr>			

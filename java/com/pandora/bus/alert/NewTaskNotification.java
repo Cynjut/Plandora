@@ -6,8 +6,10 @@ import java.util.Vector;
 
 import com.pandora.CategoryTO;
 import com.pandora.FieldValueTO;
+import com.pandora.NotificationFieldTO;
 import com.pandora.PlanningRelationTO;
 import com.pandora.ProjectTO;
+import com.pandora.RequirementTO;
 import com.pandora.ResourceTO;
 import com.pandora.ResourceTaskTO;
 import com.pandora.RootTO;
@@ -17,6 +19,7 @@ import com.pandora.UserTO;
 import com.pandora.bus.EventBUS;
 import com.pandora.delegate.CategoryDelegate;
 import com.pandora.delegate.ProjectDelegate;
+import com.pandora.delegate.RequirementDelegate;
 import com.pandora.delegate.TaskDelegate;
 import com.pandora.delegate.TaskStatusDelegate;
 import com.pandora.delegate.UserDelegate;
@@ -34,11 +37,12 @@ public class NewTaskNotification extends Notification {
     private static final String NEWTASK_EST_TIME    = "NEWTASK_EST_TIME";
     private static final String NEWTASK_EST_DATE    = "NEWTASK_EST_DATE";
     private static final String NEWTASK_RES_ID      = "NEWTASK_RES_ID";
+    private static final String NEWTASK_REQ_ID      = "NEWTASK_REQ_ID";
 
     /* (non-Javadoc)
      * @see com.pandora.bus.alert.Notification#sendNotification(java.util.Vector, java.util.Vector)
      */
-    public boolean sendNotification(Vector fields, Vector sqlData) throws Exception {
+    public boolean sendNotification(Vector<NotificationFieldTO> fields, Vector<Vector<Object>> sqlData) throws Exception {
     	boolean response = false;
     	EventBUS bus = new EventBUS();
 		ProjectDelegate pdel = new ProjectDelegate();
@@ -47,7 +51,7 @@ public class NewTaskNotification extends Notification {
 		UserDelegate udel = new UserDelegate();
 		
 		for (int i=1; i<sqlData.size(); i++) {
-			Vector sqlDataItem = (Vector)sqlData.elementAt(i);
+			Vector<Object> sqlDataItem = (Vector<Object>)sqlData.elementAt(i);
 			
 			String projectId = this.getParamByKey(NEWTASK_PROJECT_ID, fields);
 			String categoryId = this.getParamByKey(NEWTASK_CATEGORY_ID, fields);
@@ -56,6 +60,7 @@ public class NewTaskNotification extends Notification {
 			String estTime = this.getParamByKey(NEWTASK_EST_TIME, fields);
 			String estDate = this.getParamByKey(NEWTASK_EST_DATE, fields);
 			String resId = this.getParamByKey(NEWTASK_RES_ID, fields);
+			String reqId = this.getParamByKey(NEWTASK_REQ_ID, fields);
 			Locale loc = new Locale("pt", "BR");
 
 			//replace the wildcards with the fields...
@@ -66,10 +71,11 @@ public class NewTaskNotification extends Notification {
 			estTime = super.replaceByToken(sqlDataItem, estTime);
 			estDate = super.replaceByToken(sqlDataItem, estDate);
 			resId = super.replaceByToken(sqlDataItem, resId);
+			reqId = super.replaceByToken(sqlDataItem, reqId);
 			
-			if (projectId!=null && categoryId!=null && name!=null && estTime!=null && estDate!=null
+			if (projectId!=null && categoryId!=null && name!=null && estTime!=null && estDate!=null && reqId!=null
 					&& !projectId.trim().equals("") && !categoryId.trim().equals("") && !name.trim().equals("")
-					&& !estTime.trim().equals("") && !estDate.trim().equals("")) {
+					&& !estTime.trim().equals("") && !estDate.trim().equals("") && !reqId.trim().equals("")) {
 
 				float time = StringUtil.getStringToFloat(estTime, loc);
 				if (time>0) {
@@ -80,14 +86,14 @@ public class NewTaskNotification extends Notification {
 							CategoryTO cto = cdel.getCategory(new CategoryTO(categoryId.trim()));
 							if (cto!=null) {
 								UserTO uto = udel.getRoot();
-						    	TaskTO tto = createTaskObject(name, desc, pto, cto, uto);
+						    	TaskTO tto = createTaskObject(name, desc, pto, cto, uto, reqId);
 						    	
 						    	if (resId==null || resId.trim().equals("")) {
 						    		resId = uto.getId();
 						    	}
 
 						    	ResourceTaskTO rtto = createResourceTask(resId, startDate, time, pto, uto, tto);					    	
-						    	Vector restaskList = new Vector();
+						    	Vector<ResourceTaskTO> restaskList = new Vector<ResourceTaskTO>();
 						    	restaskList.add(rtto);
 						    	tto.setAllocResources(restaskList);
 						    	
@@ -147,8 +153,9 @@ public class NewTaskNotification extends Notification {
     }
     
 	private TaskTO createTaskObject(String name, String desc, ProjectTO pto,
-			CategoryTO cto, UserTO uto) {
+			CategoryTO cto, UserTO uto, String reqId) throws BusinessException {
 		TaskTO tto = new TaskTO();
+		RequirementDelegate rdel = new RequirementDelegate();
 		
 		tto.setAdditionalFields(null);
 		tto.setAttachments(null);
@@ -158,6 +165,17 @@ public class NewTaskNotification extends Notification {
 		tto.setIteration(null);
 		tto.setRelationList(null);
 		tto.setTemplateInstanceId(null);
+
+		if (reqId.trim().equalsIgnoreCase("N/A")) {
+			tto.setRequirement(null);	
+		} else {
+			RequirementTO req = rdel.getRequirement(new RequirementTO(reqId));
+			if (req!=null) {
+				tto.setRequirement(req);	
+			} else {
+				throw new BusinessException("The request [" + reqId + "] was not found.");
+			}
+		}
 		
 		tto.setCategory(cto);
 		tto.setCreatedBy(uto);
@@ -170,7 +188,6 @@ public class NewTaskNotification extends Notification {
 		tto.setName(name);
 		tto.setParentTask(null);
 		tto.setProject(pto);
-		tto.setRequirement(null);
 		tto.setType(PlanningRelationTO.ENTITY_TASK);
 		return tto;
 	}
@@ -179,8 +196,8 @@ public class NewTaskNotification extends Notification {
     /* (non-Javadoc)
      * @see com.pandora.bus.alert.Notification#getFields()
      */        
-    public Vector getFields(){
-        Vector response = new Vector();
+    public Vector<FieldValueTO> getFields(){
+        Vector<FieldValueTO> response = new Vector<FieldValueTO>();
         response.add(new FieldValueTO(NEWTASK_PROJECT_ID, "notification.newTask.project", FieldValueTO.FIELD_TYPE_TEXT, 10, 10));
         response.add(new FieldValueTO(NEWTASK_CATEGORY_ID, "notification.newTask.category", FieldValueTO.FIELD_TYPE_TEXT, 10, 10));
         response.add(new FieldValueTO(NEWTASK_NAME, "notification.newTask.name", FieldValueTO.FIELD_TYPE_TEXT, 50, 50));
@@ -188,6 +205,7 @@ public class NewTaskNotification extends Notification {
         response.add(new FieldValueTO(NEWTASK_EST_DATE, "notification.newTask.estdate", FieldValueTO.FIELD_TYPE_TEXT, 10, 10));
         response.add(new FieldValueTO(NEWTASK_EST_TIME, "notification.newTask.esttime", FieldValueTO.FIELD_TYPE_TEXT, 10, 10));
         response.add(new FieldValueTO(NEWTASK_RES_ID, "notification.newTask.resid", FieldValueTO.FIELD_TYPE_TEXT, 10, 10));
+        response.add(new FieldValueTO(NEWTASK_REQ_ID, "notification.newTask.reqid", FieldValueTO.FIELD_TYPE_TEXT, 10, 10));
         
         return response;
     }
@@ -215,7 +233,7 @@ public class NewTaskNotification extends Notification {
     /* (non-Javadoc)
      * @see com.pandora.bus.alert.Notification#getFieldTypes()
      */    
-    public Vector getFieldTypes() {
+    public Vector<String> getFieldTypes() {
         return null;
     }
 
@@ -223,7 +241,7 @@ public class NewTaskNotification extends Notification {
     /* (non-Javadoc)
      * @see com.pandora.bus.alert.Notification#getFieldKeys()
      */    
-    public Vector getFieldKeys() {
+    public Vector<String> getFieldKeys() {
         return null;
     }
 
@@ -231,7 +249,7 @@ public class NewTaskNotification extends Notification {
     /* (non-Javadoc)
      * @see com.pandora.bus.alert.Notification#getFieldLabels()
      */
-    public Vector getFieldLabels() {
+    public Vector<String> getFieldLabels() {
         return null;
     }
     

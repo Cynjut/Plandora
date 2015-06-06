@@ -23,7 +23,7 @@ public class MilestoneOccurrence extends Occurrence implements CalendarSyncInter
     }
     
     public Vector getFields(){
-        Vector response = new Vector();
+        Vector<FieldValueTO> response = new Vector<FieldValueTO>();
         response.add(new FieldValueTO(MILE_DATE, "label.occurrence.milestone.date", FieldValueTO.FIELD_TYPE_DATE, 10, 10));
         response.add(new FieldValueTO(MILE_DESCRIPTION, "label.occurrence.milestone.description", FieldValueTO.FIELD_TYPE_AREA, 255, 8));
         
@@ -37,7 +37,7 @@ public class MilestoneOccurrence extends Occurrence implements CalendarSyncInter
     
     
     public Vector getStatusValues() {
-        Vector response = new Vector();
+        Vector<TransferObject> response = new Vector<TransferObject>();
         response.add(new TransferObject(STATE_START,   "label.occurrence.milestone.status.planned"));
         response.add(new TransferObject("50",          "label.occurrence.milestone.status.postponed"));
         response.add(new TransferObject(STATE_FINAL_1, "label.occurrence.milestone.status.done"));        
@@ -58,5 +58,10 @@ public class MilestoneOccurrence extends Occurrence implements CalendarSyncInter
 		cal.setDateProperties("VALUE=DATE");
 		cal.setName(oto.getName());
 		return cal;
+	}
+
+	
+	public String getDateFieldId() {
+		return MILE_DATE;
 	}
 }

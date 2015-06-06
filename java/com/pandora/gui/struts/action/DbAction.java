@@ -1,6 +1,5 @@
 package com.pandora.gui.struts.action;
 
-import java.sql.Timestamp;
 import java.util.Iterator;
 import java.util.Vector;
 
@@ -62,7 +61,7 @@ public class DbAction extends GeneralStrutsAction {
 	
 	private void performQuery(String sql, DbForm frm) throws BusinessException{
 	    DbQueryDelegate del = new DbQueryDelegate();
-	    Vector list = null;
+	    Vector<Vector<Object>> list = null;
 	    list = del.performQuery(sql);
         StringBuffer result = formatOutput(list);
         frm.setResult(result.toString());	    
@@ -82,15 +81,15 @@ public class DbAction extends GeneralStrutsAction {
 	 * write data in html table format. 
 	 * @param list
 	 */
-	private StringBuffer formatOutput(Vector list){
+	private StringBuffer formatOutput(Vector<Vector<Object>> list){
 	    StringBuffer response = new StringBuffer();
 	    
 	    response.append("<table width=\"95%\" border=\"1\" cellspacing=\"0\" cellpadding=\"0\">");
-	    Iterator i = list.iterator();
+	    Iterator<Vector<Object>> i = list.iterator();
 	    while(i.hasNext()){
 	        response.append("\n<tr>");
-	        Vector line = (Vector)i.next();
-	        Iterator j = line.iterator();
+	        Vector<Object> line = i.next();
+	        Iterator<Object> j = line.iterator();
 	        while(j.hasNext()){
 	        	String cell = "";
 	        	Object c = (Object)j.next();

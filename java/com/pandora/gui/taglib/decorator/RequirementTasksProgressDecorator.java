@@ -1,19 +1,9 @@
 package com.pandora.gui.taglib.decorator;
 
-import java.util.Iterator;
-import java.util.Vector;
-
 import org.apache.taglibs.display.ColumnDecorator;
 
-import com.pandora.PlanningRelationTO;
 import com.pandora.RequirementTO;
 import com.pandora.ResourceTaskTO;
-import com.pandora.TaskTO;
-import com.pandora.UserTO;
-import com.pandora.delegate.TaskDelegate;
-import com.pandora.delegate.UserDelegate;
-import com.pandora.exception.BusinessException;
-import com.pandora.helper.HtmlUtil;
 
 public class RequirementTasksProgressDecorator extends ColumnDecorator {
 
@@ -25,9 +15,8 @@ public class RequirementTasksProgressDecorator extends ColumnDecorator {
     }
 	
 	
-   	public String getPreContent(Object columnValue, String tag) {
-        TaskDelegate tdel = new TaskDelegate();   		
-   		String response = "<table width=\"100%\" border=\"0\" cellspacing=\"0\" cellpadding=\"0\"><tr class=\"gapFormBody\">";
+   	public String getPreContent(Object columnValue, String tag) {	
+   		String response = "<table width=\"100%\" border=\"0\" cellspacing=\"0\" cellpadding=\"1\"><tr height=\"5px\">";
    		int allTasks = 0;
    		int closedTask = 0;
    		int percDone = 0;
@@ -39,18 +28,13 @@ public class RequirementTasksProgressDecorator extends ColumnDecorator {
 			
 			RequirementTO rto = (RequirementTO)this.getObject();
 			if (rto!=null) {
-				Vector<TaskTO> taskListOfReq = null;
-				taskListOfReq = tdel.getTaskListByRequirement(rto, rto.getProject(), true);
-	            if (taskListOfReq!=null && taskListOfReq.size()>0){
-	                Iterator<TaskTO> i = taskListOfReq.iterator();
-	                while(i.hasNext()){
-	                	allTasks++;
-	                    TaskTO tto = i.next();
-	                    if (tto.isFinished()) {
-	                    	closedTask++;
-	                    }
-	                }
-	            }
+				
+				for (ResourceTaskTO rtto : rto.getResourceTaskList()) {
+                	allTasks++;
+                	if (rtto.getTaskStatus()!=null && rtto.getTaskStatus().isFinish()) {
+                		closedTask++;
+                	}
+				}
 	            
 				if (allTasks>0) {
 					percDone = (int)((float)((float)closedTask / (float)allTasks) * 100);	
@@ -68,7 +52,7 @@ public class RequirementTasksProgressDecorator extends ColumnDecorator {
 				response = response + "<td " + (allTasks>0?"title=\"" + allTasks + " " + nonClosedLbl + "\"":"") + " class=\"tablecell\" style=\"background-repeat:no-repeat\" bgcolor=\"#ff0000\">&nbsp;</td>";
 			}
 			
-		} catch (BusinessException e) {
+		} catch (Exception e) {
 			e.printStackTrace();
 		}
 		

@@ -11,7 +11,6 @@ import com.pandora.ResourceTaskTO;
 import com.pandora.TaskHistoryTO;
 import com.pandora.TaskTO;
 import com.pandora.UserTO;
-
 import com.pandora.bus.TaskBUS;
 import com.pandora.exception.BusinessException;
 
@@ -34,7 +33,7 @@ public class TaskDelegate extends GeneralDelegate {
     /* (non-Javadoc)
      * @see com.pandora.bus.TaskBUS.getTaskListByRequirement(com.pandora.RequirementTO, com.pandora.ProjectTO, boolean, boolean)
      */
-    public Vector getTaskListByRequirement(RequirementTO rto, ProjectTO pto, boolean evenClose, boolean isSort) throws BusinessException {
+    public Vector<TaskTO> getTaskListByRequirement(RequirementTO rto, ProjectTO pto, boolean evenClose, boolean isSort) throws BusinessException {
         return bus.getTaskListByRequirement(rto, pto, evenClose, isSort);
     }
     
@@ -56,7 +55,7 @@ public class TaskDelegate extends GeneralDelegate {
     /* (non-Javadoc)
      * @see com.pandora.bus.TaskBUS.getSubTasksList(com.pandora.TaskTO)
      */    
-    public Vector getSubTasksList(TaskTO parenttask) throws BusinessException {       
+    public Vector<TaskTO> getSubTasksList(TaskTO parenttask) throws BusinessException {       
         return bus.getSubTasksList(parenttask); 
     }
     
@@ -80,7 +79,7 @@ public class TaskDelegate extends GeneralDelegate {
     /* (non-Javadoc)
      * @see com.pandora.bus.TaskBUS.insertTask(java.util.Vector)
      */    
-    public void insertTask(Vector list) throws BusinessException {
+    public void insertTask(Vector<TaskTO> list) throws BusinessException {
         bus.insertTask(list);
     }
     
@@ -123,10 +122,10 @@ public class TaskDelegate extends GeneralDelegate {
     
         
     /* (non-Javadoc)
-     * @see com.pandora.bus.TaskBUS.getTaskListByProject(com.pandora.ProjectTO, java.util.Timestamp, boolean, boolean)
+     * @see com.pandora.bus.TaskBUS.getTaskListByProject(com.pandora.ProjectTO, java.util.Timestamp, java.util.Timestamp, boolean, boolean)
      */
-    public Vector<TaskTO> getTaskListByProject(ProjectTO pto, Timestamp iniRange, boolean orderedIt, boolean includeSubProjects) throws BusinessException { 
-        return bus.getTaskListByProject(pto, iniRange, orderedIt, includeSubProjects);        
+    public Vector<TaskTO> getTaskListByProject(ProjectTO pto, Timestamp iniRange, Timestamp finalRange, boolean orderedIt, boolean includeSubProjects) throws BusinessException { 
+        return bus.getTaskListByProject(pto, iniRange, finalRange, orderedIt, includeSubProjects);        
     }    
 
     
@@ -141,7 +140,7 @@ public class TaskDelegate extends GeneralDelegate {
     /* (non-Javadoc)
      * @see com.pandora.bus.TaskBUS.getDateFromTaskList(java.util.Vector, boolean)
      */
-    public Timestamp getDateFromTaskList(Vector taskList, boolean isInitial) throws BusinessException {
+    public Timestamp getDateFromTaskList(Vector<TaskTO> taskList, boolean isInitial) throws BusinessException {
         return bus.getDateFromTaskList(taskList, isInitial);        
     }
     
@@ -157,7 +156,7 @@ public class TaskDelegate extends GeneralDelegate {
     /* (non-Javadoc)
      * @see com.pandora.bus.TaskBUS.getHistory(java.lang.String)
      */
-    public Vector getHistory(String taskId) throws BusinessException {
+    public Vector<TaskHistoryTO> getHistory(String taskId) throws BusinessException {
         return bus.getHistory(taskId);
     }
 
@@ -165,7 +164,7 @@ public class TaskDelegate extends GeneralDelegate {
     /* (non-Javadoc)
      * @see com.pandora.bus.TaskBUS.getHistoryByRequirementId(java.lang.String)
      */
-    public Vector getHistoryByRequirementId(String reqId) throws BusinessException {
+    public Vector<TaskHistoryTO> getHistoryByRequirementId(String reqId) throws BusinessException {
         return bus.getHistoryByRequirementId(reqId);
     }
 
@@ -180,7 +179,7 @@ public class TaskDelegate extends GeneralDelegate {
     /* (non-Javadoc)
      * @see com.pandora.bus.TaskBUS.getTechCommentsFromTask(java.util.Vector, com.pandora.CustomerTO)
      */    
-    public String getTechCommentsFromTask(Vector items, CustomerTO cto) throws BusinessException {
+    public String getTechCommentsFromTask(Vector<TaskHistoryTO> items, CustomerTO cto) throws BusinessException {
         return bus.getTechCommentsFromTask(items, cto);
     }    
     

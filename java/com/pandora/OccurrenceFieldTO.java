@@ -1,6 +1,7 @@
 package com.pandora;
 
 import java.sql.Timestamp;
+import java.util.Vector;
 
 /**
  */
@@ -15,6 +16,8 @@ public class OccurrenceFieldTO extends TransferObject {
     private String field;
     
     private Timestamp dateValue;
+    
+    private Vector<Vector<Object>> tableValues;
 
     
     ////////////////////////////////////////
@@ -51,7 +54,26 @@ public class OccurrenceFieldTO extends TransferObject {
 	public void setDateValue(Timestamp newValue) {
 		this.dateValue = newValue;
 	}
+	
+	
+    ////////////////////////////////////////  	
+	public Vector<Vector<Object>> getTableValues() {
+		return tableValues;
+	}
+	public void setTableValues(Vector<Vector<Object>> newValue) {
+		this.tableValues = newValue;
+	}
 
-    
+	public boolean isEmpty(Vector<Object> line) {
+		boolean response = true;
+		if (line!=null) {
+			for (Object cell : line) {
+				if (cell!=null && !(cell+"").trim().equals("")) {
+					response = false;
+				}
+			}
+		}
+		return response;
+	}
     
 }

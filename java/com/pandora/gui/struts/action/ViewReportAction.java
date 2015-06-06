@@ -3,6 +3,7 @@ package com.pandora.gui.struts.action;
 import java.io.OutputStream;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Locale;
 import java.util.Vector;
 
 import javax.servlet.http.HttpServletRequest;
@@ -13,6 +14,7 @@ import org.apache.struts.action.ActionForward;
 import org.apache.struts.action.ActionMapping;
 
 import com.pandora.CategoryTO;
+import com.pandora.PreferenceTO;
 import com.pandora.ProjectTO;
 import com.pandora.ReportFieldTO;
 import com.pandora.ReportResultTO;
@@ -22,6 +24,7 @@ import com.pandora.UserTO;
 import com.pandora.delegate.CategoryDelegate;
 import com.pandora.delegate.ProjectDelegate;
 import com.pandora.delegate.ReportDelegate;
+import com.pandora.delegate.UserDelegate;
 import com.pandora.exception.BusinessException;
 import com.pandora.exception.EmptyReportBusinessException;
 import com.pandora.gui.struts.form.ViewReportForm;
@@ -43,12 +46,12 @@ public class ViewReportAction extends GeneralStrutsAction {
 		    ProjectTO pto = null;
 
 		    UserTO uto = SessionUtil.getCurrentUser(request);
-		    Vector prjList = pdel.getProjectListByUser(uto);
+		    Vector<ProjectTO> prjList = pdel.getProjectListByUser(uto);
 			if (prjList!=null && prjList.size()>0) {
 				pto = (ProjectTO)prjList.get(0);
 				request.getSession().setAttribute("projectList", prjList);					
 			} else {
-				prjList = new Vector(); 
+				prjList = new Vector<ProjectTO>(); 
 			}
 
 			if (pto!=null && frm.getProjectId().trim().equals("ALL")) {
@@ -63,7 +66,7 @@ public class ViewReportAction extends GeneralStrutsAction {
 
 				this.refresh(mapping, form, request, response);
 			} else {
-				request.getSession().setAttribute("exportReportList", new Vector());		
+				request.getSession().setAttribute("exportReportList", new Vector<TransferObject>());		
 			}
 		    
 	    } catch (Exception e) {
@@ -73,6 +76,12 @@ public class ViewReportAction extends GeneralStrutsAction {
 	    return mapping.findForward(forward);
 	}
     
+	
+	public ActionForward navigate(ActionMapping mapping, ActionForm form,
+			HttpServletRequest request, HttpServletResponse response){
+		return mapping.findForward("showViewReport");
+	}
+	
 	
 	public ActionForward refreshProject(ActionMapping mapping, ActionForm form,
 			 HttpServletRequest request, HttpServletResponse response) throws BusinessException{
@@ -84,13 +93,14 @@ public class ViewReportAction extends GeneralStrutsAction {
 	    frm.setProjectName(pto.getName());
 	    
 	    CategoryDelegate cdel = new CategoryDelegate();
-		Vector categoryListFrmDB = cdel.getCategoryListByType(CategoryTO.TYPE_REPORT, new ProjectTO(frm.getProjectId()), false);		    
+		Vector<CategoryTO> categoryListFrmDB = cdel.getCategoryListByType(CategoryTO.TYPE_REPORT, new ProjectTO(frm.getProjectId()), false);		    
 		request.getSession().setAttribute("categoryList", categoryListFrmDB);
 
-	    Vector expList = new Vector();
+	    Vector<TransferObject> expList = new Vector<TransferObject>();
 		expList.add(new TransferObject("PDF", "PDF"));
 		expList.add(new TransferObject("ODT", "OpenOffice Writer"));
 		expList.add(new TransferObject("RTF", "Rich Text Format"));
+		expList.add(new TransferObject("JPG", "JPG"));
 		request.getSession().setAttribute("exportReportList", expList);
 		
 		this.refresh(mapping, form, request, response);
@@ -111,14 +121,14 @@ public class ViewReportAction extends GeneralStrutsAction {
 		    
 	        UserTO uto = SessionUtil.getCurrentUser(request);
 	        ProjectTO pto = pdel.getProjectByUser(uto, new ProjectTO(frm.getProjectId()));	        
-            Vector reportList = rdel.getListBySource(false, frm.getCategoryId(), pto, false);
+            Vector<ReportTO> reportList = rdel.getListBySource(false, frm.getCategoryId(), pto, false);
 	        
             //generate html table for each report...
             if (reportList!=null && reportList.size()>0) {
             	
-                Iterator i = reportList.iterator();
+                Iterator<ReportTO> i = reportList.iterator();
                 while(i.hasNext()) {
-                    ReportTO rto = (ReportTO)i.next();
+                    ReportTO rto = i.next();
                     rto.setProject(pto);
                     String repPrj = rto.getProject().getId();
                     if (repPrj.equals(frm.getProjectId()) || repPrj.equals(ProjectTO.PROJECT_ROOT_ID)){
@@ -140,6 +150,7 @@ public class ViewReportAction extends GeneralStrutsAction {
 	public ActionForward generate(ActionMapping mapping, ActionForm form,
 			 HttpServletRequest request, HttpServletResponse response) {
 	    ActionForward forward = mapping.findForward("showEmptyReport");
+	    ReportDelegate rdel = new ReportDelegate();
 	    
 	    try {
 	        ViewReportForm frm = (ViewReportForm)form;
@@ -147,24 +158,14 @@ public class ViewReportAction extends GeneralStrutsAction {
 	        boolean showReport = true;
 	        frm.setExportReportFormat(request.getParameter("reportOutput"));
 	        
-	        //get the project related to the form
-	        ProjectDelegate pdel = new ProjectDelegate();
-	        ProjectTO formProject = pdel.getProjectObject(new ProjectTO(frm.getProjectId()), false);
-	        
-	        ReportDelegate rdel = new ReportDelegate();
-	        ReportTO rto = rdel.getReport(new ReportTO(frm.getReportId()));
-	        this.verifyFilePath(rto);
-
-	        //link the form project with the report (eventually the report could related with project root)	        
-	        rto.setProject(formProject);
-			rto.setExportReportFormat(frm.getExportReportFormat());
+	        ReportTO rto = this.getReport(frm.getReportId(), frm.getProjectId(), frm.getExportReportFormat(), SessionUtil.getCurrentUser(request));
 	        
 	        //create a list of fields from form with selected values and set into ReportTO
-	        Vector formFields = new Vector();
-	        Vector fields = rdel.getReportFields(rto.getSqlStement());
+	        Vector<ReportFieldTO> formFields = new Vector<ReportFieldTO>();
+	        Vector<ReportFieldTO> fields = rdel.getReportFields(rto.getSqlStement());
 	        if (fields!=null) {
-	        	HashMap hm = new HashMap();
-	            Iterator i = fields.iterator();
+	        	HashMap<String, ReportFieldTO> hm = new HashMap<String, ReportFieldTO>();
+	            Iterator<ReportFieldTO> i = fields.iterator();
 	            while(i.hasNext()) {
 	                ReportFieldTO fieldTO = (ReportFieldTO)i.next();
 	                
@@ -185,8 +186,6 @@ public class ViewReportAction extends GeneralStrutsAction {
 	            }
 	            rto.setFormFieldsValues(formFields);
 	        }
-	        rto.setLocale(SessionUtil.getCurrentLocale(request));
-	        rto.setHandler(SessionUtil.getCurrentUser(request));      
 
 	        if (showReport) {
 		        byte[] reportStream = rdel.performReport(rto);
@@ -200,6 +199,10 @@ public class ViewReportAction extends GeneralStrutsAction {
 		        	} else if (frm.getExportReportFormat().equals(ReportTO.REPORT_EXPORT_ODT)) {	
 		        		response.setContentType("application/vnd.oasis.opendocument.text");
 		        		response.setHeader("content-disposition", "inline;filename=report.odt");
+		        	} else if (frm.getExportReportFormat().equals(ReportTO.REPORT_EXPORT_JPG)) {
+		        		response.setContentType("image/jpg");
+		        		response.setHeader("content-disposition", "inline;filename=report.jpg");
+		        		
 		        	}
 		    		
 		    		response.setContentLength(reportStream.length); 
@@ -220,6 +223,32 @@ public class ViewReportAction extends GeneralStrutsAction {
 	    return forward;	    
 	}
 
+	
+	public ReportTO getReport(String reportId, String projectId, String exportFormat, UserTO uto) throws BusinessException {
+        ProjectDelegate pdel = new ProjectDelegate();
+        ReportDelegate rdel = new ReportDelegate();
+        
+        //get the project related to the form
+        ProjectTO formProject = pdel.getProjectObject(new ProjectTO(projectId), false);
+        
+        ReportTO rto = rdel.getReport(new ReportTO(reportId));
+        this.verifyFilePath(rto);
+        
+        //link the form project with the report (eventually the report could related with project root)	        
+        rto.setProject(formProject);
+		rto.setExportReportFormat(exportFormat);
+		
+		if (uto!=null) {
+	        rto.setLocale(uto.getLocale());
+	        rto.setHandler(uto);      			
+		} else {
+	        rto.setLocale(Locale.US);			
+		}
+        
+		return rto;
+	}
+
+
 	/**
 	 * Check if the current path into report object is a relative or absolute path.
 	 * if is relative, find the absolute path. Otherwise, do nothing.
@@ -230,7 +259,21 @@ public class ViewReportAction extends GeneralStrutsAction {
 	    //find the absolute path using the relative reference... 
 	    if (fileName.indexOf("#CLASS_PATH#")>=0) {
 	        fileName = fileName.replaceAll("#CLASS_PATH#", "");
-	        rto.setReportFileName(this.getServlet().getServletContext().getRealPath(fileName));
+	        
+	        if (this.getServlet()!=null) {
+	        	rto.setReportFileName(this.getServlet().getServletContext().getRealPath(fileName));	
+	        } else {
+	        	try {
+		        	UserDelegate del = new UserDelegate();
+		        	UserTO uto = del.getRoot();
+		        	String path = uto.getPreference().getPreference(PreferenceTO.GENERAL_WEBAPP_PATH);
+		        	fileName = fileName.replaceAll("/WEB-INF", "");
+		        	rto.setReportFileName(path + fileName);	        		
+	        	}catch(Exception e) {
+	        		e.printStackTrace();
+	        	}
+	        }
+	        
 	    }
 	}
 	
@@ -245,7 +288,7 @@ public class ViewReportAction extends GeneralStrutsAction {
 	    String buttonLabel = this.getResources(request).getMessage(request.getLocale(), "label.button.generate");
 	    
 	    //get the filter(s) field(s) of current report 
-	    Vector filterList = rdel.getReportFields(rto.getSqlStement());
+	    Vector<ReportFieldTO> filterList = rdel.getReportFields(rto.getSqlStement());
 	    
 	    sb.append("<input type=\"hidden\" name=\"PROJECT_ID_" + rto.getId() + "\" value=\"" + rto.getId() + "\"> \n");
 	    sb.append("<table width=\"70%\" border=\"0\" cellspacing=\"0\" cellpadding=\"0\"> \n");
@@ -257,12 +300,12 @@ public class ViewReportAction extends GeneralStrutsAction {
 	    
 	    //for each filter field, create a row in html format
 	    if (filterList.size()>0 && this.someFieldIsVisible(filterList) ) {
-	    	HashMap hm = new HashMap();
+	    	HashMap<String, ReportFieldTO> hm = new HashMap<String, ReportFieldTO>();
 		    sb.append("<table width=\"70%\" border=\"0\" cellspacing=\"0\" cellpadding=\"0\">");
-		    Iterator i = filterList.iterator();
+		    Iterator<ReportFieldTO> i = filterList.iterator();
 		    boolean firstRow = true;
 		    while(i.hasNext()) {
-		        ReportFieldTO filter = (ReportFieldTO)i.next();
+		        ReportFieldTO filter = i.next();
 		        if (hm.get(filter.getId())==null) {
 		        	hm.put(filter.getId(), filter);
 		        	
@@ -303,12 +346,12 @@ public class ViewReportAction extends GeneralStrutsAction {
 	}
 	
 	
-	private boolean someFieldIsVisible(Vector filterList){
+	private boolean someFieldIsVisible(Vector<ReportFieldTO> filterList){
 	    boolean response = false ;
 	    if (filterList!=null) {
-		    Iterator i = filterList.iterator();
+		    Iterator<ReportFieldTO> i = filterList.iterator();
 		    while(i.hasNext()) {
-		        ReportFieldTO filter = (ReportFieldTO)i.next();
+		        ReportFieldTO filter = i.next();
 		        if (filter.isVisible()) {
 		            response = true;
 		            break;
@@ -385,11 +428,11 @@ public class ViewReportAction extends GeneralStrutsAction {
 	        UserTO uto = SessionUtil.getCurrentUser(request);
 	        filter.setLabel(HtmlUtil.checkSQLKeyWord(filter.getLabel(), filter.getProject().getId(), uto.getId() ));
 
-	        Vector list = rdel.performSQLByReportField(filter, uto);
+	        Vector<ReportResultTO> list = rdel.performSQLByReportField(filter, uto);
 	        if (list!=null) {
-	            Iterator i = list.iterator();
+	            Iterator<ReportResultTO> i = list.iterator();
 	            while(i.hasNext()) {
-	                ReportResultTO rrto = (ReportResultTO)i.next();
+	                ReportResultTO rrto = i.next();
 	                combo.append("<option value=\"" + rrto.getId() + "\">" + rrto.getValue() +"</option>");
 	            }
 	        }

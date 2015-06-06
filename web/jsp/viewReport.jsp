@@ -2,6 +2,7 @@
 <%@ taglib uri="/WEB-INF/lib/struts-bean" prefix="bean" %>
 <%@ taglib uri="/WEB-INF/lib/display" prefix="display" %>
 <%@ taglib uri="/WEB-INF/lib/struts-logic" prefix="logic" %>
+<%@ taglib uri="/WEB-INF/lib/plandora-html" prefix="plandora-html" %>
 
 <jsp:include page="header.jsp" />
 
@@ -48,13 +49,13 @@
 <html:hidden name="viewReportForm" property="reportId"/>
 <html:hidden name="viewReportForm" property="reportOutput"/>
 
-<br>
+<plandora-html:shortcut name="viewReportForm" property="goToReport" fieldList="reportId, projectId"/>
 
 <table width="100%" border="0" cellspacing="0" cellpadding="0">
 <tr><td width="10">&nbsp;</td><td valign="top">
 
 	<display:headerfootergrid width="100%" type="HEADER">
-		<bean:message key="title.viewReport"/> <bean:write name="viewReportForm" property="projectName" />
+		<bean:message key="title.viewReport"/> <bean:write name="viewReportForm" property="projectName" filter="false"/>
 	</display:headerfootergrid>
 
 	<table width="98%" border="0" cellspacing="0" cellpadding="0">
@@ -73,19 +74,19 @@
 		<td class="formTitle"><bean:message key="label.viewReport.project"/>:&nbsp;</td>		
 		<td>
 			<html:select name="viewReportForm" property="projectId" styleClass="textBox" onkeypress="javascript:changeProject();" onchange="javascript:changeProject();">
-				 <html:options collection="projectList" property="id" labelProperty="name"/>
+				 <html:options collection="projectList" property="id" labelProperty="name" filter="false"/>
 			</html:select>		
 		</td>		
         <td class="formTitle"><bean:message key="label.viewReport.category"/>:&nbsp;</td>
 		<td>
 	  		<html:select name="viewReportForm" property="categoryId" styleClass="textBox" onkeypress="javascript:changeProject();" onchange="javascript:changeProject();">
-	             <html:options collection="categoryList" property="id" labelProperty="name"/>
+	             <html:options collection="categoryList" property="id" labelProperty="name" filter="false"/>
 			</html:select>
 		</td>
         <td class="formTitle"><bean:message key="label.viewReport.format"/>:&nbsp;</td>
 		<td>
 	  		<html:select name="viewReportForm" property="exportReportFormat" styleClass="textBox" >
-	             <html:options collection="exportReportList" property="id" labelProperty="genericTag"/>
+	             <html:options collection="exportReportList" property="id" labelProperty="genericTag" filter="false"/>
 			</html:select>
 		</td>
 		<td>&nbsp;</td>			

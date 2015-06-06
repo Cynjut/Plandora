@@ -1,24 +1,16 @@
-/**
- * $Id: Decorator.java,v 1.2 2005/04/17 06:02:56 albertopereto Exp $
- *
- * Status: Ok
- *
- * Todo
- *   - push the appropriate stuff down into TableDecorator
- **/
 package org.apache.taglibs.display;
 
 import java.util.Collection;
 import java.util.List;
 
-import javax.servlet.jsp.PageContext;
+import javax.servlet.http.HttpSession;
 
 /**
  * This class provides some basic functionality for all objects which serve
  * as decorators for the objects in the List being displayed.
  **/
 public abstract class Decorator extends Object {
-   private PageContext ctx = null;
+   private HttpSession session = null;
    private Object collection = null;
     
    private Object obj = null;
@@ -29,8 +21,8 @@ public abstract class Decorator extends Object {
    public Decorator() {
    }
 
-   public void init( PageContext ctx, Object list ) {
-       this.ctx = ctx;
+   public void init( HttpSession ses, Object list ) {
+       this.session = ses;
        this.collection = list;
    }
 
@@ -52,11 +44,12 @@ public abstract class Decorator extends Object {
    public void finish() {
    }
 
-   public PageContext getPageContext() { 
-       return this.ctx; 
+   public HttpSession getSession() {
+       return this.session;
    }
 
-    public List getList() {
+    @SuppressWarnings("unchecked")
+	public List getList() {
         if (this.collection instanceof List){ 
             return (List)this.collection;
         } else { 
@@ -64,7 +57,8 @@ public abstract class Decorator extends Object {
         }
     }
 
-    public Collection getCollection () {
+    @SuppressWarnings("unchecked")
+	public Collection getCollection () {
         if (this instanceof Collection) {
             return (Collection) this.collection;
         } else {

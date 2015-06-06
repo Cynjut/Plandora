@@ -4,6 +4,7 @@ import java.util.Locale;
 
 import javax.servlet.http.HttpServletRequest;
 
+import org.apache.struts.action.ActionError;
 import org.apache.struts.action.ActionErrors;
 import org.apache.struts.action.ActionMapping;
 import org.apache.struts.util.MessageResources;
@@ -42,6 +43,8 @@ public class CategoryForm extends GeneralStrutsForm {
     
     private boolean isHidden;
     
+    private boolean hideClosedCategory;
+    
     
     public void clear() {
         this.name = null;
@@ -54,6 +57,7 @@ public class CategoryForm extends GeneralStrutsForm {
         this.isDevelopingTask = false;
         this.isHidden = false;
         this.positionOrder = "0";
+        this.id = null;
     }
 
     
@@ -63,6 +67,7 @@ public class CategoryForm extends GeneralStrutsForm {
         this.isTestingTask = false;
         this.isDevelopingTask = false;
     	this.isHidden = false;
+    	this.hideClosedCategory = false;
 	}
 
     
@@ -76,12 +81,16 @@ public class CategoryForm extends GeneralStrutsForm {
 			MessageResources mr = this.getCurrentUser().getBundle();
 			Locale loc = SessionUtil.getCurrentLocale(request);
 			FormValidationUtil.checkInt(errors, mr.getMessage(loc, "label.category.order"), this.positionOrder);
+			
+		    if (this.name==null || this.name.trim().equals("")){
+		    	errors.add("Name", new ActionError("validate.category.blankName") );
+		    }
 		}
 		
 		return errors;
 	}
 	
-	
+		
 	////////////////////////////////////////	
 	public boolean getIsBillableTask() {
 		return isBillableTask;
@@ -166,6 +175,15 @@ public class CategoryForm extends GeneralStrutsForm {
 	}
 	public void setPositionOrder(String newValue) {
 		this.positionOrder = newValue;
+	}
+
+	
+    //////////////////////////////////////////  
+	public boolean getHideClosedCategory() {
+		return hideClosedCategory;
+	}
+	public void setHideClosedCategory(boolean newValue) {
+		this.hideClosedCategory = newValue;
 	}
     
     

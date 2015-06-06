@@ -61,6 +61,7 @@ public class ConverterBUS extends GeneralBusiness {
 	private static Converter getClass(String convClass){
 		Converter auth = null;
 		try {
+			@SuppressWarnings("rawtypes")
 			Class busClass = Class.forName(convClass);
             auth = (Converter)busClass.newInstance();					
 		} catch (InstantiationException e) {

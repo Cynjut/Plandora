@@ -10,10 +10,12 @@ import org.apache.struts.action.ActionForward;
 import org.apache.struts.action.ActionMapping;
 
 import com.pandora.RiskHistoryTO;
+import com.pandora.UserTO;
 import com.pandora.delegate.RiskDelegate;
 import com.pandora.exception.BusinessException;
 import com.pandora.gui.struts.form.HistRiskForm;
 import com.pandora.helper.LogUtil;
+import com.pandora.helper.SessionUtil;
 import com.pandora.helper.StringUtil;
 
 public class HistRiskAction extends GeneralStrutsAction {
@@ -28,7 +30,7 @@ public class HistRiskAction extends GeneralStrutsAction {
 			this.clearMessages(request);
 
 			RiskDelegate rdel = new RiskDelegate();
-			Vector list = rdel.getHistory(frm.getRiskId());
+			Vector<RiskHistoryTO> list = rdel.getHistory(frm.getRiskId());
 			request.getSession().setAttribute("riskHistoryList", list);
 									
 		} catch(BusinessException e){
@@ -46,7 +48,8 @@ public class HistRiskAction extends GeneralStrutsAction {
         try {		
 	    	
             HistRiskForm frm = (HistRiskForm) form;
-	    	Vector riskList = (Vector)request.getSession().getAttribute("riskHistoryList");
+	    	@SuppressWarnings("rawtypes")
+			Vector riskList = (Vector)request.getSession().getAttribute("riskHistoryList");
 
 			String selectedItem = frm.getSelectedIndex();
 			if (selectedItem!=null) {
@@ -62,6 +65,26 @@ public class HistRiskAction extends GeneralStrutsAction {
     	return mapping.findForward(forward);	    	
 	}
 	
+	
+	public ActionForward showLifecycle(ActionMapping mapping, ActionForm form,
+			 HttpServletRequest request, HttpServletResponse response) {
+	    String forward = "showRiskContent";
+	    RiskDelegate rdel = new RiskDelegate();
+        try {		
+            HistRiskForm frm = (HistRiskForm) form;
+            
+	    	@SuppressWarnings({ "rawtypes", "unchecked" })
+	    	Vector<RiskHistoryTO> riskList = (Vector)request.getSession().getAttribute("riskHistoryList");
+	    	
+	    	UserTO uto = SessionUtil.getCurrentUser(request);
+		    frm.setHistoryContent(rdel.getRiskLifecycle(riskList, uto));
+						
+		} catch(BusinessException e){
+		    LogUtil.log(this, LogUtil.LOG_ERROR, "Show RiskHistory error", e);
+		}
+    	return mapping.findForward(forward);	    	
+	}
+	    
 	
     private String getContent(RiskHistoryTO rhto) throws BusinessException {
         String response = "";        

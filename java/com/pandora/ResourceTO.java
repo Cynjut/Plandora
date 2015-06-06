@@ -15,7 +15,7 @@ public class ResourceTO extends CustomerTO {
     public static final Integer ROLE_RESOURCE = new Integer(1);  
 
     /** The default value of resource capacity */
-    public static final Integer DEFAULT_CAPACITY = new Integer(480);
+    public static final Integer DEFAULT_FULLDAY_CAPACITY = new Integer(480);
     
     
     /** This attribute allow/not allow that the resource to open the Agile board form */
@@ -31,7 +31,7 @@ public class ResourceTO extends CustomerTO {
     private Boolean canSeeInvoice = new Boolean(false);
 
     
-    private Vector resourceCapacityList;
+    private Vector<ResourceCapacityTO> resourceCapacityList;
     
     
     /**
@@ -136,22 +136,22 @@ public class ResourceTO extends CustomerTO {
     
     
     ///////////////////////////////////////////    
-    public Vector getResourceCapacityList() {
+    public Vector<ResourceCapacityTO> getResourceCapacityList() {
 		return resourceCapacityList;
 	}
-	public void setResourceCapacityList(Vector newValue) {
+	public void setResourceCapacityList(Vector<ResourceCapacityTO> newValue) {
 		this.resourceCapacityList = newValue;
 	}
 
 
     ///////////////////////////////////////////    
     public Integer getCapacityPerDay(Timestamp currentDate) {
-    	Integer response = DEFAULT_CAPACITY;
+    	Integer response = DEFAULT_FULLDAY_CAPACITY;
     	if (this.resourceCapacityList!=null && currentDate!=null) {
-    		Iterator i = this.resourceCapacityList.iterator();
-    		Integer lastValue = DEFAULT_CAPACITY;
+    		Iterator<ResourceCapacityTO> i = this.resourceCapacityList.iterator();
+    		Integer lastValue = DEFAULT_FULLDAY_CAPACITY;
     		while(i.hasNext()) {
-    			ResourceCapacityTO rto = (ResourceCapacityTO)i.next();
+    			ResourceCapacityTO rto = i.next();
     			if (currentDate.before(rto.getDate())) {    			
     				response = lastValue;
     				break;
@@ -175,6 +175,7 @@ public class ResourceTO extends CustomerTO {
         this.setDepartment(parent.getDepartment());
         this.setEmail(parent.getEmail());
         this.setBirth(parent.getBirth());
+        this.setCompany(parent.getCompany());
         this.setAuthenticationMode(parent.getAuthenticationMode());
         this.setPermission(parent.getPermission());
         this.setFunction(parent.getFunction());
@@ -200,17 +201,4 @@ public class ResourceTO extends CustomerTO {
     }
     
     
-    /**
-     * Return the current resource object information on Applet PARAM format.
-     * @param i
-     */
-    public String getLayerBodyFormat(int i) {               
-        return "<param name=\"LAYER_" + i + "\" value=\"" + 
-        							this.getId() + "|" + i + "|" + 
-        							this.getUsername() + "|" +
-        							this.getName() + "|" + 
-        							this.getColor() + "|" +
-        							this.getCapacityPerDay(null).intValue() + "\" />\n";
-    }
-
 }

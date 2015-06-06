@@ -1,8 +1,13 @@
 package com.pandora;
 
 import java.sql.Timestamp;
+import java.text.DecimalFormat;
+import java.text.NumberFormat;
 import java.util.Iterator;
+import java.util.Locale;
 import java.util.Vector;
+
+import javax.servlet.http.HttpSession;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
@@ -29,17 +34,19 @@ public class MetaFieldTO extends TransferObject {
     public static final Integer APPLY_TO_INVOICE     = new Integer(5);
     public static final Integer APPLY_TO_EXPENSE     = new Integer(6);
     public static final Integer APPLY_TO_COST        = new Integer(7);
+    public static final Integer APPLY_TO_OCCURRENCE  = new Integer(8);
     
     public static final Integer APPLY_TO_CUSTOM_FORM = new Integer(9);
 
     
     /** Constant used by type attribute */
-    public static final int TYPE_TEXT_BOX      = 1;
-    public static final int TYPE_COMBO_BOX     = 2;
-    public static final int TYPE_SQL_COMBO_BOX = 3;
-    public static final int TYPE_TEXT_AREA     = 4;
-    public static final int TYPE_CALENDAR      = 5;
-    public static final int TYPE_TABLE         = 9;
+    public static final int TYPE_TEXT_BOX      		= 1;
+    public static final int TYPE_COMBO_BOX     		= 2;
+    public static final int TYPE_SQL_COMBO_BOX 		= 3;
+    public static final int TYPE_TEXT_AREA     		= 4;
+    public static final int TYPE_CALENDAR      		= 5;
+    public static final int TYPE_TEXT_BOX_NUMERIC	= 6;
+    public static final int TYPE_TABLE         		= 9;
     
     
     /** The name of meta field used by GUI to display the label content */
@@ -63,7 +70,7 @@ public class MetaFieldTO extends TransferObject {
      * <li>If meta field is a combo box from DB, the domain is used to store the query used to get data from DB </li>
      **/
     private String domain;
-    private Vector domainCache;
+    private Vector<Vector<Object>> domainCache;
     
     /** If NOT NULL the meta Field should be hidden into other GUIs*/
     private Timestamp disableDate = null;
@@ -77,6 +84,11 @@ public class MetaFieldTO extends TransferObject {
     /** This attribute is transient */
     private int numCols = 0;
     
+    private Integer order;
+    
+    private Boolean isMandatory = Boolean.FALSE;
+    
+    private Boolean isQualifier = Boolean.FALSE;
     
     /**
      * Constructor 
@@ -92,8 +104,8 @@ public class MetaFieldTO extends TransferObject {
     }
 
     
-    public StringBuffer getFormatedTable(String style, Vector values, MetaFieldTO mfto, 
-    		UserTO uto, String formName) throws Exception{
+    public StringBuffer getFormatedTable(String style, Vector<AdditionalTableTO> values, 
+    		MetaFieldTO mfto, UserTO uto, String formName, boolean isReadOnly) throws Exception{
     	StringBuffer buff = new StringBuffer();
     	int valuesIndex = 0;
     	
@@ -112,7 +124,10 @@ public class MetaFieldTO extends TransferObject {
     		}
     		String gridborder = XmlDomParse.getAttributeTextByTag(gridNode, "border");
     		String newrowStr = XmlDomParse.getAttributeTextByTag(gridNode, "newrow");
-    		boolean newrow = (newrowStr!=null && newrowStr.equalsIgnoreCase("true"));    		
+    		boolean newrow = (newrowStr!=null && newrowStr.equalsIgnoreCase("true")); 
+    		if (isReadOnly) {
+    			newrow = false;
+    		} 
     		buff.append(">\n");   		
 
     		StringBuffer payload = new StringBuffer();
@@ -148,7 +163,7 @@ public class MetaFieldTO extends TransferObject {
            						this.numCols = 0;
        		        			valuesIndex = this.getFormatedColByDomain(cols, payload, numRows, 
        		        					(gridborder!=null && gridborder.equalsIgnoreCase("true")), values, 
-       		        					style, uto, valuesIndex);           						
+       		        					style, uto, valuesIndex, isReadOnly);           						
     		            		payload.append("</tr>\n");   
         					}
 	    				}
@@ -156,7 +171,7 @@ public class MetaFieldTO extends TransferObject {
     			}
     		}
 
-    		if (newrow && values!=null) {
+    		if (values!=null) {
 				int totalRows = values.size() / valuesIndex;
 				for (int r=2; r<=totalRows; r++) {
 					numRows++;
@@ -164,14 +179,14 @@ public class MetaFieldTO extends TransferObject {
 					this.numCols = 0;
 	       			valuesIndex = this.getFormatedColByValues(colsOfFirstRow, payload, r, 
 	       					(gridborder!=null && gridborder.equalsIgnoreCase("true")), values, 
-	       					style, uto, valuesIndex);           						           						
+	       					style, uto, valuesIndex, isReadOnly);           						           						
 	    			
 					if (gridborder!=null && gridborder.equalsIgnoreCase("true")) {
 						payload.append("<td class=\"metaFieldTableCel\">");
 					} else {
 						payload.append("<td>");               						
 					}
-					if (r>1) {
+					if (r>1 && newrow) {
 						payload.append("<a href=\"javascript:metaTableRemoveRow('" + formName + "', '" + this.getHtmlName() + "|" + r + "');\" border=\"0\"><center><img border=\"0\" src=\"../images/remove.gif\" ></center></a></td>");	
 					} else {
 						payload.append("&nbsp;</td>");               						
@@ -179,10 +194,12 @@ public class MetaFieldTO extends TransferObject {
 					payload.append("</tr>\n");
 				}
 			}
-    		
-    		buff.append("<tr class=\"gapFormBody\"><td colspan=\"" + numCols + "\">&nbsp;</td></tr>");    		
-    		buff.append("<tr class=\"formBody\"><td colspan=\"" + (numCols-1) + "\"><img src=\"../images/brick.png\" " +
-    				        "title=\"Artefatos\" alt=\"Artefatos\" border=\"0\">&nbsp;&nbsp;<b>" + mfto.getName() + "</b>" + getHelpNote() + "</td></tr>");
+
+    		if (!isReadOnly) {
+        		buff.append("<tr class=\"gapFormBody\"><td colspan=\"" + numCols + "\">&nbsp;</td></tr>");    		
+        		buff.append("<tr class=\"formBody\"><td colspan=\"" + (numCols-1) + "\"><img src=\"../images/brick.png\" " +
+        				        "title=\"Artefatos\" alt=\"Artefatos\" border=\"0\">&nbsp;&nbsp;<b>" + mfto.getName() + "</b>" + getHelpNote() + "</td></tr>");    			
+    		}
     		buff.append(payload);
 			if (newrow) {
 				buff.append("<tr class=\"gapFormBody\"><td colspan=\"" + numCols + "\" align=\"left\">");
@@ -200,11 +217,35 @@ public class MetaFieldTO extends TransferObject {
     }
     
     
- 
+    public Vector<TransferObject> getDomainList() {
+    	Vector<TransferObject> response = new Vector<TransferObject>();
+    	
+    	if (this.getType().equals(new Integer(TYPE_COMBO_BOX))) {
+    		if (this.getDomain()!=null) {
+        		String[] list = this.getDomain().split("\\|");
+        		if (list.length % 2 == 0) {
+            		for(int i=0; i<list.length; i+=2) {
+            			TransferObject to = new TransferObject(list[i], list[i+1]);
+            			response.add(to);
+            		}    			        			
+        		}
+    		}
+    		
+    	} else if (this.getType().equals(new Integer(TYPE_SQL_COMBO_BOX))) {
+    		response = HtmlUtil.getQueryData(this.getDomain(), null, (project!=null?project.getId():null), null);
+    	}
+    	
+    	return response;
+    }
+    
+    public StringBuffer getFormatedField(String style, String currValue, UserTO uto, HttpSession session){  
+    	return getFormatedField(style, currValue, uto, false, session);
+    }
+    
     /**
      * Format a html field with title and body.
      */
-    public StringBuffer getFormatedField(String style, String currValue, UserTO uto){    	
+    public StringBuffer getFormatedField(String style, String currValue, UserTO uto, boolean isReadOnly, HttpSession session){    	
         StringBuffer buff = new StringBuffer();
                 
         //format the body's content according meta field type
@@ -214,18 +255,29 @@ public class MetaFieldTO extends TransferObject {
                     this.getTextBoxMaxLenght() + "\" size=\"" + 
                     this.getTextBoxMaxLenght() + "\" value=\"" +
                     this.getDefaultValue(this.getDomain(), currValue, MetaFieldTO.TYPE_TEXT_BOX) + "\"" +
-                    this.getEnabledStatus(true) +
+                    (isReadOnly?"disabled=\"true\"":this.getEnabledStatus(true)) +
+                    this.getStyleSheetClass(style) + ">");
+           	buff.append(getHelpNote());	
+            buff.append(this.getHiddenFieldByEnabledStatus(MetaFieldTO.TYPE_TEXT_BOX, currValue));
+            
+        } else if (this.getType().equals(new Integer(TYPE_TEXT_BOX_NUMERIC))) {
+            buff.append("<input type=\"text\" name=\"" + 
+                    this.getHtmlName() + "\" id=\"" + this.getHtmlName() + "\" maxlength=\"" +
+                    this.getTextBoxMaxLenght() + "\" size=\"" + 
+                    this.getTextBoxMaxLenght() + "\" value=\"" +
+                    this.getDefaultValue(this.getDomain(), currValue, MetaFieldTO.TYPE_TEXT_BOX_NUMERIC) + "\"" +
+                    (isReadOnly?"disabled=\"true\"":this.getEnabledStatus(true)) +
                     this.getStyleSheetClass(style) + ">");
            	buff.append(getHelpNote());	
             buff.append(this.getHiddenFieldByEnabledStatus(MetaFieldTO.TYPE_TEXT_BOX, currValue));
             
         } else if (this.getType().equals(new Integer(TYPE_COMBO_BOX))) {
-            buff.append(HtmlUtil.getComboBox(this.getHtmlName(), this.getDomain(), style, currValue, null) );
+            buff.append(HtmlUtil.getComboBox(this.getHtmlName(), this.getDomain(), style, currValue, session, 0, null, isReadOnly) );
            	buff.append(getHelpNote());	
 
         } else if (this.getType().equals(new Integer(TYPE_SQL_COMBO_BOX))) {
             Vector<TransferObject> options = HtmlUtil.getQueryData(this.getDomain(), null, (project!=null?project.getId():null), null);
-            buff.append(HtmlUtil.getComboBox(this.getHtmlName(), options, style, currValue) );
+            buff.append(HtmlUtil.getComboBox(this.getHtmlName(), options, style, currValue, 0, null, isReadOnly) );
            	buff.append(getHelpNote());	
         
         } else if (this.getType().equals(new Integer(TYPE_TEXT_AREA))) {
@@ -233,7 +285,7 @@ public class MetaFieldTO extends TransferObject {
                     this.getHtmlName() + "\" id=\"" + this.getHtmlName() + "\" cols=\"" +
                     this.getTextAreaCols() + "\" rows=\"" +
                     this.getTextAreaRows() + "\" " +
-                    this.getEnabledStatus(false) +
+                    (isReadOnly?"disabled=\"true\"":this.getEnabledStatus(false)) +
                     this.getStyleSheetClass(style) + ">" + 
                     this.getDefaultValue(this.getDomain(), currValue, MetaFieldTO.TYPE_TEXT_AREA) + "</textarea>");
            	buff.append(getHelpNote());	
@@ -251,7 +303,7 @@ public class MetaFieldTO extends TransferObject {
  			buff.append("<input type=\"text\" name=\"" + 
  					this.getHtmlName() + "\" id=\"" + this.getHtmlName() + "\" size=\"" + 
  						this.getTextBoxMaxLenght() + "\" value=\"" + defVal + "\"" +
- 						this.getEnabledStatus(true) +
+ 						(isReadOnly?"disabled=\"true\"":this.getEnabledStatus(true)) +
  						this.getStyleSheetClass(style) + ">\n");
  			buff.append("</td><td><a href=\"javascript:calc_" + this.getHtmlName() + ".popup();\" border=\"0\">");
  			buff.append("<img src=\"../images/calendar.gif\" title=\"" + calLabel + "\" alt=\"" + calLabel + "\" border=\"0\" ></a>\n");
@@ -287,9 +339,28 @@ public class MetaFieldTO extends TransferObject {
     }
     
     
+    public String getFormatedValue(Float value, String pattern, Locale loc){
+    	DecimalFormat df = (DecimalFormat)NumberFormat.getInstance(loc);
+		df.applyPattern(pattern);
+		return  (value != null && ! value.equals("") ? df.format(value) : "" );
+    }
+    
+    
     /**
      * Get a content from domain based on id
      */
+    public String getValueByKey(AdditionalFieldTO afto, Locale loc){
+    	 String response = "";
+    	if (this.getType().equals(new Integer(TYPE_TEXT_BOX_NUMERIC))) {
+    		String[] options = this.getDomain().split("\\|");	
+			response = this.getFormatedValue(afto.getNumericValue(), options[3], loc);
+        } else{
+        	response = getValueByKey(afto.getValue());
+        }
+        	
+    	return response;
+    }
+    
     public String getValueByKey(String id){
         String response = "";
         
@@ -299,7 +370,6 @@ public class MetaFieldTO extends TransferObject {
             
             } else if (this.getType().equals(new Integer(TYPE_TEXT_AREA))) {
                 response = id;
-                
             } else if (this.getType().equals(new Integer(TYPE_COMBO_BOX))) {
                 String domain = this.getDomain();
                 int ini = domain.indexOf(id+"|");
@@ -315,9 +385,9 @@ public class MetaFieldTO extends TransferObject {
                     DbQueryDelegate query = new DbQueryDelegate();
                     this.domainCache = query.performQuery(this.getDomain());           		
             	}
-                Iterator i = this.domainCache.iterator();
+                Iterator<Vector<Object>> i = this.domainCache.iterator();
                 while(i.hasNext()){
-                	Vector item = (Vector)i.next();
+                	Vector<Object> item = (Vector<Object>)i.next();
                     if (((item.get(0)).toString()).equals(id)) {
                         response = (String)item.get(1);
                         break;
@@ -418,6 +488,10 @@ public class MetaFieldTO extends TransferObject {
                 if (options.length>2) {
                     response = options[2];
                 }                            
+            } else if (guiType==MetaFieldTO.TYPE_TEXT_BOX_NUMERIC) {
+                if (options.length>2) {
+                    response = options[2];
+                }                            
             } else if (guiType==MetaFieldTO.TYPE_TEXT_AREA) {
                 if (options.length>3) {
                     response = options[3];
@@ -439,7 +513,7 @@ public class MetaFieldTO extends TransferObject {
 
 
 	private int getFormatedColByDomain(NodeList cols, StringBuffer payload,	int rowNumber, boolean isBorder, 
-			Vector values, String style, UserTO uto, int counter) {
+			Vector<AdditionalTableTO> values, String style, UserTO uto, int counter, boolean isReadOnly) {
 		
 		for (int j = 0; j < cols.getLength(); j++) {
 			Node colNode = cols.item(j);
@@ -469,7 +543,7 @@ public class MetaFieldTO extends TransferObject {
 					innerField.setDomain(colNode.getTextContent());
 					innerField.setId(this.getHtmlName() + "_" + rowNumber + "_" + this.numCols);
 					innerField.setHelpContent(null);
-					payload.append(innerField.getFormatedField(style, currentValueOfCell, uto));
+					payload.append(innerField.getFormatedField(style, currentValueOfCell, uto, isReadOnly, null));
 					counter++;
 
 					payload.append("</td>");
@@ -483,7 +557,7 @@ public class MetaFieldTO extends TransferObject {
     
 	
 	private int getFormatedColByValues(NodeList colsOfFirstRow, StringBuffer payload, int rowNumber, boolean isBorder, 
-			Vector values, String style, UserTO uto, int counter) {
+			Vector<AdditionalTableTO> values, String style, UserTO uto, int counter, boolean isReadOnly) {
 		
 		for (int j = 0; j < colsOfFirstRow.getLength(); j++) {
 			Node colNode = colsOfFirstRow.item(j);
@@ -517,7 +591,7 @@ public class MetaFieldTO extends TransferObject {
 					innerField.setDomain(colNode.getTextContent());
 					innerField.setId(this.getHtmlName() + "_" + rowNumber + "_" + this.numCols);
 					innerField.setHelpContent(null);
-					payload.append(innerField.getFormatedField(style, currentValueOfCell, uto));
+					payload.append(innerField.getFormatedField(style, currentValueOfCell, uto, isReadOnly, null));
 					counter++;
 
 					payload.append("</td>");
@@ -530,11 +604,11 @@ public class MetaFieldTO extends TransferObject {
 	}
 	
 	
-    private AdditionalTableTO getTableCellValue(int row, int col, Vector values) {
+    private AdditionalTableTO getTableCellValue(int row, int col, Vector<AdditionalTableTO> values) {
     	AdditionalTableTO response = null;
-    	Iterator i = values.iterator();
+    	Iterator<AdditionalTableTO> i = values.iterator();
     	while(i.hasNext()) {
-    		AdditionalTableTO atto = (AdditionalTableTO)i.next();
+    		AdditionalTableTO atto = i.next();
     		if (atto.getCol().intValue()==col &&
     				atto.getLine().intValue()==row) {
     			response = atto;
@@ -553,8 +627,17 @@ public class MetaFieldTO extends TransferObject {
         this.domain = newValue;
     }
     
-    
-    ////////////////////////////////////////////////    
+
+	////////////////////////////////////////////////
+    public Integer getOrder() {
+		return order;
+	}
+	public void setOrder(Integer newValue) {
+		this.order = newValue;
+	}
+	
+
+	////////////////////////////////////////////////    
     public String getName() {
         return name;
     }
@@ -624,6 +707,25 @@ public class MetaFieldTO extends TransferObject {
 	public void setHelpContent(String newValue) {
 		this.helpContent = newValue;
 	}
-    
+
+	
+	////////////////////////////////////////////
+	public Boolean isMandatory() {
+		return isMandatory;
+	}
+	public void setIsMandatory(Boolean newValue) {
+		this.isMandatory = newValue;
+	}
+
+	
+	////////////////////////////////////////////
+	public Boolean getIsQualifier() {
+		return isQualifier;
+	}
+	public void setIsQualifier(Boolean newValue) {
+		this.isQualifier = newValue;
+	}
+	
+	
 }
 

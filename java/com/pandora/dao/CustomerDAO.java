@@ -13,7 +13,6 @@ import com.pandora.RootTO;
 import com.pandora.TransferObject;
 import com.pandora.UserTO;
 import com.pandora.exception.DataAccessException;
-import com.pandora.helper.LogUtil;
 
 /**
  * This class contain all methods to handle data related with Customer entity into data base. 
@@ -67,7 +66,7 @@ public class CustomerDAO extends UserDAO {
 		
 		try {
 		    
-		    //create a where clausule based on list of customer objects		    
+		    //create a 'where' clause based on list of customer objects		    
 		    Iterator i = customerList.iterator();
 		    while(i.hasNext()){
 		        if (where.equals("")){
@@ -95,13 +94,7 @@ public class CustomerDAO extends UserDAO {
 		} catch (SQLException e) {
 			throw new DataAccessException(e);
 		}finally{
-			//Close the current result set and statement
-			try {
-				if(rs != null) rs.close();
-				if(pstmt != null) pstmt.close();
-			} catch (SQLException ec) {
-			    LogUtil.log(this, LogUtil.LOG_ERROR, "DB Closing statement error", ec);
-			} 		
+			super.closeStatement(rs, pstmt);
 		}	 
 		return response;
     }
@@ -115,10 +108,9 @@ public class CustomerDAO extends UserDAO {
 		ResultSet rs = null;
 		PreparedStatement pstmt = null; 
 		try {
-  
-		    //select a Leader from database
 			pstmt = c.prepareStatement("select c.id, c.project_id, u.username, u.color, u.email, u.name, " +
-									   "u.phone, u.password, u.department_id, u.area_id, u.function_id, u.country, u.language, u.birth, u.auth_mode, u.permission, u.pic_file, u.final_date, " +
+									   "u.phone, u.password, u.department_id, u.area_id, u.function_id, u.country, u.language, " +
+									   "u.birth, u.company_id, u.auth_mode, u.permission, u.pic_file, u.final_date, u.creation_date, " +
 									   "c.is_disable, c.can_see_tech_comment, c.is_req_acceptable, c.pre_approve_req, " +
 									   "c.can_see_discussion, c.can_see_other_reqs, c.can_open_otherowner_reqs " +
 									   "from tool_user u, customer c " +
@@ -161,8 +153,8 @@ public class CustomerDAO extends UserDAO {
     /**
      * Get a list of Customers objects based on a user id.
      */
-    public Vector getCustomerByUser(UserTO uto) throws DataAccessException {
-        Vector response = null;
+    public Vector<CustomerTO> getCustomerByUser(UserTO uto) throws DataAccessException {
+        Vector<CustomerTO> response = null;
         Connection c = null;
 		try {
 			c = getConnection();
@@ -179,13 +171,14 @@ public class CustomerDAO extends UserDAO {
     /**
      * Get a list of Customers objects based on a user id.
      */
-    private Vector getCustomerByUser(UserTO uto, Connection c) throws DataAccessException{
-        Vector response= new Vector();
+    private Vector<CustomerTO> getCustomerByUser(UserTO uto, Connection c) throws DataAccessException{
+        Vector<CustomerTO> response= new Vector<CustomerTO>();
 		ResultSet rs = null;
 		PreparedStatement pstmt = null; 
 		try {
 			pstmt = c.prepareStatement("select c.id, c.project_id, u.username, u.color, u.email, u.name, " +
-			        				   "u.phone, u.password, u.department_id, u.area_id, u.function_id, u.country, u.language, u.birth, u.auth_mode, u.permission, u.pic_file, u.final_date, " +
+			        				   "u.phone, u.password, u.department_id, u.area_id, u.function_id, u.country, u.language, " +
+			        				   "u.birth, u.company_id, u.auth_mode, u.permission, u.pic_file, u.final_date, u.creation_date, " +
 									   "c.is_disable, c.can_see_tech_comment, c.is_req_acceptable, c.pre_approve_req, " +
 									   "c.can_see_discussion, c.can_see_other_reqs, c.can_open_otherowner_reqs " +
 									   "from tool_user u, customer c " +
@@ -196,7 +189,6 @@ public class CustomerDAO extends UserDAO {
 			while (rs.next()){
 				response.addElement(this.populateCustomerByResultSet(rs));
 			}
-
 		} catch (SQLException e) {
 			throw new DataAccessException(e);
 		}finally{
@@ -215,11 +207,12 @@ public class CustomerDAO extends UserDAO {
 		PreparedStatement pstmt = null; 
 		try {		    
 			pstmt = c.prepareStatement("select c.id, c.project_id, u.username, u.color, u.email, u.name, " +
-									   "u.phone, u.password, u.department_id, u.area_id, u.function_id, u.country, u.language, u.birth, u.auth_mode, u.permission, u.pic_file, u.final_date, " +
+									   "u.phone, u.password, u.department_id, u.area_id, u.function_id, u.country, u.language, " +
+									   "u.birth, u.company_id, u.auth_mode, u.permission, u.pic_file, u.final_date, u.creation_date, " +
 									   "c.is_disable, c.can_see_tech_comment, c.is_req_acceptable, c.pre_approve_req, " +
 									   "c.can_see_discussion, c.can_see_other_reqs, c.can_open_otherowner_reqs " +
 									   "from customer c, tool_user u " +
-									   "where c.id = u.id and u.username <> '" + RootTO.ROOT_USER + "' " +
+									   "where c.id = u.id " + //and u.username <> '" + RootTO.ROOT_USER + "' " +
 										 "and c.project_id = ? " +
 									   "order by u.username");
 			pstmt.setString(1, filter.getId());
@@ -237,14 +230,15 @@ public class CustomerDAO extends UserDAO {
     }
 
     
-    public Vector getCanOtherReqCustomerList(UserTO uto, Connection c) throws DataAccessException{
-        Vector response= new Vector();
+    public Vector<CustomerTO> getCanOtherReqCustomerList(UserTO uto, Connection c) throws DataAccessException{
+        Vector<CustomerTO> response= new Vector<CustomerTO>();
 		ResultSet rs = null;
 		PreparedStatement pstmt = null;
 		
 		try {
 		    String sql = "select c.id, c.project_id, u.username, u.color, u.email, u.name, " +
-						    "u.phone, u.password, u.department_id, u.area_id, u.function_id, u.country, u.language, u.birth, u.auth_mode, u.permission, u.pic_file, u.final_date, " +
+						    "u.phone, u.password, u.department_id, u.area_id, u.function_id, u.country, u.language, " +
+						    "u.birth, u.company_id, u.auth_mode, u.permission, u.pic_file, u.final_date, u.creation_date, " +
 						    "c.is_disable, c.can_see_tech_comment, c.is_req_acceptable, c.pre_approve_req, " +
 						    "c.can_see_discussion, c.can_see_other_reqs, c.can_open_otherowner_reqs " +
 						 "from customer c, tool_user u " +
@@ -276,7 +270,8 @@ public class CustomerDAO extends UserDAO {
 		try {
 		    CustomerTO filter = (CustomerTO)to;
 			pstmt = c.prepareStatement("select c.id, c.project_id, u.username, u.color, u.email, u.name, " +
-					   				     "u.phone, u.password, u.department_id, u.area_id, u.function_id, u.country, u.language, u.birth, u.auth_mode, u.permission, u.pic_file, u.final_date, " +
+					   				     "u.phone, u.password, u.department_id, u.area_id, u.function_id, u.country, u.language, " +
+					   				     "u.birth, u.company_id, u.auth_mode, u.permission, u.pic_file, u.final_date, u.creation_date, " +
 					   				     "is_disable, c.can_see_tech_comment, c.is_req_acceptable, c.pre_approve_req, " +
 					   				     "c.can_see_discussion, c.can_see_other_reqs, c.can_open_otherowner_reqs " +
 					   				   "from customer c, tool_user u " +
@@ -288,7 +283,6 @@ public class CustomerDAO extends UserDAO {
 			while (rs.next()){
 			    response = this.populateCustomerByResultSet(rs);
 			} 
-						
 		} catch (SQLException e) {
 			throw new DataAccessException(e);
 		}finally{
@@ -393,13 +387,10 @@ public class CustomerDAO extends UserDAO {
 		} catch (SQLException e) {
 			throw new DataAccessException(e);
 		}finally{
-			try {
-				if(pstmt != null) pstmt.close();
-			} catch (SQLException ec) {
-			    LogUtil.log(this, LogUtil.LOG_ERROR, "DB Closing statement error", ec);
-			} 		
+			super.closeStatement(null, pstmt);
 		}       
     }
+    
     
     /**
      * Remove a list of users from data base related with project id. <br>

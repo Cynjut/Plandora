@@ -1,12 +1,11 @@
 package com.pandora.gui.taglib.decorator;
 
-import java.util.Iterator;
+import java.util.HashMap;
 import java.util.Vector;
 
 import org.apache.taglibs.display.ColumnDecorator;
 
 import com.pandora.CustomerTO;
-import com.pandora.LeaderTO;
 import com.pandora.ProjectTO;
 import com.pandora.RequirementStatusTO;
 import com.pandora.RequirementTO;
@@ -32,14 +31,15 @@ public class RequirementGridEditDecorator extends ColumnDecorator {
     /* (non-Javadoc)
      * @see org.apache.taglibs.display.ColumnDecorator#decorate(java.lang.Object, java.lang.String)
      */
-    public String decorate(Object columnValue, String tag) {
+    @SuppressWarnings("unchecked")
+	public String decorate(Object columnValue, String tag) {
 		String image = "";
 		String altValue = this.getBundleMessage("label.grid.requestform.readonly"); 
 		String imgSrc = "../images/lockedit.gif";
 		
 		try {
 			tag = ResourceHomeForm.RO_MODE_SOURCE; //default value
-			UserTO uto = (UserTO)this.getPageContext().getSession().getAttribute(UserDelegate.CURRENT_USER_SESSION);
+			UserTO uto = (UserTO)this.getSession().getAttribute(UserDelegate.CURRENT_USER_SESSION);
 		    
 		    RequirementTO rto = (RequirementTO)this.getObject();
 		    if (rto!=null && rto.getId()!=null) {
@@ -49,13 +49,23 @@ public class RequirementGridEditDecorator extends ColumnDecorator {
 				if (uto.getId().equals(rto.getRequester().getId()) && (isWaiting || isClosed)){
 				    
 				    if (isClosed) {
+				    	
 						//retrieve data about the requirement customer from data base
-						UserDelegate udel = new UserDelegate();
-						CustomerTO filter = rto.getRequester();
-						filter.setProject(rto.getProject());
-						CustomerTO cto = udel.getCustomer(filter);
-				        
-				        if ( cto.getBoolIsReqAcceptable()) {
+				    	HashMap<String,CustomerTO> hm = (HashMap<String,CustomerTO>)super.getSession().getAttribute("REQ_GRID_EDIT_CUSTOMER_LIST_" + rto.getProject().getId());
+				    	if (hm==null) {
+				    		hm = new HashMap<String, CustomerTO>();
+							UserDelegate udel = new UserDelegate();
+							Vector<CustomerTO> customerList = udel.getCustomerByProject(rto.getProject(), true);
+							for (CustomerTO cto : customerList) {
+								if (hm.get(cto.getId())==null) {
+									hm.put(cto.getId(), cto);
+								}
+							}
+							super.getSession().setAttribute("REQ_GRID_EDIT_CUSTOMER_LIST_" + rto.getProject().getId(), hm);
+				    	}
+
+						CustomerTO cto = hm.get(rto.getRequester().getId());
+				        if ( cto!=null && cto.getBoolIsReqAcceptable()) {
 					        altValue = this.getBundleMessage("label.grid.requestform.reopen");
 					        imgSrc = "../images/reopen.gif";
 					        tag = ResourceHomeForm.REF_REQ_SOURCE;		            
@@ -73,7 +83,7 @@ public class RequirementGridEditDecorator extends ColumnDecorator {
 				    
 			    } else {
 			    	ProjectTO project = rto.getProject();
-		            if (this.checkUserIsLeader(project, uto)) {
+		            if (uto.isLeader(project)) {
 					    altValue = this.getBundleMessage("label.grid.requestform.adjust");
 					    imgSrc = "../images/adjustreq.gif";
 					    if (isWaiting) {
@@ -98,32 +108,6 @@ public class RequirementGridEditDecorator extends ColumnDecorator {
 		return image;
     }
     
-    /**
-     * Check if a current requester of Requirement is a leader 
-     * of project related with Requirement.
-     */
-    private boolean checkUserIsLeader(ProjectTO pto, UserTO requester) {
-        boolean isLeader = false;
-        
-        Vector<LeaderTO> leaders = pto.getProjectLeaders();
-        if (leaders==null) {
-        	//set leaders to null to induce the lazzy initialization of project leader list
-        	pto.setProjectLeaders(null); 
-        	leaders = pto.getProjectLeaders();
-        }
-        
-        if (leaders!=null){
-            Iterator i = leaders.iterator();
-            while(i.hasNext()){
-                LeaderTO lead = (LeaderTO)i.next();
-                if (lead.getId().equals(requester.getId())){
-                    isLeader = true;
-                    break;
-                }
-            }            
-        }
-        return isLeader;
-    }
     
     /* (non-Javadoc)
      * @see org.apache.taglibs.display.ColumnDecorator#contentToSearching(java.lang.Object)

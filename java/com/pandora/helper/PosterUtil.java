@@ -1,9 +1,14 @@
 package com.pandora.helper;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.FileNotFoundException;
+import java.io.InputStreamReader;
+import java.io.UnsupportedEncodingException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.net.URLEncoder;
+
+import com.pandora.bus.SystemSingleton;
 
 /**
  * This class contains the objects needed to send an HTTP post
@@ -39,10 +44,11 @@ public class PosterUtil {
      */
     public void addParameter(String param, String value) {
     	try {
+			String encoding = SystemSingleton.getInstance().getDefaultEncoding();    		
             if (parameters.equals("")) {
-				parameters = param + "=" + URLEncoder.encode(value, "UTF-8");
+				parameters = param + "=" + URLEncoder.encode(value, encoding);
             } else {
-                parameters += "&" + param + "=" + URLEncoder.encode(value, "UTF-8");
+                parameters += "&" + param + "=" + URLEncoder.encode(value, encoding);
             }    		
     	} catch (UnsupportedEncodingException e) {
     		e.printStackTrace();

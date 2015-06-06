@@ -25,6 +25,8 @@ public class FieldValueTO extends TransferObject{
     
     public static final String FIELD_TYPE_RELATION_MANY  = "RELATION_MANY";
     
+    public static final String FIELD_TYPE_GRID           = "GRID";
+    
     private String type;
         
     private String label;
@@ -36,6 +38,8 @@ public class FieldValueTO extends TransferObject{
     private String helpMessage;
     
     private Vector<TransferObject> domain;
+        
+    private Vector<FieldValueTO> gridFields;
     
     private String currentValue;
     
@@ -64,6 +68,14 @@ public class FieldValueTO extends TransferObject{
         this.size = s;
         this.readOnly = ro;
     }
+
+    public FieldValueTO(String id, String n, Vector<FieldValueTO> fields, Vector<String> fieldJS){
+        super.setId(id);
+        this.type = FIELD_TYPE_GRID;
+        this.label = n;
+        this.gridFields = fields;
+        this.domain = null;
+     }
     
     
     public void translateDomain(UserTO uto) {
@@ -156,6 +168,11 @@ public class FieldValueTO extends TransferObject{
 	}
 	public void setReadOnly(boolean newValue) {
 		this.readOnly = newValue;
+	}
+
+    /////////////////////////////////////////	
+	public Vector<FieldValueTO> getGridFields() {
+		return gridFields;
 	}
     
 }

@@ -18,6 +18,7 @@ import com.pandora.delegate.DbQueryDelegate;
 import com.pandora.delegate.OccurrenceDelegate;
 import com.pandora.delegate.ProjectDelegate;
 import com.pandora.exception.BusinessException;
+import com.pandora.helper.DBUtil;
 import com.pandora.helper.DateUtil;
 import com.pandora.helper.StringUtil;
 
@@ -183,12 +184,13 @@ public final class ResourceCategoryCapacityChartGadget extends ChartGadget {
                     }
                     
                     sqlData = sqlData + "select a.alloc_time, c.name, ";
+                    sqlData = sqlData + DBUtil.addDate(dbname, "rt.actual_date", "a.sequence-1") + " as bucket_date ";
                     
-                    if (dbname.equalsIgnoreCase("MySQL")) {
-                    	sqlData = sqlData + "ADDDATE(rt.actual_date, a.sequence-1) as bucket_date ";
-            		} else {
-            			sqlData = sqlData + "rt.actual_date+ cast((a.sequence-1) || ' day' as interval) as bucket_date ";
-            		}
+                    //if (dbname.equalsIgnoreCase("MySQL")) {
+                    //	sqlData = sqlData + "ADDDATE(rt.actual_date, a.sequence-1) as bucket_date ";
+            		//} else {
+            		//	sqlData = sqlData + "rt.actual_date+ cast((a.sequence-1) || ' day' as interval) as bucket_date ";
+            		//}
                     
                     sqlData = sqlData + ", o.name as iteration, o.id " + 
                                 "from resource_task_alloc a, task t, resource_task rt, category c, " +
@@ -235,7 +237,6 @@ public final class ResourceCategoryCapacityChartGadget extends ChartGadget {
                     				index = slot.intValue();	                        	
                     			} else {
                     				index = -1;
-                    				System.out.println("index is null. dt:" + tm + " gran.list:" + this.granularity);
                     			}
                             }
                             

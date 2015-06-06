@@ -69,7 +69,7 @@
 	<html:hidden name="surveyForm" property="showEditQuestion"/>
 	<html:hidden name="surveyForm" property="editQuestionId"/>
 		
-	<br>
+	<plandora-html:shortcut name="surveyForm" property="goToSurveyForm" fieldList="projectId"/>
 	
 	<table width="100%" border="0" cellspacing="0" cellpadding="0">
 	<tr><td width="10">&nbsp;</td><td>
@@ -151,12 +151,12 @@
 				</tr>
 				<tr class="pagingFormBody">
 					<td colspan="3" class="formBody">
-						<display:table border="1" width="100%" name="questionList" pagesize="0" scope="session">
-							  <display:column align="center" property="content" title="label.formSurvey.question.content" />
-							  <display:column width="25%"align="center" property="position" title="label.formSurvey.question.position"/>
-  					  		  <display:column width="2%" property="id" title="grid.title.empty" decorator="com.pandora.gui.taglib.decorator.SurveyQuestionEditDecorator" />
-					  		  <display:column width="2%" property="id" title="grid.title.empty" decorator="com.pandora.gui.taglib.decorator.SurveyQuestionRemoveDecorator" />							  
-						</display:table>
+						<plandora-html:ptable width="100%" name="questionList" pagesize="0" scope="session" frm="surveyForm">
+							  <plandora-html:pcolumn align="center" property="content" title="label.formSurvey.question.content" />
+							  <plandora-html:pcolumn width="25%"align="center" property="position" title="label.formSurvey.question.position"/>
+  					  		  <plandora-html:pcolumn width="2%" property="id" title="grid.title.empty" decorator="com.pandora.gui.taglib.decorator.SurveyQuestionEditDecorator" />
+					  		  <plandora-html:pcolumn width="2%" property="id" title="grid.title.empty" decorator="com.pandora.gui.taglib.decorator.SurveyQuestionRemoveDecorator" />							  
+						</plandora-html:ptable>
 					</td>
 				</tr>
 				<tr class="gapFormBody">
@@ -178,14 +178,14 @@
 		</tr>
 	    <tr class="pagingFormBody">
 	      <td width="20">&nbsp;</td>
-	      <td width="300" class="formTitle"><bean:message key="label.formSurvey.anonymousUrl"/></td>
+	      <td width="300" class="formBody"><bean:message key="label.formSurvey.anonymousUrl"/></td>
 	      <td>&nbsp;</td>
 	      <td width="20">&nbsp;</td>
 	    </tr>
 	    <tr class="tableRowOdd">
 	      <td>&nbsp;</td>
 	      <td class="code" colspan="2">
-				<bean:write name="surveyForm" property="anonymousURI" />
+				<bean:write name="surveyForm" property="anonymousURI" filter="false"/>
 	      </td>
 	      <td>&nbsp;</td>
 	    </tr>
@@ -200,12 +200,12 @@
 		  <td width="120">
 			<logic:equal name="surveyForm" property="showSaveConfirmation" value="on">
 				<html:button property="save" styleClass="button" onclick="javascript:saveWithConfirmation();">
-					<bean:write name="surveyForm" property="saveLabel" />
+					<bean:write name="surveyForm" property="saveLabel" filter="false"/>
 				</html:button>    		
 			</logic:equal>
 			<logic:equal name="surveyForm" property="showSaveConfirmation" value="off">
 				<html:button property="save" styleClass="button" onclick="javascript:buttonClick('surveyForm', 'saveSurvey');">
-					<bean:write name="surveyForm" property="saveLabel" />
+					<bean:write name="surveyForm" property="saveLabel" filter="false"/>
 				</html:button>    		
 			</logic:equal>      
 		  </td>
@@ -237,15 +237,16 @@
 	<table width="98%" border="0" cellspacing="0" cellpadding="0">
 		<tr class="formBody">
 			<td>
-				<display:table border="1" width="100%" name="surveyList" scope="session" pagesize="6">
-					  <display:column width="2%" align="center" property="id" title="grid.title.empty" />
-					  <display:column property="name" title="label.formSurvey.name" />
-					  <display:column width="15%" align="center" property="publishingDate" title="label.formSurvey.publishing" decorator="com.pandora.gui.taglib.decorator.GridDateDecorator" tag="2;0" />
-					  <display:column width="15%" align="center" property="finalDate" title="label.formSurvey.finaldate" decorator="com.pandora.gui.taglib.decorator.GridDateDecorator" tag="2;0" />
-					  <display:column width="2%" property="id" title="grid.title.empty" decorator="com.pandora.gui.taglib.decorator.SurveyAnswerViewerDecorator" />					  
-					  <display:column width="2%" property="id" title="grid.title.empty" decorator="com.pandora.gui.taglib.decorator.GridEditDecorator" tag="'surveyForm', 'editSurvey'" />
-					  <display:column width="2%" property="id" title="grid.title.empty" decorator="com.pandora.gui.taglib.decorator.GridDeleteDecorator" tag="'surveyForm', 'removeSurvey'" />
-				</display:table>		
+				<plandora-html:ptable width="100%" name="surveyList" scope="session" pagesize="25" frm="surveyForm" >
+					  <plandora-html:pcolumn width="2%" align="center" property="id" title="grid.title.empty" />
+					  <plandora-html:pcolumn sort="true" likeSearching="true" property="name" title="label.formSurvey.name" />
+					  <plandora-html:pcolumn sort="true" width="13%" align="center" property="creationDate" title="grid.title.creationDate" decorator="com.pandora.gui.taglib.decorator.GridDateDecorator" tag="2;0" />
+					  <plandora-html:pcolumn sort="true" width="13%" align="center" property="publishingDate" title="label.formSurvey.publishing" decorator="com.pandora.gui.taglib.decorator.GridDateDecorator" tag="2;0" />
+					  <plandora-html:pcolumn sort="true" width="13%" align="center" property="finalDate" title="label.formSurvey.finaldate" decorator="com.pandora.gui.taglib.decorator.GridDateDecorator" tag="2;0" />
+					  <plandora-html:pcolumn width="2%" property="id" title="grid.title.empty" decorator="com.pandora.gui.taglib.decorator.SurveyAnswerViewerDecorator" />					  
+					  <plandora-html:pcolumn width="2%" property="id" title="grid.title.empty" decorator="com.pandora.gui.taglib.decorator.GridEditDecorator" tag="'surveyForm', 'editSurvey'" />
+					  <plandora-html:pcolumn width="2%" property="id" title="grid.title.empty" decorator="com.pandora.gui.taglib.decorator.GridDeleteDecorator" tag="'surveyForm', 'removeSurvey'" />
+				</plandora-html:ptable>
 			</td>
 		</tr> 
 	</table>
@@ -257,6 +258,11 @@
 			<bean:message key="button.refresh"/>
 		  </html:button>    
 		</td>
+		<td class="textBoxOverTitleArea">
+			<html:checkbox property="hideClosedSurveys" name="surveyForm" >
+				<bean:message key="label.formSurvey.hideClosed"/>
+			</html:checkbox>
+		</td>	   		
 		<td>&nbsp;</td>
 		</tr></table>  	
 	</display:headerfootergrid>

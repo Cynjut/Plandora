@@ -9,6 +9,7 @@ import java.util.Vector;
 
 import com.pandora.CustomerTO;
 import com.pandora.ProjectTO;
+import com.pandora.ResourceCapacityTO;
 import com.pandora.ResourceTO;
 import com.pandora.RootTO;
 import com.pandora.TransferObject;
@@ -154,7 +155,7 @@ public class ResourceDAO extends CustomerDAO {
     }
 
     
-    /**
+	/**
      * Update a list of resources into data base related with project id. <br>
      */
     public void update(Vector vto, Connection c) throws DataAccessException {
@@ -211,13 +212,13 @@ public class ResourceDAO extends CustomerDAO {
 		    
 			pstmt = c.prepareStatement("select r.id, r.project_id, u.username, u.color, u.email, u.name, " +
 			                           "u.phone, u.password, u.department_id, u.area_id, u.function_id, u.country, " +
-			                           "u.language, u.birth, u.auth_mode, u.permission, u.pic_file, u.final_date, " +
+			                           "u.language, u.birth, u.company_id, u.auth_mode, u.permission, u.pic_file, u.final_date, u.creation_date, " +
 									   "c.pre_approve_req, r.can_see_customer, r.can_self_alloc, r.can_see_repository, r.can_see_invoice, " +
 									   "c.is_disable, c.is_req_acceptable, c.can_see_tech_comment, " +
 									   "c.can_see_discussion, c.can_see_other_reqs, c.can_open_otherowner_reqs  " +
 									   "from resource r, tool_user u, customer c " +
-									   "where r.id = u.id and c.id = u.id and u.username <> '" + RootTO.ROOT_USER + "' " +
-									   	 "and r.project_id = c.project_id " + disabledSQL + projectSQL + 
+									   "where r.id = u.id and c.id = u.id " + //and u.username <> '" + RootTO.ROOT_USER + "' " +
+									   	 "and r.project_id = c.project_id and u.final_date is null " + disabledSQL + projectSQL + 
 									   	 "order by u.username");
 			rs = pstmt.executeQuery();						
 			while (rs.next()){
@@ -236,8 +237,8 @@ public class ResourceDAO extends CustomerDAO {
     /**
      * Get a list of Resources objects based on a user id.
      */
-    public Vector getResourceByUser(UserTO uto) throws DataAccessException {
-        Vector response = null;
+    public Vector<ResourceTO> getResourceByUser(UserTO uto) throws DataAccessException {
+        Vector<ResourceTO> response = null;
         Connection c = null;
 		try {
 			c = getConnection();
@@ -254,13 +255,14 @@ public class ResourceDAO extends CustomerDAO {
     /**
      * Get a list of Resources objects based on a user id.
      */
-    private Vector getResourceByUser(UserTO uto, Connection c) throws DataAccessException{
-        Vector response= new Vector();
+    private Vector<ResourceTO> getResourceByUser(UserTO uto, Connection c) throws DataAccessException{
+        Vector<ResourceTO> response= new Vector<ResourceTO>();
 		ResultSet rs = null;
 		PreparedStatement pstmt = null; 
 		try {
 			pstmt = c.prepareStatement("select r.id, r.project_id, u.username, u.color, u.email, u.name, " +
-                    				   "u.phone, u.password, u.department_id, u.area_id, u.function_id, u.country, u.language, u.birth, u.auth_mode, u.permission, u.pic_file, u.final_date, " +			        
+                    				   "u.phone, u.password, u.department_id, u.area_id, u.function_id, u.country, u.language, " +
+                    				   "u.birth, u.company_id, u.auth_mode, u.permission, u.pic_file, u.final_date, u.creation_date, " +			        
 									   "c.pre_approve_req, r.can_see_customer, r.can_self_alloc, r.can_see_repository, r.can_see_invoice, " +
 									   "c.is_disable, c.is_req_acceptable, c.can_see_tech_comment, " +
 									   "c.can_see_discussion, c.can_see_other_reqs, c.can_open_otherowner_reqs " +
@@ -300,7 +302,6 @@ public class ResourceDAO extends CustomerDAO {
         return response;
     }
 
-    
     /**
      * Get a specific Resource TO from data base, based on id.
      */
@@ -310,7 +311,8 @@ public class ResourceDAO extends CustomerDAO {
 		PreparedStatement pstmt = null; 
 		try {
 			pstmt = c.prepareStatement("select r.id, r.project_id, u.username, u.color, u.email, u.name, " +
-	 				   				   "u.phone, u.password, u.department_id, u.area_id, u.function_id, u.country, u.language, u.birth, u.auth_mode, u.permission, u.pic_file, u.final_date, " +
+	 				   				   "u.phone, u.password, u.department_id, u.area_id, u.function_id, u.country, u.language, u.birth, u.company_id, " +
+	 				   				   "u.auth_mode, u.permission, u.pic_file, u.final_date, u.creation_date, " +
 									   "c.pre_approve_req, r.can_see_customer, r.can_self_alloc, r.can_see_repository, r.can_see_invoice, " +
 									   "c.is_disable, c.is_req_acceptable, c.can_see_tech_comment, " +
 									   "c.can_see_discussion, c.can_see_other_reqs, c.can_open_otherowner_reqs " +
@@ -340,7 +342,8 @@ public class ResourceDAO extends CustomerDAO {
 		try {
 		    ResourceTO filter = (ResourceTO)to;
 			pstmt = c.prepareStatement("select r.id, r.project_id, u.username, u.color, u.email, u.name, " +
-	   				   				   "u.phone, u.password, u.department_id, u.area_id, u.function_id, u.country, u.language, u.birth, u.auth_mode, u.permission, u.pic_file, u.final_date, " +			        
+	   				   				   "u.phone, u.password, u.department_id, u.area_id, u.function_id, u.country, u.language, " +
+	   				   				   "u.birth, u.company_id, u.auth_mode, u.permission, u.pic_file, u.final_date, u.creation_date, " +			        
 									   "c.pre_approve_req, r.can_see_customer, r.can_self_alloc, r.can_see_repository, r.can_see_invoice, " +
 									   "c.is_disable, c.is_req_acceptable, c.can_see_tech_comment, " +
 									   "c.can_see_discussion, c.can_see_other_reqs, c.can_open_otherowner_reqs " +
@@ -363,7 +366,7 @@ public class ResourceDAO extends CustomerDAO {
 		return response;
 	}
    
-    
+	
     /**
      * Create a new TO object based on data into result set.
      */
@@ -381,7 +384,7 @@ public class ResourceDAO extends CustomerDAO {
         response.setCanSeeRepository(getBoolean(rs, "can_see_repository"));
         response.setCanSeeInvoice(getBoolean(rs, "can_see_invoice"));        
         
-        Vector capacityList = rcdao.getListByResourceProject(response.getId(), response.getProject().getId(), c);
+        Vector<ResourceCapacityTO> capacityList = rcdao.getListByResourceProject(response.getId(), response.getProject().getId(), null, c);
         response.setResourceCapacityList(capacityList);
         
         return response;

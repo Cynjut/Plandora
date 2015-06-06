@@ -9,6 +9,7 @@ import java.util.Vector;
 
 import com.pandora.BSCReportTO;
 import com.pandora.CategoryTO;
+import com.pandora.DBQueryResult;
 import com.pandora.ProjectTO;
 import com.pandora.ReportFieldTO;
 import com.pandora.ReportResultTO;
@@ -19,17 +20,19 @@ import com.pandora.dao.ReportDAO;
 import com.pandora.delegate.ProjectDelegate;
 import com.pandora.exception.BusinessException;
 import com.pandora.exception.DataAccessException;
+import com.pandora.exception.DuplicatedKpiTypeException;
 import com.pandora.exception.EmptyReportBusinessException;
 import com.pandora.exception.EmptyReportException;
 import com.pandora.helper.DateUtil;
 import com.pandora.helper.LogUtil;
+import com.pandora.helper.StringUtil;
 
 /**
  * This class contain the business rules related with Report entity.
  */
 public class ReportBUS extends GeneralBusiness {
 
-    /** The Data Acess Object related with current business entity */
+    /** The Data Access Object related with current business entity */
     ReportDAO dao = new ReportDAO();
     
 
@@ -72,9 +75,9 @@ public class ReportBUS extends GeneralBusiness {
     }
 
     
-    public void getKpiValues(Timestamp initialDate, Timestamp finalDate, ReportTO kpiObj) throws BusinessException {
+    public void getKpiValues(Timestamp initialDate, Timestamp finalDate, ReportTO kpiObj, String projectId) throws BusinessException {
         try {
-        	dao.getKpiValues(initialDate, finalDate, kpiObj);
+        	dao.getKpiValues(initialDate, finalDate, kpiObj, projectId);
         } catch (DataAccessException e) {
             throw new  BusinessException(e);
         }
@@ -99,18 +102,52 @@ public class ReportBUS extends GeneralBusiness {
      */
     public void insertReport(ReportTO rto) throws BusinessException {
         try {
+        	//this.checkDuplicateKpiType(rto);
             dao.insert(rto);
         } catch (DataAccessException e) {
             throw new  BusinessException(e);
         }        
     }
 
+    //TODO refatorar...
+	private void checkDuplicateKpiType(ReportTO rto) throws BusinessException, DuplicatedKpiTypeException {
+		if (rto!=null && rto.getKpiType()!=null && !rto.getKpiType().equals("") && !rto.getKpiType().equals("0")) {
+			Vector<ReportTO> list = this.getReportByKpiType(rto.getKpiType());
+			for (ReportTO item : list) {
+
+				if (rto.getId()==null || (rto.getId()!=null && !item.getId().equals(rto.getId())  )) {
+					for (ProjectTO pto1 : item.getAppliedProjectList()) {
+						for (ProjectTO pto2 : rto.getAppliedProjectList()) {
+							System.out.println("pto1:" + pto1.getId() + " pto2:" + pto2.getId());
+							
+							if (pto1!=null && pto2!=null && rto.getKpiType()!=null && item.getKpiType()!=null &&
+									pto1.getId().equals(pto2.getId()) && item.getKpiType().equals(rto.getKpiType())) {
+								throw new DuplicatedKpiTypeException();
+							}
+						}
+					}					
+				}
+				
+			}
+		}
+	}
+
     
-    /**
+    private Vector<ReportTO> getReportByKpiType(Integer kpiType) throws BusinessException {
+        try {            
+            return dao.getReportByKpiType(kpiType);     
+        } catch (Exception e) {
+            throw new  BusinessException(e);
+        }                
+	}
+
+    
+	/**
      * Update data of a Report object from data base.
      */
     public void updateReport(ReportTO rto) throws BusinessException {
         try {
+        	//this.checkDuplicateKpiType(rto);
             dao.update(rto);
         } catch (DataAccessException e) {
             throw new  BusinessException(e);
@@ -161,39 +198,48 @@ public class ReportBUS extends GeneralBusiness {
 		    while(i.hasNext()){
 		        long initTime = DateUtil.getNow().getTime();
 		        ReportTO rto = i.next();
-		        ReportResultTO rsto = this.performKPI(rto);
+		        String currentProjectId = rto.getProject().getId();
 		        
-		        if (rsto!=null) {
-			        rto.addResultList(rsto);
-			        
-			        //calculate the new lastExecution date 
-			        //Increment 24hs (if is not null) or get the current timestamp (is is null)
-			        Timestamp execution = rto.getLastExecution();
-			        if (execution==null){
-			            execution = DateUtil.getNow();
-			        } else {
-			            execution = DateUtil.getChangedDate(execution, Calendar.HOUR, 24);    
-			        }
-			        
-			        //update the result object into data base and lastExecution information
-			        rto.setLastExecution(execution);
-			        rsto.setLastExecution(execution);
-			        rsto.setReportId(rto.getId());
-			        dao.update(rto);
-			        long elapsedTime = (DateUtil.getNow().getTime()-initTime);
-		            LogUtil.log(LogUtil.SUMMARY_KPI_GENERATE, this, RootTO.ROOT_USER, LogUtil.LOG_INFO, 
-		                    "The KPI [" + rto.getName() + "] was successfully executed. Value:[" + rsto.getValue() + 
-		                    "] Next Execution:[" + DateUtil.getDateTime(execution, new Locale("en", "US"),2,2) +
-		                    "] Elapsed time (ms):[" + elapsedTime + "]");
-		            
+		        //calculate the new lastExecution date 
+		        //Increment 24hs (if is not null) or get the current timestamp (is is null)
+		        Timestamp execution = rto.getLastExecution();
+		        if (execution==null){
+		            execution = DateUtil.getNow();
 		        } else {
-
-		        	long elapsedTime = (DateUtil.getNow().getTime()-initTime);
-		        	LogUtil.log(LogUtil.SUMMARY_KPI_GENERATE, this, RootTO.ROOT_USER, LogUtil.LOG_INFO, 
-		                    "The query of KPI [" + rto.getName() + "] returned NOTHING, then the cursor will not be increased. " + 
-		                    "Next Execution:[" + DateUtil.getDateTime(rto.getLastExecution(), new Locale("en", "US"),2,2) +
-		                    "] Elapsed time (ms):[" + elapsedTime + "]");		        	
+		            execution = DateUtil.getChangedDate(execution, Calendar.HOUR, 24);    
 		        }
+		        
+		        Vector<ProjectTO> list = rto.getAppliedProjectList();
+	    		for (ProjectTO pto : list) {
+	    			rto.setResultList(null);
+	    			
+	    			ReportResultTO rsto = this.performKPI(rto, pto);
+			        if (rsto!=null) {
+				        rto.addResultList(rsto);
+				        				        
+				        //update the result object into data base and lastExecution information
+				        rto.setLastExecution(execution);
+				        rto.setProject(new ProjectTO(currentProjectId));
+				        rsto.setLastExecution(execution);
+				        rsto.setReportId(rto.getId());
+				        rsto.setProjectId(pto.getId());
+				        dao.update(rto);
+				        
+				        long elapsedTime = (DateUtil.getNow().getTime()-initTime);
+			            LogUtil.log(LogUtil.SUMMARY_KPI_GENERATE, this, RootTO.ROOT_USER, LogUtil.LOG_INFO, 
+			                    "The KPI [" + rto.getName() + "] was successfully executed. Value:[" + rsto.getValue() + 
+			                    "] Next Execution:[" + DateUtil.getDateTime(execution, new Locale("en", "US"),2,2) +
+			                    "] Elapsed time (ms):[" + elapsedTime + "]");		        		
+			        } else {
+
+			        	long elapsedTime = (DateUtil.getNow().getTime()-initTime);
+			        	LogUtil.log(LogUtil.SUMMARY_KPI_GENERATE, this, RootTO.ROOT_USER, LogUtil.LOG_INFO, 
+			                    "The query of KPI [" + rto.getName() + "] returned NOTHING, then the cursor will not be increased. " + 
+			                    "Next Execution:[" + DateUtil.getDateTime(rto.getLastExecution(), new Locale("en", "US"),2,2) +
+			                    "] Elapsed time (ms):[" + elapsedTime + "]");		        	
+			        }
+	    			
+	    		}
 		    }
                 
         } catch (DataAccessException e) {
@@ -203,15 +249,16 @@ public class ReportBUS extends GeneralBusiness {
     }
 
     
-    private ReportResultTO performKPI(ReportTO rto) throws DataAccessException {
-        ReportResultTO response = null;
+    private ReportResultTO performKPI(ReportTO rto, ProjectTO pto) throws DataAccessException {
+    	ReportResultTO response = null;
         DbQueryBUS dbBus = new DbQueryBUS();
-        
-    	try {    	  
+    	try {
+    		
     		Vector<Integer> types = new Vector<Integer>();
     		Vector<Object> values = new Vector<Object>();
     		int[] sqlTypes = null;
     		
+    		rto.setProject(pto);
     		String sql = getStatementValues(rto.getSqlStement(), rto, types, values);
             if (types!=null) {
             	sqlTypes = new int[types.size()];
@@ -219,18 +266,28 @@ public class ReportBUS extends GeneralBusiness {
     	        	sqlTypes[j] = ((Integer)types.elementAt(j)).intValue();
     	        }
             }
-    		
-    		
-            Vector kpiResponse = dbBus.performQuery(sql, sqlTypes, values);
+
+            DBQueryResult resp = dbBus.performQuery(sql, sqlTypes, values);
             
-            if (kpiResponse!=null && !kpiResponse.isEmpty() && kpiResponse.size()>1) {
-            	Vector line = ((Vector)kpiResponse.get(1));
+            if (resp!=null && !resp.isEmpty()) {
+            	Vector<Object> line = ((Vector<Object>)resp.getData(0));
 			    String value = "";
 			    try {
 				    if (rto.getDataType().equals(ReportTO.FLOAT_DATA_TYPE) || 
 				            rto.getDataType().equals(ReportTO.CURRENCY_DATA_TYPE)) {
 				    	value = (String)line.get(0);
 			            
+				    } else if (rto.getDataType().equals(ReportTO.PERCENTUAL_DATA_TYPE)) {
+				    	value = (String)line.get(0);
+				    	try {
+				    		if (StringUtil.checkIsFloat(value, ReportTO.KPI_DEFAULT_LOCALE)) {
+				    			float f = StringUtil.getStringToFloat(value, ReportTO.KPI_DEFAULT_LOCALE);
+				    			value = StringUtil.getFloatToString(f, "0.00", ReportTO.KPI_DEFAULT_LOCALE);
+				    		}
+				    	}catch(Exception e){
+				    		value = null;
+				    	}
+				    	
 				    } else if (rto.getDataType().equals(ReportTO.DATE_DATA_TYPE)) {
 						String str = (String)line.get(0);	
 						if (str != null){
@@ -242,9 +299,16 @@ public class ReportBUS extends GeneralBusiness {
 			        value = "";
 			    }
 			    
-			    response = new ReportResultTO();
-			    response.setValue(value);
-			} 
+			    if (value!=null) {
+				    response = new ReportResultTO();
+				    response.setValue(value);
+				    response.setProjectId(pto.getId());			    	
+			    }
+			    
+	            LogUtil.log(LogUtil.SUMMARY_KPI_GENERATE, this, RootTO.ROOT_USER, LogUtil.LOG_INFO, 
+	                    "The KPI [" + rto.getName() + "] for project [" + pto.getId() + 
+	                    "] was performed returning value:[" + value + "]");    			    
+			}     			
     		
     	} catch(Exception e){
     		throw new DataAccessException(e);
@@ -342,7 +406,7 @@ public class ReportBUS extends GeneralBusiness {
 	public Vector<BSCReportTO> getBSC(Timestamp refDate, ProjectTO pto, CategoryTO cto, boolean onCascade) throws BusinessException {
         Vector<BSCReportTO> response = new Vector<BSCReportTO>();
         try {
-            response = dao.getBSC(refDate, pto, cto, onCascade);
+        	response = dao.getBSC(refDate, pto, cto, onCascade);
         } catch (DataAccessException e) {
             throw new  BusinessException(e);
         }

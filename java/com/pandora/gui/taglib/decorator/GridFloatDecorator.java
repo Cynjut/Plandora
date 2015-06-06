@@ -26,7 +26,7 @@ public class GridFloatDecorator extends ColumnDecorator {
      */
     public String decorate(Object columnValue, String tag) {
         String response = "err!";
-        UserTO uto = (UserTO)this.getPageContext().getSession().getAttribute(UserDelegate.CURRENT_USER_SESSION);
+        UserTO uto = (UserTO)this.getSession().getAttribute(UserDelegate.CURRENT_USER_SESSION);
         String language = uto.getLanguage();
         String country = uto.getCountry();            
 

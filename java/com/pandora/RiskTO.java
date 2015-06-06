@@ -46,6 +46,7 @@ public class RiskTO extends PlanningTO {
     
     private Integer riskType;
     
+    private String lastComment;
     
     /**
      * Constructor 
@@ -220,16 +221,14 @@ public class RiskTO extends PlanningTO {
 	public void setRiskType(Integer newValue) {
 		this.riskType = newValue;
 	}
+	
 
-
-	public String getFieldToString(){
-        String response = "";        
-        response = response + "[" + this.getName() + "]\n";
-        response = response + "[" + this.getDescription() + "]\n";
-        response = response + "[" + this.getResponsible() + "]\n";
-        response = response + "[" + this.getCategory().getName() + "]\n";
-        response = response + "[" + this.getStrategy() + "]\n";
-        response = response + "[" + this.getContingency() + "]\n";
-        return response;
-    }
+    //////////////////////////////////////////
+	public String getLastComment() {
+		return lastComment;
+	}
+	public void setLastComment(String newValue) {
+		this.lastComment = newValue;
+	}
+	
 }

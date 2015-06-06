@@ -5,7 +5,6 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Vector;
 
 import com.pandora.CustomerFunctionTO;
@@ -15,12 +14,11 @@ import com.pandora.ProjectTO;
 import com.pandora.TransferObject;
 import com.pandora.exception.DataAccessException;
 import com.pandora.helper.DateUtil;
-import com.pandora.helper.LogUtil;
 
 public class CustomerFunctionDAO extends DataAccess {
 
-    public Vector getListByCustomerProject(String customerId, String projectId) throws DataAccessException {
-        Vector response = null;
+    public Vector<CustomerFunctionTO> getListByCustomerProject(String customerId, String projectId) throws DataAccessException {
+        Vector<CustomerFunctionTO> response = null;
         Connection c = null;
 		try {
 			c = getConnection();
@@ -33,7 +31,7 @@ public class CustomerFunctionDAO extends DataAccess {
         return response;
     }
 
-    
+   
     public TransferObject getObject(TransferObject to, Connection c)
 			throws DataAccessException {
     	CustomerFunctionTO response = null;
@@ -55,23 +53,18 @@ public class CustomerFunctionDAO extends DataAccess {
 		} catch (SQLException e) {
 			throw new DataAccessException(e);
 		}finally{
-			try {
-				if(rs != null) rs.close();
-				if(pstmt != null) pstmt.close();
-			} catch (SQLException ec) {
-			    LogUtil.log(this, LogUtil.LOG_ERROR, "DB Closing statement error", ec);
-			} 		
+			super.closeStatement(rs, pstmt);
 		}	 
 		return response;
 	}
 
 
-	public Vector getListByCustomerProject(String customerId, String projectId, Connection c)  throws DataAccessException {
-    	Vector response = new Vector();
+	public Vector<CustomerFunctionTO> getListByCustomerProject(String customerId, String projectId, Connection c)  throws DataAccessException {
+    	Vector<CustomerFunctionTO> response = new Vector<CustomerFunctionTO>();
     	FunctionDAO fdao = new FunctionDAO();
 		ResultSet rs = null;
 		PreparedStatement pstmt = null;
-		HashMap hm = new HashMap();
+		HashMap<String, String> hm = new HashMap<String, String>();
 		try {						
 			pstmt = c.prepareStatement("select c.customer_id, c.project_id, c.function_id, c.creation_date, f.name " + 
 									   "from function f, customer_function c " + 
@@ -87,10 +80,8 @@ public class CustomerFunctionDAO extends DataAccess {
 			    hm.put(fto.getId(), fto.getId());
 			}
 			
-			Vector flist = fdao.getList(c);
-			Iterator i = flist.iterator();
-			while(i.hasNext()) {
-				FunctionTO fto = (FunctionTO)i.next();
+			Vector<FunctionTO> flist = fdao.getList(c);
+			for (FunctionTO fto : flist) {
 				if (hm.get(fto.getId())==null) {
 					CustomerFunctionTO cfto = new CustomerFunctionTO();
 					cfto.setFunct(fto);
@@ -101,12 +92,7 @@ public class CustomerFunctionDAO extends DataAccess {
 		} catch (SQLException e) {
 			throw new DataAccessException(e);
 		}finally{
-			try {
-				if(rs != null) rs.close();
-				if(pstmt != null) pstmt.close();
-			} catch (SQLException ec) {
-			    LogUtil.log(this, LogUtil.LOG_ERROR, "DB Closing statement error", ec);
-			} 		
+			super.closeStatement(rs, pstmt);
 		}	 
 		return response;
     }
@@ -126,11 +112,7 @@ public class CustomerFunctionDAO extends DataAccess {
 		} catch (SQLException e) {
 			throw new DataAccessException(e);
 		}finally{
-			try {
-				if(pstmt != null) pstmt.close();
-			} catch (SQLException ec) {
-			    LogUtil.log(this, LogUtil.LOG_ERROR, "DB Closing statement error", ec);
-			} 		
+			super.closeStatement(null, pstmt);
 		}               
     }
     
@@ -148,25 +130,19 @@ public class CustomerFunctionDAO extends DataAccess {
 		} catch (SQLException e) {
 			throw new DataAccessException(e);
 		}finally{
-			try {
-				if(pstmt != null) pstmt.close();
-			} catch (SQLException ec) {
-			    LogUtil.log(this, LogUtil.LOG_ERROR, "DB Closing statement error", ec);
-			} 		
+			super.closeStatement(null, pstmt);
 		}        
     }
 
     
-    public void insertByCustomerList(Vector insertCustomers, Connection c) throws DataAccessException {
+    public void insertByCustomerList(Vector<CustomerTO> insertCustomers, Connection c) throws DataAccessException {
 		PreparedStatement pstmt = null;
 		CustomerDAO cdao = new CustomerDAO();
 		try {
 			if (insertCustomers!=null) {
-			    Iterator i = insertCustomers.iterator();
-			    while(i.hasNext()) {
-			    	CustomerTO cto = (CustomerTO)i.next();
+				for (CustomerTO cto : insertCustomers) {
 			    	cto = (CustomerTO) cdao.getObject(cto, c);
-			    	
+
 			    	CustomerFunctionTO cfto = new CustomerFunctionTO();
 		    		cfto.setCustomer(cto);
 		    		cfto.setFunct(cto.getFunction());
@@ -180,38 +156,26 @@ public class CustomerFunctionDAO extends DataAccess {
 			}
 			
 		}finally{
-			try {
-				if(pstmt != null) pstmt.close();
-			} catch (SQLException ec) {
-			    LogUtil.log(this, LogUtil.LOG_ERROR, "DB Closing statement error", ec);
-			} 		
+			super.closeStatement(null, pstmt);
 		}                   	
     }
     
     
-	public void removeByCustomerList(Vector removeCustomers, Connection c) throws DataAccessException {
+	public void removeByCustomerList(Vector<CustomerTO> removeCustomers, Connection c) throws DataAccessException {
 		PreparedStatement pstmt = null;
 		try {
 			if (removeCustomers!=null) {
-			    Iterator i = removeCustomers.iterator();
-			    while(i.hasNext()) {
-			    	CustomerTO cto = (CustomerTO)i.next();
-				    pstmt = c.prepareStatement("delete from customer_function where customer_id=? " +
-											   "and project_id=?");
+				for (CustomerTO cto : removeCustomers) {
+				    pstmt = c.prepareStatement("delete from customer_function where customer_id=? and project_id=?");
 					pstmt.setString(1, cto.getId());
 					pstmt.setString(2, cto.getProject().getId());
 					pstmt.executeUpdate();
 			    }				
 			}
-			
 		} catch (SQLException e) {
 			throw new DataAccessException(e);
 		}finally{
-			try {
-				if(pstmt != null) pstmt.close();
-			} catch (SQLException ec) {
-			    LogUtil.log(this, LogUtil.LOG_ERROR, "DB Closing statement error", ec);
-			} 		
+			super.closeStatement(null, pstmt);
 		}               
     }
 	

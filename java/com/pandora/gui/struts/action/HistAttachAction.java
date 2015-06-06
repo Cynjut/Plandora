@@ -29,7 +29,7 @@ public class HistAttachAction extends GeneralStrutsAction {
             this.clearMessages(request);
 
             AttachmentDelegate del = new AttachmentDelegate();
-            Vector list = del.getHistory(frm.getAttachmentId());
+            Vector<AttachmentHistoryTO> list = del.getHistory(frm.getAttachmentId());
             request.getSession().setAttribute("attachHistoryList", list);
 
         } catch (BusinessException e) {
@@ -46,13 +46,13 @@ public class HistAttachAction extends GeneralStrutsAction {
         try {
 
             HistAttachForm frm = (HistAttachForm) form;
-            Vector list = (Vector) request.getSession().getAttribute(
-                    "attachHistoryList");
+            @SuppressWarnings({ "rawtypes", "unchecked" })
+			Vector<AttachmentHistoryTO> list = (Vector) request.getSession().getAttribute("attachHistoryList");
 
             String selectedItem = frm.getSelectedIndex();
             if (selectedItem != null) {
                 int index = Integer.parseInt(selectedItem);
-                AttachmentHistoryTO hto = (AttachmentHistoryTO) list.get(index);
+                AttachmentHistoryTO hto = list.get(index);
                 frm.setHistoryContent(this.getContent(hto));
             }
 

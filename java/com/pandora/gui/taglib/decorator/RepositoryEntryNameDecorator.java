@@ -33,7 +33,7 @@ public class RepositoryEntryNameDecorator extends ColumnDecorator {
 					forward = tag;
 				}
 
-				if (content!=null || !content.equalsIgnoreCase("null")) {
+				if (content!=null && !content.equalsIgnoreCase("null")) {
 
 					String newPath = formatPath(item.getPath(), rootUrl);
 
@@ -65,21 +65,12 @@ public class RepositoryEntryNameDecorator extends ColumnDecorator {
 	public String formatPath(String path, String rootUrl){
 		String newPath = "";
 		if (path!=null && !path.trim().equals("")) {
-			
-			//int idx = 0;
-			//if (item.getPath().startsWith("/")) {
-			//	idx = item.getPath().indexOf(rootUrl) + 1;	
-			//} else {
-			//	idx = item.getPath().indexOf(rootUrl);
-			//}
-			
-			//if (idx>0) {
-			//	newPath = item.getPath().substring(idx + rootUrl.length());	
-			//} else {
-			//	newPath = item.getPath();
-			//}
-			
-			newPath = path.replaceAll(rootUrl, "");			
+			if (rootUrl!=null) {
+				newPath = path.replaceAll(rootUrl, "");	
+			} else {
+				newPath = path;
+			}
+						
 			if (newPath.startsWith("/")) {
 				newPath = newPath.substring(1);
 			}

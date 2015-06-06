@@ -1,8 +1,8 @@
 package com.tests;
 
-import com.pandora.ReportTO;
-
 import junit.framework.TestCase;
+
+import com.pandora.ReportTO;
 
 /**
  */

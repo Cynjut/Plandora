@@ -49,7 +49,8 @@ public class GeneralStruts extends ActionServlet {
 				//String uid = SessionUtil.getUID(request.getSession().getId());
 				//request.setAttribute("uid", uid);
 				
-				
+				//String chartset = SystemSingleton.getInstance().getDefaultEncoding();				
+				//request.setCharacterEncoding(chartset);
 				SessionUtil.addEvent(uto, request.getPathInfo());
 				super.process(request, response);
 				
@@ -74,7 +75,7 @@ public class GeneralStruts extends ActionServlet {
 		try {
 		    String frmPath = request.getPathInfo().toLowerCase();
 		    if (frmPath.equalsIgnoreCase("/login") || frmPath.equalsIgnoreCase("/connectorlistener") || 
-		    		frmPath.equalsIgnoreCase("/calendarSync") || frmPath.equalsIgnoreCase("/flashfreemind.css") || 
+		    		frmPath.equalsIgnoreCase("/calendarSync") || frmPath.equalsIgnoreCase("/flashfreemind.css") ||  
 		    		frmPath.equalsIgnoreCase("/csshover.htc") || frmPath.equalsIgnoreCase("/expressInstall") || frmPath.equalsIgnoreCase("/FlexPaperViewer") ||
 		    		(frmPath.equalsIgnoreCase("/showSurvey") && (request.getParameter("operation").equals("anonymous") || request.getParameter("operation").equals("anonyanswer")))){
 		        response = true;
@@ -91,9 +92,9 @@ public class GeneralStruts extends ActionServlet {
 				                	 frmPath.equalsIgnoreCase("/managerisk") || frmPath.equalsIgnoreCase("/managehistrisk") ||
 				                	 frmPath.equalsIgnoreCase("/manageattachment") || frmPath.equalsIgnoreCase("/downloadAttachment") ||
 				                	 frmPath.equalsIgnoreCase("/manageSurvey") || frmPath.equalsIgnoreCase("/manageCustomForm") ||
-				                	 frmPath.equalsIgnoreCase("/viewMindMap") || frmPath.equalsIgnoreCase("/visorFreemind")|| frmPath.equalsIgnoreCase("/open-flash-chart") ||
+				                	 frmPath.equalsIgnoreCase("/viewMindMap") || frmPath.equalsIgnoreCase("/visorFreemind.swf")|| frmPath.equalsIgnoreCase("/open-flash-chart") ||
 				                	 frmPath.equalsIgnoreCase("/manageMetaForm") || frmPath.equalsIgnoreCase("/showSurvey") ||
-				                	 frmPath.equalsIgnoreCase("/showGadgetProperty") || 
+				                	 frmPath.equalsIgnoreCase("/showGadgetProperty") ||  frmPath.equalsIgnoreCase("/manageCompany") ||
 				                	 frmPath.equalsIgnoreCase("/showRepositoryViewer") || frmPath.equalsIgnoreCase("/manageTemplate") ||
 				                	 frmPath.equalsIgnoreCase("/showAgilePanel") || frmPath.equalsIgnoreCase("/showAgilePanelReq") ||
 				                	 frmPath.equalsIgnoreCase("/showAgilePanelTask") || frmPath.equalsIgnoreCase("/showRepositoryViewerCustomer") ||
@@ -104,14 +105,16 @@ public class GeneralStruts extends ActionServlet {
 				                	 frmPath.equalsIgnoreCase("/showBrowseArtifact") || frmPath.equalsIgnoreCase("/showResCapacityPanel") ||
 				                	 frmPath.equalsIgnoreCase("/showResCapacityEdit") || frmPath.equalsIgnoreCase("/showCostPanel") ||
 				                	 frmPath.equalsIgnoreCase("/showCostEdit") || frmPath.equalsIgnoreCase("/manageExpense") ||
-				                	 frmPath.equalsIgnoreCase("/repositoryUpload") || frmPath.equalsIgnoreCase("/showSnipArtifact"));
-				        
+				                	 frmPath.equalsIgnoreCase("/repositoryUpload") || frmPath.equalsIgnoreCase("/showSnipArtifact") ||
+				                	 frmPath.equalsIgnoreCase("/manageOptionPicture") || frmPath.equalsIgnoreCase("/showCostList") ||
+				                	 frmPath.equalsIgnoreCase("/showShortCutPopup") || frmPath.equalsIgnoreCase("/showRssPopup") ||
+				                	 frmPath.equalsIgnoreCase("/showProjectPanel")|| frmPath.equalsIgnoreCase("/showProjectPanelPopup")  );
 				    } else if (uto instanceof LeaderTO) { 
 				        response = ( frmPath.equalsIgnoreCase("/managehistrequest") || frmPath.equalsIgnoreCase("/manageproject") || 
 				                	 frmPath.equalsIgnoreCase("/manageresourcehome")  || frmPath.equalsIgnoreCase("/refuse")  || 
 				                	 frmPath.equalsIgnoreCase("/showallrequirement")  || frmPath.equalsIgnoreCase("/managetask")  || 
-				                	 frmPath.equalsIgnoreCase("/searchPlanning")  || frmPath.equalsIgnoreCase("/ganttviewer") || 
-				                	 frmPath.equalsIgnoreCase("/managehisttask") || frmPath.equalsIgnoreCase("/managerestask") || 
+				                	 frmPath.equalsIgnoreCase("/searchPlanning")  || frmPath.equalsIgnoreCase("/ganttviewer") || frmPath.equalsIgnoreCase("/ganttpanel") || 
+				                	 frmPath.equalsIgnoreCase("/managehisttask") || frmPath.equalsIgnoreCase("/managerestask") || frmPath.equalsIgnoreCase("/showGanttEdit") ||
 				                	 frmPath.equalsIgnoreCase("/managecustrequest") || frmPath.equalsIgnoreCase("/viewreport") || 
 				                	 frmPath.equalsIgnoreCase("/manageoption") || frmPath.equalsIgnoreCase("/showalltask") ||
 				                	 frmPath.equalsIgnoreCase("/projectimportexport") || frmPath.equalsIgnoreCase("/viewbsc") || frmPath.equalsIgnoreCase("/viewBSCPanel") ||
@@ -120,7 +123,7 @@ public class GeneralStruts extends ActionServlet {
 				                	 frmPath.equalsIgnoreCase("/managehistrisk")  || frmPath.equalsIgnoreCase("/manageattachment") ||
 				                	 frmPath.equalsIgnoreCase("/manageHistAttach") || frmPath.equalsIgnoreCase("/downloadAttachment") || 
 				                	 frmPath.equalsIgnoreCase("/manageCustomForm") || frmPath.equalsIgnoreCase("/viewMindMap") || 
-				                	 frmPath.equalsIgnoreCase("/visorFreemind") || frmPath.equalsIgnoreCase("/applyTaskTemplate") || frmPath.equalsIgnoreCase("/open-flash-chart") ||
+				                	 frmPath.equalsIgnoreCase("/visorFreemind.swf") || frmPath.equalsIgnoreCase("/applyTaskTemplate") || frmPath.equalsIgnoreCase("/open-flash-chart") ||
 				                	 frmPath.equalsIgnoreCase("/manageDiscussion") || frmPath.equalsIgnoreCase("/manageSurvey") ||
 				                	 frmPath.equalsIgnoreCase("/showSurvey") || frmPath.equalsIgnoreCase("/showGadgetProperty") || 
 				                	 frmPath.equalsIgnoreCase("/showRepositoryViewer") ||
@@ -134,16 +137,19 @@ public class GeneralStruts extends ActionServlet {
 				                	 frmPath.equalsIgnoreCase("/showResCapacityPanel") || frmPath.equalsIgnoreCase("/showResCapacityEdit") ||
 				                	 frmPath.equalsIgnoreCase("/showCostPanel") || frmPath.equalsIgnoreCase("/showCostEdit") ||
 				                	 frmPath.equalsIgnoreCase("/manageExpense") || frmPath.equalsIgnoreCase("/repositoryUpload") ||
-				                	 frmPath.equalsIgnoreCase("/showSnipArtifact"));
+				                	 frmPath.equalsIgnoreCase("/showSnipArtifact") || frmPath.equalsIgnoreCase("/manageOptionPicture") ||
+				                	 frmPath.equalsIgnoreCase("/showCostList") || frmPath.equalsIgnoreCase("/showShortCutPopup") ||
+				                	 frmPath.equalsIgnoreCase("/showRssPopup") || frmPath.equalsIgnoreCase("/showProjectPanel") || 
+				                	 frmPath.equalsIgnoreCase("/showProjectPanelPopup"));
 				    } else if (uto instanceof ResourceTO) { 
 				        response = ( frmPath.equalsIgnoreCase("/managehistrequest") || frmPath.equalsIgnoreCase("/manageresourcehome") || 
-				                	 frmPath.equalsIgnoreCase("/ganttviewer") || frmPath.equalsIgnoreCase("/managerestask") || 
-				                	 frmPath.equalsIgnoreCase("/viewreport") || frmPath.equalsIgnoreCase("/searchPlanning") ||
+				                	 frmPath.equalsIgnoreCase("/ganttviewer") || frmPath.equalsIgnoreCase("/ganttpanel") || frmPath.equalsIgnoreCase("/managerestask") || 
+				                	 frmPath.equalsIgnoreCase("/viewreport") || frmPath.equalsIgnoreCase("/searchPlanning") || frmPath.equalsIgnoreCase("/showGanttEdit") ||
 				                	 frmPath.equalsIgnoreCase("/managehisttask") || frmPath.equalsIgnoreCase("/managecustrequest") || 
 				                	 frmPath.equalsIgnoreCase("/manageoption") || frmPath.equalsIgnoreCase("/projectimportexport") ||
 				                	 frmPath.equalsIgnoreCase("/viewkb") || frmPath.equalsIgnoreCase("/manageattachment") ||
 				                	 frmPath.equalsIgnoreCase("/downloadAttachment")|| frmPath.equalsIgnoreCase("/manageCustomForm") ||
-				                	 frmPath.equalsIgnoreCase("/viewMindMap") || frmPath.equalsIgnoreCase("/visorFreemind") || frmPath.equalsIgnoreCase("/open-flash-chart") ||
+				                	 frmPath.equalsIgnoreCase("/viewMindMap") || frmPath.equalsIgnoreCase("/visorFreemind.swf") || frmPath.equalsIgnoreCase("/open-flash-chart") ||
 				                	 frmPath.equalsIgnoreCase("/applyTaskTemplate") || frmPath.equalsIgnoreCase("/manageDiscussion") ||
 				                	 frmPath.equalsIgnoreCase("/showSurvey") || frmPath.equalsIgnoreCase("/showGadgetProperty") ||
 				                	 frmPath.equalsIgnoreCase("/showRepositoryViewer") || frmPath.equalsIgnoreCase("/showAgilePanel") ||
@@ -155,17 +161,20 @@ public class GeneralStruts extends ActionServlet {
 				                	 frmPath.equalsIgnoreCase("/manageArtifact")|| frmPath.equalsIgnoreCase("/showBrowseArtifact") ||
 				                	 frmPath.equalsIgnoreCase("/showCostPanel") || frmPath.equalsIgnoreCase("/showCostEdit") ||
 				                	 frmPath.equalsIgnoreCase("/manageExpense") || frmPath.equalsIgnoreCase("/repositoryUpload") || 
-				                	 frmPath.equalsIgnoreCase("/showSnipArtifact")
-				                	 );
+				                	 frmPath.equalsIgnoreCase("/showSnipArtifact") || frmPath.equalsIgnoreCase("/manageOptionPicture") ||
+				                	 frmPath.equalsIgnoreCase("/showCostList") || frmPath.equalsIgnoreCase("/showShortCutPopup") ||
+				                	 frmPath.equalsIgnoreCase("/showRssPopup") || frmPath.equalsIgnoreCase("/showProjectPanel") || frmPath.equalsIgnoreCase("/showProjectPanelPopup") ||
+				                	 frmPath.equalsIgnoreCase("/managerisk") || frmPath.equalsIgnoreCase("/manageoccurrence") );
 				    } else if (uto instanceof CustomerTO) { 
 				        response = ( frmPath.equalsIgnoreCase("/managecustrequest") || frmPath.equalsIgnoreCase("/manageattachment") || 
 				                	 frmPath.equalsIgnoreCase("/managehistrequest") || frmPath.equalsIgnoreCase("/manageoption") ||
 				                	 frmPath.equalsIgnoreCase("/downloadAttachment")|| frmPath.equalsIgnoreCase("/manageCustomForm") || 
-				                	 frmPath.equalsIgnoreCase("/viewMindMap") || frmPath.equalsIgnoreCase("/visorFreemind") || 
+				                	 frmPath.equalsIgnoreCase("/viewMindMap") || frmPath.equalsIgnoreCase("/visorFreemind.swf") || 
 				                	 frmPath.equalsIgnoreCase("/searchPlanning") || frmPath.equalsIgnoreCase("/viewreport") ||
 				                	 frmPath.equalsIgnoreCase("/manageDiscussion") || frmPath.equalsIgnoreCase("/showSurvey") ||
 				                	 frmPath.equalsIgnoreCase("/showRepositoryViewer") || frmPath.equalsIgnoreCase("/showRepositoryViewerCustomer") ||
-				                	 frmPath.startsWith("/repositoryfileviewer"));
+				                	 frmPath.startsWith("/repositoryfileviewer") || frmPath.equalsIgnoreCase("/manageOptionPicture") ||
+				                	 frmPath.equalsIgnoreCase("/showProjectPanel") || frmPath.equalsIgnoreCase("/showProjectPanelPopup"));
 				    }
 
 			    }

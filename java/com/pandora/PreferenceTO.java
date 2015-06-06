@@ -17,8 +17,10 @@ public class PreferenceTO extends TransferObject {
     public static final String HOME_TASKLIST_NUMLINE        = "home.taskList.numLine";
     public static final String HOME_PENDLIST_NUMLINE        = "home.pendList.numLine";
     public static final String HOME_REQULIST_NUMLINE        = "home.requList.numLine";
+    public static final String HOME_TOPICLIST_NUMLINE       = "home.topiList.numLine";
     public static final String HOME_REQULIST_PRIORITY_COLOR = "home.requList.showPriorityColor";
     public static final String HOME_PROJLIST_NUMLINE        = "home.projList.numLine";
+    public static final String HOME_TEAMLIST_NUMLINE        = "home.teamList.numLine";
     public static final String HOME_TASKLIST_DAYSTOHIDE     = "home.taskList.dayToHide";
     public static final String HOME_TASKLIST_ORDER          = "home.taskList.order";
     
@@ -38,6 +40,12 @@ public class PreferenceTO extends TransferObject {
     public static final String LIST_ALL_REQ_SW_META_FIELD = "listAll.myReq.metaField.show";
     public static final String LIST_ALL_REQ_SW_PARENT_REQ = "listAll.myReq.parentReq.show";
     
+    public static final String GANTT_PANEL_INI_DT          = "listAll.ganttPanel.inidate";
+    public static final String GANTT_PANEL_FIN_DT          = "listAll.ganttPanel.finaldate";
+    public static final String GANTT_PANEL_VISIB           = "listAll.ganttPanel.visibility";
+    public static final String GANTT_PANEL_CURRES          = "listAll.ganttPanel.currentres";
+    public static final String GANTT_HIDE_OCC              = "listAll.ganttPanel.hideoccurr";
+    
     public static final String AGILE_PANEL_TODO            = "listAll.agilePanel.todo.show";
     public static final String AGILE_PANEL_PROG            = "listAll.agilePanel.prog.show";
     public static final String AGILE_PANEL_DONE            = "listAll.agilePanel.done.show";
@@ -47,8 +55,6 @@ public class PreferenceTO extends TransferObject {
     public static final String AGILE_PANEL_ASSIG1          = "listAll.agilePanel.assig1.show";
     public static final String AGILE_PANEL_ASSIG2          = "listAll.agilePanel.assig2.show";
 
-    public static final String RES_CAP_MAXLIMIT            = "listAll.rescap.maxlimit.status";
-    public static final String RES_CAP_UNIT                = "listAll.rescap.unit.status";
     public static final String RES_CAP_VIEWMODE            = "listAll.rescap.viewmode.status";
     public static final String RES_CAP_GRANULARITY         = "listAll.rescap.granularity.status";
     public static final String RES_CAP_HIDE_DSBLE_USERS    = "listAll.rescap.hidedisable.status";
@@ -66,6 +72,16 @@ public class PreferenceTO extends TransferObject {
     public static final String AGILE_FILTER_HIDE_TSKREQ    = "listAll.agilePanel.flt.hide3.status";
     public static final String AGILE_FILTER_SHOW_CHART     = "listAll.agilePanel.flt.show1.status";
     public static final String AGILE_FILTER_HIDE_OLD_ITER  = "listAll.agilePanel.flt.hide4.status";
+
+    public static final String LIST_ALL_COST_SW_DESC       = "listAll.costlist.desc.show";
+    public static final String LIST_ALL_COST_SW_CATEG      = "listAll.costlist.categ.show";
+    public static final String LIST_ALL_COST_SW_PROJ       = "listAll.costlist.proj.show";
+    public static final String LIST_ALL_COST_SW_ACCCD      = "listAll.costlist.acc.show";
+    public static final String LIST_ALL_COST_SW_STAT       = "listAll.costlist.stat.show";
+    public static final String LIST_ALL_COST_SW_VAL        = "listAll.costlist.val.show";
+    public static final String LIST_ALL_COST_SW_APPR       = "listAll.costlist.appr.show";
+    public static final String LIST_ALL_COST_SW_DUED       = "listAll.costlist.duedt.show";
+    public static final String LIST_ALL_COST_SW_EXPE       = "listAll.costlist.expen.show";
     
     public static final String LIST_ALL_TSK_PROJECT        = "listAll.myTask.project.show";
     public static final String LIST_ALL_TSK_RESOURCE       = "listAll.myTask.resource.show";
@@ -91,11 +107,13 @@ public class PreferenceTO extends TransferObject {
     public static final String HOME_TASKLIST_SW_TSK_PARENT = "home.taskList.parent.show";
     public static final String HOME_TASKLIST_SW_BLOCKERS   = "home.taskList.blockers.show";
     public static final String HOME_TASKLIST_SW_BILLABLE   = "home.taskList.billable.show";
+    public static final String HOME_TASKLIST_SW_META       = "home.taskList.metafield.show";
 
     public static final String HOME_PENDCOST_SW_PROJ  = "home.pendcost.project.show";
     public static final String HOME_PENDCOST_SW_CREAT = "home.pendcost.creatdate.show";
     public static final String HOME_PENDCOST_SW_USER  = "home.pendcost.username.show";
     public static final String HOME_PENDCOST_SW_NAME  = "home.pendcost.name.show";
+    public static final String HOME_PENDCOST_SW_META  = "home.pendcost.metafield.show";
     
     public static final String HOME_PENDLIST_SW_DESC  = "home.pendList.desc.show";
     public static final String HOME_PENDLIST_SW_PROJ  = "home.pendList.project.show";
@@ -104,6 +122,7 @@ public class PreferenceTO extends TransferObject {
     public static final String HOME_PENDLIST_SW_CREAT = "home.pendList.creatdate.show";
     public static final String HOME_PENDLIST_SW_REQUE = "home.pendList.requester.show";
     public static final String HOME_PENDLIST_SW_PRIOR = "home.pendList.priority.show";
+    public static final String HOME_PENDLIST_SW_META  = "home.pendList.metafield.show";
 
     public static final String HOME_REQLIST_SW_DESC   = "home.reqList.desc.show";
     public static final String HOME_REQLIST_SW_PROJ   = "home.reqList.project.show";
@@ -127,10 +146,9 @@ public class PreferenceTO extends TransferObject {
     public static final String HOME_PROJLIST_SW_ID    = "home.projList.id.show";
     public static final String HOME_PROJLIST_SW_STAT  = "home.projList.status.show";
     public static final String HOME_PROJLIST_SW_ROLE  = "home.projList.role.show";
+    public static final String HOME_PROJLIST_SW_META  = "home.projList.metafield.show";
     
     public static final String HOME_FORUMLIST_SW_CREAT  = "home.forumList.creatdate.show";
-    public static final String HOME_FORUMLIST_SW_LSTUPD = "home.forumList.lastupd.show";
-    public static final String HOME_FORUMLIST_SW_REPLYN = "home.forumList.replynum.show";
     
     public static final String RSK_SW_PROJECT     = "risk.project.show";
     public static final String RSK_SW_CATEGORY    = "risk.category.show";
@@ -145,15 +163,26 @@ public class PreferenceTO extends TransferObject {
     public static final String RSK_SW_IMP_SCOP  = "risk.impact.scop.show";
     public static final String RSK_SW_IMP_TIME  = "risk.impact.time.show";
     public static final String RSK_SW_TYPE      = "risk.type.show";
+    
+    public static final String PLA_SW_VIS       = "planning.visibility.show";
 
     public static final String OCC_SW_PROJECT  = "occurrence.project.show";
     public static final String OCC_SW_STATUS   = "occurrence.status.show";
     public static final String OCC_SW_SOURCE   = "occurrence.source.show";
     public static final String OCC_HIDE_CLOSED = "occurrence.hideClosed";
     
+    public static final String EXPENSE_CREATION_DT = "expense.creation.show";
+    public static final String EXPENSE_PROJECT     = "expense.project.show";
+    public static final String EXPENSE_STATUS      = "expense.status.show";
+    public static final String EXPENSE_TOTAL       = "expense.total.show";
+    public static final String EXPENSE_META_FIELD  = "expense.metafield.show";
+    
     public static final String LIST_NUMWORDS      = "list.numWords";
     public static final String MY_REQU_DAYS_AGO   = "list.myRequirement.maxDaysAgo";
-    public static final String MY_TASK_DAYS_AGO   = "list.myTasks.maxDaysAgo";    
+    
+    public static final String MY_TASK_DAYS_AGO   = "list.myTasks.maxDaysAgo";
+    public static final String MY_TASK_SHOW_LOCK  = "list.myTasks.showLock";
+    
     public static final String CRITICAL_DAY_TASK  = "list.task.delay.critical";
     public static final String WARNING_DAY_TASK   = "list.task.delay.warning";
     public static final String HIDE_PROJECT       = "list.task.hideproject";
@@ -163,6 +192,7 @@ public class PreferenceTO extends TransferObject {
     public static final String SHORTCUT_NAME      = "list.task.shortcut.title.";
     public static final String SHORTCUT_URL       = "list.task.shortcut.url.";
     public static final String SHORTCUT_ICON      = "list.task.shortcut.icon.";
+    public static final String SHORTCUT_OPEN      = "list.task.shortcut.open.";
     
     public static final String LDAP_FILTER       = "authentication.ldap.filter";
     public static final String LDAP_HOST         = "authentication.ldap.host";
@@ -190,35 +220,50 @@ public class PreferenceTO extends TransferObject {
     public static final String REPOSITORY_GRID_AUTHOR   = "repository.grid.author.show";
     public static final String REPOSITORY_GRID_SIZE     = "repository.grid.size.show";
     public static final String REPOSITORY_GRID_VIEWER   = "repository.grid.viewer.show";
+    public static final String REPOSITORY_GRID_DOWNLOAD = "repository.grid.download.show";
     public static final String REPOSITORY_GRID_LOCK     = "repository.grid.lock.show";
     public static final String REPOSITORY_GRID_DATE     = "repository.grid.date.show";
     public static final String REPOSITORY_GRID_FULLPATH = "repository.grid.fullpath.show";
     public static final String REPOSITORY_GRID_GRANT    = "repository.grid.grant.show";
+    public static final String REPOSITORY_GRID_DEL      = "repository.grid.del.show";
     public static final String REPOSITORY_GRID_LOG      = "repository.grid.log.show";
     
-    public static final String GENERAL_SKIN           = "general.skin";
-    public static final String GENERAL_CURRENCY       = "general.currency";
+    public static final String GENERAL_SKIN               = "general.skin";
+    public static final String GENERAL_CURRENCY           = "general.currency";
+    public static final String GENERAL_WEBAPP_PATH        = "general.webapp.path";
+    public static final String GENERAL_DEFAULT_CAPACITY   = "general.capacity.default";
+    public static final String GENERAL_METAFIELD_TIMEOUT  = "general.metafield.timeout";
     
     public static final String CUSTHOME_DEF_PROJ      = "custHome.defaultrProject";
     public static final String NOTIFICATION_BUS_CLASS = "notification.bus.class";
     public static final String CALEND_SYNC_BUS_CLASS  = "calendar.sync.bus.class";
     public static final String CONVERTER_BUS_CLASS    = "converter.bus.class";
+    public static final String OVERVIEW_PROJ_CLASS    = "overview_prj.bus.class";
     public static final String OCCURRENCE_BUS_CLASS   = "occurrence.bus.class";
     public static final String IMP_EXP_BUS_CLASS      = "imp-exp.bus.class";
     public static final String UPLOAD_MAX_SIZE        = "upload.maxsize";
     public static final String ARTIFACT_MAX_SIZE      = "artifact.maxsize";
     public static final String NEW_VERSION_URL        = "newversion.url";
- 
+
+    public static final String OVERVIEW_PROJ_PREFIX   = "overview_prj.opt.";
     public static final String PIN_TASK_LIST          = "task.pin.list";
     public static final String INPUT_TASK_FORMAT      = "task.input.format";
     public static final String TASK_REPORT_URL        = "task.report.url";
-    public static final String SURVEY_REPORT_URL      = "survey.report.url";
     public static final String EXPENSE_REPORT_URL     = "expense.report.url";
+    
+    public static final String SURVEY_REPORT_URL      = "survey.report.url";
+    public static final String SURVEY_HIDE_CLOSED     = "survey.hideClosed";
+
+    public static final String AGENT_HIDE_DISABLED    = "notification.hideDisabled";
+    public static final String CATEGORY_HIDE_CLOSED   = "category.hideClosed";
+    public static final String REPORT_HIDE_CLOSED     = "report.hideClosed";
+    public static final String COSTS_HIDE_CLOSED      = "costs.hideClosed";
     
     public static final String PANEL_HIDDEN           = "home.panel.hidden";
     
     public static final String KPI_SHOW_ONLY_CURPROJ  = "kpi.show.onlyCurrentProject";
     public static final String KPI_SHOW_ONLY_OPENED   = "kpi.show.onlyOpened";
+    
     
     
     /** List of preferences of current user */
@@ -282,8 +327,16 @@ public class PreferenceTO extends TransferObject {
             response = "styleDefault.css";
         } if (key.equals(GENERAL_CURRENCY)){            
         	response = "en_US";
+        } if (key.equals(GENERAL_WEBAPP_PATH)) {
+        	response = "";
+        } if (key.equals(GENERAL_DEFAULT_CAPACITY)) {        	
+        	response = "480";
+        } if (key.equals(GENERAL_METAFIELD_TIMEOUT)) {        	
+        	response = "1000";
         } else if (key.equals(HOME_TASKLIST_NUMLINE)){
-            response = "6";                
+            response = "6";
+        } else if (key.equals(HOME_TOPICLIST_NUMLINE)){
+            response = "7";
         } else if (key.equals(HOME_PENDLIST_NUMLINE)){
             response = "6";                
         } else if (key.equals(HOME_REQULIST_NUMLINE)){
@@ -291,9 +344,21 @@ public class PreferenceTO extends TransferObject {
         } else if (key.equals(HOME_REQULIST_PRIORITY_COLOR)){
         	response = "FALSE";
         } else if (key.equals(HOME_PROJLIST_NUMLINE)){
-            response = "3";                
+            response = "3";
+        } else if (key.equals(HOME_TEAMLIST_NUMLINE)){            
+        	response = "6";
         } else if (key.equals(HOME_PROJLIST_SW_ID)) {	
         	response = "off";            
+        } else if (key.equals(HOME_PROJLIST_SW_CREAT)) {
+        	response = "off";
+        } else if (key.equals(HOME_PROJLIST_SW_LIFE)) {
+        	response = "off";
+        } else if (key.equals(HOME_PROJLIST_SW_STAT)) {
+        	response = "off";
+        } else if (key.equals(HOME_PROJLIST_SW_ROLE)) {	
+        	response = "on";
+        } else if (key.equals(HOME_PROJLIST_SW_META)) {	
+        	response = "off";
         } else if (key.equals(HOME_TASKLIST_DAYSTOHIDE)){
             response = "7";
         } else if (key.equals(LIST_ALL_SHOW_PAGING)){
@@ -304,14 +369,36 @@ public class PreferenceTO extends TransferObject {
             response = "0";
         } else if (key.startsWith(OCC_HIDE_CLOSED)){            
         	response = "off";
+        } else if (key.startsWith(SURVEY_HIDE_CLOSED)){            
+        	response = "off";
+        } else if (key.startsWith(CATEGORY_HIDE_CLOSED)){            
+        	response = "off";
+        } else if (key.startsWith(AGENT_HIDE_DISABLED)){            
+        	response = "off";
+        } else if (key.startsWith(COSTS_HIDE_CLOSED)){
+        	response = "off";
+        } else if (key.startsWith(REPORT_HIDE_CLOSED)){            
+        	response = "off";
         } else if (key.equals(LIST_NUMWORDS)) {
             response = "20";
         } else if (key.equals(MY_REQU_DAYS_AGO)) {
             response = "90";
         } else if (key.equals(MY_TASK_DAYS_AGO)) {
             response = "90";
+        } else if (key.equals(MY_TASK_SHOW_LOCK)) {            
+        	response = "off";
+        } else if (key.equals(GANTT_PANEL_INI_DT)) {
+        	response = "";
+        } else if (key.equals(GANTT_PANEL_FIN_DT)) {
+        	response = "";
+        } else if (key.equals(GANTT_PANEL_VISIB)) {
+        	response = "1";
+        } else if (key.equals(GANTT_PANEL_CURRES)) {
+        	response = "-1";
+        } else if (key.equals(GANTT_HIDE_OCC)) {        	
+        	response = "off";        	
         } else if (key.equals(AGILE_PANEL_TODO)) {
-        	response = "on";
+        	response = "on";        	
         } else if (key.equals(AGILE_PANEL_PROG)) {
         	response = "on";
         } else if (key.equals(AGILE_PANEL_DONE)) {
@@ -326,10 +413,6 @@ public class PreferenceTO extends TransferObject {
         	response = "on";    
         } else if (key.equals(AGILE_PANEL_ASSIG2)) {
         	response = "on";   
-        } else if (key.equals(RES_CAP_MAXLIMIT)) {
-        	response = "480";
-        } else if (key.equals(RES_CAP_UNIT)) {
-        	response = "1";
         } else if (key.equals(RES_CAP_VIEWMODE)) {
         	response = "ALL";
         } else if (key.equals(RES_CAP_GRANULARITY)) {
@@ -379,12 +462,10 @@ public class PreferenceTO extends TransferObject {
         } else if (key.equals(LIST_ALL_REQ_SW_PRG_TSK)) {            
             response = "on";
         } else if (key.equals(LIST_ALL_REQ_SW_META_FIELD)) {    
-            response = "on";
-        } else if (key.equals(HOME_TASKLIST_SW_TSK_PARENT)) {            
+            response = "off";            
+        } else if (key.equals(RSK_SW_CATEGORY)) {
         	response = "off";
-        } else if (key.equals(HOME_TASKLIST_SW_BLOCKERS)) {        	
-        	response = "off";
-        } else if (key.equals(HOME_TASKLIST_SW_BILLABLE)) {        	
+        } else if (key.equals(RSK_SW_RESPONSIBLE)) {
         	response = "off";
         } else if (key.equals(RSK_SW_PROJECT)) {            
             response = "off";
@@ -408,20 +489,122 @@ public class PreferenceTO extends TransferObject {
         	response = "on";
         } else if (key.equals(RSK_SW_TYPE)) {            
         	response = "off";
-        } else if (key.equals(OCC_SW_PROJECT)) {            
+        }else if(key.equals(PLA_SW_VIS)){
+        	response = "on";
+        }else if(key.equals(EXPENSE_CREATION_DT)){
+        	response = "on";
+        }else if(key.equals(EXPENSE_PROJECT)){
+        	response = "on";
+        }else if(key.equals(EXPENSE_STATUS)){
+        	response = "off";
+        }else if(key.equals(EXPENSE_TOTAL)){
+        	response = "on";
+        }else if(key.equals(EXPENSE_META_FIELD)){
+        	response = "off";
+        }else if (key.equals(OCC_SW_PROJECT)) {            
             response = "off";            
         } else if (key.equals(REPOSITORY_GRID_FULLPATH)) {            
         	response = "off";
         } else if (key.equals(REPOSITORY_GRID_GRANT)) {
         	response = "on";
+        } else if (key.equals(REPOSITORY_GRID_DEL)) {        	
+        	response = "on";
         } else if (key.equals(REPOSITORY_GRID_LOG)) {
         	response = "on";
         } else if (key.equals(REPOSITORY_GRID_VIEWER)) {
-        	response = "on";        	
+        	response = "on";
+        } else if (key.equals(REPOSITORY_GRID_DOWNLOAD)) {
+        	response = "on";   
         } else if (key.equals(INV_INVLIST_SW_NAME)) {
+        	response = "on";        	
+        } else if (key.equals(LIST_ALL_COST_SW_DESC)) {
+        	response = "off";
+        } else if (key.equals(LIST_ALL_COST_SW_CATEG)) {
+        	response = "on";
+        } else if (key.equals(LIST_ALL_COST_SW_PROJ)) {
+        	response = "on";
+        } else if (key.equals(LIST_ALL_COST_SW_ACCCD)) {
+        	response = "on";
+        } else if (key.equals(LIST_ALL_COST_SW_STAT)) {
+        	response = "on";
+        } else if (key.equals(LIST_ALL_COST_SW_VAL)) {
+        	response = "on";
+        } else if (key.equals(LIST_ALL_COST_SW_APPR)) {
+        	response = "on";
+        } else if (key.equals(LIST_ALL_COST_SW_DUED)) {
+        	response = "on";
+        } else if (key.equals(LIST_ALL_COST_SW_EXPE)) {
         	response = "on";
         } else if (key.equals(INV_INVLIST_SW_NUMBER)) {
         	response = "on";
+        } else if (key.equals(HOME_TASKLIST_SW_CLASSIF)) {
+        	response = "on";
+        } else if (key.equals(HOME_TASKLIST_SW_PROJECT)) {
+        	response = "on";
+        } else if (key.equals(HOME_TASKLIST_SW_ACT_DATE)) {
+        	response = "on";
+        } else if (key.equals(HOME_TASKLIST_SW_ACT_TIME)) {
+        	response = "on";        	
+        } else if (key.equals(HOME_TASKLIST_SW_EST_DATE)) {
+        	response = "off";        	
+        } else if (key.equals(HOME_TASKLIST_SW_EST_TIME)) {
+        	response = "off";        	
+        } else if (key.equals(HOME_TASKLIST_SW_TSK_STATUS)) {
+        	response = "off";        	
+        } else if (key.equals(HOME_TASKLIST_SW_TSK_CATEG)) {
+        	response = "on";        	
+        } else if (key.equals(HOME_TASKLIST_SW_REL_REQ)) {
+        	response = "off";        	
+        } else if (key.equals(HOME_TASKLIST_SW_TSK_ITERAT)) {
+        	response = "off";        	
+        } else if (key.equals(HOME_TASKLIST_SW_REQ_ITERAT)) {
+        	response = "off";        	
+        } else if (key.equals(HOME_TASKLIST_SW_TSK_PARENT)) {
+        	response = "off";        	
+        } else if (key.equals(HOME_TASKLIST_SW_BLOCKERS)) {
+        	response = "off";        	
+        } else if (key.equals(HOME_TASKLIST_SW_BILLABLE)) {
+        	response = "on";
+        } else if (key.equals(HOME_TASKLIST_SW_META)) {        	
+        	response = "off";
+        } else if (key.equals(HOME_PENDCOST_SW_META)) {
+        	response = "off";
+        } else if (key.equals(HOME_PENDCOST_SW_PROJ)) {
+        	response = "on";
+        } else if (key.equals(HOME_PENDCOST_SW_CREAT)) {
+        	response = "on";
+        } else if (key.equals(HOME_PENDCOST_SW_USER)) {
+        	response = "on";
+        } else if (key.equals(HOME_PENDCOST_SW_NAME)) {
+        	response = "on";
+        } else if (key.equals(HOME_PENDLIST_SW_DESC)) {
+        	response = "on";        	
+        } else if (key.equals(HOME_PENDLIST_SW_PROJ)) {
+        	response = "on";        	
+        } else if (key.equals(HOME_PENDLIST_SW_CATEG)) {
+        	response = "on";        	
+        } else if (key.equals(HOME_PENDLIST_SW_SUGG)) {
+        	response = "off";        	
+        } else if (key.equals(HOME_PENDLIST_SW_CREAT)) {
+        	response = "off";
+        } else if (key.equals(HOME_PENDLIST_SW_REQUE)) {
+        	response = "on";
+        } else if (key.equals(HOME_PENDLIST_SW_PRIOR)) {
+        	response = "on";
+        } else if (key.equals(HOME_PENDLIST_SW_META)) {        	
+        	response = "off";
+        } else if (key.equals(HOME_REQLIST_SW_DESC)) {
+        	response = "on";        	
+        } else if (key.equals(HOME_REQLIST_SW_PROJ)) {
+        	response = "on";        	
+        } else if (key.equals(HOME_REQLIST_SW_CATEG)) {
+        	response = "on";        	
+        } else if (key.equals(HOME_REQLIST_SW_PRIOR)) {
+        	response = "on";        	
+        } else if (key.equals(HOME_REQLIST_SW_ITERA)) {
+        	response = "off";        	
+        } else if (key.equals(HOME_REQLIST_SW_STAT)) {
+        	response = "off";
         } else if (key.equals(INV_INVLIST_SW_PO)) {
         	response = "on";
         } else if (key.equals(INV_INVLIST_SW_PRJ)) {
@@ -436,10 +619,8 @@ public class PreferenceTO extends TransferObject {
         	response = "off";
         } else if (key.equals(INV_INVLIST_SW_TOTAL)) {
         	response = "on";
-        } else if (key.equals(HOME_TASKLIST_SW_REQ_ITERAT)) {        	
-        	response = "off";
-        } else if (key.equals(HOME_REQLIST_SW_ITERA)) {
-        	response = "off";
+        } else if (key.equals(HOME_FORUMLIST_SW_CREAT)) {
+        	response = "on";
         } else if (key.equals(LIST_ALL_TSK_BILLABLE)) {
         	response = "off";
         } else if (key.equals(CRITICAL_DAY_TASK)) {            
@@ -457,23 +638,25 @@ public class PreferenceTO extends TransferObject {
         } else if (key.equals(CONVERTER_BUS_CLASS)) {
             //response = "com.pandora.bus.convert.MM2SWFConverter; com.pandora.bus.convert.PDF2SWFConverter";
         	response = "";
+        } else if (key.equals(OVERVIEW_PROJ_CLASS)) {
+            response = "com.pandora.gui.struts.action.projectpanel.ProjectInfoProjectPanel; com.pandora.gui.struts.action.projectpanel.StakeholdersProjectPanel; com.pandora.gui.struts.action.projectpanel.RiskInfoProjectPanel; com.pandora.gui.struts.action.projectpanel.MilestonesAndInterationProjectPanel";        	
         } else if (key.equals(NOTIFICATION_BUS_CLASS)) {
-            response = "com.pandora.bus.alert.EmailNotification; com.pandora.bus.alert.DbLogNotification; com.pandora.bus.alert.HttpNotification; com.pandora.bus.alert.CheckFileNotification; com.pandora.bus.alert.ExecuteNotification; com.pandora.bus.alert.NewTaskNotification; com.pandora.bus.alert.ReplicateTableNotification";
+            response = "com.pandora.bus.alert.EmailNotification; com.pandora.bus.alert.DbLogNotification; com.pandora.bus.alert.HttpNotification; com.pandora.bus.alert.CheckFileNotification; com.pandora.bus.alert.ExecuteNotification; com.pandora.bus.alert.NewTaskNotification; com.pandora.bus.alert.ReplicateTableNotification; com.pandora.bus.alert.FileToTableNotification; com.pandora.bus.alert.PingNotification; com.pandora.bus.alert.Report2EmailNotification; com.pandora.bus.alert.FileToFTPNotification; com.pandora.bus.alert.Report2FileNotification; com.pandora.bus.alert.Jira5IssueToRequestNotification";
         } else if (key.equals(OCCURRENCE_BUS_CLASS)) {
             response = "com.pandora.bus.occurrence.IssueOccurrence; com.pandora.bus.occurrence.AdHocOccurrence; com.pandora.bus.occurrence.EventOccurrence; com.pandora.bus.occurrence.LessonLearnedOccurrence; com.pandora.bus.occurrence.MilestoneOccurrence; com.pandora.bus.occurrence.IterationOccurrence; com.pandora.bus.occurrence.StrategicObjectivesOccurrence";
         } else if (key.equals(KB_BUS_CLASS)) {
-            response = "com.pandora.bus.kb.RequirementKbIndex; com.pandora.bus.kb.TaskKbIndex; com.pandora.bus.kb.OccurrenceKbIndex; com.pandora.bus.kb.RiskKbIndex;";
+            response = "com.pandora.bus.kb.RequirementKbIndex; com.pandora.bus.kb.TaskKbIndex; com.pandora.bus.kb.OccurrenceKbIndex; com.pandora.bus.kb.RiskKbIndex; com.pandora.bus.kb.AttachmentKbIndex;";
         } else if (key.equals(SNIP_ARTIFACT_BUS_CLASS)) {            
-            response = "com.pandora.bus.snip.ImageSnipArtifact; com.pandora.bus.snip.TableSnipArtifact";            
+            response = "com.pandora.bus.snip.ImageSnipArtifact; com.pandora.bus.snip.TableSnipArtifact; com.pandora.bus.snip.LinkSnipArtifact"; //com.pandora.bus.snip.SimpleChartSnipArtifact; com.pandora.bus.snip.FlowChartSnipArtifact            
         } else if (key.equals(GADGET_BUS_CLASS)) {
-            response = "com.pandora.bus.gadget.BillableTaskChartGadget; com.pandora.bus.gadget.DefectTaskChartGadget; com.pandora.bus.gadget.PredictableTaskChartGadget; com.pandora.bus.gadget.ResourceAllocationChartGadget; com.pandora.bus.gadget.TaskStreamHtmlGadget; com.pandora.bus.gadget.WorkflowTimeGadget; com.pandora.bus.gadget.KpiChartGadget; com.pandora.bus.gadget.ResourceCategoryCapacityChartGadget; com.pandora.bus.gadget.ResourceProjectCapacityChartGadget; com.pandora.bus.gadget.ProjectRiskChartGadget; " +
-            		   "com.pandora.bus.gadget.ProjectRiskInPeriodGadget; com.pandora.bus.gadget.IterationBurndownChartGadget; com.pandora.bus.gadget.KanbanLimitWIPChartGadget; com.pandora.bus.gadget.CalendarHtmlGadget; com.pandora.bus.gadget.InvoiceIncomeChartGadget; com.pandora.bus.gadget.CostAndBudgetGadget; com.pandora.bus.gadget.RequirementSummaryChartGadget; com.pandora.bus.gadget.KPIHistogramGadgetChart; com.pandora.bus.gadget.GoogleSlot1HtmlGadget; com.pandora.bus.gadget.GoogleSlot2HtmlGadget; com.pandora.bus.gadget.GoogleSlot3HtmlGadget";
+            response = "com.pandora.bus.gadget.RemainingDaysHtmlGadget; com.pandora.bus.gadget.BillableTaskChartGadget; com.pandora.bus.gadget.DefectTaskChartGadget; com.pandora.bus.gadget.PredictableTaskChartGadget; com.pandora.bus.gadget.ResourceAllocationChartGadget; com.pandora.bus.gadget.TaskStreamHtmlGadget; com.pandora.bus.gadget.WorkflowTimeGadget; com.pandora.bus.gadget.KpiChartGadget; com.pandora.bus.gadget.ResourceCategoryCapacityChartGadget; com.pandora.bus.gadget.ResourceProjectCapacityChartGadget; com.pandora.bus.gadget.ProjectRiskChartGadget; " +
+            		   "com.pandora.bus.gadget.ProjectRiskInPeriodGadget; com.pandora.bus.gadget.IterationBurndownChartGadget; com.pandora.bus.gadget.KanbanLimitWIPChartGadget; com.pandora.bus.gadget.CalendarHtmlGadget; com.pandora.bus.gadget.InvoiceIncomeChartGadget; com.pandora.bus.gadget.MarginChartGadget; com.pandora.bus.gadget.CostAndBudgetGadget; com.pandora.bus.gadget.RequirementSummaryChartGadget; com.pandora.bus.gadget.KPIHistogramGadgetChart; com.pandora.bus.gadget.GoogleSlot1HtmlGadget; com.pandora.bus.gadget.GoogleSlot2HtmlGadget; com.pandora.bus.gadget.GoogleSlot3HtmlGadget"; //com.pandora.bus.gadget.RequirementLeadTimeGadget;
         } else if (key.equals(IMP_EXP_BUS_CLASS)) {
-            response = "com.pandora.imp.GanttProject20XmlExportBUS; com.pandora.imp.GoogleAgenda20ExportBUS; com.pandora.imp.MsProjectXmlImportBUS; com.pandora.imp.KPICsvExportBUS";
+            response = "com.pandora.imp.GanttProject20XmlExportBUS; com.pandora.imp.GoogleAgenda20ExportBUS; com.pandora.imp.KPICsvExportBUS; com.pandora.imp.CostCsvExportBUS; com.pandora.imp.MsProjectXmlImportBUS; com.pandora.imp.RequestCSVImportBUS";
         } else if (key.equals(REPOSITORY_BUS_CLASS)) {
         	response = "com.pandora.bus.repository.WrapperSVNRepository; com.pandora.bus.repository.WrapperDBRepository";
         } else if (key.equals(AUTH_BUS_CLASS)) {
-        	response = "com.pandora.bus.auth.SystemAuthentication; com.pandora.bus.auth.LdapAuthentication";
+        	response = "com.pandora.bus.auth.SystemAuthentication; com.pandora.bus.auth.LdapAuthentication; com.pandora.bus.auth.AES256Authentication";
         } else if (key.equals(ARTIFACT_EXPORT_CLASS)) {
         	response = "com.pandora.bus.artifact.HtmlArtifactExport; com.pandora.bus.artifact.PDFArtifactExport";
         } else if (key.equals(KB_INDEX_FOLDER)) {
@@ -483,7 +666,7 @@ public class PreferenceTO extends TransferObject {
         } else if (key.equals(ARTIFACT_MAX_SIZE)) {
             response = "307200";
         } else if (key.equals(NEW_VERSION_URL)) {
-            response = "http://plandora.sourceforge.net/version.php";
+            response = "http://www.plandora.org/version.php";
         } else if (key.equals(LDAP_FILTER)) {            
             response = "";
         } else if (key.equals(LDAP_HOST)) {            

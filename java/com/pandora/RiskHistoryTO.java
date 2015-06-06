@@ -36,6 +36,17 @@ public class RiskHistoryTO extends TransferObject {
     
     private Integer riskType;
     
+    private String name;
+    
+    private String description;
+    
+    private String responsible;
+    
+    private String categoryId;
+    
+    private String strategy;
+    
+    private String contingency;
     
     
     /////////////////////////////////////////
@@ -169,6 +180,60 @@ public class RiskHistoryTO extends TransferObject {
 	}
 	public void setRiskStatusType(String newValue) {
 		this.riskStatusType = newValue;
+	}
+	
+	
+    //////////////////////////////////////////	
+	public String getName() {
+		return name;
+	}
+	public void setName(String newValue) {
+		this.name = newValue;
+	}
+	
+	
+    //////////////////////////////////////////	
+	public String getDescription() {
+		return description;
+	}
+	public void setDescription(String newValue) {
+		this.description = newValue;
+	}
+	
+	
+    //////////////////////////////////////////	
+	public String getResponsible() {
+		return responsible;
+	}
+	public void setResponsible(String newValue) {
+		this.responsible = newValue;
+	}
+	
+	
+    //////////////////////////////////////////	
+	public String getCategoryId() {
+		return categoryId;
+	}
+	public void setCategoryId(String newValue) {
+		this.categoryId = newValue;
+	}
+	
+	
+    //////////////////////////////////////////	
+	public String getStrategy() {
+		return strategy;
+	}
+	public void setStrategy(String newValue) {
+		this.strategy = newValue;
+	}
+	
+	
+    //////////////////////////////////////////	
+	public String getContingency() {
+		return contingency;
+	}
+	public void setContingency(String newValue) {
+		this.contingency = newValue;
 	}
 	
 	

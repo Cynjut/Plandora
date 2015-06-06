@@ -17,6 +17,7 @@ import com.pandora.ReportTO;
 import com.pandora.SurveyQuestionTO;
 import com.pandora.SurveyTO;
 import com.pandora.UserTO;
+import com.pandora.delegate.PreferenceDelegate;
 import com.pandora.delegate.SurveyDelegate;
 import com.pandora.delegate.UserDelegate;
 import com.pandora.exception.BusinessException;
@@ -32,15 +33,18 @@ public class SurveyAction extends GeneralStrutsAction {
 			HttpServletRequest request, HttpServletResponse response){
 		
 		String forward = "showSurvey";
-		this.clearForm(form, request);		
-		this.refresh(mapping, form, request, response);
-		
-		request.getSession().setAttribute("questionList", new Vector());
+		this.clearForm(form, request);
+		this.reset(form);
 		
 		SurveyForm frm = (SurveyForm)form;
-		frm.setPathContext(request.getContextPath());
 		
-		this.reset(form);
+	    UserTO uto = SessionUtil.getCurrentUser(request);
+	    String hideClosedSur = uto.getPreference().getPreference(PreferenceTO.SURVEY_HIDE_CLOSED);
+	    frm.setHideClosedSurveys(hideClosedSur!=null && hideClosedSur.equals("on"));
+		
+		this.refresh(mapping, form, request, response);
+		request.getSession().setAttribute("questionList", new Vector<SurveyQuestionTO>());
+		frm.setPathContext(request.getHeader("referer"), request.getContextPath());
 		
 	    frm.setSaveMethod(SurveyForm.INSERT_METHOD, SessionUtil.getCurrentUser(request));
 
@@ -93,14 +97,20 @@ public class SurveyAction extends GeneralStrutsAction {
 				source.setAnonymousKey(null);
 				source.setOwner(SessionUtil.getCurrentUser(request));
 				source.setCreationDate(DateUtil.getNow());
+				
 				String label = super.getBundleMessage(request, "message.formSurvey.replicSurvey.copy");
-				source.setName(label + " " + source.getName());
+				String copyName = label + " " + source.getName();
+				if (copyName!=null && copyName.length()>=50) {
+					copyName = copyName.substring(0, 49);					
+				}
+				source.setName(copyName);
+				
 				source.setProject(new ProjectTO(frm.getProjectId()));
 				
-				Vector qlist = source.getQuestionList();
-				Iterator i = qlist.iterator();
+				Vector<SurveyQuestionTO> qlist = source.getQuestionList();
+				Iterator<SurveyQuestionTO> i = qlist.iterator();
 				while(i.hasNext()) {
-					SurveyQuestionTO q = (SurveyQuestionTO)i.next();
+					SurveyQuestionTO q = i.next();
 					q.setId("NEW_");
 				}
 				
@@ -148,15 +158,16 @@ public class SurveyAction extends GeneralStrutsAction {
 		    SurveyForm frm = (SurveyForm)form;
 		    this.reset(form);
 
-		    Vector qList = (Vector)request.getSession().getAttribute("questionList");
+		    @SuppressWarnings({ "rawtypes", "unchecked" })
+			Vector<SurveyQuestionTO> qList = (Vector)request.getSession().getAttribute("questionList");
 		    if (qList!=null && frm.getRemovedQuestionId()!=null){
-		        Iterator i = qList.iterator();
+		        Iterator<SurveyQuestionTO> i = qList.iterator();
 		        while(i.hasNext()){
-		            SurveyQuestionTO qto = (SurveyQuestionTO)i.next();
+		            SurveyQuestionTO qto = i.next();
 		            if (qto.getId().equals(frm.getRemovedQuestionId())){
 		                request.getSession().removeAttribute("questionList");
 		                qList.remove(qto);
-		                Vector temp = new Vector();
+		                Vector<SurveyQuestionTO> temp = new Vector<SurveyQuestionTO>();
 		                temp.addAll(qList);
 		                request.getSession().setAttribute("questionList", temp);
 	
@@ -216,24 +227,30 @@ public class SurveyAction extends GeneralStrutsAction {
 	public ActionForward refresh(ActionMapping mapping, ActionForm form,
 			HttpServletRequest request, HttpServletResponse response){
 	    String forward = "showSurvey";
-
+	    PreferenceDelegate pdel = new PreferenceDelegate();
 		try {
 			SurveyForm frm = (SurveyForm)form;
 			this.reset(form);
 		    SurveyDelegate del = new SurveyDelegate();
-		    
+
+		    //save the new preference
+		    UserTO uto = SessionUtil.getCurrentUser(request);
+		    PreferenceTO pto = new PreferenceTO(PreferenceTO.SURVEY_HIDE_CLOSED, frm.getHideClosedSurveys()?"on":"off", uto);
+			uto.getPreference().addPreferences(pto);
+			pto.addPreferences(pto);
+            pdel.insertOrUpdate(pto);	
+            
 		    if (frm.getProjectId()!=null && !frm.getProjectId().equals("")) {
-				Vector sList = del.getSurveyList(frm.getProjectId());
+				Vector<SurveyTO> sList = del.getSurveyList(frm.getProjectId(), frm.getHideClosedSurveys());
 				request.getSession().setAttribute("surveyList", sList);		    	
 
-				UserTO uto = SessionUtil.getCurrentUser(request);
-				Vector repList = del.getSurveyListByUser(uto, true);
+				Vector<SurveyTO> repList = del.getSurveyListByUser(uto, false);
 				ShowSurveyAction saction = new ShowSurveyAction();
 				String content = saction.getHtmlCombo(request, repList);
 				frm.setReplicationHtmlList(content);
 				
 		    } else {
-		    	request.getSession().setAttribute("surveyList", new Vector());
+		    	request.getSession().setAttribute("surveyList", new Vector<SurveyTO>());
 		    }
 				
 			
@@ -367,7 +384,8 @@ public class SurveyAction extends GeneralStrutsAction {
         sto.setQuestionsToBeRemoved(frm.getQuestionsToBeRemoved());
         sto.setQuestionsToBeUpdated(frm.getQuestionsToBeUpdated());
         
-        Vector qList = (Vector)request.getSession().getAttribute("questionList");
+        @SuppressWarnings({ "unchecked", "rawtypes" })
+		Vector<SurveyQuestionTO> qList = (Vector)request.getSession().getAttribute("questionList");
         sto.setQuestionList(qList);
 
         return sto;

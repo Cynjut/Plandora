@@ -36,9 +36,9 @@ public class InvoiceForm extends GeneralStrutsForm {
 	private String contact;
 	
 	
-	private ArrayList invoiceItemsToBeUpdated;
+	private ArrayList<String> invoiceItemsToBeUpdated;
 	
-	private ArrayList invoiceItemsToBeRemoved;
+	private ArrayList<String> invoiceItemsToBeRemoved;
 	
 	
 	private String unitPrice;
@@ -57,13 +57,13 @@ public class InvoiceForm extends GeneralStrutsForm {
 	
 		
 	/////////////////////////////
-	public ArrayList getInvoiceItemsToBeRemoved() {
+	public ArrayList<String> getInvoiceItemsToBeRemoved() {
 		return invoiceItemsToBeRemoved;
 	}
 	public void addInvoiceItemsToBeRemoved(String item) {
 		boolean already = false;
 		if (this.invoiceItemsToBeRemoved==null) {
-			this.invoiceItemsToBeRemoved = new ArrayList();
+			this.invoiceItemsToBeRemoved = new ArrayList<String>();
 		} else {
 			Object[] list = this.invoiceItemsToBeRemoved.toArray();
 			for (int i=0 ; i<list.length; i++) {
@@ -83,13 +83,13 @@ public class InvoiceForm extends GeneralStrutsForm {
 	
 	
 	/////////////////////////////	
-	public ArrayList getInvoiceItemsToBeUpdated() {
+	public ArrayList<String> getInvoiceItemsToBeUpdated() {
 		return invoiceItemsToBeUpdated;
 	}
 	public void addInvoiceItemsToBeUpdated(String item) {
 		boolean already = false;
 		if (this.invoiceItemsToBeUpdated==null) {
-			this.invoiceItemsToBeUpdated = new ArrayList();
+			this.invoiceItemsToBeUpdated = new ArrayList<String>();
 		} else {
 			Object[] list = this.invoiceItemsToBeUpdated.toArray();
 			for (int i=0 ; i<list.length; i++) {
@@ -297,7 +297,8 @@ public class InvoiceForm extends GeneralStrutsForm {
 		        errors.add("Name", new ActionError("validate.invoiceForm.blankName") );
 		    }
 
-			Vector iList = (Vector)request.getSession().getAttribute("invoiceItemList");
+			@SuppressWarnings({ "unchecked", "rawtypes" })
+			Vector<String> iList = (Vector)request.getSession().getAttribute("invoiceItemList");
 			if (iList==null || iList.size()==0){
 		        errors.add("Name", new ActionError("validate.invoiceForm.blankList") );
 		    }

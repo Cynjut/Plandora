@@ -2009,7 +2009,7 @@ tinymce.create('static tinymce.util.XHR', {
 
 						return '<mce:script' + attribs + '>' + text + '</mce:script>';
 					});
-
+					
 					// Wrap style elements
 					h = h.replace(/<style([^>]+|)>([\s\S]*?)<\/style>/gi, function(v, attribs, text) {
 						// Wrap text contents
@@ -8545,6 +8545,7 @@ tinymce.create('tinymce.ui.Separator:tinymce.ui.Control', {
 				});
 			});
 
+			/* hide color picker (AlbertoPereto - 19/02/2011)
 			if (s.more_colors_func) {
 				n = DOM.add(tb, 'tr');
 				n = DOM.add(n, 'td', {colspan : s.grid_width, 'class' : 'mceMoreColors'});
@@ -8555,6 +8556,7 @@ tinymce.create('tinymce.ui.Separator:tinymce.ui.Control', {
 					return Event.cancel(e); // Cancel to fix onbeforeunload problem
 				});
 			}
+			*/
 
 			DOM.addClass(m, 'mceColorSplitMenu');
 

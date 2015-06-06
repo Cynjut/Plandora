@@ -25,21 +25,21 @@ public class ExpenseTO extends PlanningTO {
 
 	
 	////////////////////////////////////	
-	public Integer getTotal() {
-		int acc = 0;
+	public Long getTotal() {
+		long acc = 0;
 		if (expensesItems!=null) {
 			for (CostTO cto : expensesItems) {
 				Vector<CostInstallmentTO> instList = cto.getInstallments();
 				if (instList!=null) {
 					for (CostInstallmentTO cito : instList) {
 						if (cito!=null && cito.getValue()!=null) {
-							acc+= cito.getValue().intValue();
+							acc+= cito.getValue().longValue();
 						}
 					}
 				}				
 			}
 		}
-		return new Integer(acc);
+		return new Long(acc);
 	}
 
 	
@@ -63,6 +63,19 @@ public class ExpenseTO extends PlanningTO {
 		return response;
 	}
 	
+
+	public void setApprover(LeaderTO led) {
+		if (expensesItems!=null) {
+			for (CostTO cto : expensesItems) {
+				Vector<CostInstallmentTO> instList = cto.getInstallments();
+				if (instList!=null) {
+					for (CostInstallmentTO cito : instList) {
+						cito.setApprover(led);
+					}
+				}				
+			}
+		}
+	}
 	
 	
 	////////////////////////////////////

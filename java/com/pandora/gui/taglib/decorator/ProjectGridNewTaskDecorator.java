@@ -18,8 +18,9 @@ public class ProjectGridNewTaskDecorator extends ColumnDecorator {
     public String decorate(Object columnValue) {
 		String image = "&nbsp;";
 		ProjectTO pto = (ProjectTO)this.getObject();
-		if (pto.getRoleIntoProject().equals(LeaderTO.ROLE_LEADER+"") || 
-			    pto.getRoleIntoProject().equals(RootTO.ROLE_ROOT+"")){
+		if (pto!=null && pto.getRoleIntoProject()!=null && (
+				pto.getRoleIntoProject().equals(LeaderTO.ROLE_LEADER+"") || 
+			    pto.getRoleIntoProject().equals(RootTO.ROLE_ROOT+""))){
 			
 		    if (pto.getBollCanAlloc()) {
 		    	

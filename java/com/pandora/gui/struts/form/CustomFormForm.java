@@ -27,6 +27,7 @@ public class CustomFormForm extends GeneralStrutsForm {
     private String daysToHideRecords = "30";
     
     
+    
     //////////////////////////////////////
     public String getFormTitle() {
         return formTitle;

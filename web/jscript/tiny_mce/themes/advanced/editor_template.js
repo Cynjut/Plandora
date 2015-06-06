@@ -1131,31 +1131,27 @@
 		_mceImage : function(ui, val) {
 			var ed = this.editor;
 
-			// Internal image object like a flash placeholder
-			if (ed.dom.getAttrib(ed.selection.getNode(), 'class').indexOf('mceItem') != -1)
-				return;
-
-			ed.windowManager.open({
-				url : tinymce.baseURL + '/themes/advanced/image.htm',
-				width : 355 + parseInt(ed.getLang('advanced.image_delta_width', 0)),
-				height : 275 + parseInt(ed.getLang('advanced.image_delta_height', 0)),
-				inline : true
-			}, {
-				theme_url : this.url
-			});
+			//alert(ed.selection.getNode().src + " " + ed.settings.snip_img_width + " " + ed.settings.snip_img_height);
+			var longdesc = ed.selection.getNode().getAttribute('longdesc');
+			
+			//chamar popup de edicao de imagem
+			displayMessage("../do/showSnipArtifact?operation=prepareForm&projectId=" + ed.settings.projectId + "&id=" + longdesc + "&snip=com.pandora.bus.snip.ImageSnipArtifact", ed.settings.snip_img_width, ed.settings.snip_img_height);
 		},
 
 		_mceLink : function(ui, val) {
 			var ed = this.editor;
+			
+			//TODO chamar popup de edicao de link
+			//displayMessage("../do/showSnipArtifact?operation=prepareForm&projectId=" + ed.settings.projectId + "&snip=com.pandora.bus.snip.LinkSnipArtifact", ed.settings.snip_lnk_width, ed.settings.snip_lnk_height);
 
-			ed.windowManager.open({
-				url : tinymce.baseURL + '/themes/advanced/link.htm',
-				width : 310 + parseInt(ed.getLang('advanced.link_delta_width', 0)),
-				height : 200 + parseInt(ed.getLang('advanced.link_delta_height', 0)),
-				inline : true
-			}, {
-				theme_url : this.url
-			});
+			//ed.windowManager.open({
+			//	url : tinymce.baseURL + '/themes/advanced/link.htm',
+			//	width : 310 + parseInt(ed.getLang('advanced.link_delta_width', 0)),
+			//	height : 200 + parseInt(ed.getLang('advanced.link_delta_height', 0)),
+			//	inline : true
+			//}, {
+			//	theme_url : this.url
+			//});
 		},
 
 		_mceNewDocument : function() {

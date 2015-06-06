@@ -13,7 +13,7 @@ import com.pandora.exception.DataAccessException;
  */
 public class AreaBUS extends GeneralBusiness {
     
-    /** The Data Acess Object related with current business entity */
+    /** The Data Access Object related with current business entity */
     AreaDAO dao = new AreaDAO();
     
     /**

@@ -2,14 +2,15 @@ package com.tests.integration;
 
 import java.util.ArrayList;
 
+import junit.framework.TestCase;
+
+import com.pandora.bus.SystemSingleton;
 import com.pandora.integration.Connector;
 import com.pandora.integration.Integration;
 import com.pandora.integration.IntegrationResponse;
 import com.pandora.integration.ResourceTaskAllocIntegration;
 import com.pandora.integration.ResourceTaskIntegration;
 import com.pandora.integration.exception.IntegrationException;
-
-import junit.framework.TestCase;
 
 /**
  */
@@ -18,7 +19,7 @@ public class ConnectorTest extends TestCase {
     /** The class tested */
     Connector connector = null;
     
-    String target = "http://localhost:8080/pandora/do/connectorListener";
+    String target = "://localhost:8080/pandora/do/connectorListener";
     
     
  	public void setUp() {
@@ -30,8 +31,9 @@ public class ConnectorTest extends TestCase {
  	
  	public void testExecute() throws IntegrationException{
  	 
- 	   IntegrationResponse resp0 = connector.execute(prepareResourceTaskList2(), target);
- 	   assertTrue("Test 0 ", resp0.wasSuccess());
+ 		String protoc = SystemSingleton.getInstance().getSystemProtocol();
+ 		IntegrationResponse resp0 = connector.execute(prepareResourceTaskList2(), protoc + target);
+ 		assertTrue("Test 0 ", resp0.wasSuccess());
  	  /**
  	   //Test 1 - check if call with empty list works
  	   IntegrationResponse resp1 = connector.execute(null, target);

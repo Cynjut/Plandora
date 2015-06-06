@@ -5,6 +5,7 @@ import java.util.Vector;
 import org.apache.taglibs.display.ColumnDecorator;
 
 import com.pandora.PlanningRelationTO;
+import com.pandora.PlanningTO;
 import com.pandora.RequirementTO;
 import com.pandora.UserTO;
 import com.pandora.delegate.UserDelegate;
@@ -22,9 +23,15 @@ public class RequirementGridHilight extends ColumnDecorator {
      */
     public String decorate(Object columnValue, String tag) {
         String response = "";
-		RequirementTO rto = (RequirementTO)this.getObject();
-		if (rto!=null) {
-			response = response.concat(rto.getDescription());			
+        PlanningTO pto = null;
+        if (this.getObject() instanceof RequirementTO) {
+        	pto = (RequirementTO)this.getObject();	
+        } else if (this.getObject() instanceof PlanningTO) {
+        	pto = (PlanningTO)this.getObject();
+        }
+		
+		if (pto!=null) {
+			response = response.concat(pto.getDescription());			
 		}
 	    return response;
     }
@@ -34,26 +41,29 @@ public class RequirementGridHilight extends ColumnDecorator {
    		String response = "<table width=\"100%\" border=\"0\" cellspacing=\"0\" cellpadding=\"0\"><tr>";
    		String iniIdent = "";
    		String colorTd = "";
-        
-		RequirementTO rto = (RequirementTO)this.getObject();
-		if (rto!=null) {			
-			UserTO uto = (UserTO)this.getPageContext().getSession().getAttribute(UserDelegate.CURRENT_USER_SESSION);
 
-			String color = HtmlUtil.getTextByPriority(uto, rto.getPriority());
-			if (color!=null) {
-				colorTd = "bgcolor=\"" + color + "\"";				
-			}					
-			
-			if (tag!=null) {
-				Vector<PlanningRelationTO> relations = rto.getRelationList();
-				Vector<PlanningRelationTO> parent = PlanningRelationTO.getRelation(relations, PlanningRelationTO.RELATION_PART_OF, rto.getId(), true);
-				if (parent!=null && parent.size()>0) {
-					iniIdent = "<td width=\"" + (rto.getGridLevel() * 20) + "\" valign=\"top\"><img border=\"0\" align=\"right\" src=\"../images/treenode.gif\" /></td>";
-				}
-			}
+        if (this.getObject() instanceof RequirementTO) {
+    		RequirementTO rto = (RequirementTO)this.getObject();
+    		if (rto!=null) {			
+    			UserTO uto = (UserTO)this.getSession().getAttribute(UserDelegate.CURRENT_USER_SESSION);
 
-			response = response + iniIdent + "<td class=\"tableCell\" " + colorTd + ">";
-		}
+    			String color = HtmlUtil.getTextByPriority(uto, rto.getPriority());
+    			if (color!=null) {
+    				colorTd = "bgcolor=\"" + color + "\"";				
+    			}					
+    			
+    			if (tag!=null) {
+    				Vector<PlanningRelationTO> relations = rto.getRelationList();
+    				Vector<PlanningRelationTO> parent = PlanningRelationTO.getRelation(relations, PlanningRelationTO.RELATION_PART_OF, rto.getId(), true);
+    				if (parent!=null && parent.size()>0) {
+    					iniIdent = "<td width=\"" + (rto.getGridLevel() * 20) + "\" valign=\"top\"><img border=\"0\" align=\"right\" src=\"../images/treenode.gif\" /></td>";
+    				}
+    			}
+
+    			response = response + iniIdent + "<td class=\"tableCell\" " + colorTd + ">";
+    		}        	
+        }
+   		
 		return response;
    	}
    	
@@ -61,16 +71,19 @@ public class RequirementGridHilight extends ColumnDecorator {
    	public String getPostContent(Object columnValue, String tag) {
    		String response = "";
 
-   		RequirementTO rto = (RequirementTO)this.getObject();		
-		if (rto!=null) {			
-			UserTO uto = (UserTO)this.getPageContext().getSession().getAttribute(UserDelegate.CURRENT_USER_SESSION);
-			
-			String color = HtmlUtil.getTextByPriority(uto, rto.getPriority());						
-			if (color!=null) {
-				response = response + "</td>";				
-			}
-			response = response + "</td></tr></table>";								
-		}
+        if (this.getObject() instanceof RequirementTO) {
+       		RequirementTO rto = (RequirementTO)this.getObject();		
+    		if (rto!=null) {			
+    			UserTO uto = (UserTO)this.getSession().getAttribute(UserDelegate.CURRENT_USER_SESSION);
+    			
+    			String color = HtmlUtil.getTextByPriority(uto, rto.getPriority());						
+    			if (color!=null) {
+    				response = response + "</td>";				
+    			}
+    			response = response + "</td></tr></table>";								
+    		}        	
+        }
+        
 		return response;   		
    	}
 

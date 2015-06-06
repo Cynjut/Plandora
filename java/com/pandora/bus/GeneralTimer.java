@@ -3,6 +3,7 @@ package com.pandora.bus;
 import java.sql.Timestamp;
 
 import com.pandora.bus.kb.IndexEngineBUS;
+//import com.pandora.delegate.EmailImapDelegate;
 import com.pandora.delegate.NotificationDelegate;
 import com.pandora.delegate.ReportDelegate;
 import com.pandora.exception.BusinessException;
@@ -14,7 +15,7 @@ import com.pandora.helper.LogUtil;
  */
 public class GeneralTimer implements Runnable {
 
-	/** Static instace of current singleton */	
+	/** Static instance of current singleton */	
 	private static GeneralTimer instance = null;
 	
 	//private static long SLEEP_TIME = 840000; //default time interval (14min)
@@ -92,13 +93,17 @@ public class GeneralTimer implements Runnable {
 	 * @throws BusinessException
 	 */
 	protected void onTimer() throws BusinessException{
+		
 	    ReportDelegate rdel = new ReportDelegate();
 	    rdel.performKPI();
 	    
 	    NotificationDelegate ndel = new NotificationDelegate();
 	    ndel.performNotification();
 
-	    //perform the engine indexation from 10 to 10 minutes...
+	    //EmailImapDelegate edel = new EmailImapDelegate();
+	    //edel.updateEmailImap();
+	    
+	    //perform the engine indexes from 10 to 10 minutes...
 	    Timestamp ts = DateUtil.getNow();
 	    if (lastIndexExecution==0 || ((ts.getTime() - lastIndexExecution) >= 600000) ) {
 		    IndexEngineBUS ind;

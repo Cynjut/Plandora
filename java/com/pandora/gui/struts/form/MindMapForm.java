@@ -8,6 +8,10 @@ public class MindMapForm extends GeneralStrutsForm {
     
     private String formTitle;
     
+    private String planningId;
+    
+    private String projectId;
+    
     
     //////////////////////////////////////
     public String getServerURI() {
@@ -25,5 +29,25 @@ public class MindMapForm extends GeneralStrutsForm {
 	public void setFormTitle(String newValue) {
 		this.formTitle = newValue;
 	}
+	
+	
+    //////////////////////////////////////
+	public String getPlanningId() {
+		return planningId;
+	}
+	public void setPlanningId(String newValue) {
+		this.planningId = newValue;
+	}
+	
+	
+    //////////////////////////////////////
+	public String getProjectId() {
+		return projectId;
+	}
+	public void setProjectId(String newValue) {
+		this.projectId = newValue;
+	}
     
+	
+	
 }

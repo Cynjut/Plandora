@@ -1,0 +1,9 @@
+User-agent: *
+Disallow: /wordpress/
+Disallow: /test/
+Disallow: /plesk-stat/
+Disallow: /picture_library/
+Disallow: /logs/
+Disallow: /img/
+Disallow: /faqs/
+Disallow: /css/

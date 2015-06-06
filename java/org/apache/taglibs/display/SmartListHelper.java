@@ -8,9 +8,6 @@ package org.apache.taglibs.display;
 
 import java.text.MessageFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Properties;
@@ -198,14 +195,16 @@ class SmartListHelper extends Object {
         }
     }
  
-    protected String getSearchOptions(String urlFormatString, String pageParam, ArrayList filterCrit, PageContext ctx) {
+    protected String getSearchOptions(String url, String pageParam, String anchorParam, String filterParam, 
+    		ArrayList<TransferObject> filterCrit, PageContext ctx) {
+    	
     	NoteIcon note = new NoteIcon();
         String fieldList = "";
         try {
             if (filterCrit!=null) {
-                Iterator i = filterCrit.iterator();
+                Iterator<TransferObject> i = filterCrit.iterator();
                 while(i.hasNext()) {
-                    TransferObject filter = (TransferObject)i.next();
+                    TransferObject filter = i.next();
                     String label = RequestUtils.message(ctx, null, null, filter.getGenericTag()); //get title label
                     if (label==null) {
                         label = filter.getGenericTag();
@@ -223,7 +222,7 @@ class SmartListHelper extends Object {
             fieldList = "";
         }
         
-        String searchValue = ctx.getRequest().getParameter(pageParam);
+        String searchValue = ctx.getRequest().getParameter(filterParam);
         if (searchValue==null) {
             searchValue = "";
         }
@@ -233,21 +232,21 @@ class SmartListHelper extends Object {
 						"<td width=\"40\" align=\"right\" class=\"tableCellAction\">" + prop.getProperty("search.title") + ": </td>" +
 						"<td width=\"105\" class=\"tableCellAction\">&nbsp;&nbsp;" +
 							"<input type=\"hidden\" name=\"searchText\" value=\"OK\">" +
-							"<input maxlength=\"30\" name=\"" + pageParam + "\" size=\"10\" value=\"" + searchValue + "\" class=\"textBoxSmall\">&nbsp;" +
-							"<input type=\"submit\" name=\"filter\" onclick=\"window.location='" + urlFormatString + "';\" value=\"" + prop.getProperty("search.button") + "\" class=\"button\">" +						
+							"<input maxlength=\"30\" name=\"" + filterParam + "\" size=\"10\" value=\"" + searchValue + "\" class=\"textBoxSmall\">&nbsp;" +
+							  "<input type=\"submit\" name=\"filter\" onclick=\"javascript:gridTextFilterRefresh('" + url + "', '" + pageParam + "', '" + filterParam + "');\" value=\"" + prop.getProperty("search.button") + "\" class=\"button\">" +
 						"</td>" +
 						"<td><div class=\"tableCellAction\">" + fieldList + "</div>" +
 			        "</tr></table>" +
 		       "</td>";
     }
     
-    protected String getSearchCombo(String urlFormatString, List orderedList, String pageParam, String selected) {
+    protected String getSearchCombo(String url, String pgParam, String anchorParam, List orderedList, String pageParam, String selected) {
     	String list = " | |";
     	
         if (orderedList!=null && orderedList.size()>0) {     
-        	Iterator i = orderedList.iterator();
+        	Iterator<String> i = orderedList.iterator();
         	while(i.hasNext()) {
-        		String item = (String)i.next();
+        		String item = i.next();
         		list = list + item + "|" + item + "|"; 
         	}    		        	
         }
@@ -256,8 +255,8 @@ class SmartListHelper extends Object {
         return "<td>" +
 					"<table width=\"100%\" border=\"0\" cellspacing=\"0\" cellpadding=\"0\"><tr class=\"tableRowAction\">" +
 						"<td align=\"left\" class=\"tableCellAction\">&nbsp;&nbsp;" + comboHtml + "&nbsp;" +
-							"<input type=\"submit\" name=\"filterCombo\" onclick=\"window.location='" + urlFormatString + 
-							    "';\" value=\"" + prop.getProperty("search.button") + "\" class=\"button\">" +
+							"<input type=\"submit\" name=\"filterCombo\" onclick=\"javascript:gridComboFilterRefresh('" + url + "', '" + pgParam + "', '" + pageParam + "');\"" + 						
+							" value=\"" + prop.getProperty("search.button") + "\" class=\"button\">" +
 						"</td>" +
 			        "</tr></table>" +
 		       "</td>";

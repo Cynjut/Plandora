@@ -35,6 +35,8 @@ public class CostForm extends GeneralStrutsForm {
 	private String costHtmlTitle;
 	
 	private String costHtmlBody;
+	
+	private String costHtmlScript;
 
 	private String showEditCost = "off";
 	
@@ -43,6 +45,7 @@ public class CostForm extends GeneralStrutsForm {
 	private String expenseId;
 	
 	private String expenseReportURL;
+	
 	
 	
 	public void reset(ActionMapping mapping, HttpServletRequest request) {
@@ -141,6 +144,15 @@ public class CostForm extends GeneralStrutsForm {
 	
 	
 	/////////////////////////////////////////		
+	public String getCostHtmlScript() {
+		return costHtmlScript;
+	}
+	public void setCostHtmlScript(String newValue) {
+		this.costHtmlScript = newValue;
+	}
+
+
+	/////////////////////////////////////////		
 	public String getShowEditCost() {
 		return showEditCost;
 	}
@@ -174,6 +186,6 @@ public class CostForm extends GeneralStrutsForm {
 	public void setExpenseReportURL(String newValue) {
 		this.expenseReportURL = newValue;
 	}
-	
+
 	
 }

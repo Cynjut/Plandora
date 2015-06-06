@@ -1,6 +1,7 @@
 package com.pandora.gui.struts.action;
 
 import java.io.PrintWriter;
+import java.net.URLEncoder;
 import java.sql.Timestamp;
 import java.text.NumberFormat;
 import java.util.Calendar;
@@ -32,6 +33,7 @@ import com.pandora.delegate.MetaFieldDelegate;
 import com.pandora.delegate.ProjectDelegate;
 import com.pandora.delegate.UserDelegate;
 import com.pandora.exception.BusinessException;
+import com.pandora.exception.MetaFieldNumericTypeException;
 import com.pandora.gui.struts.form.CostEditForm;
 import com.pandora.helper.DateUtil;
 import com.pandora.helper.HtmlUtil;
@@ -40,7 +42,7 @@ import com.pandora.helper.StringUtil;
 
 public class CostEditAction extends GeneralStrutsAction {
 
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings("rawtypes")
 	public ActionForward prepareForm(ActionMapping mapping, ActionForm form,
 			 HttpServletRequest request, HttpServletResponse response){
 		String forward = "showCostEdit";
@@ -70,22 +72,8 @@ public class CostEditAction extends GeneralStrutsAction {
 			accCodeList.add(new TransferObject("", ""));
 			accCodeList.addAll(codel.getAccountCodesByLeader(uto));
 			request.getSession().setAttribute("accountCodeList", accCodeList);
-
-			Vector<MetaFieldTO> mflist = mfdel.getListByProjectAndContainer(frm.getProjectId(), null, MetaFieldTO.APPLY_TO_COST);
-			request.getSession().setAttribute("metaFieldCostList", new Vector<MetaFieldTO>());
-			if (mflist!=null) {
-				request.getSession().setAttribute("metaFieldCostList", mflist);
-			}
-
-		    //Vector<MetaFieldTO> fieldList = (Vector<MetaFieldTO>)request.getSession().getAttribute("metaFieldCostList");
-		    //if (mflist!=null) {
-			//    for (MetaFieldTO mto : mflist) {
-			//   	AdditionalFieldTO afto = frm.getAdditionalField(mto.getId());
-			//    	if (afto!=null){
-			//    		afto.setValue("");	
-			//   	}				
-			//	}	
-		    //}
+			
+			String metaFieldProjectId = frm.getProjectId();
 			
 			if (frm.getEditCostId()!=null && !frm.getEditCostId().trim().equals("")){
 				
@@ -99,6 +87,9 @@ public class CostEditAction extends GeneralStrutsAction {
 					cto = codel.getCost(new CostTO(frm.getEditCostId()));
 				}
 				this.getActionFormFromTransferObject(cto, frm, request);
+				if (cto!=null){
+					metaFieldProjectId = cto.getProject().getId();	
+				}
 
 			} else {
 				frm.clear();
@@ -121,14 +112,27 @@ public class CostEditAction extends GeneralStrutsAction {
 					newInst.setInstallmentNum(new Integer("1"));
 					newInst.setCost(null);
 					newInst.setCostStatus(expStatus);
-					newInst.setDueDate(DateUtil.getDate(DateUtil.getNow(), true));
-					newInst.setValue(new Integer("0"));
+					newInst.setValue(new Long("0"));
+					
+					//set into the session the last installment due date to make the fulfil more confortable to user..
+					Timestamp defDueDt = DateUtil.getNow();
+					if (request.getSession().getAttribute("lastInstallmentDueDate")!=null) {
+						defDueDt = (Timestamp)request.getSession().getAttribute("lastInstallmentDueDate");	
+					}
+					newInst.setDueDate(DateUtil.getDate(defDueDt, true));
+					
 					costInstallment.add(newInst);
 				}
 				
 				request.getSession().setAttribute("costInstallmentHash", costInstallment);				
 			}
 			this.refreshInstallment(frm, request);
+
+			Vector<MetaFieldTO> mflist = mfdel.getListByProjectAndContainer(metaFieldProjectId, null, MetaFieldTO.APPLY_TO_COST);
+			request.getSession().setAttribute("metaFieldCostList", new Vector<MetaFieldTO>());
+			if (mflist!=null) {
+				request.getSession().setAttribute("metaFieldCostList", mflist);
+			}
 			
 		} catch (Exception e){
 			this.setErrorFormSession(request, "error.generic.showFormError", e);
@@ -138,7 +142,7 @@ public class CostEditAction extends GeneralStrutsAction {
 	}
 		
 	
-	@SuppressWarnings("unchecked")	
+	@SuppressWarnings({ "unchecked", "rawtypes" })	
 	public ActionForward saveCost(ActionMapping mapping, ActionForm form,
 			 HttpServletRequest request, HttpServletResponse response){
 		CostDelegate cdel = new CostDelegate();
@@ -206,20 +210,23 @@ public class CostEditAction extends GeneralStrutsAction {
 							cdel.insertCost(cto);
 						}											
 					}
+					
+					//set into the session the last installment due date to make the fulfil more confortable to user..
+					request.getSession().removeAttribute("lastInstallmentDueDate");
+					CostInstallmentTO lastInstalmment = list.get(list.size()-1);
+					if (lastInstalmment.getDueDate()!=null) {
+						request.getSession().setAttribute("lastInstallmentDueDate", lastInstalmment.getDueDate());
+					}
+					
 				}				
 			}
 			
-			//response.setContentType("text/html; charset=iso-8859-1");  
-            //response.setHeader("Cache-Control", "no-cache");  
-            //PrintWriter out = response.getWriter();
-            //if (errorMessage!=null) {
-            //	out.println(errorMessage);	
-            //}
-            //out.flush();
             if (errorMessage!=null) {
             	this.setErrorFormSession(request, errorMessage, null);
             }
 			
+		} catch(MetaFieldNumericTypeException e){
+			this.setErrorFormSession(request, e.getMessage(), e.getMetaFieldName(), null, null, null, null, e);
 		} catch (Exception e){
 			this.setErrorFormSession(request, "error.generic.showFormError", e);
 		}
@@ -235,6 +242,23 @@ public class CostEditAction extends GeneralStrutsAction {
 			response = "validate.cost.blankName";
 		}
 		
+		Vector<MetaFieldTO> metaFieldList = (Vector<MetaFieldTO>)request.getSession().getAttribute("metaFieldCostList");
+		if (metaFieldList!=null) {
+			for (MetaFieldTO mfto : metaFieldList) {
+				String val = request.getParameter("META_DATA_" + mfto.getId());
+				try {
+					val = URLEncoder.encode(val, "UTF-8");
+					val = val.replaceAll("%C2%A0", "");
+				} catch(Exception e){
+					e.printStackTrace();
+				}
+				
+				if (mfto.isMandatory() && (val==null || val.trim().equals(""))) {
+					response = "validate.cost.invalidMeta";
+				}
+			}
+		}
+
 		Vector<CostInstallmentTO> list = (Vector<CostInstallmentTO>) request.getSession().getAttribute("costInstallmentHash");
 		if (list==null || list.size()==0) {
 			response = "validate.cost.blankInst";
@@ -248,7 +272,7 @@ public class CostEditAction extends GeneralStrutsAction {
 				}
 				if (cito.getValue()==null) {
 					response = "validate.cost.blankValue";					
-				} else if (cito.getValue().intValue()<=0) {
+				} else if (cito.getValue().longValue()<=0) {
 					response = "validate.cost.invalidValue";
 				}
 			}
@@ -283,7 +307,7 @@ public class CostEditAction extends GeneralStrutsAction {
 				newInst.setCost(null);
 				newInst.setCostStatus(initialStatus);
 				newInst.setDueDate(refDate);
-				newInst.setValue(new Integer("0"));
+				newInst.setValue(new Long("0"));
 				list.add(newInst);
 				
 				request.getSession().removeAttribute("costInstallmentHash");
@@ -457,32 +481,36 @@ public class CostEditAction extends GeneralStrutsAction {
             		selectedStatus = cito.getCostStatus().getId();
             	}	            	
         		
-	            //Calendar cal = new Calendar();
-	            //cal.setProperty("due_date_" + key);
-	            //cal.setName("costEditForm");
-	            //cal.setStyleClass("textBox");
 	            String dueDate = DateUtil.getDate(cito.getDueDate(), uto.getCalendarMask(), uto.getLocale());
-	            //String dueDateCal = cal.getCalendarHtml(alt, dueDate, calFormat);
-	            
 	            boolean isDisabled = false;
+	            boolean isDisabledText = false;
+	            frm.setStateMachinePaidOrCanceled("off");	            
+	            
 	            if (frm.getUsedByExpenseForm()!=null && cito.getCostStatus()!=null && frm.getUsedByExpenseForm().equalsIgnoreCase("on")) {
 	            	isDisabled = true;
-	            //} else { //when the action is to create a new cost, the status list must be editable 
-	            //	if (frm.getEditCostId()==null || frm.getEditCostId().trim().equals("")) {
-	            //		isDisabled = true;
-	            //	}	            	
+	            	
+	            	 // When the status machine is paid or canceled the others fields this table must not be editable.
+		            if(cito.getCostStatus() != null && cito.getCostStatus().getStateMachineOrder() != null){	            
+		            	if( cito.getCostStatus().getStateMachineOrder().equals(CostStatusTO.STATE_MACHINE_PAID) 
+		            			|| cito.getCostStatus().getStateMachineOrder().equals(CostStatusTO.STATE_MACHINE_CANCELED)){
+		            		isDisabledText = true;
+		            		// disabling labels when status machine is 'paid' or 'canceled'
+		            		frm.setStateMachinePaidOrCanceled("on");
+		            	} 
+		            }
+	            	
 	            }
 
-	            float val = cito.getValue().floatValue() / 100;
-	            String valStr = StringUtil.getFloatToString(val, "0.00" , uto.getLocale());
+	            double val = cito.getValue().doubleValue() / 100;
+	            String valStr = StringUtil.getDoubleToString(val, "0.00" , uto.getLocale());
 	            String statusCombo = HtmlUtil.getComboBox("status_" + key, statusList, "textBox", selectedStatus, 0, 
-		            		"javascript:changeInstallment('status_" + key+ "', '" + key + "', 'STAT')", isDisabled);	            	
+		            		"javascript:changeInstallment('status_" + key+ "', '" + key + "', 'STAT')", isDisabled);
 	            
 				sb.append("<tr class=\"pagingFormBody\" height=\"20\"><td width=\"100\">&nbsp;</td>\n");
-				sb.append("<td class=\"capCell\" width=\"20\"><center>" + key.toString() + "</center></td>\n");
-				sb.append("<td class=\"capCell\" width=\"90\"><center>" + HtmlUtil.getTextBox("due_date_" + key, dueDate, false, "onblur=\"javascript:changeInstallment('due_date_" + key+ "', '" + key + "', 'DUEDT');\"", 10, 10) + "</center></td>\n");
+				sb.append("<td class=\"capCell\" width=\"20\"><center>" + key.toString() + "</center></td>\n");				
+				sb.append("<td class=\"capCell\" width=\"80\"><center>" + HtmlUtil.getTextBox("due_date_" + key, dueDate, isDisabledText, "onblur=\"javascript:changeInstallment('due_date_" + key+ "', '" + key + "', 'DUEDT');\"", 10, 10) + "</center></td>\n");
 				sb.append("<td class=\"capCell\"><center>" + statusCombo + "</center></td>\n");
-				sb.append("<td class=\"capCell\" width=\"80\"><center>" + cs + "&nbsp;" + HtmlUtil.getTextBox("value_" + key, valStr, false, "onblur=\"javascript:changeInstallment('value_" + key+ "', '" + key + "', 'VAL');\"",10, 6) + "</center></td>\n");
+				sb.append("<td class=\"capCell\" width=\"100\"><center>" + cs + "&nbsp;" + HtmlUtil.getTextBox("value_" + key, valStr, isDisabledText, "onblur=\"javascript:changeInstallment('value_" + key+ "', '" + key + "', 'VAL');\"",10, 10) + "</center></td>\n");
 				
 				if (frm.getUsedByExpenseForm()!=null && frm.getUsedByExpenseForm().equalsIgnoreCase("on")) {
 					sb.append("<td width=\"20\">&nbsp;</td>\n");
@@ -528,7 +556,7 @@ public class CostEditAction extends GeneralStrutsAction {
 	
 	
 	@SuppressWarnings("unchecked")
-	private void retrieveMetaFieldValue(HttpServletRequest request, ActionForm form, CostTO cto) {
+	private void retrieveMetaFieldValue(HttpServletRequest request, ActionForm form, CostTO cto) throws MetaFieldNumericTypeException {
 		Vector<MetaFieldTO> metaFieldList = (Vector<MetaFieldTO>)request.getSession().getAttribute("metaFieldCostList");
 		super.setMetaFieldValuesFromForm(metaFieldList, request, cto);	    
 		if (metaFieldList!=null) {

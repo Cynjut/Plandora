@@ -9,7 +9,7 @@ import com.pandora.helper.XmlDomParse;
 import com.pandora.integration.exception.IntegrationException;
 
 /**
- * This class contain the data responsed by PLAndora
+ * This class contain the data responded by Plandora
  * and the final status of transaction.
  */
 public class IntegrationResponse {
@@ -19,7 +19,7 @@ public class IntegrationResponse {
      * other value, the transaction failed. */
     private String status;
     
-    /** List of integration objects optionally returned by 'information supplyer' */
+    /** List of integration objects optionally returned by 'information supplier' */
     private ArrayList result;
 
     

@@ -3,10 +3,13 @@ package com.pandora;
 import java.io.ByteArrayInputStream;
 import java.sql.Date;
 import java.sql.Timestamp;
+import java.util.HashMap;
 import java.util.Locale;
+import java.util.Vector;
 
 import org.apache.struts.util.MessageResources;
 
+import com.pandora.bus.SystemSingleton;
 import com.pandora.integration.Integration;
 
 /**
@@ -42,6 +45,9 @@ public class UserTO extends TransferObject{
     
     /** The list of preferences of current user object */
     private PreferenceTO preference;
+
+    /** The current company related with user. */
+    private CompanyTO lnkCompany;
     
     /** The current department related with user. */
     private DepartmentTO lnkDepartment;
@@ -67,6 +73,12 @@ public class UserTO extends TransferObject{
     private ByteArrayInputStream binaryFile;
     
     private Timestamp finalDate;
+    
+    private Timestamp creationDate;
+    
+    private HashMap<String,ProjectTO> projectLeaderList;
+    
+    private HashMap<String,ProjectTO> projectResourceList;
     
     
     /** Return the new Struts forward name based on specific user role <br> 
@@ -279,6 +291,69 @@ public class UserTO extends TransferObject{
 	}
 
 	
+    ///////////////////////////////////////  		
+	public Timestamp getCreationDate() {
+		return this.creationDate;
+	}
+	public void setCreationDate(Timestamp newValue) {
+		this.creationDate = newValue;
+	}
+	
+	
+    ///////////////////////////////////////  	
+	public CompanyTO getCompany() {
+		return lnkCompany;
+	}
+	public void setCompany(CompanyTO newValue) {
+		this.lnkCompany = newValue;
+	}
+
+
+
+	public boolean isLeader(ProjectTO pto) {
+		boolean response = false;
+		if (this.projectLeaderList!=null) {
+			response = (this.projectLeaderList.get(pto.getId())!=null);
+		}
+		return response;
+	}
+	
+	
+	public void setProjectLeaderList(Vector<ProjectTO> projList) {
+		if (projList!=null) {
+			this.projectLeaderList = new HashMap<String,ProjectTO>();
+			for (ProjectTO pto : projList) {
+				this.projectLeaderList.put(pto.getId(), pto);	
+			}
+		}
+		
+	}
+
+	public boolean isResource(ProjectTO pto) {
+		boolean response = false;
+		if (this.projectResourceList!=null) {
+			response = (this.projectResourceList.get(pto.getId())!=null);
+		}
+		return response;
+	}
+
+	public void setProjectResourceList(Vector<ProjectTO> projList) {
+		if (projList!=null) {
+			this.projectResourceList = new HashMap<String,ProjectTO>();
+			for (ProjectTO pto : projList) {
+				this.projectResourceList.put(pto.getId(), pto);	
+			}
+		}
+	}
+	
+	public String getNameWithCompany() {
+		String content = this.name;
+		if (this.lnkCompany!=null && this.lnkCompany.getName()!=null) {
+			content = content + " (" + this.lnkCompany.getName() + ")";
+		}
+		return content;
+	}
+	
 	
 	/**
 	 * This method return OK only if the user has a customer role. 
@@ -290,5 +365,44 @@ public class UserTO extends TransferObject{
 		}
 		return response;
 	}
-	   
+	
+	
+	public String getEncoding() {
+    	String response = SystemSingleton.getInstance().getDefaultEncoding();
+		if (bundle!=null) {
+			String enc = bundle.getMessage(this.getLocale(), "encoding");
+			if (enc!=null && !enc.equals("")) {
+				response = enc;
+			}
+		}
+		return response;
+	}
+
+	
+	public String getCalendarI18nJScript() {
+		StringBuffer sb = new StringBuffer();
+		String response = "var ARR_MONTHS = [\"January\", \"February\", \"March\", \"April\", \"May\", \"June\", \"July\", \"August\", \"September\", \"October\", \"November\", \"December\"]; var ARR_WEEKDAYS = [\"S\", \"M\", \"T\", \"W\", \"T\", \"F\", \"S\"];";		
+		if (bundle!=null) {
+			sb.append("var ARR_MONTHS = [");
+			for (int i=1; i<=12; i++) {
+				if (i>1) {
+					sb.append(", ");	
+				}
+				String month = bundle.getMessage(this.getLocale(), "calendar.month." + i);
+				sb.append("\"" + month + "\""); 	
+			}
+			sb.append("]; var ARR_WEEKDAYS = [");
+			for (int i=1; i<=7; i++) {
+				if (i>1) {
+					sb.append(", ");	
+				}
+				String week = bundle.getMessage(this.getLocale(), "calendar.week." + i);
+				sb.append("\"" + week + "\""); 	
+			}
+			sb.append("];");
+			response = sb.toString();
+		}
+		return response;
+	}
+	
 }

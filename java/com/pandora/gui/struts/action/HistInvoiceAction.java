@@ -28,7 +28,7 @@ public class HistInvoiceAction extends GeneralStrutsAction {
 
 			//get all Information about request history 
 			InvoiceDelegate del = new InvoiceDelegate();
-			Vector histList = del.getHistory(frm.getInvId());
+			Vector<InvoiceHistoryTO> histList = del.getHistory(frm.getInvId());
 			request.getSession().setAttribute("invHistoryList", histList);
 
 		} catch(Exception e){
@@ -44,7 +44,8 @@ public class HistInvoiceAction extends GeneralStrutsAction {
         try {		
 	    	HistInvoiceForm frm = (HistInvoiceForm) form;
 	    	
-	    	Vector invList = (Vector)request.getSession().getAttribute("invHistoryList");
+	    	@SuppressWarnings("rawtypes")
+			Vector invList = (Vector)request.getSession().getAttribute("invHistoryList");
 			String selectedItem = frm.getSelectedIndex();
 			if (selectedItem!=null) {
 			    int index = Integer.parseInt(selectedItem);

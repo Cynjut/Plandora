@@ -11,10 +11,8 @@ import com.pandora.AttachmentTO;
 import com.pandora.TransferObject;
 import com.pandora.UserTO;
 import com.pandora.exception.DataAccessException;
-import com.pandora.helper.LogUtil;
 
-/**
- */
+
 public class AttachmentHistoryDAO extends DataAccess {
     
     public void insert(TransferObject to, Connection c) throws DataAccessException {
@@ -27,24 +25,20 @@ public class AttachmentHistoryDAO extends DataAccess {
 			pstmt.setString(1, hto.getAttachment().getId());
 			pstmt.setString(2, hto.getStatus());
 			pstmt.setTimestamp(3, hto.getCreationDate());
-			pstmt.setString(4, hto.getUser().getId());
+			pstmt.setString(4, hto.getUser().getId());	
 			pstmt.setString(5, hto.getHistory());
 			pstmt.executeUpdate();
 												
 		} catch (SQLException e) {
 			throw new DataAccessException(e);
 		}finally{
-			try {
-				if(pstmt != null) pstmt.close();
-			} catch (SQLException ec) {
-			    LogUtil.log(this, LogUtil.LOG_ERROR, "DB Closing statement error", ec);
-			} 		
+			super.closeStatement(null, pstmt);
 		}       
     }
 
 
-    public Vector getListByAttachment(String attachmentId) throws DataAccessException{
-        Vector response = null;
+    public Vector<AttachmentHistoryTO> getListByAttachment(String attachmentId) throws DataAccessException{
+        Vector<AttachmentHistoryTO> response = null;
         Connection c = null;
 		try {
 			c = getConnection();
@@ -58,8 +52,8 @@ public class AttachmentHistoryDAO extends DataAccess {
     }    
     
     
-    private Vector getListByAttachment(String attachmentId, Connection c) throws DataAccessException{
-        Vector response= new Vector();
+    private Vector<AttachmentHistoryTO> getListByAttachment(String attachmentId, Connection c) throws DataAccessException{
+        Vector<AttachmentHistoryTO> response= new Vector<AttachmentHistoryTO>();
 		ResultSet rs = null;
 		PreparedStatement pstmt = null;
 
@@ -79,12 +73,7 @@ public class AttachmentHistoryDAO extends DataAccess {
 		} catch (SQLException e) {
 			throw new DataAccessException(e);
 		}finally{
-			try {
-				if(rs != null) rs.close();
-				if(pstmt != null) pstmt.close();
-			} catch (SQLException ec) {
-			    LogUtil.log(this, LogUtil.LOG_ERROR, "DB Closing statement error", ec);
-			} 		
+			super.closeStatement(rs, pstmt);
 		}	 
 		return response;
     }

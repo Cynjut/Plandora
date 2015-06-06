@@ -11,24 +11,40 @@ import com.pandora.NotificationFieldTO;
 import com.pandora.NotificationTO;
 import com.pandora.TransferObject;
 import com.pandora.exception.DataAccessException;
-import com.pandora.helper.LogUtil;
 
-/**
- */
 public class NotificationDAO extends DataAccess {
-
    
+    public Vector<NotificationTO> getList(boolean hideClosed) throws DataAccessException {
+        Vector<NotificationTO> response = new Vector<NotificationTO>();
+        Connection c = null;
+    	try {
+    		c = getConnection();
+    		response = this.getList(hideClosed, c);
+    	} catch(Exception e){
+    		throw new DataAccessException(e);
+    	} finally{
+    		this.closeConnection(c);
+    	}
+        return response;        
+    }
+
     
-    public Vector getList(Connection c) throws DataAccessException {
-		Vector response = new Vector();
+    private Vector<NotificationTO> getList(boolean hideClosed, Connection c) throws DataAccessException {
+		Vector<NotificationTO> response = new Vector<NotificationTO>();
 		ResultSet rs = null;
 		PreparedStatement pstmt = null; 
 		try {
+			
+			String whereHide = "";
+			if (hideClosed) {
+				whereHide = "where final_date is null ";
+			}
 		    
 			pstmt = c.prepareStatement("select id, name, description, notification_class, " +
 					"sql_text, retry_number, next_notification, final_date, " +
 					"last_check, period_minute, period_hour, periodicity " +
-					"from notification");
+					"from notification " + whereHide +
+					"order by next_notification");
 			rs = pstmt.executeQuery();
 			while (rs.next()){
 			    NotificationTO nto = this.populateBeanByResultSet(rs);
@@ -40,12 +56,7 @@ public class NotificationDAO extends DataAccess {
 		    throw new DataAccessException(e);
 
 		}finally{
-			try {
-				if(rs != null) rs.close();
-				if(pstmt != null) pstmt.close();
-			} catch (SQLException ec) {
-			    LogUtil.log(this, LogUtil.LOG_ERROR, "DB Closing statement error", ec);
-			} 		
+			super.closeStatement(rs, pstmt);
 		}	 
 		return response;
     }
@@ -102,11 +113,7 @@ public class NotificationDAO extends DataAccess {
 		} catch (SQLException e) {
 			throw new DataAccessException(e);
 		}finally{
-			try {
-				if(pstmt != null) pstmt.close();
-			} catch (SQLException ec) {
-			    LogUtil.log(this, LogUtil.LOG_ERROR, "DB Closing statement error", ec);
-			} 		
+			super.closeStatement(null, pstmt);
 		}        
     }
     
@@ -159,11 +166,7 @@ public class NotificationDAO extends DataAccess {
 		} catch (SQLException e) {
 			throw new DataAccessException(e);
 		}finally{
-			try {
-				if(pstmt != null) pstmt.close();
-			} catch (SQLException ec) {
-			    LogUtil.log(this, LogUtil.LOG_ERROR, "DB Closing statement error", ec);
-			} 		
+			super.closeStatement(null, pstmt);
 		}               
     }
     
@@ -191,19 +194,14 @@ public class NotificationDAO extends DataAccess {
 		} catch (SQLException e) {
 			throw new DataAccessException(e);
 		}finally{
-			try {
-				if(rs != null) rs.close();
-				if(pstmt != null) pstmt.close();
-			} catch (SQLException ec) {
-			    LogUtil.log(this, LogUtil.LOG_ERROR, "DB Closing statement error", ec);
-			} 		
+			super.closeStatement(rs, pstmt);
 		}	 
 		return response;
     }
     
     
-    private Vector getFieldList(NotificationTO nto, Connection c) throws DataAccessException {
-		Vector response = new Vector();
+    private Vector<NotificationFieldTO> getFieldList(NotificationTO nto, Connection c) throws DataAccessException {
+		Vector<NotificationFieldTO> response = new Vector<NotificationFieldTO>();
 		ResultSet rs = null;
 		PreparedStatement pstmt = null; 
 		try {
@@ -222,12 +220,7 @@ public class NotificationDAO extends DataAccess {
 		    throw new DataAccessException(e);
 
 		}finally{
-			try {
-				if(rs != null) rs.close();
-				if(pstmt != null) pstmt.close();
-			} catch (SQLException ec) {
-			    LogUtil.log(this, LogUtil.LOG_ERROR, "DB Closing statement error", ec);
-			} 		
+			super.closeStatement(rs, pstmt);
 		}	 
 		return response;
     }   
@@ -236,13 +229,13 @@ public class NotificationDAO extends DataAccess {
     private void updateFieldList(NotificationTO nto, Connection c) throws DataAccessException {
 		PreparedStatement pstmt = null;
 		try {
-		    Vector fields = nto.getFields();
+		    Vector<NotificationFieldTO> fields = nto.getFields();
 		    if (fields!=null && !fields.isEmpty()) {		    
 		        
 		        //remove all fields related to the notification
 		        this.removeFieldList(nto, c);
 
-		        Iterator i = fields.iterator();
+		        Iterator<NotificationFieldTO> i = fields.iterator();
 		        while(i.hasNext()) {
 		            NotificationFieldTO nfto = (NotificationFieldTO)i.next();
 				    pstmt = c.prepareStatement("insert into notification_field (notification_id, name, value) values (?,?,?)");
@@ -257,11 +250,7 @@ public class NotificationDAO extends DataAccess {
 		    throw new DataAccessException(e);
 
 		}finally{
-			try {
-				if(pstmt != null) pstmt.close();
-			} catch (SQLException ec) {
-			    LogUtil.log(this, LogUtil.LOG_ERROR, "DB Closing statement error", ec);
-			} 		
+			super.closeStatement(null, pstmt);
 		}	 
     }
     
@@ -282,11 +271,7 @@ public class NotificationDAO extends DataAccess {
 		} catch (SQLException e) {
 			throw new DataAccessException(e);
 		}finally{
-			try {
-				if(pstmt != null) pstmt.close();
-			} catch (SQLException ec) {
-			    LogUtil.log(this, LogUtil.LOG_ERROR, "DB Closing statement error", ec);
-			} 		
+			super.closeStatement(null, pstmt);
 		}        
     }
         
@@ -302,11 +287,7 @@ public class NotificationDAO extends DataAccess {
 		    throw new DataAccessException(e);
 
 		}finally{
-			try {
-				if(pstmt != null) pstmt.close();
-			} catch (SQLException ec) {
-			    LogUtil.log(this, LogUtil.LOG_ERROR, "DB Closing statement error", ec);
-			} 		
+			super.closeStatement(null, pstmt);
 		}	 
     }
     

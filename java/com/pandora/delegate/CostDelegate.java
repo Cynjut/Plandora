@@ -4,6 +4,7 @@ import java.sql.Timestamp;
 import java.util.Vector;
 
 import com.pandora.CategoryTO;
+import com.pandora.CostInstallmentTO;
 import com.pandora.CostTO;
 import com.pandora.ProjectTO;
 import com.pandora.ResourceCapacityTO;
@@ -37,8 +38,13 @@ public class CostDelegate extends GeneralDelegate {
 	}
 
 	
-	public Vector<CostTO> getListByCategory(CategoryTO catTO, Timestamp iniDate, Timestamp finalDate) throws BusinessException {
-		return bus.getListByCategory(catTO, iniDate, finalDate);
+	public Vector<CostTO> getListByCategory(CategoryTO catTO, ProjectTO pto, Timestamp iniDate, Timestamp finalDate) throws BusinessException {
+		return bus.getListByCategory(catTO, pto, iniDate, finalDate);
+	}
+
+	
+	public Vector<CostTO> getListByMetaFieldValue(String metaFieldId, String metaFieldValue, Timestamp iniRange, Timestamp finalRange) throws BusinessException {
+		return bus.getListByMetaFieldValue(metaFieldId, metaFieldValue, iniRange, finalRange);
 	}
 
 	
@@ -50,6 +56,14 @@ public class CostDelegate extends GeneralDelegate {
 		bus.updateCost(cto);
 	}
 
+	public void liteUpdateCost(CostTO cto) throws BusinessException  {
+		bus.liteUpdateCost(cto);		
+	}
+
+	public void liteUpdateInstallment(CostInstallmentTO cito, UserTO handler) throws BusinessException  {
+		bus.liteUpdateInstallment(cito, handler);		
+	}
+	
 	public void removeCost(CostTO cto) throws BusinessException {
 		bus.removeCost(cto);
 	}
@@ -70,5 +84,10 @@ public class CostDelegate extends GeneralDelegate {
 
 	public Integer getCost(Vector<ResourceCapacityTO> rescapList, Timestamp bucketRef, ProjectTO pto, ResourceTO rto){
 		return bus.getCost(rescapList, bucketRef, pto, rto);
+	}
+
+	
+	public void insertCostHistory(CostTO cto, CostInstallmentTO cito) throws BusinessException {
+		bus.insertCostHistory(cto, cito);
 	}
 }

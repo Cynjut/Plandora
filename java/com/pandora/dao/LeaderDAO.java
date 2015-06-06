@@ -7,7 +7,6 @@ import java.sql.SQLException;
 import java.util.Vector;
 
 import com.pandora.LeaderTO;
-import com.pandora.ProjectTO;
 import com.pandora.ResourceTO;
 import com.pandora.RootTO;
 import com.pandora.TransferObject;
@@ -67,7 +66,8 @@ public class LeaderDAO extends ResourceDAO {
 		try {
 		    LeaderTO filter = (LeaderTO)to;
 			pstmt = c.prepareStatement("select e.id, e.project_id, u.username, u.color, u.email, u.name, " +
-					 				   "u.phone, u.password, u.department_id, u.area_id, u.function_id, u.country, u.language, u.birth, u.auth_mode, u.permission, u.pic_file, u.final_date, " +
+					 				   "u.phone, u.password, u.department_id, u.area_id, u.function_id, u.country, u.language, " +
+					 				   "u.birth, u.company_id, u.auth_mode, u.permission, u.pic_file, u.final_date, u.creation_date, " +
 										   "c.pre_approve_req, r.can_see_customer, r.can_self_alloc, r.can_see_repository, r.can_see_invoice, " +
 										   "c.is_disable, c.is_req_acceptable, c.can_see_tech_comment, " +
 										   "c.can_see_discussion, c.can_see_other_reqs, c.can_open_otherowner_reqs " +
@@ -118,7 +118,8 @@ public class LeaderDAO extends ResourceDAO {
 		PreparedStatement pstmt = null; 
 		try {
 			pstmt = c.prepareStatement("select e.id, e.project_id, u.username, u.color, u.email, u.name, " +
-			        				   "u.phone, u.password, u.department_id, u.area_id, u.function_id, u.country, u.language, u.birth, u.auth_mode, u.permission, u.pic_file, u.final_date, " +
+			        				   "u.phone, u.password, u.department_id, u.area_id, u.function_id, u.country, u.language, u.birth, u.company_id, " +
+			        				   "u.auth_mode, u.permission, u.pic_file, u.final_date, u.creation_date, " +
 									   "c.pre_approve_req, r.can_see_customer, r.can_self_alloc, r.can_see_repository, r.can_see_invoice, " +
 									   "c.is_disable, c.is_req_acceptable, c.can_see_tech_comment, " +
 									   "c.can_see_discussion, c.can_see_other_reqs, c.can_open_otherowner_reqs " +
@@ -144,12 +145,12 @@ public class LeaderDAO extends ResourceDAO {
     /**
      * Get a list of leader objects based on project id.
      */
-    public Vector getLeaderListByProjectId(ProjectTO filter) throws DataAccessException{
-        Vector response = null;
+    public Vector<LeaderTO> getLeaderListByProjectId(String projectIdList) throws DataAccessException{
+        Vector<LeaderTO> response = null;
         Connection c = null;
 		try {
 			c = getConnection();
-			response = this.getLeaderListByProjectId(filter, c);
+			response = this.getLeaderListByProjectId(projectIdList, c);
 		} catch(Exception e){
 			throw new DataAccessException(e);
 		} finally{
@@ -162,21 +163,21 @@ public class LeaderDAO extends ResourceDAO {
     /**
      * Get a list of leader objects based on project id.
      */
-    private Vector getLeaderListByProjectId(ProjectTO filter, Connection c) throws DataAccessException{
-        Vector response= new Vector();
+    private Vector<LeaderTO> getLeaderListByProjectId(String projectIdList, Connection c) throws DataAccessException{
+        Vector<LeaderTO> response= new Vector<LeaderTO>();
 		ResultSet rs = null;
 		PreparedStatement pstmt = null; 
 		try {
-			pstmt = c.prepareStatement("select e.id, e.project_id, u.username, u.color, u.email, u.name, " +
-			        				   "u.phone, u.password, u.department_id, u.area_id, u.function_id, u.country, u.language, u.birth, u.auth_mode, u.permission, u.pic_file, u.final_date, " +
+			pstmt = c.prepareStatement("select distinct e.id, e.project_id, u.username, u.color, u.email, u.name, " +
+			        				   "u.phone, u.password, u.department_id, u.area_id, u.function_id, u.country, u.language, " +
+			        				   "u.birth, u.company_id, u.auth_mode, u.permission, u.pic_file, u.final_date, u.creation_date, " +
 									   "c.pre_approve_req, r.can_see_customer, r.can_self_alloc, r.can_see_repository, r.can_see_invoice, " +
 									   "c.is_disable, c.is_req_acceptable, c.can_see_tech_comment, " +
 									   "c.can_see_discussion, c.can_see_other_reqs, c.can_open_otherowner_reqs  " +
 									   "from leader e, tool_user u, resource r, customer c " +
 									   "where e.id = u.id and r.id = u.id and c.id = u.id and u.username <> '" + RootTO.ROOT_USER + "' " + 
 									   	 "and e.project_id = r.project_id and r.project_id = c.project_id " +									     
-										 "and e.project_id = ?");			
-			pstmt.setString(1, filter.getId());
+										 "and e.project_id in (" + projectIdList + ")");			
 			rs = pstmt.executeQuery();						
 			while (rs.next()){
 				response.addElement(this.populateLeaderByResultSet(rs, c));

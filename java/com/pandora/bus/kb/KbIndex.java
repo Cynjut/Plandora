@@ -61,7 +61,7 @@ public class KbIndex extends GenericPlugin {
     
     /** Should be implemented by each sub class with 
      * Knowledge Base Index business rule */    
-    public Vector call(long initialCursor, long finalCursor) throws Exception {
+    public Vector<?> call(long initialCursor, long finalCursor) throws Exception {
         return null;
     }
 
@@ -82,7 +82,8 @@ public class KbIndex extends GenericPlugin {
     
     /** Should be implemented by each sub class with 
      * Knowledge Base Index business rule */    
-    public Class getBusinessClass() throws Exception {
+    @SuppressWarnings("rawtypes")
+	public Class getBusinessClass() throws Exception {
         return null;
     }
     
@@ -94,14 +95,14 @@ public class KbIndex extends GenericPlugin {
     }
     
     
-    protected long add(File index, Vector objectList, long defaultCursor) throws Exception{
+    protected long add(File index, Vector<?> objectList, long defaultCursor) throws Exception{
         long response = -1;
 
         if (objectList!=null && !objectList.isEmpty()) {
             
-            Iterator i = objectList.iterator();
+            Iterator<?> i = objectList.iterator();
             while(i.hasNext()) {
-                Object to = i.next();
+            	Object to = i.next();
                 Document doc = getObjectToIndex(to);
                 if (doc!=null) {
                     doc = this.additionalFields(this.getDefaultLocale(), to, doc);
@@ -179,8 +180,8 @@ public class KbIndex extends GenericPlugin {
     }
 
     
-    private long checkMaxId(Vector objectList){
-        Iterator i = objectList.iterator();
+    private long checkMaxId(Vector<?> objectList){
+        Iterator<?> i = objectList.iterator();
         long buff = -1;
         while(i.hasNext()) {
             Object obj = i.next();

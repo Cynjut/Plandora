@@ -884,46 +884,18 @@
 							m.removeAll();
 							
 							if (el.nodeName == 'A' && !ed.dom.getAttrib(el, 'name')) {
-								m.add({title : 'advanced.link_desc', icon : 'link', cmd : ed.plugins.advlink ? 'mceAdvLink' : 'mceLink', ui : true});
+								//m.add({title : 'advanced.link_desc', icon : 'link', cmd : ed.plugins.advlink ? 'mceAdvLink' : 'mceLink', ui : true});
 								m.add({title : 'advanced.unlink_desc', icon : 'unlink', cmd : 'UnLink'});
 								m.addSeparator();
 							}
 
-							if (el.nodeName == 'IMG' && el.className.indexOf('mceItem') == -1) {
-								m.add({title : 'advanced.image_desc', icon : 'image', cmd : ed.plugins.advimage ? 'mceAdvImage' : 'mceImage', ui : true});
-								m.addSeparator();
-							}
+							//if (el.nodeName == 'IMG' && el.className.indexOf('mceItem') == -1) {
+							//	m.add({title : 'advanced.image_desc', icon : 'image', cmd : ed.plugins.advimage ? 'mceAdvImage' : 'mceImage', ui : true});
+							//	m.addSeparator();
+							//}
 
-							m.add({title : 'table.desc', icon : 'table', cmd : 'mceInsertTable', value : {action : 'insert'}});
-							m.add({title : 'table.props_desc', icon : 'table_props', cmd : 'mceInsertTable'});
-							m.add({title : 'table.del', icon : 'delete_table', cmd : 'mceTableDelete'});
-							m.addSeparator();
-
-							// Cell menu
-							sm = m.addMenu({title : 'table.cell'});
-							sm.add({title : 'table.cell_desc', icon : 'cell_props', cmd : 'mceTableCellProps'});
-							//sm.add({title : 'table.split_cells_desc', icon : 'split_cells', cmd : 'mceTableSplitCells'});
-							//sm.add({title : 'table.merge_cells_desc', icon : 'merge_cells', cmd : 'mceTableMergeCells'});
-
-							// Row menu
-							sm = m.addMenu({title : 'table.row'});
-							sm.add({title : 'table.row_desc', icon : 'row_props', cmd : 'mceTableRowProps'});
-							sm.add({title : 'table.row_before_desc', icon : 'row_before', cmd : 'mceTableInsertRowBefore'});
-							sm.add({title : 'table.row_after_desc', icon : 'row_after', cmd : 'mceTableInsertRowAfter'});
-							sm.add({title : 'table.delete_row_desc', icon : 'delete_row', cmd : 'mceTableDeleteRow'});
-							sm.addSeparator();
-							sm.add({title : 'table.cut_row_desc', icon : 'cut', cmd : 'mceTableCutRow'});
-							sm.add({title : 'table.copy_row_desc', icon : 'copy', cmd : 'mceTableCopyRow'});
-							sm.add({title : 'table.paste_row_before_desc', icon : 'paste', cmd : 'mceTablePasteRowBefore'}).setDisabled(!clipboardRows);
-							sm.add({title : 'table.paste_row_after_desc', icon : 'paste', cmd : 'mceTablePasteRowAfter'}).setDisabled(!clipboardRows);
-
-							// Column menu
-							sm = m.addMenu({title : 'table.col'});
-							sm.add({title : 'table.col_before_desc', icon : 'col_before', cmd : 'mceTableInsertColBefore'});
-							sm.add({title : 'table.col_after_desc', icon : 'col_after', cmd : 'mceTableInsertColAfter'});
-							sm.add({title : 'table.delete_col_desc', icon : 'delete_col', cmd : 'mceTableDeleteCol'});
-						} else
-							m.add({title : 'table.desc', icon : 'table', cmd : 'mceInsertTable'});
+							//m.add({title : 'table.props_desc', icon : 'table_props', cmd : 'mceInsertTable'});
+						}						
 					});
 				}
 
@@ -1074,6 +1046,10 @@
 			// Register dialog commands
 			each({
 				mceInsertTable : function(val) {
+				
+					alert(ed.dom.getParent(ed.selection.getNode(), 'table').width);
+					//TODO chamar popup de edicao de tabela
+					
 					winMan.open({
 						url : url + '/table.htm',
 						width : 400 + parseInt(ed.getLang('table.table_delta_width', 0)),
@@ -1083,29 +1059,8 @@
 						plugin_url : url,
 						action : val ? val.action : 0
 					});
-				},
-
-				mceTableRowProps : function() {
-					winMan.open({
-						url : url + '/row.htm',
-						width : 400 + parseInt(ed.getLang('table.rowprops_delta_width', 0)),
-						height : 295 + parseInt(ed.getLang('table.rowprops_delta_height', 0)),
-						inline : 1
-					}, {
-						plugin_url : url
-					});
-				},
-
-				mceTableCellProps : function() {
-					winMan.open({
-						url : url + '/cell.htm',
-						width : 400 + parseInt(ed.getLang('table.cellprops_delta_width', 0)),
-						height : 295 + parseInt(ed.getLang('table.cellprops_delta_height', 0)),
-						inline : 1
-					}, {
-						plugin_url : url
-					});
 				}
+
 			}, function(func, name) {
 				ed.addCommand(name, function(ui, val) {
 					func(val);

@@ -1,11 +1,15 @@
 package com.pandora.delegate;
 
 import java.sql.Timestamp;
+import java.util.HashMap;
 import java.util.Vector;
 
+import com.pandora.AdditionalFieldTO;
 import com.pandora.ProjectTO;
 import com.pandora.ResourceTO;
+import com.pandora.ResourceTaskAllocTO;
 import com.pandora.ResourceTaskTO;
+import com.pandora.TaskHistoryTO;
 import com.pandora.TaskTO;
 import com.pandora.UserTO;
 import com.pandora.bus.ResourceTaskBUS;
@@ -23,7 +27,7 @@ public class ResourceTaskDelegate extends GeneralDelegate {
     /* (non-Javadoc)
      * @see com.pandora.bus.ResourceTaskBUS.getListByTask(com.pandora.TaskTO)
      */
-    public Vector getListByTask(TaskTO tto) throws BusinessException {
+    public Vector<ResourceTaskTO> getListByTask(TaskTO tto) throws BusinessException {
         return bus.getListByTask(tto);
     }
 
@@ -37,10 +41,10 @@ public class ResourceTaskDelegate extends GeneralDelegate {
     
     
     /* (non-Javadoc)
-     * @see com.pandora.bus.ResourceTaskBUS.getListByProject(com.pandora.ProjectTO, java.lang.String, java.lang.String, boolean)
+     * @see com.pandora.bus.ResourceTaskBUS.getListByProject(com.pandora.ProjectTO, java.lang.String, java.lang.String, java.lang.String, boolean)
      */
-    public Vector<ResourceTaskTO> getListByProject(ProjectTO pto, String statusSel, String resourceSel, boolean isProjectHierarchy) throws BusinessException {
-        return bus.getListByProject(pto, statusSel, resourceSel, isProjectHierarchy);
+    public Vector<ResourceTaskTO> getListByProject(ProjectTO pto, String statusSel, String resourceSel, String dateRangeSel, boolean isProjectHierarchy) throws BusinessException {
+        return bus.getListByProject(pto, statusSel, resourceSel, dateRangeSel, isProjectHierarchy);
     }
 
     
@@ -48,7 +52,7 @@ public class ResourceTaskDelegate extends GeneralDelegate {
      * @see com.pandora.bus.ResourceTaskBUS.changeTaskStatus(com.pandora.ResourceTaskTO, java.lang.Integer, java.lang.String, java.util.Vector, boolean)
      */
     public void changeTaskStatus(ResourceTaskTO rtto, Integer newState, String comment, 
-    		Vector additionalFields, boolean isMTClosingAllowed) throws BusinessException{
+    		Vector<AdditionalFieldTO> additionalFields, boolean isMTClosingAllowed) throws BusinessException{
         bus.changeTaskStatus(rtto, newState, comment, additionalFields, isMTClosingAllowed);
     }
 
@@ -88,7 +92,7 @@ public class ResourceTaskDelegate extends GeneralDelegate {
     /* (non-Javadoc)
      * @see com.pandora.bus.ResourceTaskBUS.getDateFromResTaskList(java.util.Vector, boolean)
      */
-    public Timestamp getDateFromResTaskList(Vector resTaskList, boolean isInitial){
+    public Timestamp getDateFromResTaskList(Vector<ResourceTaskTO> resTaskList, boolean isInitial){
         return bus.getDateFromResTaskList(resTaskList, isInitial);
     }
 
@@ -104,7 +108,7 @@ public class ResourceTaskDelegate extends GeneralDelegate {
     /* (non-Javadoc)
      * @see com.pandora.bus.ResourceTaskBUS.getHistory(java.lang.String, java.lang.String)
      */
-    public Vector getHistory(String taskId, String resourceId) throws BusinessException {
+    public Vector<TaskHistoryTO> getHistory(String taskId, String resourceId) throws BusinessException {
         return bus.getHistory(taskId, resourceId);
     }
 
@@ -113,12 +117,12 @@ public class ResourceTaskDelegate extends GeneralDelegate {
 		bus.changeAssignment(rtto, uto, comment);
 	}
 
-	public Vector getTasksWithoutReq(String projectId, String iteration, boolean hideOldIterations) throws BusinessException {
+	public Vector<ResourceTaskTO> getTasksWithoutReq(String projectId, String iteration, boolean hideOldIterations) throws BusinessException {
 		return bus.getTasksWithoutReq(projectId, iteration, hideOldIterations);
 	}
 
 
-	public Vector getNotClosedTasksUnderMacroTask(TaskTO task) throws BusinessException {
+	public Vector<TaskTO> getNotClosedTasksUnderMacroTask(TaskTO task) throws BusinessException {
 		return bus.getNotClosedTasksUnderMacroTask(task);
 	}
 
@@ -126,5 +130,24 @@ public class ResourceTaskDelegate extends GeneralDelegate {
     public void updateByResource(ResourceTaskTO rtto) throws BusinessException {
     	bus.updateByResource(rtto);
     }
+
+    
+    public void updateResourceTask(ResourceTaskTO rtto) throws BusinessException {
+    	bus.updateResourceTask(rtto);
+    }
+
+    
+    public ResourceTaskTO changeProject(String projectId, ResourceTaskTO rtto) throws BusinessException{
+    	return bus.changeProject(projectId, rtto);
+    }
+
+
+	public HashMap<String, ResourceTaskAllocTO> getHashAlloc(
+			String projectFilter, String resourceFilter, Timestamp iniDate,
+			Timestamp finalDate) throws BusinessException{
+		return bus.getHashAlloc(projectFilter, resourceFilter, iniDate, finalDate);
+	}
+
+    
     
 }

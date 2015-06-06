@@ -18,7 +18,7 @@ public class GridAttachmentDetailDecorator extends ColumnDecorator {
 		LeaderTO leader = null;
 		try {
 		    //TODO aqui tem que ser o lider do projeto nao o lider de qualquer projeto!!
-		    leader = (LeaderTO)this.getPageContext().getSession().getAttribute(UserDelegate.CURRENT_USER_SESSION);    
+		    leader = (LeaderTO)this.getSession().getAttribute(UserDelegate.CURRENT_USER_SESSION);    
 		} catch(Exception e){
 		    leader = null;
 		}

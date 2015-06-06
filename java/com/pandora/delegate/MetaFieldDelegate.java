@@ -3,6 +3,7 @@ package com.pandora.delegate;
 import java.util.Vector;
 
 import com.pandora.MetaFieldTO;
+import com.pandora.TransferObject;
 import com.pandora.bus.MetaFieldBUS;
 import com.pandora.exception.BusinessException;
 
@@ -68,5 +69,9 @@ public class MetaFieldDelegate extends GeneralDelegate {
     public Vector<MetaFieldTO> getFieldByMetaForm(String metaFormId) throws BusinessException {
         return bus.getFieldByMetaForm(metaFormId);
     }    
+    
+    public void updateAdditionalField(TransferObject to) throws BusinessException {
+        bus.updateAdditionalField(to);
+    } 
     
 }

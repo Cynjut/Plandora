@@ -3,8 +3,8 @@ package com.pandora;
 import java.sql.Timestamp;
 import java.util.Locale;
 
-import com.pandora.helper.StringUtil;
 import com.pandora.helper.DateUtil;
+import com.pandora.helper.StringUtil;
 
 /**
  * This object it is a bean that represents an ReportResult entity.
@@ -15,6 +15,11 @@ public class ReportResultTO extends TransferObject {
 
     /** Id of report performed */
     private String reportId;
+
+   
+    /** Id of project performed */
+    private String projectId;
+    private String projectName;
     
     /** Timestamp of last execution of report */
     private Timestamp lastExecution;
@@ -51,6 +56,7 @@ public class ReportResultTO extends TransferObject {
         this.reportId = newValue;
     }
     
+    
     ///////////////////////////////////////////    
     public String getValue() {
         return value;
@@ -58,6 +64,26 @@ public class ReportResultTO extends TransferObject {
     public void setValue(String newValue) {
         this.value = newValue;
     }
+    
+    
+    ///////////////////////////////////////////    
+	public String getProjectId() {
+		return projectId;
+	}
+	public void setProjectId(String newValue) {
+		this.projectId = newValue;
+	}    
+    
+	
+    ///////////////////////////////////////////  
+	public String getProjectName() {
+		return projectName;
+	}
+	public void setProjectName(String newValue) {
+		this.projectName = newValue;
+	}
+
+
 
     /**
      * Convert ReportResult value to html format
@@ -84,6 +110,9 @@ public class ReportResultTO extends TransferObject {
                     value = DateUtil.getDate(ts, mask, loc);
                 } else if (dataType.equals(ReportTO.CURRENCY_DATA_TYPE)){
                     value = StringUtil.getCurrencyValue(Float.parseFloat(val), currencyLoc);
+                } else if (dataType.equals(ReportTO.PERCENTUAL_DATA_TYPE)){
+                	float f = Float.parseFloat(val);
+                	value = StringUtil.getFloatToString(f, "0.00", loc) + "%";
                 } else {
                     value = val;
                 }        	
@@ -93,5 +122,7 @@ public class ReportResultTO extends TransferObject {
         }
         
         return sb.append(value);
-    }    
+    }
+
+    
 }

@@ -82,7 +82,7 @@
 			           &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
 			           &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
 			        </option>		  		
-				    <html:options collection="taskAvailable" property="id" labelProperty="name"/>
+				    <html:options collection="taskAvailable" property="id" labelProperty="name" filter="false"/>
 					</html:select>
 		   	    </td>
 	    	    <td>&nbsp;</td>
@@ -93,12 +93,12 @@
 		      <td>
 		      	<logic:equal name="agilePanelTaskForm" property="taskId" value="">		      
 			  		<html:select name="agilePanelTaskForm" property="requirementId" styleClass="textBox" disabled="true">
-						<html:options collection="requirementList" property="id" labelProperty="comboName"/>
+						<html:options collection="requirementList" property="id" labelProperty="comboName" filter="false"/>
 					</html:select>		      		      	
 		      	</logic:equal>
 		      	<logic:notEqual name="agilePanelTaskForm" property="taskId" value="">		      
 			  		<html:select name="agilePanelTaskForm" property="requirementId" styleClass="textBox">
-						<html:options collection="requirementList" property="id" labelProperty="comboName"/>
+						<html:options collection="requirementList" property="id" labelProperty="comboName" filter="false"/>
 					</html:select>		      		      	
 		      	</logic:notEqual>		      	
 		      </td>
@@ -108,7 +108,7 @@
 		      <td class="formTitle"><bean:message key="title.agilePanelForm.edit.category"/>:&nbsp;</td>
 		      <td>
 		  			<html:select name="agilePanelTaskForm" property="categoryId" styleClass="textBox">
-						<html:options collection="taskCategoryList" property="id" labelProperty="name"/>
+						<html:options collection="taskCategoryList" property="id" labelProperty="name" filter="false"/>
 					</html:select>		      	
 		      </td>
 		      <td>&nbsp;</td>
@@ -118,12 +118,12 @@
 		      <td>
 		      	<logic:equal name="agilePanelTaskForm" property="taskId" value="">
 			  		<html:select name="agilePanelTaskForm" property="resourceId" styleClass="textBox">
-						<html:options collection="projectResourceList" property="id" labelProperty="name"/>
+						<html:options collection="projectResourceList" property="id" labelProperty="name" filter="false"/>
 					</html:select>		      	
 		      	</logic:equal>
 		      	<logic:notEqual name="agilePanelTaskForm" property="taskId" value="">
 			  		<html:select name="agilePanelTaskForm" property="resourceId" styleClass="textBox" disabled="true">
-						<html:options collection="projectResourceList" property="id" labelProperty="name"/>
+						<html:options collection="projectResourceList" property="id" labelProperty="name" filter="false"/>
 					</html:select>		      	
 		      	</logic:notEqual>		      	
 		      </td>

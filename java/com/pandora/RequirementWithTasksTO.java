@@ -40,7 +40,7 @@ public class RequirementWithTasksTO extends RequirementTO {
 	public Vector<ResourceTaskTO> getResourceTaskList() {
 		return resourceTaskList;
 	}
-	public void setResourceTaskList(Vector list) {
+	public void setResourceTaskList(Vector<ResourceTaskTO> list) {
 		resourceTaskList = list;
 	}
 	

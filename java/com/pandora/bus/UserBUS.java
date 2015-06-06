@@ -33,22 +33,22 @@ import com.pandora.helper.StringUtil;
  */
 public class UserBUS extends GeneralBusiness {
 
-    /** The Data Acess Object related with current business entity */    
+    /** The Data Access Object related with current business entity */    
     UserDAO dao = new UserDAO();
 
-    /** The Data Acess Object related with current business entity */    
+    /** The Data Access Object related with current business entity */    
     CustomerDAO cdao = new CustomerDAO();    
     
-    /** The Data Acess Object related with current business entity */    
+    /** The Data Access Object related with current business entity */    
     ResourceDAO rdao = new ResourceDAO();
     
-    /** The Data Acess Object related with current business entity */    
+    /** The Data Access Object related with current business entity */    
     LeaderDAO edao = new LeaderDAO();
     
-    /** The Data Acess Object related with current business entity */    
+    /** The Data Access Object related with current business entity */    
     RootDAO rootdao = new RootDAO();
     
-    private int MAX_USER_PIC_BYTES = 50000;
+    private int MAX_USER_PIC_BYTES = 153600;
 
     
     /**
@@ -108,18 +108,21 @@ public class UserBUS extends GeneralBusiness {
      */
     public void updatePassword(UserTO uto) throws BusinessException{
         try {
-            //incrypt the password before updating process
-    		String encPass = PasswordEncrypt.getInstance().encrypt(uto.getPassword());
-    		uto.setPassword(encPass);
-    		
-            dao.updatePassword(uto);
-            
-            //log event...
-            LogUtil.log(LogUtil.SUMMARY_CHANGE_PASS, this, uto.getUsername(), 
-                    LogUtil.LOG_INFO, "[" + uto.getUsername() + "] password changed.");
+            //encrypt the password before updating process
+        	Authentication aclass = Authentication.getClass(uto.getAuthenticationMode());
+        	if (aclass==null) {
+        		throw new BusinessException("The class [" + uto.getAuthenticationMode() + "] was not found");	
+        	} else {
+            	uto.setPassword(aclass.encrypt(uto.getPassword()));
+                dao.updatePassword(uto);
+                
+                //log event...
+                LogUtil.log(LogUtil.SUMMARY_CHANGE_PASS, this, uto.getUsername(), 
+                        LogUtil.LOG_INFO, "[" + uto.getUsername() + "] password changed.");
+        	}
             
         } catch (DataAccessException e) {
-            throw new  BusinessException(e);
+            throw new BusinessException(e);
         }        
     }
     
@@ -256,7 +259,7 @@ public class UserBUS extends GeneralBusiness {
      * Search into data base a list of user objects based on a filter 
      * related with username and name fields.
      */
-    public Vector getListByKeyword(Vector kwList) throws BusinessException {
+    public Vector<UserTO> getListByKeyword(Vector<String> kwList) throws BusinessException {
         try {
             return dao.getListByKeyword(kwList);
         } catch (DataAccessException e) {
@@ -296,7 +299,7 @@ public class UserBUS extends GeneralBusiness {
      * @return
      * @throws BusinessException
      */
-    public Vector getResourceByUser(UserTO uto) throws BusinessException {
+    public Vector<ResourceTO> getResourceByUser(UserTO uto) throws BusinessException {
         try {
             return rdao.getResourceByUser(uto);
         } catch (DataAccessException e) {
@@ -311,7 +314,7 @@ public class UserBUS extends GeneralBusiness {
      * @return
      * @throws BusinessException
      */
-    public Vector getCustomerByUser(UserTO uto) throws BusinessException {
+    public Vector<CustomerTO> getCustomerByUser(UserTO uto) throws BusinessException {
         try {
             return cdao.getCustomerByUser(uto);
         } catch (DataAccessException e) {
@@ -322,49 +325,23 @@ public class UserBUS extends GeneralBusiness {
 
     /**
      * Get a list of Leader objects based on a user id.
-     * @param uto
-     * @return
-     * @throws BusinessException
      */
-    public Vector getLeaderByProject(ProjectTO pto) throws BusinessException {
+    public Vector<LeaderTO> getLeaderByProject(String projectIdList) throws BusinessException {
         try {
-            return edao.getLeaderListByProjectId(pto);
+            return edao.getLeaderListByProjectId(projectIdList);
         } catch (DataAccessException e) {
             throw new BusinessException(e);
         }        
     }    
     
     
-    public Vector getUserByLeaderInAllProjects(LeaderTO eto, int role) throws BusinessException {
+    public Vector<UserTO> getUserByLeaderInAllProjects(LeaderTO eto, int role) throws BusinessException {
         try {
             return dao.getUserByLeaderInAllProjects(eto, role);
         } catch (DataAccessException e) {
             throw new BusinessException(e);
         }            	
-    }
-    
-    
-    public boolean userIsLeader(UserTO uto, ProjectTO pto) {
-    	boolean response = false;
-    	try {
-            Vector leaderList = this.getLeaderByProject(pto);
-            if (leaderList!=null && leaderList.size()>0) {
-            	Iterator i = leaderList.iterator();
-            	while(i.hasNext()) {
-            		LeaderTO lto = (LeaderTO)i.next();
-        	    	if (lto.getId().equals(uto.getId())) {
-        	    		response = true;
-        	    		break;
-        	    	}        		
-            	}
-            }    		
-    	} catch(Exception e) {
-    		response = false;
-    		e.printStackTrace();
-    	}
-        return response;
-    }
-
+    }    
 
     
     /**
@@ -427,7 +404,7 @@ public class UserBUS extends GeneralBusiness {
                     ProjectTO childProj = i.next();
                     Vector<CustomerTO> custOfChild = this.getCustomerByProject(childProj, considerChild);
                     
-                    //check if list of customers just getted from database was loaded already
+                    //check if list of customers just get from database was loaded already
                     Vector custOfChildDistinct = StringUtil.minus(custOfChild, response);
                     response.addAll(custOfChildDistinct);
                 }
@@ -436,7 +413,6 @@ public class UserBUS extends GeneralBusiness {
                 response.addAll(StringUtil.minus(cdao.getCustomerListByProjectId(pto), response));
                 
         	} else {
-        		
         		response = cdao.getCustomerListByProjectId(pto);
         	}
         	
@@ -461,6 +437,7 @@ public class UserBUS extends GeneralBusiness {
      * @throws BusinessException
      */
     public UserTO getUserTopRole(UserTO uto) throws BusinessException {
+    	ProjectBUS pbus = new ProjectBUS();
         UserTO roleUser = null;
 
         try {
@@ -480,13 +457,29 @@ public class UserBUS extends GeneralBusiness {
             }
            
            	roleUser.setFileInBytes(uto.getFileInBytes());
+
+           	LeaderTO eto = new LeaderTO(roleUser.getId());
+           	eto.setUsername(roleUser.getUsername());
+           	roleUser.setProjectLeaderList(pbus.getProjectListForManagement(eto, false));
+
+           	ResourceTO rto = new ResourceTO(roleUser.getId());
+           	roleUser.setProjectResourceList(pbus.getProjectListForWork(rto, false, false));
            	
-        } catch (DataAccessException e) {
+        } catch (Exception e) {
             throw new BusinessException(e);
         }         
         
         return roleUser;     
     }
+    
+
+	public void updatePicture(UserTO uto) throws BusinessException {
+        try {
+            dao.updatePicture(uto);
+        } catch (DataAccessException e) {
+            throw new BusinessException(e);
+        }        
+	}
 
     
     public UserTO getRoot() throws BusinessException {
@@ -508,8 +501,5 @@ public class UserBUS extends GeneralBusiness {
 		}
 		return loc;
 	}
-
-
-
 
 }

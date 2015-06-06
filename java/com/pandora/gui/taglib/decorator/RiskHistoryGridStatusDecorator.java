@@ -35,8 +35,8 @@ public class RiskHistoryGridStatusDecorator extends ColumnDecorator {
 			} else if (tag.equals("TEND") && this.getTendency(to)!=null) {
 				response = this.getBundleMessage("label.formRisk.tendency." + this.getTendency(to));
 
-			} else if (tag.equals("TYPE") && this.getRiskType(to)!=null) {
-				response = this.getBundleMessage("label.formRisk.type." + this.getRiskType(to));
+			} else if (tag.equals("TYPE") && this.getType(to)!=null) {
+				response = this.getBundleMessage("label.formRisk.type." + this.getType(to));
 				
 			} else if (tag.equals("I_COST")) {
 				if (this.getImpact(to, tag)) {
@@ -105,9 +105,9 @@ public class RiskHistoryGridStatusDecorator extends ColumnDecorator {
     	}
     	return response;    	
     }
-
     
-    private Integer getRiskType(TransferObject to){
+
+    private Integer getType(TransferObject to){
     	Integer response = null;
     	if (to instanceof RiskHistoryTO) {
     		response = ((RiskHistoryTO)to).getRiskType();

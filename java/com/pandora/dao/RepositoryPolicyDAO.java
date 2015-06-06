@@ -18,15 +18,15 @@ public class RepositoryPolicyDAO extends DataAccess {
     public void saveByProject(ProjectTO pto, Connection c) throws DataAccessException {
 		PreparedStatement pstmt = null;
 		try {
-			HashMap hm = pto.getRepositoryPolicies();
+			HashMap<String, RepositoryPolicyTO> hm = pto.getRepositoryPolicies();
 			if (hm!=null) {
 			    pstmt = c.prepareStatement("delete from repository_policy where project_id=?");
 			    pstmt.setString(1, pto.getId());
 			    pstmt.executeUpdate();
 			    
-			    Iterator i = hm.values().iterator();
+			    Iterator<RepositoryPolicyTO> i = hm.values().iterator();
 			    while(i.hasNext()) {
-			    	RepositoryPolicyTO rpto = (RepositoryPolicyTO)i.next();
+			    	RepositoryPolicyTO rpto = i.next();
 			    	this.insert(rpto, c);
 			    }
 			}
@@ -55,8 +55,8 @@ public class RepositoryPolicyDAO extends DataAccess {
 	}
 
 
-	public HashMap getListByProject(ProjectTO project, Connection c) throws DataAccessException {
-    	HashMap response= new HashMap();
+	public HashMap<String, RepositoryPolicyTO> getListByProject(ProjectTO project, Connection c) throws DataAccessException {
+		HashMap<String, RepositoryPolicyTO> response= new HashMap<String, RepositoryPolicyTO>();
 		ResultSet rs = null;
 		PreparedStatement pstmt = null;
 		 

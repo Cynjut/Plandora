@@ -20,6 +20,7 @@ import com.pandora.RequirementTO;
 import com.pandora.RequirementWithTasksTO;
 import com.pandora.ResourceTO;
 import com.pandora.ResourceTaskTO;
+import com.pandora.RootTO;
 import com.pandora.TaskTO;
 import com.pandora.UserTO;
 import com.pandora.delegate.CategoryDelegate;
@@ -32,7 +33,6 @@ import com.pandora.exception.InvalidTaskStateTransitionException;
 import com.pandora.exception.InvalidTaskTimeException;
 import com.pandora.exception.ProjectTasksDiffRequirementException;
 import com.pandora.exception.TasksDiffRequirementException;
-import com.pandora.exception.ZeroCapacityException;
 import com.pandora.gui.struts.exception.InputGuiException;
 import com.pandora.gui.struts.form.AgilePanelTaskForm;
 import com.pandora.helper.DateUtil;
@@ -46,7 +46,7 @@ public class AgilePanelTaskAction extends GeneralStrutsAction {
 			HttpServletRequest request, HttpServletResponse response){
 		String forward = "showAgilePanelEdit";
 		
-		try {		
+		try {
 			AgilePanelTaskForm frm = (AgilePanelTaskForm)form;
 			String taskId = frm.getTaskId();
 			Locale loc = SessionUtil.getCurrentLocale(request);
@@ -103,8 +103,10 @@ public class AgilePanelTaskAction extends GeneralStrutsAction {
 				frm.setIsOpen("on");
 				
 				RequirementDelegate rdel = new RequirementDelegate();
-				rto = rdel.getRequirement(new RequirementTO(frm.getRequirementId()));			
-				taskCategList = cdel.getCategoryListByType(CategoryTO.TYPE_TASK, rto.getProject(), false);
+				rto = rdel.getRequirement(new RequirementTO(frm.getRequirementId()));
+				if (rto!=null) {
+					taskCategList = cdel.getCategoryListByType(CategoryTO.TYPE_TASK, rto.getProject(), false);	
+				}
 			}
 
 			if (rto!=null) {
@@ -115,6 +117,12 @@ public class AgilePanelTaskAction extends GeneralStrutsAction {
 			    
 				UserDelegate udel = new UserDelegate();
 				Vector<ResourceTO> resList = udel.getResourceByProject(rto.getProject().getId(), false, true);
+				for (ResourceTO res : resList) {
+					if (res.getUsername().equals(RootTO.ROOT_USER)) {
+						resList.remove(res);
+						break;
+					}
+				}
 				UserTO anyUser = udel.getRoot();
 				ResourceTO anyRes = new ResourceTO(anyUser.getId());
 				anyRes.setName(super.getBundleMessage(request, "label.manageTask.anyRes"));
@@ -222,8 +230,6 @@ public class AgilePanelTaskAction extends GeneralStrutsAction {
 			
 		} catch(InputGuiException e){
 			this.setErrorFormSession(request, "message.agilePanelForm.inputErr", e);
-		} catch(ZeroCapacityException e){
-			this.setErrorFormSession(request, "error.manageTask.zeroCapacity", e);
 		} catch(ProjectTasksDiffRequirementException e){
 		    this.setErrorFormSession(request, "error.manageTask.diffPrjReq", e);			
 		} catch(TasksDiffRequirementException e){
@@ -309,6 +315,7 @@ public class AgilePanelTaskAction extends GeneralStrutsAction {
 	}
 	
 	
+	@SuppressWarnings("unchecked")
 	private Vector<RequirementWithTasksTO> getReqList(HttpServletRequest request) {
 		Vector<RequirementWithTasksTO> newReqList = new Vector<RequirementWithTasksTO>();
 		RequirementWithTasksTO rwto = new RequirementWithTasksTO();
@@ -317,13 +324,15 @@ public class AgilePanelTaskAction extends GeneralStrutsAction {
 		newReqList.addElement(rwto);
 		
 		Vector<RequirementWithTasksTO> reqList = (Vector<RequirementWithTasksTO>)request.getSession().getAttribute("reqTaskBoardList");
-		Iterator<RequirementWithTasksTO> r = reqList.iterator();
-		while(r.hasNext()) {
-			RequirementWithTasksTO item = (RequirementWithTasksTO)r.next();
-			RequirementStatusTO rsto = item.getRequirementStatus();
-			if (!rsto.isFinished()){
-				newReqList.addElement(item);
-			}
+		if (reqList!=null) {
+			Iterator<RequirementWithTasksTO> r = reqList.iterator();
+			while(r.hasNext()) {
+				RequirementWithTasksTO item = (RequirementWithTasksTO)r.next();
+				RequirementStatusTO rsto = item.getRequirementStatus();
+				if (!rsto.isFinished()){
+					newReqList.addElement(item);
+				}
+			}			
 		}
 		return newReqList;
 	}

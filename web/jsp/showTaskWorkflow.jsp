@@ -4,7 +4,7 @@
 
 <html>
 
-    <table width="100%" border="0">
+    <table width="60%" border="0" cellspacing="1" cellpadding="1">	
 	<tr>
 		<td width="10">
 			<table width="100%" cellspacing="0" cellpadding="0"><tr><td class="legendClosed">&nbsp;</td></tr></table>
@@ -26,19 +26,52 @@
 	</table>
 
 
-	<div id="workFlowDiagramDiv" style="width:450px; height:410px; overflow: scroll;">
-		<img border="0" id="workFlowDiagramImg" src="../do/showAllTask?operation=renderImage" usemap="#workFlowDiagramMap" />
-	</div>
-	<map name="workFlowDiagramMap">
-		<bean:write name="showAllTaskForm" property="htmlMap" filter="false" />
-	<map>
+	<table border="0" width="100%" cellspacing="0" cellpadding="0">	
+	<tr>
+	<td width="360">
+	
+		<div id="workFlowDiagramDiv" style="width:360px; height:390px; overflow: scroll;">
+			<img border="0" id="workFlowDiagramImg" src="../do/showAllTask?operation=renderImage" usemap="#workFlowDiagramMap" />
+		</div>
+		<map name="workFlowDiagramMap">
+			<bean:write name="showAllTaskForm" property="htmlMap" filter="false" />
+		<map>
+	</td>
+	<td width="20">&nbsp;</td>
+	<td> 
+		
+		<table border="0" width="100%" cellspacing="0" cellpadding="0">		
+		<tr class="pagingFormBody">
+			<td class="formBody">&nbsp;<bean:message key="label.requestHistory.requirement"/></td>
+		</tr>
+		<tr>
+			<td class="formBody">
+				<html:textarea name="showAllTaskForm" property="requirementContent" styleClass="textBox" cols="75" rows="8" />
+			</td>
+		</tr>
+		
+		<tr class="gapFormBody"><td>&nbsp;</td></tr>
+		
+		<tr class="pagingFormBody">
+			<td class="formBody">&nbsp;<bean:message key="label.taskHistory.FUP"/></td>
+		</tr>
+		<tr>
+			<td class="formBody">
+				<html:textarea name="showAllTaskForm" property="followupContent" styleClass="textBox" cols="75" rows="16" />
+			</td>
+		</tr>
+		</table>
+		
+	</td>
+	</tr>
+	</table>
+
+	<table border="0" width="100%" cellspacing="0" cellpadding="0">	
+	<tr><td>
 	<center>
 		<html:button property="close" styleClass="button" onclick="closeMessage();closeFloatPanel();">
 		  <bean:message key="button.close"/>
 		</html:button>
-		<html:button property="reset" styleClass="button" onclick="centralizeDiagram();">
-		  <bean:message key="title.formApplyTaskTemplate.centralize"/>
-		</html:button>    	         
 	</center>
-
+	</td></tr></table>
 </html>

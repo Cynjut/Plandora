@@ -9,8 +9,8 @@ import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionForward;
 import org.apache.struts.action.ActionMapping;
 
-import com.pandora.TaskHistoryTO;
 import com.pandora.ResourceTO;
+import com.pandora.TaskHistoryTO;
 import com.pandora.delegate.ResourceTaskDelegate;
 import com.pandora.delegate.TaskDelegate;
 import com.pandora.exception.BusinessException;
@@ -34,7 +34,7 @@ public class HistTaskAction extends GeneralStrutsAction {
 	        this.clearMessages(request);
 
 	        //get all Information about task history 
-	        Vector taskList = null;
+	        Vector<TaskHistoryTO> taskList = null;
 	        if (frm.getTaskId()!=null && !frm.getTaskId().equals("")){
 	            if (frm.getResourceId()!=null && !frm.getResourceId().equals("")){
 	                taskList = rtdel.getHistory(frm.getTaskId(), frm.getResourceId());
@@ -62,7 +62,10 @@ public class HistTaskAction extends GeneralStrutsAction {
 	    try {		
 	        HistTaskForm frm = (HistTaskForm) form;
 	        ResourceTO rto = new ResourceTO(frm.getResourceId());
-	        Vector taskList = (Vector)request.getSession().getAttribute("taskHistoryList");
+
+	        @SuppressWarnings({ "rawtypes", "unchecked" })
+			Vector<TaskHistoryTO> taskList = (Vector)request.getSession().getAttribute("taskHistoryList");
+	        
 			rto.setBundle(SessionUtil.getCurrentUser(request).getBundle());	
 	        String comment = tdel.getTechCommentsFromTask(taskList, rto);
 	        frm.setHistoryComment(comment);
@@ -83,13 +86,14 @@ public class HistTaskAction extends GeneralStrutsAction {
 	    String forward = "showTaskComment";
         HistTaskForm frm = (HistTaskForm) form;
  	
-    	Vector taskList = (Vector)request.getSession().getAttribute("taskHistoryList");
+    	@SuppressWarnings({ "rawtypes", "unchecked" })
+		Vector<TaskHistoryTO> taskList = (Vector)request.getSession().getAttribute("taskHistoryList");
 
 		//get comments of requirement status selected
 		String selectedItem = frm.getSelectedIndex();
 		if (selectedItem!=null) {
 		    int index = Integer.parseInt(selectedItem);
-		    TaskHistoryTO thto = (TaskHistoryTO)taskList.get(index);
+		    TaskHistoryTO thto = taskList.get(index);
 		    frm.setHistoryComment(thto.getComment());
 		}
 		

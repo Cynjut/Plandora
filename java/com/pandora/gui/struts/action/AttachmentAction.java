@@ -9,19 +9,14 @@ import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionForward;
 import org.apache.struts.action.ActionMapping;
 import org.apache.struts.upload.FormFile;
-import com.pandora.delegate.UserDelegate;
 
 import com.pandora.AttachmentTO;
-import com.pandora.OccurrenceTO;
 import com.pandora.PlanningTO;
-import com.pandora.ProjectTO;
 import com.pandora.PreferenceTO;
-import com.pandora.RequirementTO;
-import com.pandora.RiskTO;
-import com.pandora.TaskTO;
 import com.pandora.TransferObject;
 import com.pandora.UserTO;
 import com.pandora.delegate.AttachmentDelegate;
+import com.pandora.delegate.UserDelegate;
 import com.pandora.exception.BusinessException;
 import com.pandora.exception.MaxSizeAttachmentException;
 import com.pandora.gui.struts.form.AttachmentForm;
@@ -42,7 +37,13 @@ public class AttachmentAction extends GeneralStrutsAction {
 			frm.setSource(request.getParameter("source"));
 			
 		    if (frm.getSource().equals("REQ")) {
-		        frm.setFwd("refreshCustAfterAttach");	        
+		        frm.setFwd("refreshCustAfterAttach");
+		    } else if (frm.getSource().equals("ART")) {
+		    	frm.setFwd("goToArtifact");
+		    } else if (frm.getSource().equals("ALL_REQ")) {
+		    	frm.setFwd("goToShowAllReq");
+		    } else if (frm.getSource().equals("TSK")) {
+		    	frm.setFwd("refreshTaskAfterAttach");
 		    } else {
 		    	frm.setFwd("showAttachment");
 		    }
@@ -75,7 +76,7 @@ public class AttachmentAction extends GeneralStrutsAction {
 		    AttachmentForm frm = (AttachmentForm)form;
 		    forward = frm.getFwd();
 		    
-		    if (frm.getId()!=null) {
+		    if (frm.getFileId()!=null) {
 		    	
 			    AttachmentDelegate del = new AttachmentDelegate();
 			    
@@ -132,8 +133,13 @@ public class AttachmentAction extends GeneralStrutsAction {
 		    AttachmentForm frm = (AttachmentForm)form;
 		    AttachmentDelegate del = new AttachmentDelegate();
 		    
-		    Vector list = del.getAttachmentByPlanning(frm.getPlanningId());
-		    request.getSession().setAttribute("attachmentList", list);
+		    Vector<AttachmentTO> list = del.getAttachmentByPlanning(frm.getPlanningId());
+		    if (list!=null) {
+		    	request.getSession().setAttribute("attachmentList", list);	
+		    } else {
+		    	request.getSession().setAttribute("attachmentList", new Vector<AttachmentTO>());
+		    }
+		    
 		    
 		} catch(BusinessException e){
 		   this.setErrorFormSession(request, "error.formAttachment.showForm", e);
@@ -150,7 +156,7 @@ public class AttachmentAction extends GeneralStrutsAction {
 		
 		try {
 		    AttachmentForm frm = (AttachmentForm)form;
-		    AttachmentTO ato = del.getAttachment(new AttachmentTO(frm.getId()));
+		    AttachmentTO ato = del.getAttachment(new AttachmentTO(frm.getFileId()));
 		    this.getActionFormFromTransferObject(ato, frm, request);
 		    frm.setUpload(false);
 		    
@@ -173,7 +179,7 @@ public class AttachmentAction extends GeneralStrutsAction {
 		    forward = frm.getFwd();
 			    
 			AttachmentTO ato = new AttachmentTO();
-			ato.setId(frm.getId());
+			ato.setId(frm.getFileId());
 			ato = del.getAttachment(ato);
 			ato.setHandler(uto);
 			
@@ -212,7 +218,7 @@ public class AttachmentAction extends GeneralStrutsAction {
 	private void getActionFormFromTransferObject(AttachmentTO to, AttachmentForm frm, HttpServletRequest request){
 	    frm.setComment(to.getComment());
 	    frm.setCreationDate(to.getCreationDate());
-	    frm.setId(to.getId());
+	    frm.setFileId(to.getId());
 	    frm.setName(to.getName());
 	    frm.setPlanningId(to.getPlanning().getId());
 	    frm.setStatus(to.getStatus());
@@ -225,24 +231,17 @@ public class AttachmentAction extends GeneralStrutsAction {
 	private AttachmentTO getTransferObjectFromActionForm(AttachmentForm frm, HttpServletRequest request){
 	    AttachmentTO ato = new AttachmentTO();
 	    
-	    ato.setId(frm.getId());
+	    ato.setId(frm.getFileId());
 	    ato.setCreationDate(frm.getCreationDate());
 	    ato.setComment(frm.getComment());
 	    ato.setName(frm.getName());
 	    
-	    PlanningTO pto = null;
-	    if (frm.getSource().equals("REQ")) {
-	        pto = new RequirementTO();	        
-	    } else if (frm.getSource().equals("TSK")) {
-	        pto = new TaskTO();
-	    } else if (frm.getSource().equals("PRJ")) {
-	        pto = new ProjectTO();
-	    } else if (frm.getSource().equals("OCU")) {
-	        pto = new OccurrenceTO();
-	    } else if (frm.getSource().equals("RSK")) {
-	        pto = new RiskTO();
+	    PlanningTO pto = PlanningTO.getEntity(frm.getSource());
+	    if (pto!=null) {
+		    pto.setId(frm.getPlanningId());
+	    } else {
+	    	pto = new PlanningTO(frm.getPlanningId());
 	    }
-	    pto.setId(frm.getPlanningId());
 	    ato.setPlanning(pto);
 	    
 	    ato.setStatus(frm.getStatus());
@@ -257,9 +256,13 @@ public class AttachmentAction extends GeneralStrutsAction {
 	}
 
 
-	public Vector getTypeCombo(HttpServletRequest request){
-	    Vector response = new Vector();
-	    for(int i=1; i<=13; i++){
+	private Vector<TransferObject> getTypeCombo(HttpServletRequest request){
+	    Vector<TransferObject> response = new Vector<TransferObject>();
+	    
+	    TransferObject empty = new TransferObject("-1", "");
+	    response.addElement(empty);
+	    
+	    for(int i=1; i<=14; i++){
 	        TransferObject to = new TransferObject();
 	        to.setId(this.getBundleMessage(request, "label.formAttachment.type.id." + i)); 
 	        to.setGenericTag(this.getBundleMessage(request, "label.formAttachment.type." + i));
@@ -269,14 +272,22 @@ public class AttachmentAction extends GeneralStrutsAction {
 	}
 
 	
-	public Vector getVisibilityCombo(HttpServletRequest request){
-	    Vector response = new Vector();
-	    for(int i=3; i>=1; i--){
-	        TransferObject to = new TransferObject();
-	        to.setId(i+""); 
-	        to.setGenericTag(this.getBundleMessage(request, "label.formAttachment.visibility." + i));
-	        response.addElement(to);
-	    }
+	private Vector<TransferObject> getVisibilityCombo(HttpServletRequest request){
+	    Vector<TransferObject> response = new Vector<TransferObject>();
+
+    	String publicLbl = super.getBundleMessage(request, "label.formAttachment.visibility." + AttachmentTO.VISIBILITY_PUBLIC);
+        TransferObject pub = new TransferObject(publicLbl, publicLbl);
+        response.addElement(pub);
+
+    	String privateLbl = super.getBundleMessage(request, "label.formAttachment.visibility." + AttachmentTO.VISIBILITY_PRIVATE);
+        TransferObject priv = new TransferObject(privateLbl, privateLbl);
+        response.addElement(priv);
+
+	    String restrictLbl = super.getBundleMessage(request, "label.formAttachment.visibility." + AttachmentTO.VISIBILITY_RESTRICT);
+        TransferObject restrict = new TransferObject(restrictLbl, restrictLbl);
+        response.addElement(restrict);
+
+	    	    
 	    return response;
 	}
 	

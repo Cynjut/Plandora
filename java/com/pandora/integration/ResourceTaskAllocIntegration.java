@@ -1,11 +1,12 @@
 package com.pandora.integration;
 
+import java.util.Locale;
+
 import org.w3c.dom.Node;
 
+import com.pandora.helper.StringUtil;
 import com.pandora.helper.XmlDomParse;
 import com.pandora.integration.exception.IntegrationException;
-import java.util.Locale;
-import com.pandora.helper.StringUtil;
 
 /**
  * This object serializes the information about 

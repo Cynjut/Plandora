@@ -19,6 +19,10 @@ public class PlanningTO extends TransferObject {
 	public static final String PLANNING_PROJECT     = "PRJ";	
 	public static final String PLANNING_OCCURENCE   = "OCC";
 	public static final String PLANNING_RISK	    = "RSK";
+	public static final String PLANNING_COST        = "CST";
+	public static final String PLANNING_EXPENSE     = "EXP";
+	public static final String PLANNING_ARTIFACT    = "ART";
+	public static final String PLANNING_INVOICE     = "INV";
 	
 	
     /** Description of Requirement */
@@ -34,10 +38,10 @@ public class PlanningTO extends TransferObject {
     private Vector<AdditionalFieldTO> additionalFields;
 
     /** List of attachments of current Planning object. */
-    private Vector attachments;
+    private Vector<AttachmentTO> attachments;
 
     /** List of Discussion Topics of current Planning object. */
-    private Vector discussionTopics;
+    private Vector<DiscussionTopicTO> discussionTopics;
 
     /** Iteration ID */
     private String iteration;
@@ -48,6 +52,8 @@ public class PlanningTO extends TransferObject {
     /** Define if the current planning object is a task, requirement, project, etc */
     private String type;
     
+    /**Define if the current planning object is visible */
+    private boolean visible = true;
     
     /**
      * Constructor 
@@ -79,16 +85,20 @@ public class PlanningTO extends TransferObject {
     
     
     /**
-     * Add a Addtional Field into planning object based on MetaFieldTO and value
+     * Add a Additional Field into planning object based on MetaFieldTO and value
      */
     public void addAdditionalField(MetaFieldTO mfto, String value){
-    	addAdditionalField(mfto, value, null);
+    	addAdditionalField(mfto, value, null, null);
+    }
+    
+    public void addAdditionalField(MetaFieldTO mfto, String value, Float numericValue){
+    	addAdditionalField(mfto, value, null, numericValue);
     }
 
     /**
-     * Add a Addtional Field into planning object based on MetaFieldTO and value
+     * Add a Additional Field into planning object based on MetaFieldTO and value
      */
-    public void addAdditionalField(MetaFieldTO mfto, String value, Timestamp dateValue){
+    public void addAdditionalField(MetaFieldTO mfto, String value, Timestamp dateValue, Float numericValue){
         if (this.getAdditionalFields()==null) {
             this.setAdditionalFields(new Vector<AdditionalFieldTO>());
         }
@@ -99,6 +109,7 @@ public class PlanningTO extends TransferObject {
         afto.setPlanning(this);
         afto.setValue(value);
         afto.setDateValue(dateValue);
+        afto.setNumericValue(numericValue);
         
         this.getAdditionalFields().addElement(afto);
     }
@@ -152,18 +163,18 @@ public class PlanningTO extends TransferObject {
     }
     
     /////////////////////////////////////////////      
-    public Vector getAttachments() {
+    public Vector<AttachmentTO> getAttachments() {
         return attachments;
     }
-    public void setAttachments(Vector newValue) {
+    public void setAttachments(Vector<AttachmentTO> newValue) {
         this.attachments = newValue;
     }
 
     ///////////////////////////////////////////// 
-	public Vector getDiscussionTopics() {
+	public Vector<DiscussionTopicTO> getDiscussionTopics() {
 		return discussionTopics;
 	}
-	public void setDiscussionTopics(Vector newValue) {
+	public void setDiscussionTopics(Vector<DiscussionTopicTO> newValue) {
 		this.discussionTopics = newValue;
 	}
 
@@ -199,7 +210,7 @@ public class PlanningTO extends TransferObject {
 		
 		return relationList;
 	}
-	public void setRelationList(Vector newValue) {
+	public void setRelationList(Vector<PlanningRelationTO> newValue) {
 		this.relationList = newValue;
 	}
 
@@ -212,4 +223,81 @@ public class PlanningTO extends TransferObject {
 		this.type = newValue;
 	}
 
+	
+	public static PlanningTO getEntity(String entity){
+		PlanningTO response = null;
+	    if (entity.equals(PLANNING_REQUIREMENT)) {
+	    	response = new RequirementTO();	        
+	    } else if (entity.equals(PLANNING_TASK)) {
+	    	response = new TaskTO();
+	    } else if (entity.equals(PLANNING_PROJECT)) {
+	    	response = new ProjectTO();
+	    } else if (entity.equals(PLANNING_OCCURENCE)) {
+	    	response = new OccurrenceTO();
+	    } else if (entity.equals(PLANNING_RISK)) {
+	    	response = new RiskTO();
+	    } else if (entity.equals(PLANNING_ARTIFACT)) {	    	
+	    	response = new ArtifactTO();
+	    } else if (entity.equals(PLANNING_COST)) {
+	    	response = new CostTO();
+	    } else if (entity.equals(PLANNING_EXPENSE)) {
+	    	response = new ExpenseTO();
+	    } else if (entity.equals(PLANNING_INVOICE)) {
+	    	response = new InvoiceTO();
+	    }		
+	    return response;
+	}
+
+	public ProjectTO getPlanningProject() {
+		ProjectTO response = null;
+		
+		if (this instanceof TaskTO) {
+			TaskTO obj = (TaskTO)this;
+			response = obj.getProject();
+			
+		} else if (this instanceof RequirementTO) {
+			RequirementTO obj = (RequirementTO)this;
+			response = obj.getProject();
+			
+		} else if (this instanceof ProjectTO) {
+			ProjectTO obj = (ProjectTO)this;
+			response = obj;
+			
+		} else if (this instanceof OccurrenceTO) {
+			OccurrenceTO obj = (OccurrenceTO)this;
+			response = obj.getProject();
+			
+		} else if (this instanceof RiskTO) {
+			RiskTO obj = (RiskTO)this;
+			response = obj.getProject();
+			
+		} else if (this instanceof ArtifactTO) {
+			ArtifactTO obj = (ArtifactTO)this;
+			response = new ProjectTO(obj.getProjectId());
+			
+		} else if (this instanceof CostTO) {
+			CostTO obj = (CostTO)this;
+			response = obj.getProject();
+			
+		} else if (this instanceof ExpenseTO) {
+			ExpenseTO obj = (ExpenseTO)this;
+			response = obj.getProject();
+			
+		} else if (this instanceof InvoiceTO) {
+			InvoiceTO obj = (InvoiceTO)this;
+			response = obj.getProject();
+		}
+		
+		return response;
+	}
+	
+    /////////////////////////////////        
+    public boolean getVisible() {
+		return visible;
+	}
+	public void setVisible(boolean newValue) {
+		this.visible = newValue;
+	}
+
+	
 }

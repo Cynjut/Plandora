@@ -38,7 +38,9 @@ public class CostEditForm extends GeneralStrutsForm {
 	
 	private String usedByExpenseForm = "off";
 	
-	
+	private String stateMachinePaidOrCanceled = "off";	
+
+
 	public void clear(){
 		this.editCostId = null;
 		this.costValue = null;
@@ -51,8 +53,16 @@ public class CostEditForm extends GeneralStrutsForm {
 		this.changeInstValue = "";
 		this.changeInstId = "";
 		this.changeInstType = "";
+		this.setAdditionalFields(null);
 	}
 	
+	
+	public String getStateMachinePaidOrCanceled() {
+		return stateMachinePaidOrCanceled;
+	}
+	public void setStateMachinePaidOrCanceled(String stateMachinePaidOrCanceled) {
+		this.stateMachinePaidOrCanceled = stateMachinePaidOrCanceled;
+	}	
 	
 	//////////////////////////////////////////    
     public String getCostType() {

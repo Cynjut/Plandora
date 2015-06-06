@@ -5,11 +5,10 @@ import javax.servlet.jsp.tagext.TagSupport;
 
 import org.apache.struts.Globals;
 import org.apache.struts.util.RequestUtils;
+import org.apache.taglibs.display.LookupUtil;
 
 import com.pandora.helper.LogUtil;
 import com.pandora.helper.StringUtil;
-
-import org.apache.taglibs.display.LookupUtil;
 
 public class NoteIcon extends TagSupport {
 

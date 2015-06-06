@@ -29,7 +29,7 @@
 	  <td width="39%">&nbsp;</td>
 	</tr>
 	<tr>
-	  <td width="9%" class="formTitle"><bean:message key="label.nome"/>:&nbsp;</td>
+	  <td width="9%" class="formTitle"><bean:message key="label.name"/>:&nbsp;</td>
 	  <td width="41%" class="formBody">
 		<input type="text" name="idTask" maxlength="30" size="30" class="textBox">
 	  </td>

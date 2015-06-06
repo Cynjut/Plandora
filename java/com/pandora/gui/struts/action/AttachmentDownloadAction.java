@@ -59,6 +59,7 @@ public class AttachmentDownloadAction extends GeneralStrutsAction {
 			
 		}catch(Exception e){
 			this.setErrorFormSession(request, "error.formAttachment.showForm", e);
+			LogUtil.log(this, LogUtil.LOG_ERROR, e.getMessage(), e);	
 		} finally {
 		    try {
 		        if (sos!=null) {

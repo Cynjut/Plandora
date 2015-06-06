@@ -6,7 +6,6 @@ import java.util.Iterator;
 import java.util.Vector;
 
 import com.pandora.bus.ResourceTaskBUS;
-import com.pandora.delegate.TaskDelegate;
 import com.pandora.exception.BusinessException;
 import com.pandora.helper.DateUtil;
 import com.pandora.helper.StringUtil;
@@ -14,7 +13,7 @@ import com.pandora.helper.StringUtil;
 /**
  * This object it is a bean that represents an Task entity. 
  */
-public class TaskTO extends PlanningTO implements Comparable{
+public class TaskTO extends PlanningTO implements Comparable<TransferObject>{
         
 	private static final long serialVersionUID = 1L;
 
@@ -50,9 +49,9 @@ public class TaskTO extends PlanningTO implements Comparable{
     private int gridLevel;
 
     /** List of all sub tasks. This attribute is not persistent */
-    private HashMap childTasks;
+    private HashMap<String, TaskTO> childTasks;
     
-    /** Comment of curent task */
+    /** Comment of current task */
     private String comment;
     
     private Boolean isUnpredictable;
@@ -89,7 +88,7 @@ public class TaskTO extends PlanningTO implements Comparable{
     /* (non-Javadoc)
      * @see java.lang.Comparable#compareTo(java.lang.Object)
      */
-    public int compareTo(Object arg) {
+    public int compareTo(TransferObject arg) {
         int response = 0;        
         TaskTO anotherTask = (TaskTO)arg;
 
@@ -99,7 +98,7 @@ public class TaskTO extends PlanningTO implements Comparable{
             Timestamp taskIniDate = firstRT1.getInitialDate();
 
             if (anotherTask.hasResourceTask()){
-                //get the initial date of compative task            
+                //get the initial date of comparative task            
                 ResourceTaskTO firstRT2 = (ResourceTaskTO)anotherTask.getAllocResources().elementAt(0);
                 Timestamp anotherTaskIniDate = firstRT2.getInitialDate();
                 
@@ -114,7 +113,7 @@ public class TaskTO extends PlanningTO implements Comparable{
     public static TaskTO getAdHocTask(ResourceTaskTO rtto) {
         TaskTO response = new TaskTO();
         
-        Vector allocRes = new Vector();
+        Vector<ResourceTaskTO> allocRes = new Vector<ResourceTaskTO>();
         allocRes.add(rtto);
         rtto.setEstimatedTime(new Integer(rtto.getActualTime().intValue()));
         rtto.setStartDate(new Timestamp(rtto.getActualDate().getTime()));
@@ -186,9 +185,9 @@ public class TaskTO extends PlanningTO implements Comparable{
     public boolean hasResourceTaskAlreadyStarted(){
     	boolean response = false;
         if (this.getAllocResources()!=null) {
-    	    Iterator i = this.getAllocResources().iterator();
+    	    Iterator<ResourceTaskTO> i = this.getAllocResources().iterator();
     	    while(i.hasNext()){
-    	        ResourceTaskTO rtto = (ResourceTaskTO)i.next();
+    	        ResourceTaskTO rtto = i.next();
     	        TaskStatusTO tsto = rtto.getTaskStatus();
     	        if (tsto!=null && tsto.getStateMachineOrder()!=null && !tsto.isOpen()) {
     	        	response = true;
@@ -225,31 +224,6 @@ public class TaskTO extends PlanningTO implements Comparable{
         return newLevel;
     }
 
-    /**
-     * Return the current task object information on Applet PARAM format.
-     * @param i
-     */
-    public String getResBodyFormat(int i) {
-        int size = 1;
-        String parent = " ";
-        
-        Vector alloc = this.getAllocResources();
-        if (alloc!=null && alloc.size()>0){
-            size = alloc.size();
-        }
-        
-        if (this.getParentTask()!=null){
-            parent = this.getParentTask().getId();
-        }
-        
-        String buff = "<param name=\"RES_" + i + "\" value=\"" + 
-        							this.getId() + "|" + 
-        							StringUtil.formatWordForParam(this.getName()) + "|" +
-        							StringUtil.trunc(StringUtil.formatWordForParam(this.getDescription()), 120, true) + "|" +
-        							parent + "|" + size + " \" />\n";
-        return buff;
-    }
-
     
     public String getInvolvedResources(){
     	return getInvolvedResources(false);
@@ -259,9 +233,9 @@ public class TaskTO extends PlanningTO implements Comparable{
     public String getInvolvedResources(boolean showAddInfo){
         StringBuffer filtered = new StringBuffer("");
         if (this.getAllocResources()!=null) {
-    	    Iterator i = this.getAllocResources().iterator();
+    	    Iterator<ResourceTaskTO> i = this.getAllocResources().iterator();
     	    while(i.hasNext()){
-    	        ResourceTaskTO rtto = (ResourceTaskTO)i.next();   	        
+    	        ResourceTaskTO rtto = i.next();   	        
     	        if (!filtered.toString().equals("")) {
     	        	filtered.append(", ");
     	        }
@@ -286,85 +260,7 @@ public class TaskTO extends PlanningTO implements Comparable{
         return filtered.toString();
     }
 
-    /**
-     * Return the task relationship information on Applet PARAM format.
-     */
-    public Vector getRelationshipBodyFormat(int i) {
-    	Vector buff = new Vector();
-    	int c = i;
-    	try {
-        	Vector v = this.getRelationList();
-        	Vector resTask = this.getAllocResources();
-        	TaskDelegate tdel = new TaskDelegate();
-      	        	
-        	if (v!=null && resTask!=null) {
-        		Iterator j = v.iterator();
-        		while (j.hasNext()) {
-        			PlanningRelationTO prto = (PlanningRelationTO)j.next();
-        			if (prto.getRelatedType().equals(PlanningRelationTO.ENTITY_TASK) &&
-        					prto.getPlanType().equals(PlanningRelationTO.ENTITY_TASK) &&
-        					prto.getRelated().getId().equals(this.getId())) {
-        				
-             			TaskTO master = tdel.getTaskObject(new TaskTO(prto.getPlanning().getId()));        				
-            			Vector masterResTask = master.getAllocResources();
-            			if (masterResTask!=null && masterResTask.size()>0) {
-            				
-                			Iterator k = resTask.iterator();
-                			while(k.hasNext()){
-                				ResourceTaskTO rtto = (ResourceTaskTO)k.next();
-                				buff.addElement("<param name=\"DEP_" + (++c) + "\" value=\"" + rtto.getId() + "|" + this.getId() + "|" +
-                							((ResourceTaskTO)(masterResTask.get(0))).getId() + "|" + master.getId() + "|1 \" />\n");
-                			}    				        				
-            			}
-        			}
-        		}
-        	}    		
-    	} catch(Exception e) {
-    		buff = new Vector();
-    	}
-        
-        return buff;
-    }    
     
-    /**
-     * Return the resource task objects information on Applet PARAM format.
-     * @param cursor
-     * @return
-     */
-    public String getJobBodyFormat(int cursor){
-       String response = "";
-       if (!this.isParentTask()) {
-           Vector resTask = this.getAllocResources();
-           if (resTask!=null){
-               Iterator i = resTask.iterator();
-               while(i.hasNext()){
-                   ResourceTaskTO rtto = (ResourceTaskTO)i.next();
-                   response += rtto.getJobBodyFormat(++cursor);
-               }                          
-           }
-       }
-       return response;
-    }
-    
-    /**
-     * Return the resource task objects information on Applet PARAM format.
-     * @param allocBody
-     * @param currCursor
-     * @return
-     */
-    public int getAllocBodyFormat(StringBuffer allocBody, int currCursor, Timestamp iniDate){
-        int cursor = 0; 
-        if (!this.isParentTask()){            
-            Vector resTask = this.getAllocResources();
-            Iterator i = resTask.iterator();
-            while(i.hasNext()){
-                ResourceTaskTO rtto = (ResourceTaskTO)i.next();
-                allocBody.append(rtto.getAllocBodyFormat(currCursor+cursor, iniDate));
-                cursor+=rtto.getAllocList().size();
-            }           
-        }
-        return cursor;
-    }
 
 	public boolean isFinished() {
         return (this.getFinalDate()!=null);
@@ -375,8 +271,8 @@ public class TaskTO extends PlanningTO implements Comparable{
 		boolean response = true;
         if (!this.isParentTask()){
         	
-            Vector resTask = this.getAllocResources();
-            Iterator i = resTask.iterator();
+            Vector<ResourceTaskTO> resTask = this.getAllocResources();
+            Iterator<ResourceTaskTO> i = resTask.iterator();
             while(i.hasNext()){
                 ResourceTaskTO rtto = (ResourceTaskTO)i.next();
                 if (!rtto.getTaskStatus().isOpen()) {
@@ -398,7 +294,7 @@ public class TaskTO extends PlanningTO implements Comparable{
      */
     public void addChild(TaskTO tto) {
         if (this.childTasks==null){
-            this.childTasks = new HashMap();
+            this.childTasks = new HashMap<String, TaskTO>();
         }
         
         if (childTasks.get(tto.getId())==null) {
@@ -410,7 +306,7 @@ public class TaskTO extends PlanningTO implements Comparable{
 
     public void addAllocResource(ResourceTaskTO rtto) {
         if (this.allocResources==null) {
-            this.allocResources = new Vector();
+            this.allocResources = new Vector<ResourceTaskTO>();
         }
         this.allocResources.addElement(rtto);
     }
@@ -469,7 +365,7 @@ public class TaskTO extends PlanningTO implements Comparable{
     	}
         return allocResources;
     }
-    public void setAllocResources(Vector newValue) {
+    public void setAllocResources(Vector<ResourceTaskTO> newValue) {
         this.allocResources = newValue;
     }
     
@@ -501,7 +397,7 @@ public class TaskTO extends PlanningTO implements Comparable{
     }
 
     //////////////////////////////////////////////    
-    public HashMap getChildTasks() {
+    public HashMap<String, TaskTO> getChildTasks() {
         return childTasks;
     }
 

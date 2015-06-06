@@ -93,8 +93,8 @@ public final class ProjectRiskChartGadget extends ChartGadget {
         	if (pto!=null && pto.getId()!=null) {
             	Vector<RiskTO> rList = rdel.getRiskList(pto.getId());
             	
-            	Vector tList = this.getSubList(rList, true);
-            	Vector oList = this.getSubList(rList, false);
+            	Vector<RiskTO> tList = this.getSubList(rList, true);
+            	Vector<RiskTO> oList = this.getSubList(rList, false);
             	
             	int size = 1;
             	if (tList.size() > size) size = tList.size();
@@ -183,17 +183,18 @@ public final class ProjectRiskChartGadget extends ChartGadget {
 	}
 
 	
-	private Vector getSubList(Vector list, boolean isThreat) {
-		Vector response = new Vector();
+	private Vector<RiskTO> getSubList(Vector<RiskTO> list, boolean isThreat) {
+		Vector<RiskTO> response = new Vector<RiskTO>();
 		
         if (list!=null) {
-            Iterator i = list.iterator();
+            Iterator<RiskTO> i = list.iterator();
             while(i.hasNext()) {
             	
-            	RiskTO rto = (RiskTO)i.next();
+            	RiskTO rto = i.next();
             	RiskStatusTO rsto = rto.getStatus();
             	
-            	if (rsto.getStatusType()!=null && !rsto.getStatusType().equals(RiskStatusTO.VOIDED_RISK_TYPE)) {
+            	if (rsto.getStatusType()!=null && !rsto.getStatusType().equals(RiskStatusTO.VOIDED_RISK_TYPE) 
+            			&& !rsto.getStatusType().equals(RiskStatusTO.MATERIALIZE_RISK_TYPE)) {
                 	boolean typeThreat = (rto.getRiskType()==null || rto.getRiskType().equals(RiskTO.RISK_TYPE_THREAT));
                 	if ((isThreat && typeThreat) || (!isThreat && !typeThreat)) {
                 		response.add(rto);
@@ -204,13 +205,13 @@ public final class ProjectRiskChartGadget extends ChartGadget {
 		return response;
 	}	
 	
-	private void fillInArray(Vector list, float[][] val, String[][] labels, String indicatorId, int typeIdx){
+	private void fillInArray(Vector<RiskTO> list, float[][] val, String[][] labels, String indicatorId, int typeIdx){
 		
         if (list!=null) {
-            Iterator i = list.iterator();
+            Iterator<RiskTO> i = list.iterator();
             int c = 0;
             while(i.hasNext()) {
-            	RiskTO rto = (RiskTO)i.next();
+            	RiskTO rto = i.next();
             	if (indicatorId.equals("1")) {
             		val[typeIdx][c] = Float.parseFloat(rto.getProbability());
             	} else if (indicatorId.equals("2")) {

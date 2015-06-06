@@ -5,19 +5,18 @@ import java.util.Vector;
 import com.pandora.PlanningRelationTO;
 import com.pandora.PlanningTO;
 import com.pandora.dao.PlanningRelationDAO;
-
 import com.pandora.exception.BusinessException;
-import com.pandora.exception.InvalidRelationException;
 import com.pandora.exception.DataAccessException;
+import com.pandora.exception.InvalidRelationException;
 
 public class PlanningRelationBUS extends GeneralBusiness {
 
-    /** The Data Acess Object related with current business entity */
+    /** The Data Access Object related with current business entity */
     PlanningRelationDAO dao = new PlanningRelationDAO();
 
     
-    public Vector getRelationList(PlanningTO pto) throws BusinessException {
-    	Vector response = new Vector();
+    public Vector<PlanningRelationTO> getRelationList(PlanningTO pto) throws BusinessException {
+    	Vector<PlanningRelationTO> response = new Vector<PlanningRelationTO>();
         try {
         	response = dao.getRelationList(pto);
         } catch (DataAccessException e) {

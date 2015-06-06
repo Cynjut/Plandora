@@ -38,14 +38,14 @@ public class InvoiceTotalDecorator extends ColumnDecorator {
 			if (obj instanceof InvoiceTO) {
 				InvoiceTO to = (InvoiceTO)obj;
 				if (to!=null) {
-			        Integer t = to.getTotal();
+			        Long t = to.getTotal();
 				    text = StringUtil.getCurrencyValue((t.floatValue()/100), currLoc);
 				}			
 				
 			} else if (obj instanceof InvoiceHistoryTO) {
 				InvoiceHistoryTO to = (InvoiceHistoryTO)obj;
 				if (to!=null) {
-			        Integer t = to.getTotalPrice();
+			        Long t = to.getTotalPrice();
 				    text = StringUtil.getCurrencyValue((t.floatValue()/100), currLoc);
 				}
 			}

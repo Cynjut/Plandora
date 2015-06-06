@@ -19,28 +19,18 @@ public class CategoryDAO extends DataAccess {
     /**
      * Get a list of all Category TOs from data base.
      */
-    public Vector getList(Connection c) throws DataAccessException {
-		Vector response= new Vector();
-		ResultSet rs = null;
-		PreparedStatement pstmt = null; 
-		try {
-
-			pstmt = c.prepareStatement("select c.id, c.name, c.description, c.type, c.billable, c.is_defect, c.is_testing, " +
-									   "c.project_id, p.name as PROJECT_NAME, c.disable_view, is_developing, category_order  " +
-									   "from category c LEFT OUTER JOIN project p on c.project_id = p.id " +
-									   "where c.id <> '0' ");
-			rs = pstmt.executeQuery();
-			while (rs.next()) {
-			    CategoryTO cto = this.populateBeanByResultSet(rs);
-			    response.addElement(cto);
-			}
-						
-		} catch (SQLException e) {
-			throw new DataAccessException(e);
-		} finally {
-			super.closeStatement(rs, pstmt);
-		}
-		return response;
+    public Vector<CategoryTO> getList(boolean hideClosed) throws DataAccessException {
+        Vector<CategoryTO> response = new Vector<CategoryTO>();
+        Connection c = null;
+    	try {
+    		c = getConnection();
+    		response = this.getList(hideClosed, c);
+    	} catch(Exception e){
+    		throw new DataAccessException(e);
+    	} finally{
+    		this.closeConnection(c);
+    	}
+        return response;        
     }
 
 
@@ -60,30 +50,68 @@ public class CategoryDAO extends DataAccess {
     	}
         return response;        
     }
+
     
+	public CategoryTO getCategoryByName(String cname, Integer type, ProjectTO pto) throws DataAccessException {
+        CategoryTO response = null;
+        Connection c = null;
+    	try {
+    		c = getConnection();
+    		response = this.getCategoryByName(c, cname, type, pto);
+    	} catch(Exception e){
+    		throw new DataAccessException(e);
+    	} finally{
+    		this.closeConnection(c);
+    	}
+        return response;        
+	}
     
-    private Vector<CategoryTO> getListByType(Connection c, Integer type, ProjectTO pto) throws DataAccessException {
+   
+	private CategoryTO getCategoryByName(Connection c, String cname, Integer type, ProjectTO pto) throws DataAccessException {
+		CategoryTO response= null;
+		ResultSet rs = null;
+		PreparedStatement pstmt = null;
+		try {
+		    pstmt = c.prepareStatement("select c.id, c.name, c.description, c.type, c.billable, c.is_defect, c.is_testing, " +
+					   "c.project_id, p.name as PROJECT_NAME, c.disable_view, c.is_developing, c.category_order " +
+					   "from category c LEFT OUTER JOIN project p on c.project_id = p.id " +
+					   "where (c.id='0' OR (c.type=? AND (c.project_id is NULL or c.project_id=?)) " +
+					   "and (c.disable_view is null or c.disable_view=0)) and c.name=?" +
+					   "order by c.category_order");
+			pstmt.setInt(1, type.intValue());
+			pstmt.setString(2, pto.getId());
+			pstmt.setString(3, cname);
+			rs = pstmt.executeQuery();
+			if (rs.next()) {
+			    response = this.populateBeanByResultSet(rs);
+			}	
+		} catch (SQLException e) {
+			throw new DataAccessException(e);
+		} finally {
+			super.closeStatement(rs, pstmt);
+		}
+		return response;
+	}
+
+
+	private Vector<CategoryTO> getListByType(Connection c, Integer type, ProjectTO pto) throws DataAccessException {
 		Vector<CategoryTO> response= new Vector<CategoryTO>();
 		ResultSet rs = null;
 		PreparedStatement pstmt = null;
-		
 		try {
-
 		    pstmt = c.prepareStatement("select c.id, c.name, c.description, c.type, c.billable, c.is_defect, c.is_testing, " +
 					   "c.project_id, p.name as PROJECT_NAME, c.disable_view, c.is_developing, c.category_order " +
 					   "from category c LEFT OUTER JOIN project p on c.project_id = p.id " +
 					   "where (c.id='0' OR (c.type=? AND (c.project_id is NULL or c.project_id=?)) " +
 					   "and (c.disable_view is null or c.disable_view=0)) " +
 					   "order by c.category_order");
-		    
 			pstmt.setInt(1, type.intValue());
 			pstmt.setString(2, pto.getId());
 			rs = pstmt.executeQuery();
 			while (rs.next()) {
 			    CategoryTO cto = this.populateBeanByResultSet(rs);
 			    response.addElement(cto);
-			}
-						
+			}	
 		} catch (SQLException e) {
 			throw new DataAccessException(e);
 		} finally {
@@ -263,6 +291,34 @@ public class CategoryDAO extends DataAccess {
 			super.closeStatement(null, pstmt);
 		}        
     }
+
+    
+    private Vector<CategoryTO> getList(boolean hideClosed, Connection c) throws DataAccessException {
+		Vector<CategoryTO> response= new Vector<CategoryTO>();
+		ResultSet rs = null;
+		PreparedStatement pstmt = null; 
+		try {
+			String whereHide = "";
+			if (hideClosed) {
+				whereHide = " and pn.final_date is null";
+			}
+			
+			pstmt = c.prepareStatement("select c.id, c.name, c.description, c.type, c.billable, c.is_defect, c.is_testing, " +
+									   "c.project_id, p.name as PROJECT_NAME, c.disable_view, is_developing, category_order  " +
+									   "from category c LEFT OUTER JOIN project p on c.project_id = p.id LEFT OUTER JOIN planning pn on p.id = pn.id " +
+									   "where c.id <> '0'" + whereHide);
+			rs = pstmt.executeQuery();
+			while (rs.next()) {
+			    CategoryTO cto = this.populateBeanByResultSet(rs);
+			    response.addElement(cto);
+			}			
+		} catch (SQLException e) {
+			throw new DataAccessException(e);
+		} finally {
+			super.closeStatement(rs, pstmt);
+		}
+		return response;
+    }
     
     
     /**
@@ -328,4 +384,5 @@ public class CategoryDAO extends DataAccess {
         
         return response;
     }
+
 }

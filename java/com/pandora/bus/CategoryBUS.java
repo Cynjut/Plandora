@@ -14,17 +14,17 @@ import com.pandora.exception.DataAccessException;
  */
 public class CategoryBUS extends GeneralBusiness {
 
-    /** The Data Acess Object related with current business entity */
+    /** The Data Access Object related with current business entity */
     CategoryDAO dao = new CategoryDAO();
     
     
     /**
      * Get a list of all Category objects from data base.
      */
-    public Vector<CategoryTO> getCategoryList() throws BusinessException {
+    public Vector<CategoryTO> getCategoryList(boolean hideClosed) throws BusinessException {
         Vector<CategoryTO> response = new Vector<CategoryTO>();
         try {
-            response = dao.getList();
+            response = dao.getList(hideClosed);
         } catch (DataAccessException e) {
             throw new  BusinessException(e);
         }
@@ -57,10 +57,9 @@ public class CategoryBUS extends GeneralBusiness {
         return response;
     }
 
+    
     /**
      * Get a list of Category object
-     * @return
-     * @throws BusinessException
      */
     public CategoryTO getCategory(CategoryTO filter) throws BusinessException {
         CategoryTO response = null;
@@ -72,11 +71,20 @@ public class CategoryBUS extends GeneralBusiness {
         return response;
     }
 
+	
+    public CategoryTO getCategoryByName(String cname, Integer type, ProjectTO pto) throws BusinessException {
+        CategoryTO response = null;
+        try {
+            response = dao.getCategoryByName(cname, type, pto);
+        } catch (DataAccessException e) {
+            throw new  BusinessException(e);
+        }
+        return response;
+	}
 
+	
     /**
      * Insert a new Category object into data base
-     * @param cto
-     * @throws BusinessException
      */
     public void insertCategory(CategoryTO cto) throws BusinessException {
         try {
@@ -113,7 +121,5 @@ public class CategoryBUS extends GeneralBusiness {
             throw new  BusinessException(e);
         }
     }
-
-
 
 }

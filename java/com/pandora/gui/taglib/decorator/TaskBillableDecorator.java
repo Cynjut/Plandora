@@ -38,7 +38,12 @@ public class TaskBillableDecorator extends ColumnDecorator {
 	}
 
 	public String contentToSearching(Object columnValue) {
-		return this.getBillableStatus()+"";
+		String content = super.getBundleMessage("label.yes");
+		boolean bill = this.getBillableStatus();
+		if (!bill) {
+			content = super.getBundleMessage("label.no");
+		}
+		return content;
 	}
 
 	

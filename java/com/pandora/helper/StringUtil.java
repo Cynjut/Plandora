@@ -17,10 +17,12 @@ import java.util.Vector;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.apache.commons.lang.StringEscapeUtils;
+
 import com.pandora.TransferObject;
 
 /**
- * This class contain util methods to handler strings.
+ * This class contain utilities methods to handler strings.
  */
 public final class StringUtil {
 
@@ -30,12 +32,23 @@ public final class StringUtil {
 	private StringUtil(){}
 
 
+    public static String getBase36(long val) {
+        StringBuffer ret = new StringBuffer();
+        while (val > 0) {
+            if ((val % 36) < 10) ret.append((char)(((int)'0') + (int)(val % 36)));
+            else ret.append((char)(((int)'A') + (int)((val % 36) - 10)));
+            val /= 36;
+        }
+        return ret.toString();
+    }
+    
+
 	/**
-	 * Parse a list of keyworks separated by comma and 
+	 * Parse a list of keywords separated by comma and 
 	 * return a Vector of words (string).
 	 */	 
-	public static Vector getKeyworks(String list) {
-		Vector response = null;
+	public static Vector<String> getKeyworks(String list) {
+		Vector<String> response = null;
 		StringTokenizer st = null;
 		
 		if ((list!=null) && (!list.trim().equals(""))) {
@@ -43,7 +56,7 @@ public final class StringUtil {
 			while  (st.hasMoreTokens()){
 				String keyw = (st.nextToken()).trim();
 				if (!keyw.trim().equals("")) {
-					if (response==null) response = new Vector();
+					if (response==null) response = new Vector<String>();
 					response.addElement(keyw);					
 				}
 			}	 		
@@ -120,59 +133,15 @@ public final class StringUtil {
 	 * Format the string to be displayed into messageBox
 	 */
 	public static String formatWordToHtml(String comment){
-	    String response = "";
-	    response = comment.replaceAll("á", "&aacute;");
-	    response = comment.replaceAll("í", "&iacute;");
-	    response = comment.replaceAll("é", "&eacute;");
-	    response = comment.replaceAll("ú", "&uacute;");
-	    response = comment.replaceAll("Á", "&Aacute;");
-	    response = comment.replaceAll("Í", "&Iacute;");
-	    response = comment.replaceAll("É", "&Eacute;");
-	    response = comment.replaceAll("Ú", "&Uacute;");
-	    response = comment.replaceAll("ç", "&ccedil;");
-	    response = comment.replaceAll("Ç", "&Ccedil;");
-	    response = comment.replaceAll("ê", "&ecirc;");
-	    response = comment.replaceAll("Ê", "&Ecirc;");
-	    response = comment.replaceAll("â", "&acirc;");
-	    response = comment.replaceAll("Â", "&Acirc;");
-	    response = comment.replaceAll("ô", "&ocirc;");
-	    response = comment.replaceAll("Ô", "&Ocirc;");
-	    response = comment.replaceAll("à", "&agrave;");
-	    response = comment.replaceAll("À", "&Agrave;");
-	    response = comment.replaceAll("ã", "&atilde;");
-	    response = comment.replaceAll("Ã", "&Atilde;");
-	    response = comment.replaceAll("õ", "&otilde;");
-	    response = comment.replaceAll("Õ", "&Otilde;");
-	    return response;
+	    return StringEscapeUtils.escapeHtml(comment);
 	}	
-	
+
 	/**
 	 * Format the string to be displayed into messageBox using the FreeMind format
 	 */	
 	public static String formatWordToFreeMind(String comment){
 	    String response = comment;
-	    response = response.replaceAll("ç", "&#xe7;");
-	    response = response.replaceAll("ã", "&#xe3;");
-	    response = response.replaceAll("á", "&#xe1;");
-	    response = response.replaceAll("é", "&#xe9;");
-	    response = response.replaceAll("ê", "&#xea;");
-	    response = response.replaceAll("ô", "&#xf4;");
-	    response = response.replaceAll("ó", "&#xf3;");
-	    response = response.replaceAll("ú", "&#xfa;");
-	    response = response.replaceAll("ü", "&#xfc;");
-	    response = response.replaceAll("í", "&#xed;");
-	    response = response.replaceAll("õ", "&#xf5;");
-	    response = response.replaceAll("\"", "&quot;");
-	    response = response.replaceAll("Ç", "&#xc7;");
-	    response = response.replaceAll("Á", "&#xc1;");
-	    response = response.replaceAll("À", "&#xc0;");
-	    response = response.replaceAll("Ã", "&#xc3;");
-	    response = response.replaceAll("Ò", "&#xd2;");
-	    response = response.replaceAll("Õ", "&#xd5;");
-	    response = response.replaceAll("Ó", "&#xd3;");
-	    response = response.replaceAll("É", "&#xc9;");
-	    response = response.replaceAll("Í", "&#xcd;");
-	    response = response.replaceAll("Ú", "&#xda;");	    
+	    response = StringEscapeUtils.escapeXml(response);
 	    return response;
 	}
 	
@@ -183,7 +152,8 @@ public final class StringUtil {
 	public static String formatWordForParam(String field){
         String response = " ";
         if (field!=null && !field.trim().equals("")){
-            response = field.replaceAll("\n", " ");
+        	response = field.replaceAll("\\r\\n", " ");
+            response = field.replaceAll("\\n", " ");
             response = response.replaceAll("\"", "'");            
         }
         return response;
@@ -195,12 +165,10 @@ public final class StringUtil {
 	public static String formatWordForGP(String comment){
         String response = " ";
         if (comment!=null && !comment.trim().equals("")) {
-            response = comment.replaceAll("&", "&amp;");
-            response = response.replaceAll("<", "&lt;");
-            response = response.replaceAll(">", "&gt;");
-            response = response.replaceAll("/", "&#47;"); 
-            response = response.replaceAll("\"", "'");
-            response = response.replaceAll("\n", " ");
+            response = comment.replaceAll("\"", "'");
+            response = response.replaceAll("\\r\\n", " ");
+            response = response.replaceAll("\\n", " ");
+            response = StringEscapeUtils.escapeHtml(response);
         }
         return response;
     }
@@ -208,8 +176,8 @@ public final class StringUtil {
 	/**
      * Return a vector of elements based on string divided by separator char.  
      */
-    public static Vector getTokens(String source, String separator){
-        Vector response = new Vector();
+    public static Vector<String> getTokens(String source, String separator){
+        Vector<String> response = new Vector<String>();
         try {
 	        StringTokenizer st = new StringTokenizer(source, separator);
 	        while(st.hasMoreTokens()){
@@ -217,7 +185,7 @@ public final class StringUtil {
 	            response.addElement(token);
 	        }
         } catch(Exception e){
-            response = new Vector();
+            response = new Vector<String>();
         }
         return response;
     }
@@ -258,6 +226,21 @@ public final class StringUtil {
         return response;
     }
 
+    /**
+     * Return a float from a numeric string.
+     */
+    public static double getStringToDouble(String value, Locale loc){
+    	double response = 0;
+        try {        
+	        NumberFormat nf = NumberFormat.getNumberInstance(loc);
+	        Number n = nf.parse(value);
+	        response = n.doubleValue();
+        } catch (ParseException e) {
+            response = 0;
+        }
+        return response;
+    }
+    
     
     /**
      * Return a float from a HH:MM string.
@@ -384,7 +367,7 @@ public final class StringUtil {
    	    			response = response + words[i] + " "; 	
    	    		}
    	   	        if (addPoints) {
-   	   	        	response = response + "...";
+   	   	        	response = response + "<a style=\"cursor: help;\" title=\"" + content.substring(response.length()) + "\">...</a>";
    	   	        }   	    		
    	    	} else {
    	    		response = content;	
@@ -528,18 +511,28 @@ public final class StringUtil {
     }
 
 
-	public static Integer getStringToCents(String strValue, Locale locale) {
-		Integer response = null;
+	public static Long getStringToCents(String strValue, Locale locale) {
+		Long response = null;
 		try {
-			float f = StringUtil.getStringToFloat(strValue, locale);
-			BigDecimal bd = new BigDecimal(f * 100);
+			double d = StringUtil.getStringToDouble(strValue, locale) * 100;
+			BigDecimal bd = new BigDecimal(d);
 			bd = bd.setScale(2, BigDecimal.ROUND_HALF_UP);
-			response = new Integer(bd.intValue()); 
+			response = new Long(bd.longValue()); 
 		} catch (Exception e) {
 			e.printStackTrace();
 			
 		}
 		return response;
+	}
+
+
+	public static String getDoubleToString(double value, String pattern, Locale loc) {
+        String response = "";
+        Double d = new Double(value);
+        DecimalFormat df = (DecimalFormat)NumberFormat.getInstance(loc);
+        df.applyPattern("0.###");
+        response = df.format(d);
+        return response;
 	}
 
 }

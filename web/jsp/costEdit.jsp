@@ -132,6 +132,7 @@
 		<html:hidden name="costEditForm" property="changeInstId"/>
 		<html:hidden name="costEditForm" property="changeInstType"/>
 		<html:hidden name="costEditForm" property="usedByExpenseForm"/>
+		<html:hidden name="costEditForm" property="stateMachinePaidOrCanceled"/>
 			
 		<br>
 		
@@ -167,52 +168,136 @@
 				<table width="100%" border="0" cellspacing="0" cellpadding="0">
 			    <tr class="pagingFormBody">
 			      <td width="100" class="formTitle"><bean:message key="label.costedit.name"/>:&nbsp;</td>
-			      <td colspan="2"><html:text name="costEditForm" property="name" styleClass="textBox" size="30" maxlength="30"/></td>
+			      <td colspan="2">
+			      	<logic:equal name="costEditForm" property="editCostId" value="">
+			    		<html:text name="costEditForm" property="name" styleClass="textBox" size="30" maxlength="30" />	
+			    	</logic:equal>
+			     	<logic:notEqual name="costEditForm" property="editCostId" value="">
+			      		<logic:equal name="costEditForm" property="usedByExpenseForm" value="on">
+			      			<logic:equal name="costEditForm" property="stateMachinePaidOrCanceled" value="on">
+			      				<html:text name="costEditForm" property="name" styleClass="textBox" size="30" disabled="true" maxlength="30" />
+			      			</logic:equal>
+			      			<logic:equal name="costEditForm" property="stateMachinePaidOrCanceled" value="off">
+			      				<html:text name="costEditForm" property="name" styleClass="textBox" size="30" maxlength="30" />
+			      			</logic:equal>
+			      		</logic:equal>
+			      		<logic:equal name="costEditForm" property="usedByExpenseForm" value="off">
+			      			<html:text name="costEditForm" property="name" styleClass="textBox" size="30" maxlength="30" />
+			      		</logic:equal>
+			      	</logic:notEqual>		
+			      </td>
 			      <td width="10">&nbsp;</td>
-			    </tr>   
+			    </tr>
 	
-			    <tr class="pagingFormBody">
+			     <tr class="pagingFormBody">
 			      <td class="formTitle"><bean:message key="label.costedit.desc"/>:&nbsp;</td>
-			      <td colspan="2"><html:textarea name="costEditForm" property="description" styleClass="textBox" cols="70" rows="3" /></td>
+			      <td colspan="2">
+			        <logic:equal name="costEditForm" property="editCostId" value="">
+			    		<html:textarea name="costEditForm" property="description" styleClass="textBox" cols="65" rows="3" />   	
+			    	</logic:equal>
+			    	<logic:notEqual name="costEditForm" property="editCostId" value=""> 
+			      		<logic:equal name="costEditForm" property="usedByExpenseForm" value="on">
+			      			<logic:equal name="costEditForm" property="stateMachinePaidOrCanceled" value="on">
+			      				<html:textarea name="costEditForm" property="description" styleClass="textBox" cols="65" rows="3" disabled="true" />
+			      			</logic:equal>
+			      			<logic:equal name="costEditForm" property="stateMachinePaidOrCanceled" value="off">
+			      				<html:textarea name="costEditForm" property="description" styleClass="textBox" cols="65" rows="3" />
+			      			</logic:equal>			      			
+			      		</logic:equal>
+			      		<logic:equal name="costEditForm" property="usedByExpenseForm" value="off">
+			      			<html:textarea name="costEditForm" property="description" styleClass="textBox" cols="65" rows="3" />
+			      		</logic:equal>
+			      	</logic:notEqual>
+			      </td>
 			      <td>&nbsp;</td>
-			    </tr>   
+			     </tr>			     
+			     
 				
 				<tr class="pagingFormBody">	
 			       	<td class="formTitle"><bean:message key="label.costedit.prj"/>:&nbsp;</td>
 				    <td class="formBody" colspan="2">
 				    	<logic:equal name="costEditForm" property="usedByExpenseForm" value="on">
 						  	<html:select name="costEditForm" property="projectId" styleClass="textBox" disabled="true">
-						   		<html:options collection="costProjectList" property="id" labelProperty="name"/>
+						   		<html:options collection="costProjectList" property="id" labelProperty="name" filter="false" />
 							</html:select>
 				    	</logic:equal>
 				    	<logic:equal name="costEditForm" property="usedByExpenseForm" value="off">
 						  	<html:select name="costEditForm" property="projectId" styleClass="textBox" onkeypress="javascript:changeProject();" onchange="javascript:changeProject();">
-						   		<html:options collection="costProjectList" property="id" labelProperty="name"/>
+						   		<html:options collection="costProjectList" property="id" labelProperty="name" filter="false" />
 							</html:select>
 				    	</logic:equal>
 			   	    </td>
 		    	    <td width="10">&nbsp;</td>
 			    </tr>
-	
-				<tr class="pagingFormBody">	
+			    
+			    <tr class="pagingFormBody">	
 			       	<td class="formTitle"><bean:message key="label.costedit.category"/>:&nbsp;</td>
 				    <td class="formBody" colspan="2">			    
 				    	<div id="cost_category">
-						  	<html:select name="costEditForm" property="categoryId" styleClass="textBox">
-						   		<html:options collection="costCategoryList" property="id" labelProperty="name"/>
-							</html:select>
+				    	<logic:equal name="costEditForm" property="editCostId" value="">
+			    			<html:select name="costEditForm" property="categoryId" styleClass="textBox">
+						   		<html:options collection="costCategoryList" property="id" labelProperty="name" filter="false"/>
+							</html:select> 	
+			    		</logic:equal>
+			    		<logic:notEqual name="costEditForm" property="editCostId" value="">
+				    		<logic:equal name="costEditForm" property="usedByExpenseForm" value="on">						  		
+								<logic:equal name="costEditForm" property="stateMachinePaidOrCanceled" value="on">
+			      					<html:select name="costEditForm" property="categoryId" styleClass="textBox" disabled="true">
+						   				<html:options collection="costCategoryList" property="id" labelProperty="name" filter="false"/>
+									</html:select>
+			      				</logic:equal>
+			      				<logic:equal name="costEditForm" property="stateMachinePaidOrCanceled" value="off">
+			      					<html:select name="costEditForm" property="categoryId" styleClass="textBox">
+						   				<html:options collection="costCategoryList" property="id" labelProperty="name" filter="false"/>
+									</html:select>
+			      				</logic:equal>	
+							</logic:equal>
+							<logic:equal name="costEditForm" property="usedByExpenseForm" value="off">
+						  		<html:select name="costEditForm" property="categoryId" styleClass="textBox">
+						   			<html:options collection="costCategoryList" property="id" labelProperty="name" filter="false"/>
+								</html:select>
+							</logic:equal>
+						</logic:notEqual>
 						</div>
 			   	    </td>
 		    	    <td width="10">&nbsp;</td>
 			    </tr>
-	
+			    
 			    <tr class="pagingFormBody">
 			      <td class="formTitle"><bean:message key="label.costedit.acccode"/>:&nbsp;</td>
-			      <td class="formBody" colspan="2"><html:text name="costEditForm" property="accountCode" styleClass="textBox" size="17" maxlength="30"/>
-						&nbsp;&nbsp;&nbsp;
-					  	<html:select name="costEditForm" property="accountCodeSelected" styleClass="textBox" onkeypress="javascript:changeAccount();" onchange="javascript:changeAccount();">
-					   		<html:options collection="accountCodeList" property="id" labelProperty="genericTag"/>
-						</html:select>
+			      <td class="formBody" colspan="2">			      
+			      	<logic:equal name="costEditForm" property="editCostId" value="">
+			    		<html:text name="costEditForm" property="accountCode" styleClass="textBox" size="17" maxlength="30"/>
+							&nbsp;&nbsp;&nbsp;
+					  		<html:select name="costEditForm" property="accountCodeSelected" styleClass="textBox" onkeypress="javascript:changeAccount();" onchange="javascript:changeAccount();">
+					   			<html:options collection="accountCodeList" property="id" labelProperty="genericTag" filter="false"/>
+							</html:select>    	
+			    	</logic:equal>
+			    	<logic:notEqual name="costEditForm" property="editCostId" value="">
+			      		<logic:equal name="costEditForm" property="usedByExpenseForm" value="on">
+			      			<logic:equal name="costEditForm" property="stateMachinePaidOrCanceled" value="on">
+			      				<html:text name="costEditForm" property="accountCode" styleClass="textBox" size="17" disabled="true" maxlength="30"/>
+								&nbsp;&nbsp;&nbsp;
+					  			<html:select name="costEditForm" property="accountCodeSelected" styleClass="textBox" disabled="true" onkeypress="javascript:changeAccount();" onchange="javascript:changeAccount();">
+					   				<html:options collection="accountCodeList" property="id" labelProperty="genericTag" filter="false"/>
+								</html:select>
+							</logic:equal>
+							<logic:equal name="costEditForm" property="stateMachinePaidOrCanceled" value="off">
+			      				<html:text name="costEditForm" property="accountCode" styleClass="textBox" size="17" maxlength="30"/>
+								&nbsp;&nbsp;&nbsp;
+					  			<html:select name="costEditForm" property="accountCodeSelected" styleClass="textBox" onkeypress="javascript:changeAccount();" onchange="javascript:changeAccount();">
+					   				<html:options collection="accountCodeList" property="id" labelProperty="genericTag" filter="false"/>
+								</html:select>
+							</logic:equal>
+						</logic:equal>
+						<logic:equal name="costEditForm" property="usedByExpenseForm" value="off">
+			      			<html:text name="costEditForm" property="accountCode" styleClass="textBox" size="17" maxlength="30"/>
+							&nbsp;&nbsp;&nbsp;
+					  		<html:select name="costEditForm" property="accountCodeSelected" styleClass="textBox" onkeypress="javascript:changeAccount();" onchange="javascript:changeAccount();">
+					   			<html:options collection="accountCodeList" property="id" labelProperty="genericTag" filter="false"/>
+							</html:select>
+						</logic:equal>
+					</logic:notEqual>	
 			      </td>
 			      <td>&nbsp;</td>
 			    </tr>   

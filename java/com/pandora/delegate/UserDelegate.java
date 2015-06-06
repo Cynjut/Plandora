@@ -106,7 +106,7 @@ public class UserDelegate extends GeneralDelegate{
     /* (non-Javadoc)
      * @see com.pandora.bus.UserBUS.getListByKeyword(com.pandora.ProjectTO)
      */            
-    public Vector getListByKeyword(Vector kwList) throws BusinessException {
+    public Vector<UserTO> getListByKeyword(Vector<String> kwList) throws BusinessException {
         return bus.getListByKeyword(kwList);
     }
 
@@ -122,7 +122,7 @@ public class UserDelegate extends GeneralDelegate{
     /* (non-Javadoc)
      * @see com.pandora.bus.UserBUS.ggetResourceByUser(com.pandora.UserTO)
      */            
-    public Vector getResourceByUser(UserTO uto) throws BusinessException {        
+    public Vector<ResourceTO> getResourceByUser(UserTO uto) throws BusinessException {        
         return bus.getResourceByUser(uto);        
     }
 
@@ -130,22 +130,22 @@ public class UserDelegate extends GeneralDelegate{
     /* (non-Javadoc)
      * @see com.pandora.bus.UserBUS.getCustomerByProject(com.pandora.UserTO)
      */            
-    public Vector getCustomerByUser(UserTO uto) throws BusinessException {
+    public Vector<CustomerTO> getCustomerByUser(UserTO uto) throws BusinessException {
         return bus.getCustomerByUser(uto);        
     }    
     
     /* (non-Javadoc)
-     * @see com.pandora.bus.UserBUS.getLeaderByProject(com.pandora.ProjectTO)
+     * @see com.pandora.bus.UserBUS.getLeaderByProject(java.lang.String)
      */                
-    public Vector getLeaderByProject(ProjectTO pto) throws BusinessException {
-        return bus.getLeaderByProject(pto);
+    public Vector<LeaderTO> getLeaderByProject(String projectIdList) throws BusinessException {
+        return bus.getLeaderByProject(projectIdList);
     }
 
     
     /* (non-Javadoc)
      * @see com.pandora.bus.UserBUS.getUserByLeaderInAllProjects(com.pandora.LeaderTO, int)
      */                
-    public Vector getUserByLeaderInAllProjects(LeaderTO eto, int role) throws BusinessException {
+    public Vector<UserTO> getUserByLeaderInAllProjects(LeaderTO eto, int role) throws BusinessException {
         return bus.getUserByLeaderInAllProjects(eto, role);
     }
 
@@ -187,23 +187,33 @@ public class UserDelegate extends GeneralDelegate{
 	
     
     /* (non-Javadoc)
-     * @see com.pandora.bus.UserBUS.userIsLeader(com.pandora.UserTO, com.pandora.ProjectTO)
-     */            
-    public boolean userIsLeader(UserTO uto, ProjectTO pto) {
-    	return bus.userIsLeader(uto, pto);
-    }    
-    
-    /* (non-Javadoc)
      * @see com.pandora.bus.UserBUS.attribRootIntoProjectResource(com.pandora.UserTO, com.pandora.ProjectTO)
      */                
     public void attribRootIntoProjectResource(UserTO root, ProjectTO pto) throws BusinessException {
     	bus.attribRootIntoProjectResource(root, pto);
     }
 
+    public void updatePicture(UserTO uto) throws BusinessException {
+		bus.updatePicture(uto);
+	}
 
+    
 	public Locale getCurrencyLocale() throws BusinessException {
 		return bus.getCurrencyLocale();
 	}
 
+
+	public String checkCustomerViewDiscussion(UserTO uto, ProjectTO pto) throws BusinessException{
+		String response = "off";
+		if (uto!=null && pto!=null && uto.getId()!=null) {
+		    CustomerTO cto = new CustomerTO(uto.getId());
+		    cto.setProject(pto);
+		    cto = bus.getCustomer(cto);
+		    if (cto!=null && cto.getBoolCanSeeDiscussion()) {
+		    	response = "on";	
+		    }					
+		}
+		return response;
+	}
 
 }

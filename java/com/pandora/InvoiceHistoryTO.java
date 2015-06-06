@@ -30,7 +30,7 @@ public class InvoiceHistoryTO extends TransferObject {
 	
 	private String description;
 	
-	private Integer totalPrice;
+	private Long totalPrice;
 	
     private UserTO handler;
 
@@ -156,10 +156,10 @@ public class InvoiceHistoryTO extends TransferObject {
 
 	
     //////////////////////////////////////////
-	public Integer getTotalPrice() {
+	public Long getTotalPrice() {
 		return totalPrice;
 	}
-	public void setTotalPrice(Integer newValue) {
+	public void setTotalPrice(Long newValue) {
 		this.totalPrice = newValue;
 	}
 

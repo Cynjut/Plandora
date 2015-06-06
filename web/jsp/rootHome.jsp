@@ -20,7 +20,7 @@
 	<table width="98%" border="0" cellspacing="0" cellpadding="0">
     <tr class="pagingFormBody">
       <td width="10">&nbsp;</td>
-      <td width="100">&nbsp; </td>
+      <td width="160">&nbsp; </td>
       <td>&nbsp; </td>
       <td width="10">&nbsp;</td>
     </tr>
@@ -32,22 +32,28 @@
     </tr>
     <tr class="pagingFormBody">
       <td>&nbsp;</td>
-      <td class="formTitle"><bean:message key="title.area"/></td>
+      <td class="formTitle"><a href="../do/manageArea?operation=screenArea"><bean:message key="title.area"/></a></td>      
       <td>&nbsp; </td>
       <td>&nbsp;</td>
     </tr>
     <tr class="pagingFormBody">
       <td>&nbsp;</td>
-      <td class="formTitle"><bean:message key="title.department"/></td>
-      <td>&nbsp; </td>
+      <td class="formTitle"><a href="../do/manageDepartment?operation=screenDepartment"><bean:message key="title.department"/></a></td>      
+      <td><bean:message key="title.underConstruction"/></td>
       <td>&nbsp;</td>
     </tr>
     <tr class="pagingFormBody">
       <td>&nbsp;</td>
-      <td class="formTitle"><bean:message key="title.function"/></td>
-      <td>&nbsp; </td>
+       <td class="formTitle"><a href="../do/manageFunction?operation=screenFunction"><bean:message key="title.function"/></a></td>     
+      <td><bean:message key="title.underConstruction"/></td>
       <td>&nbsp;</td>
     </tr>
+    <tr class="pagingFormBody">
+      <td>&nbsp;</td>
+      <td class="formTitle"><a href="../do/manageCompany?operation=prepareForm"><bean:message key="label.userCompany"/></a></td>
+      <td>&nbsp; </td>
+      <td>&nbsp;</td>
+    </tr>    
     <tr class="pagingFormBody">
       <td>&nbsp;</td>      
       <td class="formTitle"><a href="../do/manageDB?operation=prepareForm">Manage DB</a></td>
@@ -109,12 +115,14 @@
       <td>&nbsp; </td>
       <td>&nbsp;</td>
     </tr>       
+<!--     
     <tr class="pagingFormBody">
       <td>&nbsp;</td>      
       <td class="formTitle"><a href="../do/manageTemplate?operation=prepareForm"><bean:message key="title.manageTemplate"/></a></td>
       <td>&nbsp; </td>
       <td>&nbsp;</td>
     </tr>        
+-->    
     <tr class="pagingFormBody">
       <td>&nbsp;</td>
       <td class="formTitle">Project Status</td>
@@ -154,7 +162,7 @@
 		<tr> 
 			<td class="errorValidation">
 				<bean:message key="title.newVersion"/><br/>
-				<bean:write name="newversion.url" property="genericTag" />
+				<bean:write name="newversion.url" property="genericTag" filter="false" />
 			</td>
 		</tr>
 		</table>

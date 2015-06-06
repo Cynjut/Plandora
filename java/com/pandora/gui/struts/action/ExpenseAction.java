@@ -21,9 +21,11 @@ import com.pandora.ProjectTO;
 import com.pandora.UserTO;
 import com.pandora.delegate.ExpenseDelegate;
 import com.pandora.delegate.MetaFieldDelegate;
+import com.pandora.delegate.PreferenceDelegate;
 import com.pandora.delegate.ProjectDelegate;
 import com.pandora.delegate.UserDelegate;
 import com.pandora.exception.BusinessException;
+import com.pandora.exception.MetaFieldNumericTypeException;
 import com.pandora.exception.PaidExpenseCannotBeExcludedException;
 import com.pandora.gui.struts.form.ExpenseForm;
 import com.pandora.gui.struts.form.UserForm;
@@ -46,6 +48,9 @@ public class ExpenseAction extends GeneralStrutsAction {
 			UserTO uto = SessionUtil.getCurrentUser(request);
 			frm.setUsername(uto.getName());
 			request.getSession().setAttribute("metaFieldList", new Vector<MetaFieldTO>());
+			
+			String hideClosed = uto.getPreference().getPreference(PreferenceTO.COSTS_HIDE_CLOSED);
+			frm.setHideClosedCosts(hideClosed!=null && hideClosed.equals("on"));
 			
 			this.refreshAuxiliaryLists(frm, request);
 			frm.setShowSaveButton("on");
@@ -89,6 +94,8 @@ public class ExpenseAction extends GeneralStrutsAction {
 			ExpenseTO eto = new ExpenseTO("");
 			this.retrieveMetaFieldValue(request, frm, eto);				
 			frm.setShowAddForm("on");			
+		} catch(MetaFieldNumericTypeException e){
+			this.setErrorFormSession(request, e.getMessage(), e.getMetaFieldName(), null, null, null, null, e);
 		} catch (Exception e) {
 			this.setErrorFormSession(request, "error.generic.showFormError", e);
 		}		
@@ -139,7 +146,7 @@ public class ExpenseAction extends GeneralStrutsAction {
 		String forward = "showExpense";
 		try {
 			ExpenseForm frm = (ExpenseForm)form;
-			HashMap expenseItems = (HashMap) request.getSession().getAttribute("expenseItemHash");
+			HashMap<String, CostTO> expenseItems = (HashMap<String, CostTO>) request.getSession().getAttribute("expenseItemHash");
 			if (expenseItems!=null && frm.getRemoveExpenseId()!=null) {
 				expenseItems.remove(frm.getRemoveExpenseId());
 			}
@@ -185,6 +192,8 @@ public class ExpenseAction extends GeneralStrutsAction {
 			UserTO uto = SessionUtil.getCurrentUser(request);			
 		    frm.setSaveMethod(ExpenseForm.INSERT_METHOD, uto);
 		    		        			
+		} catch(MetaFieldNumericTypeException e){
+			this.setErrorFormSession(request, e.getMessage(), e.getMetaFieldName(), null, null, null, null, e);
 		} catch(Exception e){
 		    this.setErrorFormSession(request, errorMsg, e);
 		}	    
@@ -280,6 +289,14 @@ public class ExpenseAction extends GeneralStrutsAction {
 		ProjectDelegate pdel = new ProjectDelegate();
 		ExpenseDelegate edel = new ExpenseDelegate();
 		MetaFieldDelegate mfdel = new MetaFieldDelegate();
+	    PreferenceDelegate pfdel = new PreferenceDelegate();
+	    
+	    //save the new preference
+	    UserTO uto = SessionUtil.getCurrentUser(request);
+	    PreferenceTO pref = new PreferenceTO(PreferenceTO.COSTS_HIDE_CLOSED, frm.getHideClosedCosts()?"on":"off", uto);
+		uto.getPreference().addPreferences(pref);
+		pref.addPreferences(pref);
+		pfdel.insertOrUpdate(pref);
 		
 		//if project is already closed, the save button must be hidden
 		if (frm.getProjectId()!=null && !frm.getProjectId().trim().equals("")) {
@@ -296,11 +313,11 @@ public class ExpenseAction extends GeneralStrutsAction {
 		frm.setShowAddForm("off");
 		frm.setReportURL("");
 		
-		Vector<ProjectTO> prjList = pdel.getProjectListForWork(SessionUtil.getCurrentUser(request), true);
+		Vector<ProjectTO> prjList = pdel.getProjectListForWork(SessionUtil.getCurrentUser(request), true, true);
 		request.getSession().setAttribute("expenseProjectList", prjList);
-
-		UserTO uto = SessionUtil.getCurrentUser(request);
-		Vector<ExpenseTO> expList = edel.getExpenseList(uto.getId());
+		this.checkMissingProject(frm.getProjectId(), request);
+		
+		Vector<ExpenseTO> expList = edel.getExpenseList(uto.getId(), frm.getHideClosedCosts());
 		request.getSession().setAttribute("expenseList", expList);
 		
 		Vector<MetaFieldTO> mflist = mfdel.getListByProjectAndContainer(frm.getProjectId(), null, MetaFieldTO.APPLY_TO_EXPENSE);
@@ -313,10 +330,10 @@ public class ExpenseAction extends GeneralStrutsAction {
 	@SuppressWarnings("unchecked")
 	private void summarizeItems(ExpenseForm frm, HttpServletRequest request) throws BusinessException {
 		UserDelegate udel = new UserDelegate();
-		int acc = 0;
+		long acc = 0;
 		Locale currLoc = udel.getCurrencyLocale();
 		
-		HashMap expenseItems = (HashMap) request.getSession().getAttribute("expenseItemHash");
+		HashMap<String, CostTO> expenseItems = (HashMap<String, CostTO>) request.getSession().getAttribute("expenseItemHash");
 		if (expenseItems==null || expenseItems.size()==0) {
 			expenseItems = new HashMap<String,CostTO>();
 			request.getSession().setAttribute("expenseItemList", new Vector<CostTO>());
@@ -326,7 +343,7 @@ public class ExpenseAction extends GeneralStrutsAction {
 			while(i.hasNext()) {
 				CostTO cto = i.next();
 				if (cto.getTotalValue()!=null) {
-					acc += cto.getTotalValue().intValue();	
+					acc += cto.getTotalValue().longValue();	
 				}
 				exp.add(cto);
 			}
@@ -339,7 +356,7 @@ public class ExpenseAction extends GeneralStrutsAction {
 
 	
 	@SuppressWarnings("unchecked")
-	private ExpenseTO getTransferObjectFromActionForm(ExpenseForm frm,	HttpServletRequest request) {
+	private ExpenseTO getTransferObjectFromActionForm(ExpenseForm frm,	HttpServletRequest request) throws BusinessException {
 	    ExpenseTO eto = new ExpenseTO();
 	    
 	    UserTO uto = SessionUtil.getCurrentUser(request);
@@ -347,7 +364,7 @@ public class ExpenseAction extends GeneralStrutsAction {
         eto.setProject(new ProjectTO(frm.getProjectId()));
         eto.setUser(uto);
 	    eto.setDescription(frm.getComment());
-	    eto.setExpensesItems((Vector)request.getSession().getAttribute("expenseItemList"));
+	    eto.setExpensesItems((Vector<CostTO>)request.getSession().getAttribute("expenseItemList"));
 
 	    this.retrieveMetaFieldValue(request, frm, eto);				
 	    
@@ -355,17 +372,43 @@ public class ExpenseAction extends GeneralStrutsAction {
 	}
 	
 	
-	private void getActionFormFromTransferObject(ExpenseTO to, ExpenseForm frm, HttpServletRequest request){
+	private void getActionFormFromTransferObject(ExpenseTO to, ExpenseForm frm, HttpServletRequest request) throws BusinessException{
 	    frm.setExpenseId(to.getId());
 	    frm.setUsername(to.getUser().getName());
 	    frm.setComment(to.getDescription());
 	    frm.setProjectId(to.getProject().getId());
 	    frm.setAdditionalFields(to.getAdditionalFields());
+	    this.checkMissingProject(to.getProject().getId(), request);
 	}
 
 	
+    //if related project_id is not into project_list (probably because the user was disabled)
+    //insert the missing project at project combo
 	@SuppressWarnings("unchecked")
-	private void retrieveMetaFieldValue(HttpServletRequest request, ExpenseForm frm, ExpenseTO eto) {
+	private void checkMissingProject(String currentProjectId, HttpServletRequest request) throws BusinessException{
+		ProjectDelegate pdel = new ProjectDelegate();
+		
+		if (currentProjectId!=null && !currentProjectId.trim().equals("")) {
+		    boolean found = false;
+	    	Vector<ProjectTO> prjList = (Vector<ProjectTO>)request.getSession().getAttribute("expenseProjectList");
+	    	for (ProjectTO pto : prjList) {
+				if (pto.getId().equals(currentProjectId)) {
+					found = true;
+					break;
+				}
+			}
+	    	if (!found){
+	    		ProjectTO newPrj = new ProjectTO(currentProjectId); 
+	    		newPrj = pdel.getProjectObject(newPrj, true);
+	    		prjList.add(newPrj);
+	    		request.getSession().setAttribute("expenseProjectList", prjList);
+	    	}					
+		}
+	}
+	
+	
+	@SuppressWarnings("unchecked")
+	private void retrieveMetaFieldValue(HttpServletRequest request, ExpenseForm frm, ExpenseTO eto) throws MetaFieldNumericTypeException {
 		Vector<MetaFieldTO> metaFieldList = (Vector<MetaFieldTO>)request.getSession().getAttribute("metaFieldList");
 		super.setMetaFieldValuesFromForm(metaFieldList, request, eto);	    
 		if (metaFieldList!=null) {

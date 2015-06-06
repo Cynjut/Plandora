@@ -18,7 +18,7 @@ public class RequirementTO extends PlanningTO{
     private Timestamp deadlineDate;
     
     /** The list of status related with requirement. */
-    private Vector lnkRequirementHistory;
+    //private Vector lnkRequirementHistory;
 
     /** The project related with requirement */
     private ProjectTO project;
@@ -36,9 +36,9 @@ public class RequirementTO extends PlanningTO{
     private Integer estimatedTime; 
     
     /** List of resource Task objects related with current Requirement. (used by ShowAllRequreiment Form) */
-    private Vector resourceTaskList;
+    private Vector<ResourceTaskTO> resourceTaskList;
 
-    /** The requirement prioriry considered by customer */
+    /** The requirement priority considered by customer */
     private Integer priority; 
     
     /** The id of parent requirement */
@@ -47,10 +47,10 @@ public class RequirementTO extends PlanningTO{
     /** If true, the current requirement is a Adjustment Requirement. It is not a persistent attribute */
     private boolean isAdjustment;
 
-    /** If true, the current requirement should be reopend. It is not a persistent attribute */
+    /** If true, the current requirement should be reopened. It is not a persistent attribute */
     private boolean isReopening;
     
-    /** If the requirement was pre-approved, this attrbute should be set with the id of the resource that will be allocated. */
+    /** If the requirement was pre-approved, this attribute should be set with the id of the resource that will be allocated. */
     private String preApprovedReqResource;
     
     /** This field could be used by user to add a comment into the requirement history.*/
@@ -80,7 +80,7 @@ public class RequirementTO extends PlanningTO{
     public RequirementTO(RequirementTO clone){
         this.suggestedDate = clone.getSuggestedDate();
         this.deadlineDate = clone.getDeadlineDate();
-        this.lnkRequirementHistory=clone.getRequirementHistory();
+        //this.lnkRequirementHistory=clone.getRequirementHistory();
         this.project=clone.getProject();
         this.category=clone.getCategory();
         this.requester=clone.getRequester();
@@ -146,12 +146,12 @@ public class RequirementTO extends PlanningTO{
     }
     
     /////////////////////////////////////////////    
-    public Vector getRequirementHistory() {
-        return lnkRequirementHistory;
-    }
-    public void setRequirementHistory(Vector newValue) {
-        this.lnkRequirementHistory = newValue;
-    }
+    //public Vector getRequirementHistory() {
+    //   return lnkRequirementHistory;
+    //}
+    //public void setRequirementHistory(Vector newValue) {
+    //    this.lnkRequirementHistory = newValue;
+    //}
     
     /////////////////////////////////////////////    
     public RequirementStatusTO getRequirementStatus() {
@@ -194,10 +194,10 @@ public class RequirementTO extends PlanningTO{
     }
 
     /////////////////////////////////////////////    
-    public Vector getResourceTaskList() {
+    public Vector<ResourceTaskTO> getResourceTaskList() {
         return resourceTaskList;
     }
-    public void setResourceTaskList(Vector newValue) {
+    public void setResourceTaskList(Vector<ResourceTaskTO> newValue) {
         this.resourceTaskList = newValue;
     }
     
@@ -228,13 +228,13 @@ public class RequirementTO extends PlanningTO{
     public String getParentRequirementId() {
     	if (parentRequirementId==null) {
     		
-    		//find out the parent requirement throught the relation list...
-    		Vector relationList = PlanningRelationTO.getRelation(getRelationList(), PlanningRelationTO.RELATION_PART_OF, this.getId(), true);
+    		//find out the parent requirement through the relation list...
+    		Vector<PlanningRelationTO> relationList = PlanningRelationTO.getRelation(getRelationList(), PlanningRelationTO.RELATION_PART_OF, this.getId(), true);
     		if (relationList!=null && relationList.size()>0) {
-        		Iterator i = relationList.iterator();
+        		Iterator<PlanningRelationTO> i = relationList.iterator();
         		String ids = "";
         		while(i.hasNext()) {
-        			PlanningRelationTO relation = (PlanningRelationTO)i.next();
+        			PlanningRelationTO relation = i.next();
             		if (relation.getRelated()!=null &&	relation.getPlanning()!=null) {
             			if (!ids.equals("")) {
             				ids = ids + "; ";	

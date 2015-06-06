@@ -30,10 +30,10 @@
 	</tr>
 	</table>
 	
-	<table class="table" width="100%" border="1" cellspacing="1" cellpadding="2">
+	<table class="table" width="100%" height="92%" border="0" cellspacing="0" cellpadding="0">
 		<tr class="tableRowEven">
-		   <td colspan="2">
-				<html:textarea name="histRiskForm" property="historyContent" styleClass="textBox" cols="135" rows="13" readonly="true" />
+		   <td>
+				<html:textarea name="histRiskForm" property="historyContent" styleClass="fullTextArea" readonly="true" />
 		   </td>
 		</tr>	
 	</table>

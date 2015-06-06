@@ -4,19 +4,17 @@ import java.awt.Color;
 import java.util.Iterator;
 import java.util.Vector;
 
-import javax.servlet.jsp.JspException;
-import javax.servlet.jsp.PageContext;
-
-import org.apache.struts.Globals;
-import org.apache.struts.util.RequestUtils;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpSession;
 
 import com.pandora.FieldValueTO;
 import com.pandora.PlanningRelationTO;
-import com.pandora.ReportTO;
 import com.pandora.PreferenceTO;
-import com.pandora.UserTO;
+import com.pandora.ReportTO;
 import com.pandora.TransferObject;
+import com.pandora.UserTO;
 import com.pandora.delegate.DbQueryDelegate;
+import com.pandora.delegate.UserDelegate;
 import com.pandora.exception.BusinessException;
 import com.pandora.gui.taglib.calendar.Calendar;
 
@@ -84,7 +82,7 @@ public class HtmlUtil {
             content = content + " disabled"; 
         }
         if (eventJs!=null){
-            content = content + eventJs;    
+        	content = content + " " + eventJs; 
         }
         if (maxLength>0) {
             content = content + " maxlength=\"" + maxLength + "\"";
@@ -131,25 +129,26 @@ public class HtmlUtil {
 	    return getComboBox(key, values, "textBox", selectedValue, null);
 	}
 	
-	public static String getComboBox(String key, String values, String cssName, String selectedValue, PageContext pageContext){
-		return getComboBox(key, values, cssName, selectedValue, pageContext, 0, null);
+	public static String getComboBox(String key, String values, String cssName, String selectedValue, HttpSession session){
+		return getComboBox(key, values, cssName, selectedValue, session, 0, null, false);
 	}
 	
 	public static String getComboBox(String key, String values, String cssName, String selectedValue, 
-			PageContext pageContext, int size, String jScript){
+			HttpSession session, int size, String jScript, boolean isDisabled){
 	    StringBuffer response = new StringBuffer();
 	    
 	    response.append("<select id=\"" + key + "\" name=\"" + key + "\" " + (size>0?" size=\"" + size + "\"":""));
 	    if (jScript !=null) {
 	    	response.append(" onkeypress=\"" + jScript + "\" onchange=\"" + jScript + "\"");
 	    }
-	    response.append(" class=\"" + cssName + "\">");
+	    response.append(" class=\"" + cssName + "\"" + (isDisabled?" disabled=\"disabled\"":"") + ">");
+	    
         String[] options = values.split("\\|");
         if (options.length % 2 == 0) {
             for (int p=0; p<options.length; p+=2) {
                 response.append("<option " + getSelectedComboValue(selectedValue, options[p]) + 
                         " value=\"" + options[p] + "\">" + 
-                        getBundleString(options[p+1], pageContext) +"</option>");    
+                        getBundleString(options[p+1], session) +"</option>");    
             }
         }
         response.append("</select>");
@@ -232,25 +231,22 @@ public class HtmlUtil {
 	    return sb.toString();
 	}
 	
-	
-    public static String getHtmlField(FieldValueTO field, String fieldValue, String formName, 
-            String[] i18nBoolLabels, String[] i18nDateLabels){
-    	return getHtmlField(field, fieldValue, formName, i18nBoolLabels, i18nDateLabels, null);
-    }
-    
-	
-    public static String getHtmlField(FieldValueTO field, String fieldValue, String formName, 
-            String[] i18nBoolLabels, String[] i18nDateLabels, String jsScript){
+	public static String getHtmlField(FieldValueTO field, String fieldValue, String formName, String[] i18nLabels, String[] i18nDateLabels, String jsScript){
+		return getHtmlField(field, fieldValue, null, formName, i18nLabels, i18nDateLabels, jsScript);	
+	}
+		
+    public static String getHtmlField(FieldValueTO field, String fieldValue, Vector<Vector<Object>> fieldTableValues, String formName, 
+    		String[] i18nLabels, String[] i18nDateLabels, String jsScript){
         
         String response = "";
         if (field.getType().equals(FieldValueTO.FIELD_TYPE_BOOL)) {
             String labels = "";
-            if (i18nBoolLabels!=null && i18nBoolLabels.length>=2) {
-                labels = "OK|" + i18nBoolLabels[0] + "|NOK|" + i18nBoolLabels[1];                
+            if (i18nLabels!=null && i18nLabels.length>=2) {
+                labels = "OK|" + i18nLabels[0] + "|NOK|" + i18nLabels[1];                
             } else {
                 labels = "<Err>|<Err>";
             }
-            response = getComboBox(field.getId(), labels, "textBox", fieldValue, null, 0, jsScript);
+            response = getComboBox(field.getId(), labels, "textBox", fieldValue, null, 0, jsScript, false);
             
         } else if (field.getType().equals(FieldValueTO.FIELD_TYPE_PASS)) {
             response = getTextBox(field.getId(), fieldValue, false, null, field.getMaxLen(), field.getSize(), "password");
@@ -281,10 +277,72 @@ public class HtmlUtil {
 			                "<input type=\"button\" " + (field.isReadOnly()?"disabled=\"true\"":"") + " class=\"button\" value=\"   <<  \">" +
 		        	        "</td><td width=\"40%\">" +
 		        		      	  getComboBox(field.getId(), fieldValue, (field.isReadOnly()?"textBoxDisabled":"textBox"), "", 
-		        		      			  		null, field.getSize(), jsScript) +
+		        		      			  		null, field.getSize(), jsScript, false) +
 		        		    "</td>" +
 		        		 "</tr></table>";
-            
+        	
+        } else if (field.getType().equals(FieldValueTO.FIELD_TYPE_GRID)) {
+        	response = "<br/><input type=\"hidden\" name=\"" + field.getId()+ "\" value=\"" + FieldValueTO.FIELD_TYPE_GRID + "\" />\n" +
+        			   "<table border=\"0\" cellspacing=\"1\" cellpadding=\"0\" width=\"38%\">\n";
+        	StringBuffer title = new StringBuffer("<tr class=\"tableRowHeader\">");
+        	StringBuffer body = new StringBuffer();
+        	StringBuffer postTable = new StringBuffer();
+
+        	if (i18nLabels!=null) {
+        		for(int c=0; c<i18nLabels.length;c++) {
+        			String label = i18nLabels[c];
+        			String colspan="";
+        			if (c==i18nLabels.length-1) {
+        				colspan="colspan=\"2\"";
+        			}
+        			title.append("<th class=\"tableCellHeader\" " + colspan + ">" + label + "</th>");	
+				}
+        	}
+        	title.append("</tr>");
+        	
+        	if (fieldTableValues!=null){
+        		for(int r=0; r<fieldTableValues.size();r++) {
+        			Vector<Object> line = fieldTableValues.elementAt(r);
+        			if (line!=null) {
+        				boolean emptyRow = true;
+        				StringBuffer currentRow = new StringBuffer("<tr>");
+            			for(int c=0; c<line.size();c++) {
+                			String newCell = "&nbsp;";
+            				Object cellObj = line.elementAt(c);
+            				if (cellObj!=null && field.getGridFields().size()>c) {
+            					emptyRow = false;
+            					FieldValueTO sub = field.getGridFields().elementAt(c);
+            					FieldValueTO htmlField = new FieldValueTO(sub.getId()+"_"+r, sub.getLabel(), sub.getType(), sub.getMaxLen(), sub.getSize());
+            					htmlField.setDomain(sub.getDomain());
+            					htmlField.setHelpMessage(sub.getHelpMessage());
+            					newCell = getHtmlField(htmlField, ""+cellObj, formName, i18nLabels, i18nDateLabels, jsScript);
+            				}
+            				currentRow.append("<td>" + newCell + "</td>");
+    					}
+            			currentRow.append("<td><a href=\"javascript:occTableRemoveRow('" + formName + "', '" + field.getId()+ "_" + r + "');\" border=\"0\"><center><img border=\"0\" src=\"../images/remove.gif\" ></center></a></td></tr>\n");
+            			
+            			if (!emptyRow) {
+            				body.append(currentRow);
+            			}
+        			}
+        		}
+        	}
+        	
+        	body.append("<tr>");
+        	for (FieldValueTO sub : field.getGridFields()) {
+        		String newCell = "&nbsp;";
+        		if (!sub.getType().equals(FieldValueTO.FIELD_TYPE_GRID)) {
+        			newCell = getHtmlField(sub, "", formName, i18nLabels, i18nDateLabels, jsScript);        			
+        		}
+        		body.append("<td>" + newCell + "</td>");
+			}
+        	body.append("<td>&nbsp;</td></tr>\n");
+        	
+        	postTable.append("<input type=\"button\" name=\"rowAddButton\" value=\"  +  \" onclick=\"javascript:occTableAddRow('" + formName + "', '" + field.getId() + "');\" class=\"button\"></td></tr>\n");
+        	postTable.append("<input type=\"hidden\" name=\"" + field.getId()+ "_rows\" value=\"" + ((fieldTableValues==null||fieldTableValues.size()==0)?1:fieldTableValues.size()) + "\" />\n");
+        	response = response + title.toString() + body.toString() + "</tr></table>\n" + postTable.toString();
+        	
+        	
         } else {
             response = getTextBox(field.getId(), fieldValue, field.getMaxLen(), field.getSize());
         }
@@ -293,7 +351,7 @@ public class HtmlUtil {
     }
 
     
-    public static Vector<TransferObject> getQueryData(String sql, PageContext pageContext, String optionalProjectId, String optionalUserId){
+    public static Vector<TransferObject> getQueryData(String sql, HttpSession session, String optionalProjectId, String optionalUserId){
         DbQueryDelegate dbdel = new DbQueryDelegate();
         Vector<TransferObject> response = new Vector<TransferObject>();
 
@@ -314,7 +372,7 @@ public class HtmlUtil {
             	    to.setId((String)item.elementAt(0));
             	    
             	    String key = (item.elementAt(1)).toString();
-               	    to.setGenericTag(getBundleString(key, pageContext));            	    	
+               	    to.setGenericTag(getBundleString(key, session));            	    	
             	    
                     response.add(to);        	    
             	}            	
@@ -379,21 +437,26 @@ public class HtmlUtil {
     		response = "../images/occurrence.gif";
     	} else if (entityType.equals(PlanningRelationTO.ENTITY_RISK)) {
     		response = "../images/risk.gif";
+    	} else if (entityType.equals("ATTACHMENT")) {
+    		response = "../images/attachment.gif";
     	} else {
     		response = "../images/empty.gif";
     	}
     	return response;
     }
     
-    private static String getBundleString(String key, PageContext pageContext ){
+    public static String getBundleString(String key, HttpSession session ){
 	    String value = "";
-	    if (pageContext!=null) {
-			try {   	    
-			    value = RequestUtils.message(pageContext, null, Globals.LOCALE_KEY, key, null);
-		        if (value.startsWith("???")) {
-		            value = key;
-				}
-	        } catch (JspException e) {
+	    if (session!=null) {
+			try {
+		   	    UserTO uto = (UserTO)session.getAttribute(UserDelegate.CURRENT_USER_SESSION);
+		   	    if (uto!=null){
+		   	    	value = uto.getBundle().getMessage(uto.getLocale(), key);
+			        if (value.startsWith("???")) {
+			            value = key;
+					}		   	    	
+		   	    }
+	        } catch (Exception e) {
 	            value = "err!";
 	        }	    	
 	    } else {
@@ -459,4 +522,42 @@ public class HtmlUtil {
 		 }
 	    return color;
 	 }
+
+
+	public static String getColorComboBox(String key, String cssName, int size, String jScript, String selectedValue, HttpServletRequest request) {
+		StringBuffer response = new StringBuffer();
+		
+		UserTO uto = SessionUtil.getCurrentUser(request);
+		
+	    response.append("<select id=\"" + key + "\" name=\"" + key + "\" " + (size>0?" size=\"" + size + "\"":""));
+	    if (jScript !=null) {
+	    	response.append(" onkeypress=\"" + jScript + "\" onchange=\"" + jScript + "\"");
+	    }
+	    response.append(" class=\"" + cssName + "\">");
+
+	    String colors = "-1|color.default|ffffff|color.White|000000|color.black|808080|color.dgray|c0c0c0|color.lgray|" +
+	    				"808000|color.dyellow|ffff00|color.lyellow|000080|color.dblue|0000ff|color.lblue|" +
+	    				"008000|color.dgreen|00ff00|color.lgreen|800000|color.dred|ff0000|color.lred";
+        String[] options = colors.split("\\|");
+        
+        if (options.length % 2 == 0) {
+            for (int p=0; p<options.length; p+=2) {
+            	
+            	String selected = "";
+            	if (selectedValue!=null && selectedValue.equals(options[p])) {
+            		selected = "selected";
+            	}
+            	
+            	String slyleColor = "'../images/color/c" + options[p] + ".png'"; 
+            	if (options[p].equals("-1")) {
+            		slyleColor = "'../images/color/empty.gif'";
+            	}
+                response.append("<option style=\"background-image: url(" + slyleColor + "); background-repeat:no-repeat; background-position:right center;\" value=\"" + options[p] + "\" " + selected + ">" + 
+                		uto.getBundle().getMessage(uto.getLocale(), options[p+1]) +"</option>");    
+            }
+        }
+        response.append("</select>");
+        
+        return response.toString();
+	}
 }

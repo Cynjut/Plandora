@@ -31,7 +31,7 @@ public class NotificationTO extends TransferObject{
     private String description;
     
     /** The specific fields of notification */
-    private Vector fields;
+    private Vector<NotificationFieldTO> fields;
     
     /** The number of retry of engine should be perform 
      * if the notification process fail.*/
@@ -130,10 +130,10 @@ public class NotificationTO extends TransferObject{
     }
     
     /////////////////////////////////////////    
-    public Vector getFields() {
+    public Vector<NotificationFieldTO> getFields() {
         return fields;
     }
-    public void setFields(Vector newValue) {
+    public void setFields(Vector<NotificationFieldTO> newValue) {
         this.fields = newValue;
     }
     
@@ -225,7 +225,7 @@ public class NotificationTO extends TransferObject{
 
     public void addField(NotificationFieldTO nfto) {
         if (this.fields==null) {
-            this.fields = new Vector();
+            this.fields = new Vector<NotificationFieldTO>();
         }
         this.fields.add(nfto);        
     }

@@ -3,6 +3,8 @@ package com.pandora.delegate;
 import java.util.ArrayList;
 import java.util.Vector;
 
+import com.pandora.DBQueryParam;
+import com.pandora.DBQueryResult;
 import com.pandora.bus.DbQueryBUS;
 import com.pandora.exception.BusinessException;
 
@@ -20,12 +22,16 @@ public class DbQueryDelegate extends GeneralDelegate {
      * @see com.pandora.bus.DbQueryBUS.performQuery(java.lang.String)
      */
     public Vector<Vector<Object>> performQuery(String sql) throws BusinessException{
-        return bus.performQuery(sql, null, null);
+        return this.performQuery(sql, null, null);
     }
 
 
-    public Vector performQuery(String sql, int[] types, Vector params) throws BusinessException{
-        return bus.performQuery(sql, types ,params);
+    public Vector<Vector<Object>> performQuery(String sql, int[] types, Vector params) throws BusinessException{
+    	DBQueryResult r = bus.performQuery(sql, types ,params);
+    	Vector<Vector<Object>> v = new Vector<Vector<Object>>();
+    	v.addElement(r.getColumns());
+    	v.addAll(r.getData());
+        return v;
     }
 
 
@@ -41,7 +47,7 @@ public class DbQueryDelegate extends GeneralDelegate {
         return bus.executeQuery(sql);
     }
 
-    public Vector executeQuery(ArrayList sql, ArrayList params) throws BusinessException{
+    public Vector executeQuery(ArrayList<String> sql, ArrayList<DBQueryParam> params) throws BusinessException{
         return bus.executeQuery(sql, params);
     }
     

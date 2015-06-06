@@ -21,10 +21,13 @@ public class KbDocumentTO extends TransferObject{
     
     private ProjectTO project= null;
     
+    private float score = 0;
     
-    public KbDocumentTO(Document d) {
+    
+    public KbDocumentTO(Document d, float sc) {
         this.doc = d;
         this.type = d.get(KbIndex.KB_TYPE);
+        this.score = sc;
     }
     
     public Timestamp getCreationDate(){
@@ -37,8 +40,8 @@ public class KbDocumentTO extends TransferObject{
         return ts;
     }
     
-    public String getRelevance(){
-        return doc.getBoost()+"";
+    public float getRelevance(){
+        return score;
     }
     
     /////////////////////////////////////    

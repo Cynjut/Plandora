@@ -1,5 +1,6 @@
 package com.pandora.dao;
 
+import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -14,12 +15,15 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Vector;
 
+import javax.imageio.ImageIO;
+
 import net.sf.jasperreports.engine.JRExporterParameter;
 import net.sf.jasperreports.engine.JRParameter;
 import net.sf.jasperreports.engine.JRResultSetDataSource;
 import net.sf.jasperreports.engine.JasperExportManager;
 import net.sf.jasperreports.engine.JasperFillManager;
 import net.sf.jasperreports.engine.JasperPrint;
+import net.sf.jasperreports.engine.JasperPrintManager;
 import net.sf.jasperreports.engine.export.JRRtfExporter;
 import net.sf.jasperreports.engine.export.oasis.JROdtExporter;
 
@@ -34,6 +38,7 @@ import com.pandora.ResourceTO;
 import com.pandora.TransferObject;
 import com.pandora.UserTO;
 import com.pandora.bus.ReportBUS;
+import com.pandora.bus.SystemSingleton;
 import com.pandora.delegate.ProjectDelegate;
 import com.pandora.exception.BusinessException;
 import com.pandora.exception.DataAccessException;
@@ -55,10 +60,13 @@ public class ReportDAO extends DataAccess {
         ResultSet rs = null;
         PreparedStatement pstmt = null;
         boolean isEmpty = false;
-        
+        DbQueryDAO dbdao = new DbQueryDAO();
 		try {
-			c = getConnection();
-			pstmt = this.prepareStatement(rto.getSqlWithoutDomain(), rto, c);
+			String sql = rto.getSqlWithoutDomain();
+			c = dbdao.getConnectionBasedToSql(sql, true);
+			sql = dbdao.removeConnStringFromSql(sql);
+			
+			pstmt = this.prepareStatement(sql, rto, c);
 	        rs = pstmt.executeQuery();
 	        
 			Map<String,Object> parameters = new HashMap<String,Object>();
@@ -68,17 +76,38 @@ public class ReportDAO extends DataAccess {
 				parameters.put(JRParameter.REPORT_LOCALE, loc);
 			}
 
+			String encoding = SystemSingleton.getInstance().getDefaultEncoding();
 			JRResultSetDataSource jrRS = new JRResultSetDataSource(rs);
 			JasperPrint jp = JasperFillManager.fillReport(rto.getReportFileName(), parameters, jrRS );
 			isEmpty = (jp.getPages().size()==0);
 			if (!isEmpty) {
 				if (rto.getExportReportFormat().equals(ReportTO.REPORT_EXPORT_PDF)) {
-					response = JasperExportManager.exportReportToPdf(jp);    
-
+					response = JasperExportManager.exportReportToPdf(jp);   
+					
+				} else if (rto.getExportReportFormat().equals(ReportTO.REPORT_EXPORT_JPG)) {
+					BufferedImage bufferedImage = (BufferedImage)JasperPrintManager.printPageToImage(jp, 0, 2.0f);
+				    ByteArrayOutputStream baos = null;
+				    try {
+					    baos = new ByteArrayOutputStream();
+					    ImageIO.write( bufferedImage, "jpg", baos );
+					    baos.flush();
+					    response = baos.toByteArray();			    				    	
+				    } catch (Exception e){
+				    	e.printStackTrace();
+				    }finally {
+				    	try {
+				    		if (baos!=null)  {
+				    			baos.close();	
+				    		}
+					    } catch (Exception e){
+					    	e.printStackTrace();
+					    }
+				    }
+					
 				} else if (rto.getExportReportFormat().equals(ReportTO.REPORT_EXPORT_RTF)) {
 					JRRtfExporter exporter = new JRRtfExporter();
 					ByteArrayOutputStream baos = new ByteArrayOutputStream();  
-					exporter.setParameter(JRExporterParameter.CHARACTER_ENCODING, "UTF-8");   
+					exporter.setParameter(JRExporterParameter.CHARACTER_ENCODING, encoding);   
 					exporter.setParameter(JRExporterParameter.JASPER_PRINT, jp );
 					exporter.setParameter(JRExporterParameter.OUTPUT_STREAM, baos  );
 					exporter.exportReport();	
@@ -87,7 +116,7 @@ public class ReportDAO extends DataAccess {
 				} else if (rto.getExportReportFormat().equals(ReportTO.REPORT_EXPORT_ODT)) {
 					JROdtExporter exporter = new JROdtExporter();
 					ByteArrayOutputStream baos = new ByteArrayOutputStream();  
-					exporter.setParameter(JRExporterParameter.CHARACTER_ENCODING, "UTF-8");   
+					exporter.setParameter(JRExporterParameter.CHARACTER_ENCODING, encoding);   
 					exporter.setParameter(JRExporterParameter.JASPER_PRINT, jp );
 					exporter.setParameter(JRExporterParameter.OUTPUT_STREAM, baos  );
 					exporter.exportReport();	
@@ -291,27 +320,28 @@ public class ReportDAO extends DataAccess {
 				catWhere = " and r.category_id='" + cto.getId() + "' "; 
 			}
 			
-			String sql = "select r.id, r.name, r.report_perspective_id, r.data_type, " + 
+			String sql = "select r.id, r.name, r.report_perspective_id, r.data_type, r.description, " + 
 		       	         "r.category_id, r.goal, r.tolerance, r.tolerance_type, " +
 		       	         "rr.last_execution, re.value, o.strategy, o.weight, re.report_id, " +
-		       	         "p.id as project_id, p.name as project_name, o.occurrence_id, r.final_date " +
-		          "from report_result re, (select report_id, max(last_execution) as last_execution  " +
+		       	         "p.id as project_id, p.name as project_name, o.occurrence_id, r.final_date, " +
+		       	         "p2.id as project_label_id, p2.name as project_label_name " +
+		          "from project_report pr, report_result re, (select report_id, max(last_execution) as last_execution  " +
 				                          "from report_result where last_execution <= ? " +
-				                          "group by report_id) as rr, project p, " +
+				                          "group by report_id) as rr, project p, project p2, " +
 		                "report r LEFT OUTER JOIN (select report_id, ok.weight, o.name as strategy, ok.occurrence_id " + 
 						                          "from occurrence_kpi ok, occurrence o  " +
 						                          "where o.id = ok.occurrence_id and occurrence_status <> '99' " +
 					                             ") as o on o.report_id = r.id " +
 		         "where r.type=1  " +
-		           "and rr.report_id = r.id and rr.report_id = re.report_id " +
-		           "and rr.last_execution = re.last_execution and r.project_id = p.id " +
+		           "and rr.report_id = r.id and rr.report_id = re.report_id and re.project_id = p.id and r.project_id = p2.id " +
+		           "and rr.last_execution = re.last_execution and pr.project_id = p.id and pr.report_id = r.id " +
 		           "and r.project_id in (" + projList + ") " + catWhere +  
-		         "order by p.id, o.strategy asc, o.weight asc, r.name";
+		         "order by o.strategy asc, p.name, o.weight asc, r.name";
 			pstmt = c.prepareStatement(sql);		
 			pstmt.setTimestamp(1, reference);
 			rs = pstmt.executeQuery();
 			while (rs.next()){
-				BSCReportTO bsc = this.populateBSCReportByResultSet(rs);
+				BSCReportTO bsc = this.populateBSCReportByResultSet(rs, c);
 			    response.addElement(bsc);
 			} 
 						
@@ -329,17 +359,17 @@ public class ReportDAO extends DataAccess {
 		ResultSet rs = null;
 		PreparedStatement pstmt = null; 
 		try {
-			pstmt = c.prepareStatement("select r.id, r.name, r.type, r.report_perspective_id, " +
+			pstmt = c.prepareStatement("select r.id, r.name, r.type, r.report_perspective_id, r.description, " +
 									      "r.sql_text, r.execution_hour, r.last_execution, r.project_id, " +
 									      "r.final_date, r.data_type, r.file_name, r.category_id, r.profile_view, ok.weight, " +
-									      "r.goal, r.tolerance, r.tolerance_type " +
+									      "r.goal, r.tolerance, r.tolerance_type, r.kpi_type " +
 									   "from occurrence_kpi ok, report r " +
 									   "where r.final_date is null and ok.report_id = r.id " +
 									     "and ok.occurrence_id= ?");
 			pstmt.setString(1, occurrenceId);			
 			rs = pstmt.executeQuery();
 			while (rs.next()){
-			    ReportTO rto = this.populateBeanByResultSet(rs);
+			    ReportTO rto = this.populateBeanByResultSet(rs, c);
 			    rto.setGenericTag(getString(rs, "weight"));
 			    response.addElement(rto);
 			} 
@@ -353,6 +383,25 @@ public class ReportDAO extends DataAccess {
 	}
 
     
+    private void includeProjectReport(ReportTO rto, Connection c) throws DataAccessException {
+		ResultSet rs = null;
+		PreparedStatement pstmt = null; 
+		try {
+			pstmt = c.prepareStatement("select report_id, project_id from project_report where report_id=?");
+			pstmt.setString(1, rto.getId());			
+			rs = pstmt.executeQuery();
+			while (rs.next()){
+			    ProjectTO pto = new ProjectTO(getString(rs, "project_id"));
+			    rto.addAppliedProjectList(pto);
+			} 
+		} catch (SQLException e) {
+			throw new DataAccessException(e);
+		}finally{
+			super.closeStatement(rs, pstmt);
+		}	 
+	}
+    
+    
     /**
      * Return a list of report objects that must be executed by timer
      */
@@ -364,11 +413,10 @@ public class ReportDAO extends DataAccess {
 			int hourNow = DateUtil.get(DateUtil.getNow(), Calendar.HOUR_OF_DAY);
 		    Timestamp tsDateNow = DateUtil.getDate(DateUtil.getNow(), true);
 		    
-		    //get a list of objects from data base
-			pstmt = c.prepareStatement("select Id, name, type, report_perspective_id, " +
+			pstmt = c.prepareStatement("select id, name, type, report_perspective_id, description, " +
 									   "sql_text, execution_hour, last_execution, project_id, " +
 									   "final_date, data_type, file_name, category_id, profile_view, " +
-									   "goal, tolerance, tolerance_type " +
+									   "goal, tolerance, tolerance_type, kpi_type " +
 									   "from report " +
 									   "where final_date is null " +
 									     "and execution_hour = ? and type <> '0' " +
@@ -377,7 +425,7 @@ public class ReportDAO extends DataAccess {
 			pstmt.setTimestamp(2, tsDateNow);			
 			rs = pstmt.executeQuery();
 			while (rs.next()){
-			    ReportTO rto = this.populateBeanByResultSet(rs);
+			    ReportTO rto = this.populateBeanByResultSet(rs, c);
 			    rto.setCategory(this.getCategory(rto.getCategory()));
 			    response.addElement(rto);
 			} 
@@ -413,7 +461,7 @@ public class ReportDAO extends DataAccess {
 
 		    
 		    if (pto!=null) {
-		    	projectSql = " and (r.project_id='0' or r.project_id in (" + pdel.getProjectIn(pto.getId()) + ")) ";
+		    	projectSql = " and (r.project_id='0' or pr.project_id in (" + pdel.getProjectIn(pto.getId()) + ")) ";
 		    	if (!isKpi && pto.getRoleIntoProject()!=null) {
 		    		//check if report profile is equals the current role of project or 'all'
 		    		profileSql = "and (r.profile_view='" + pto.getRoleIntoProject() + "' or r.profile_view='4' " +
@@ -427,12 +475,12 @@ public class ReportDAO extends DataAccess {
 		        condition = "and category_id=? ";
 		    }
 		    
-			pstmt = c.prepareStatement("select r.Id, r.name, r.type, r.report_perspective_id, " +
+			pstmt = c.prepareStatement("select r.id, r.name, r.type, r.report_perspective_id, r.description, " +
 									   "r.sql_text, r.execution_hour, r.last_execution, r.project_id, r.final_date, " +
 									   "r.data_type, p.name as project_name, r.file_name, r.category_id, r.profile_view, " +
-									   "r.goal, r.tolerance, r.tolerance_type " +
-									   "from report r, project p " +
-									   "where r.project_id = p.id " + condition + projectSql + closedWhere +
+									   "r.goal, r.tolerance, r.tolerance_type, r.kpi_type " +
+									   "from report r, project p, project_report pr " +
+									   "where pr.report_id = r.id and pr.project_id = p.id " + condition + projectSql + closedWhere +
 									     sourceSql + profileSql + 
 									     "order by r.project_id, r.report_perspective_id, r.name");
 			if (categoryId!=null && !categoryId.equals("0")) {
@@ -440,7 +488,7 @@ public class ReportDAO extends DataAccess {
 			}
 			rs = pstmt.executeQuery();
 			while (rs.next()){
-			    ReportTO rto = this.populateBeanByResultSet(rs);
+			    ReportTO rto = this.populateBeanByResultSet(rs, c);
 			    rto.setCategory(this.getCategory(rto.getCategory()));
 			    
 			    //get remaining field...
@@ -477,7 +525,7 @@ public class ReportDAO extends DataAccess {
     		while(i.hasNext()){
     		    ReportTO rto = i.next();
     		    rto.setCategory(this.getCategory(rto.getCategory()));
-    		    rrdao.fillInReport(rto, initialDate, finalDate, c);
+    		    rrdao.fillInReport(rto, projectId, initialDate, finalDate, c);
     		}
     		
     		
@@ -490,12 +538,12 @@ public class ReportDAO extends DataAccess {
     }
 
     
-    public void getKpiValues(Timestamp initialDate, Timestamp finalDate, ReportTO kpiObj) throws DataAccessException {
+    public void getKpiValues(Timestamp initialDate, Timestamp finalDate, ReportTO kpiObj, String projectId) throws DataAccessException {
         ReportResultDAO rrdao = new ReportResultDAO(); 
         Connection c = null;
     	try {
     		c = getConnection();
-   		    rrdao.fillInReport(kpiObj, initialDate, finalDate, c);
+   		    rrdao.fillInReport(kpiObj, projectId, initialDate, finalDate, c);
     	} catch(Exception e){
     		throw new DataAccessException(e);
     	} finally{
@@ -503,7 +551,36 @@ public class ReportDAO extends DataAccess {
     	}       
     }
     
-    
+	
+    public Vector<ReportTO> getReportByKpiType(Integer kpiType) throws DataAccessException {
+		Vector<ReportTO> response= new Vector<ReportTO>();
+		ResultSet rs = null;
+		PreparedStatement pstmt = null; 
+		Connection c = null;
+		try {
+			c = getConnection();
+			pstmt = c.prepareStatement("select r.id, r.name, r.type, r.report_perspective_id, r.description, " + 
+									   "r.sql_text, r.execution_hour, r.last_execution, r.project_id, " +
+									   "r.final_date, r.data_type, r.file_name, r.category_id, r.profile_view, " +
+									   "r.goal, r.tolerance, r.tolerance_type, r.kpi_type " +
+									   "from report r where r.kpi_type = ?");
+			pstmt.setInt(1, kpiType);
+			rs = pstmt.executeQuery();
+			while (rs.next()){
+			    ReportTO rto = this.populateBeanByResultSet(rs, c);
+			    response.addElement(rto);
+			} 
+
+		} catch (SQLException e) {
+			throw new DataAccessException(e);
+		}finally{
+			super.closeStatement(rs, pstmt);
+			this.closeConnection(c);
+		}	 
+		return response;
+	}
+
+	
     /**
      * Get a list of all Report TOs from data base, based on time range and area.
      */
@@ -513,23 +590,22 @@ public class ReportDAO extends DataAccess {
 		ResultSet rs = null;
 		PreparedStatement pstmt = null; 
 		try {
-		     
-		    //get a list of objects from data base
-			pstmt = c.prepareStatement("select Id, name, type, report_perspective_id, " + 
-									   "sql_text, execution_hour, last_execution, project_id, " +
-									   "final_date, data_type, file_name, category_id, profile_view, " +
-									   "goal, tolerance, tolerance_type " +
-									   "from report " +
-									   "where final_date is null " +
-									   	 "and report_perspective_id=? and type <> '0' " +
-									   	 "and project_id=? and (category_id is NULL or category_id=?) " +
-									     "order by name, type");
+			pstmt = c.prepareStatement("select r.id, r.name, r.type, r.report_perspective_id, r.description, " + 
+									   "r.sql_text, r.execution_hour, r.last_execution, r.project_id, " +
+									   "r.final_date, r.data_type, r.file_name, r.category_id, r.profile_view, " +
+									   "r.goal, r.tolerance, r.tolerance_type, r.kpi_type " +
+									   "from report r, project_report pr " +
+									   "where r.final_date is null " +
+									   	 "and r.report_perspective_id=? and r.type <> '0' " +
+									   	 "and pr.project_id=? and (r.category_id is NULL or r.category_id=?) " +
+									   	 "and pr.report_id = r.id " +
+									   "order by r.name, r.type");
 			pstmt.setString(1, reportPerspectiveId);
 			pstmt.setString(2, projectId);
 			pstmt.setString(3, categoryId);
 			rs = pstmt.executeQuery();
 			while (rs.next()){
-			    ReportTO rto = this.populateBeanByResultSet(rs);
+			    ReportTO rto = this.populateBeanByResultSet(rs, c);
 			    rto.setCategory(this.getCategory(rto.getCategory()));
 			    response.addElement(rto);
 			} 
@@ -553,15 +629,15 @@ public class ReportDAO extends DataAccess {
 		PreparedStatement pstmt = null; 
 		try {
 		    ReportTO rto = (ReportTO)to;
-			pstmt = c.prepareStatement("select Id, name, type, report_perspective_id, " +
+			pstmt = c.prepareStatement("select Id, name, type, report_perspective_id, description, " +
 					   				   "sql_text, execution_hour, last_execution, project_id, " +
 					   				   "final_date, data_type, file_name, category_id, profile_view, " +
-					   				   "goal, tolerance, tolerance_type " +
+					   				   "goal, tolerance, tolerance_type, kpi_type " +
 					   				   "from report where id = ?");			
 			pstmt.setString(1, rto.getId());
 			rs = pstmt.executeQuery();
 			while (rs.next()){
-			    response = this.populateBeanByResultSet(rs);
+			    response = this.populateBeanByResultSet(rs, c);
 			    response.setCategory(this.getCategory(response.getCategory()));
 			} 
 						
@@ -584,10 +660,10 @@ public class ReportDAO extends DataAccess {
 		    ReportTO rto = (ReportTO)to;
 			rto.setId(this.getNewId());
 					    
-			pstmt = c.prepareStatement("insert into report (Id, name, type, report_perspective_id, " +
+			pstmt = c.prepareStatement("insert into report (id, name, type, report_perspective_id, " +
 					   				   "sql_text, execution_hour, last_execution, project_id, final_date, " +
-					   				   "data_type, file_name, category_id, profile_view, goal, tolerance, tolerance_type) " +
-									   "values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
+					   				   "data_type, file_name, category_id, profile_view, goal, tolerance, tolerance_type, description, kpi_type) " +
+									   "values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
 			pstmt.setString(1, rto.getId());
 			pstmt.setString(2, rto.getName());
 			if (rto.getType()!=null) {
@@ -639,8 +715,21 @@ public class ReportDAO extends DataAccess {
 			    pstmt.setString(16, rto.getToleranceType());    
 			} else {
 			    pstmt.setNull(16, java.sql.Types.VARCHAR);
-			}						
+			}
+			pstmt.setString(17, rto.getDescription());
+			if (rto.getKpiType()!=null) {
+			    pstmt.setInt(18, rto.getKpiType().intValue());    
+			} else {
+			    pstmt.setNull(18, java.sql.Types.DECIMAL);
+			}
 			pstmt.executeUpdate();
+						
+			for (ProjectTO pto : rto.getAppliedProjectList()) {
+				pstmt = c.prepareStatement("insert into project_report (report_id, project_id) values (?,?)");
+				pstmt.setString(1, rto.getId());
+				pstmt.setString(2, pto.getId());
+				pstmt.executeUpdate();
+			}
 			
 		} catch (SQLException e) {
 			throw new DataAccessException(e);
@@ -660,7 +749,7 @@ public class ReportDAO extends DataAccess {
 			pstmt = c.prepareStatement("update report set name=?, type=?, report_perspective_id=?, " +
 									   "sql_text=?, execution_hour=?, last_execution=?, project_id=?, " +
 									   "final_date=?, data_type=?, file_name=?, category_id=?, profile_view=?, " +
-									   "goal=?, tolerance=?, tolerance_type=? " +
+									   "goal=?, tolerance=?, tolerance_type=?, description=?, kpi_type=? " +
 									   "where id=?");
 			pstmt.setString(1, rto.getName());
 			if (rto.getType()!=null) {
@@ -709,8 +798,25 @@ public class ReportDAO extends DataAccess {
 			} else {
 			    pstmt.setNull(15, java.sql.Types.VARCHAR);
 			}
-			pstmt.setString(16, rto.getId());
+			pstmt.setString(16, rto.getDescription());
+			if (rto.getKpiType()!=null) {
+			    pstmt.setInt(17, rto.getKpiType().intValue());    
+			} else {
+			    pstmt.setNull(17, java.sql.Types.DECIMAL);
+			}
+			pstmt.setString(18, rto.getId());
 			pstmt.executeUpdate();
+
+			pstmt = c.prepareStatement("delete from project_report where report_id=?");
+			pstmt.setString(1, rto.getId());
+			pstmt.executeUpdate();
+			
+			for (ProjectTO pto : rto.getAppliedProjectList()) {
+				pstmt = c.prepareStatement("insert into project_report (report_id, project_id) values (?,?)");
+				pstmt.setString(1, rto.getId());
+				pstmt.setString(2, pto.getId());
+				pstmt.executeUpdate();
+			}			
 			
 			//if necessary, insert a new Report Result into data base
 			if (rto.getResultList()!=null){
@@ -728,19 +834,33 @@ public class ReportDAO extends DataAccess {
 			super.closeStatement(null, pstmt);
 		}        
     }
+
     
-    /**
-     * 
-     */
     public void remove(TransferObject to, Connection c)  throws DataAccessException {
 		PreparedStatement pstmt = null; 
 		try {
-		    
 		    ReportTO rto = (ReportTO)to;
-			pstmt = c.prepareStatement("update report set final_date=? where id=?");
-			pstmt.setTimestamp(1, DateUtil.getNow());
-			pstmt.setString(2, rto.getId());
-			pstmt.executeUpdate();
+		    
+			ReportResultDAO rrdao = new ReportResultDAO();
+			boolean contain = rrdao.containResult(rto, c);
+		    
+			if (contain) {
+				pstmt = c.prepareStatement("update report set final_date=? where id=?");
+				pstmt.setTimestamp(1, DateUtil.getNow());
+				pstmt.setString(2, rto.getId());
+				pstmt.executeUpdate();
+				
+			} else {
+				
+				pstmt = c.prepareStatement("delete from project_report where report_id=?");
+				pstmt.setString(1, rto.getId());
+				pstmt.executeUpdate();
+
+				pstmt = c.prepareStatement("delete from report where id=?");
+				pstmt.setString(1, rto.getId());
+				pstmt.executeUpdate();
+				
+			}
 												
 		} catch (SQLException e) {
 			throw new DataAccessException(e);
@@ -753,17 +873,19 @@ public class ReportDAO extends DataAccess {
     /**
      * Create a new TO object based on data into result set.
      */
-    protected ReportTO populateBeanByResultSet(ResultSet rs) throws DataAccessException{
+    private ReportTO populateBeanByResultSet(ResultSet rs, Connection c) throws DataAccessException{
         ReportTO response = new ReportTO();
         response.setId(getString(rs, "id"));
         response.setExecutionHour(getInteger(rs, "execution_hour"));
         response.setFinalDate(getTimestamp(rs, "final_date"));
         response.setLastExecution(getTimestamp(rs, "last_execution"));
         response.setName(getString(rs, "name"));
+        response.setDescription(getString(rs, "description"));
         response.setProject(new ProjectTO(getString(rs, "project_id")));
         response.setReportPerspectiveId(getString(rs, "report_perspective_id"));
         response.setSqlStement(getString(rs, "sql_text"));
         response.setType(getInteger(rs, "type"));
+        response.setKpiType(getInteger(rs, "kpi_type"));
         response.setDataType(getInteger(rs, "data_type"));
         response.setReportFileName(getString(rs, "file_name"));
         response.setProfile(getString(rs, "profile_view"));
@@ -776,9 +898,13 @@ public class ReportDAO extends DataAccess {
             response.setCategory(new CategoryTO(categoryId));
         }
         
+        //fetch related project_report records
+        this.includeProjectReport(response, c);
+        
         return response;
     }
 
+    
     private CategoryTO getCategory(CategoryTO category) throws DataAccessException{
         CategoryTO response = new CategoryTO();
 	    if (category!=null) {
@@ -795,17 +921,27 @@ public class ReportDAO extends DataAccess {
     /**
      * Create a new TO object based on data into result set.
      */
-    private BSCReportTO populateBSCReportByResultSet(ResultSet rs) throws DataAccessException{
+    private BSCReportTO populateBSCReportByResultSet(ResultSet rs, Connection c) throws DataAccessException{
     	BSCReportTO response = new BSCReportTO();
     	ReportResultDAO rrdao = new ReportResultDAO();
     	
-    	ProjectTO pto = new ProjectTO(getString(rs, "project_id"));
-    	pto.setName(getString(rs, "project_name"));
+    	String result_projectId = getString(rs, "project_id");
+    	String result_projectName = getString(rs, "project_name");
+    	
+    	ProjectTO pto = new ProjectTO(result_projectId);
+    	pto.setName(result_projectName);
+    	
+    	String labelProjectId = getString(rs, "project_label_id");
+    	if (labelProjectId!=null && !labelProjectId.equals("0")){
+        	pto = new ProjectTO(labelProjectId);
+        	pto.setName(getString(rs, "project_label_name"));    		
+    	}
     	
         ReportTO kpi = new ReportTO();
         kpi.setId(getString(rs, "id"));
         kpi.setLastExecution(getTimestamp(rs, "last_execution"));
         kpi.setName(getString(rs, "name"));
+        kpi.setDescription(getString(rs, "description"));
         kpi.setProject(pto);
         kpi.setReportPerspectiveId(getString(rs, "report_perspective_id"));
         kpi.setDataType(getInteger(rs, "data_type"));
@@ -823,8 +959,11 @@ public class ReportDAO extends DataAccess {
         response.setStrategyName(getString(rs, "strategy"));
         response.setStrategyId(getString(rs, "occurrence_id"));
         
-        ReportResultTO rrto = rrdao.populateReanByResultSet(rs);
+        ReportResultTO rrto = rrdao.populateBeanByResultSet(rs, result_projectId, result_projectName);
         response.setResult(rrto);
+        
+        //fetch related project_report records
+        this.includeProjectReport(kpi, c);
         
         return response;
     }

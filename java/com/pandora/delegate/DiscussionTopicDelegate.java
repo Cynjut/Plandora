@@ -2,10 +2,10 @@ package com.pandora.delegate;
 
 import java.util.Vector;
 
-import com.pandora.bus.DiscussionTopicBUS;
-import com.pandora.exception.BusinessException;
 import com.pandora.DiscussionTopicTO;
 import com.pandora.UserTO;
+import com.pandora.bus.DiscussionTopicBUS;
+import com.pandora.exception.BusinessException;
 
 public class DiscussionTopicDelegate extends GeneralDelegate {
 
@@ -16,7 +16,7 @@ public class DiscussionTopicDelegate extends GeneralDelegate {
     /* (non-Javadoc)
      * @see com.pandora.bus.DiscussionTopicBUS.getListByPlanning(java.lang.String)
      */    
-    public Vector getListByPlanning(String planningId) throws BusinessException{
+    public Vector<DiscussionTopicTO> getListByPlanning(String planningId) throws BusinessException{
         return bus.getListByPlanning(planningId);
     }
 
@@ -29,10 +29,12 @@ public class DiscussionTopicDelegate extends GeneralDelegate {
     }
     
 
-    /* (non-Javadoc)
-     * @see com.pandora.bus.DiscussionTopicBUS.getListByUser(com.plandora.UserTO)
-     */            
-    public Vector<DiscussionTopicTO> getListByUser(UserTO uto) throws BusinessException{
-    	return bus.getListByUser(uto);
+    public DiscussionTopicTO getTopic(String id) throws BusinessException{
+    	return bus.getTopic(id);
     }
+
+
+	public void removeDiscussionTopic(String topicId, UserTO uto) throws BusinessException{
+		bus.removeDiscussionTopic(topicId, uto);
+	}
 }

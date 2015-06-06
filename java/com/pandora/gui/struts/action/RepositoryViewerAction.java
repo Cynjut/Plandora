@@ -23,6 +23,7 @@ import com.pandora.delegate.ProjectDelegate;
 import com.pandora.delegate.RepositoryDelegate;
 import com.pandora.delegate.UserDelegate;
 import com.pandora.exception.BusinessException;
+import com.pandora.exception.NotEmptyFolderException;
 import com.pandora.gui.struts.form.RepositoryViewerForm;
 import com.pandora.helper.DateUtil;
 import com.pandora.helper.SessionUtil;
@@ -38,7 +39,12 @@ public class RepositoryViewerAction extends GeneralStrutsAction {
 		RepositoryDelegate rdel = new RepositoryDelegate();
 		
 		try {
-			UserTO uto = SessionUtil.getCurrentUser(request);			
+			String reqUri = request.getRequestURI();	
+			reqUri = reqUri.substring(0, reqUri.indexOf("/do"));
+			String path = SessionUtil.getUri(request);
+			frm.setUriPath(path + reqUri);
+			
+			UserTO uto = SessionUtil.getCurrentUser(request);
 			ProjectTO pto = pdel.getProjectObject(new ProjectTO(frm.getProjectId()), false);
 			boolean isAllowed = (pto.isLeader(uto.getId()));
 			
@@ -100,7 +106,50 @@ public class RepositoryViewerAction extends GeneralStrutsAction {
 		return mapping.findForward("showRepositoryViewer");		
 	}
 	
+	
+	public ActionForward toggleDownloadStatus(ActionMapping mapping, ActionForm form,
+			HttpServletRequest request, HttpServletResponse response){
+		try {
+			RepositoryViewerForm frm = (RepositoryViewerForm)form;
+			RepositoryDelegate rdel = new RepositoryDelegate();
+			
+			ProjectTO pto = new ProjectTO(frm.getProjectId());
+			RepositoryFileProjectTO rfpto = rdel.getFileFromDBbyId(pto, frm.getId());
 
+			String action = RepositoryDelegate.ACTION_PUBLIC_DWL_ON;
+			boolean newStatus = false;
+			if (rfpto!=null) {
+				Boolean d = rfpto.getIsDownloadable();
+				if (d!=null) {
+					newStatus = !d.booleanValue();
+					if (!newStatus) {
+						action = RepositoryDelegate.ACTION_PUBLIC_DWL_OFF;
+					}
+				}				
+			}
+			
+			rdel.updateDownloadableStatus(pto, frm.getId(), newStatus);
+			
+			UserTO uto = SessionUtil.getCurrentUser(request);
+			rdel.insertHistory(uto, pto, rfpto.getFile(), action, null);
+			
+			frm.setOperation("navigate");
+			frm.setGenericTag(null);
+			
+		} catch(Exception e){
+			this.setErrorFormSession(request, "error.generic.showFormError", e);
+		}
+		
+		return navigate(mapping, form, request, response);		
+	}
+	
+	
+	public ActionForward showDownloadPopup(ActionMapping mapping, ActionForm form,
+			HttpServletRequest request, HttpServletResponse response){
+		return mapping.findForward("showPublicDownloadPopup");		
+	}
+	
+	
 	
 	public ActionForward toggleCustomerViewer(ActionMapping mapping, ActionForm form,
 			HttpServletRequest request, HttpServletResponse response){
@@ -156,6 +205,7 @@ public class RepositoryViewerAction extends GeneralStrutsAction {
 	public ActionForward getFile(ActionMapping mapping, ActionForm form,
 			HttpServletRequest request, HttpServletResponse response){
 		ServletOutputStream sos = null;
+		RepositoryDelegate del = new RepositoryDelegate();
 		
 		try {
 			RepositoryDelegate repdel = new RepositoryDelegate();	
@@ -165,6 +215,9 @@ public class RepositoryViewerAction extends GeneralStrutsAction {
 			ProjectTO pto = pdel.getProjectObject(new ProjectTO(frm.getProjectId()), true);
 			RepositoryFileTO rfto = repdel.getFile(pto, frm.getPath(), frm.getRev());
 
+			UserTO uto = SessionUtil.getCurrentUser(request);
+			del.insertHistory(uto, pto, rfto, RepositoryDelegate.ACTION_CUSTOMER_DWL, null);
+			
 			sos = response.getOutputStream();
 			response.setContentType(rfto.getContentType());
 			response.setHeader("Content-Disposition", "attachment; filename=\"" + rfto.getName() + "\"");
@@ -172,6 +225,7 @@ public class RepositoryViewerAction extends GeneralStrutsAction {
 			sos.write(rfto.getFileInBytes());
 			
 		}catch(Exception e){
+			e.printStackTrace();
 			this.setErrorFormSession(request, "error.generic.showFormError", e);
 		} finally {
 		    try {
@@ -183,6 +237,32 @@ public class RepositoryViewerAction extends GeneralStrutsAction {
 			}
 		}
 		return null;		
+	}
+
+
+	public ActionForward removeItem(ActionMapping mapping, ActionForm form,
+			 HttpServletRequest request, HttpServletResponse response){
+		String forward = "showRepositoryViewer";
+		try {
+			ProjectDelegate pdel = new ProjectDelegate();
+			RepositoryDelegate repdel = new RepositoryDelegate();	
+			super.clearMessages(request);
+			
+			RepositoryViewerForm frm = (RepositoryViewerForm)form;	
+			ProjectTO pto = pdel.getProjectObject(new ProjectTO(frm.getProjectId()), true);
+			repdel.removeFile(pto, frm.getPath(), frm.getRev());
+			
+			this.refresh(mapping, form, request, response);
+			
+			this.setSuccessFormSession(request, "label.formRepository.remov");
+		
+		} catch(NotEmptyFolderException e) {
+			this.setErrorFormSession(request, "label.formRepository.msg.notEmptyfolder", e);
+		} catch(Exception e) {
+		    this.setErrorFormSession(request, "error.generic.showFormError", e);
+		}
+					
+		return mapping.findForward(forward);				
 	}
 
 	
@@ -197,29 +277,35 @@ public class RepositoryViewerAction extends GeneralStrutsAction {
 			response.setHeader("Cache-Control", "no-cache");  
 			PrintWriter out = response.getWriter();
 			
+			@SuppressWarnings("rawtypes")
 			Vector<RepositoryFileTO> allItens = (Vector)request.getSession().getAttribute("repositoryFileList");
 			if (allItens!=null) {
 				int idx = Integer.parseInt(frm.getId()); //if (allItens.size()>idx)
 				RepositoryFileTO item = (RepositoryFileTO)allItens.get(idx);
 				if (item!=null) {
 					boolean disabled = false;
-					RepositoryFileProjectTO rfp = del.getFileFromDB(new ProjectTO(frm.getProjectId()), item.getPath());
+					ProjectTO pto = new ProjectTO(frm.getProjectId());
+					RepositoryFileProjectTO rfp = del.getFileFromDB(pto, item.getPath());
+					
+					String action = RepositoryDelegate.ACTION_CUST_CDWL_ON;
 					if (rfp!=null && rfp.getIsDisabled()!=null) {
 						disabled = !rfp.getIsDisabled().booleanValue();
 						if (disabled) {
-							out.println("off.gif|" + this.getBundleMessage(request, "label.formRepository.perm.off"));				
+							out.println("off.gif|" + this.getBundleMessage(request, "label.formRepository.perm.off"));
+							action = RepositoryDelegate.ACTION_CUST_CDWL_OFF;
 						} else {
-							out.println("on.gif|" + this.getBundleMessage(request, "label.formRepository.perm.on"));				
+							out.println("on.gif|" + this.getBundleMessage(request, "label.formRepository.perm.on"));	
 						}						
 					} else {
 						out.println("on.gif|" + this.getBundleMessage(request, "label.formRepository.perm.on"));
 					}
 					
-					String artifactId = null;
-					if (rfp!=null && rfp.getFile()!=null && rfp.getFile().getArtifactTemplateType()!=null) {
-						artifactId = rfp.getFile().getArtifactTemplateType();
+					del.updateDisabledStatus(new ProjectTO(frm.getProjectId()), item.getPath(), disabled);
+					
+					if (rfp!=null) {
+						UserTO uto = SessionUtil.getCurrentUser(request);
+						del.insertHistory(uto, pto, rfp.getFile(), action, null);						
 					}
-					del.updateDisabledStatus(new ProjectTO(frm.getProjectId()), item.getPath(), disabled, artifactId);
 				}
 			}
 						
@@ -324,7 +410,7 @@ public class RepositoryViewerAction extends GeneralStrutsAction {
 						uto.setUsername(log.getAuthor());
 						uto = udel.getObjectByUsername(uto);
 						if (uto!=null) {
-							imgAuthor = "../do/login?operation=getUserPic&id=" + uto.getId(); 
+							imgAuthor = "../do/login?operation=getUserPic&id=" + uto.getId() + "&ts=" +DateUtil.getNow().toString(); 
 						}
 
 						String dateStr = "&nbsp;";

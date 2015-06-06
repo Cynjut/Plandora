@@ -10,6 +10,7 @@ import org.apache.struts.util.MessageResources;
 import com.pandora.CustomerTO;
 import com.pandora.PlanningRelationTO;
 import com.pandora.ProjectTO;
+import com.pandora.RequirementHistoryTO;
 import com.pandora.RequirementStatusTO;
 import com.pandora.RequirementTO;
 import com.pandora.RequirementTriggerTO;
@@ -24,6 +25,8 @@ import com.pandora.delegate.TaskDelegate;
 import com.pandora.exception.BusinessException;
 import com.pandora.exception.DataAccessException;
 import com.pandora.exception.DifferentProjectFromParentReqException;
+import com.pandora.exception.MandatoryMetaFieldBusinessException;
+import com.pandora.exception.MandatoryMetaFieldDataException;
 import com.pandora.exception.ParentReqNotExistsException;
 import com.pandora.exception.ParentReqSameReqException;
 
@@ -32,7 +35,7 @@ import com.pandora.exception.ParentReqSameReqException;
  */
 public class RequirementBUS extends GeneralBusiness {
 
-    /** The Data Acess Object related with current business entity */
+    /** The Data Access Object related with current business entity */
     RequirementDAO dao = new RequirementDAO();
     
     
@@ -74,8 +77,8 @@ public class RequirementBUS extends GeneralBusiness {
     /**
      * Get a list of all Requirement TOs from data base based on user and project.
      */
-    public Vector getListByUserProject(UserTO uto, ProjectTO pto, boolean sharingView) throws BusinessException{
-        Vector response = new Vector();
+    public Vector<RequirementTO> getListByUserProject(UserTO uto, ProjectTO pto, boolean sharingView) throws BusinessException{
+        Vector<RequirementTO> response = new Vector<RequirementTO>();
         try {
             response = dao.getListByUserProject(uto, pto);
         } catch (DataAccessException e) {
@@ -89,42 +92,49 @@ public class RequirementBUS extends GeneralBusiness {
      */
     public Vector<RequirementTO> getListByProject(ProjectTO pto, String status, String requester, String priority, String categoryName, 
     		String viewMode) throws BusinessException {
-
-    	String templateId = null;
-    	boolean isHierarchy = false;
-    	if (viewMode!=null) {
-        	isHierarchy = viewMode.equals("0");
-        	if (!viewMode.equals("-1") && !viewMode.equals("0")) {
-        		templateId = viewMode;
-        	}    		
-    	}
-    	
-        Vector<RequirementTO> response = this.getListByProject(pto, status, requester, priority, categoryName, templateId, true);
-
-        if (isHierarchy && response!=null) {
+    	Vector<RequirementTO> response = new Vector<RequirementTO>();
+    	ProjectBUS pbus = new ProjectBUS();
+    	try {
+        	String templateId = null;
+        	boolean isHierarchy = false;
+        	if (viewMode!=null) {
+            	isHierarchy = viewMode.equals("0");
+            	if (!viewMode.equals("-1") && !viewMode.equals("0")) {
+            		templateId = viewMode;
+            	}    		
+        	}
         	
-        	//set the objects into the hash
-        	HashMap<String, RequirementTO> hm = new HashMap<String, RequirementTO>();
-            Iterator<RequirementTO> i = response.iterator();
-            while(i.hasNext()){
-            	RequirementTO r = i.next();
-            	hm.put(r.getId(), r);
-            }
+        	String idsList = pbus.getProjectIn(pto.getId(), true);
+        	response = dao.getListByProject(idsList, status, requester, priority, categoryName, templateId);
+
+            if (isHierarchy && response!=null) {
+            	
+            	//set the objects into the hash
+            	HashMap<String, RequirementTO> hm = new HashMap<String, RequirementTO>();
+                Iterator<RequirementTO> i = response.iterator();
+                while(i.hasNext()){
+                	RequirementTO r = i.next();
+                	hm.put(r.getId(), r);
+                }
+                
+            	//get first requirements parent 
+                Vector<RequirementTO> hierarchyList = new Vector<RequirementTO>();
+                Iterator<RequirementTO> j = response.iterator();
+                while(j.hasNext()){
+                	RequirementTO r = j.next();
+                	Vector<PlanningRelationTO> parentList = PlanningRelationTO.getRelation(r.getRelationList(), PlanningRelationTO.RELATION_PART_OF, r.getId(), true);
+                	if (parentList==null || parentList.size()==0) {
+                		RequirementTO currentParent = (RequirementTO)hm.get(r.getId());
+                		this.checkHierarchy(currentParent, hm, hierarchyList, 0);	
+                	}
+                }
+                
+                response = hierarchyList;
+            }    		
             
-        	//get first requirements parent 
-            Vector<RequirementTO> hierarchyList = new Vector<RequirementTO>();
-            Iterator<RequirementTO> j = response.iterator();
-            while(j.hasNext()){
-            	RequirementTO r = j.next();
-            	Vector<PlanningRelationTO> parentList = PlanningRelationTO.getRelation(r.getRelationList(), PlanningRelationTO.RELATION_PART_OF, r.getId(), true);
-            	if (parentList==null || parentList.size()==0) {
-            		RequirementTO currentParent = (RequirementTO)hm.get(r.getId());
-            		this.checkHierarchy(currentParent, hm, hierarchyList, 0);	
-            	}
-            }
-            
-            response = hierarchyList;
-        }
+    	} catch(Exception e) {
+    		throw new  BusinessException(e);
+    	}
         
         return response;
     }
@@ -154,21 +164,21 @@ public class RequirementBUS extends GeneralBusiness {
     	
     }
     
-    public Vector getThinListByProject(ProjectTO pto) throws BusinessException{
-        Vector response = new Vector();
+    public Vector<RequirementTO> getThinListByProject(ProjectTO pto, String categoryId) throws BusinessException{
+        Vector<RequirementTO> response = new Vector<RequirementTO>();
         ProjectBUS pbus = new ProjectBUS();
         try {
             
             //get the requirements of child projects 
-            Vector childs = pbus.getProjectListByParent(pto, true);
-            Iterator i = childs.iterator();
+            Vector<ProjectTO> childs = pbus.getProjectListByParent(pto, true);
+            Iterator<ProjectTO> i = childs.iterator();
             while(i.hasNext()){
                 ProjectTO childProj = (ProjectTO)i.next();
-                Vector reqOfChild = this.getThinListByProject(childProj);
+                Vector<RequirementTO> reqOfChild = this.getThinListByProject(childProj, categoryId);
                 response.addAll(reqOfChild);
             }
            
-            Vector reqOfParent = dao.getThinListByProject(pto);
+            Vector<RequirementTO> reqOfParent = dao.getThinListByProject(pto, categoryId);
             response.addAll(reqOfParent);
             
         } catch (DataAccessException e) {
@@ -178,37 +188,12 @@ public class RequirementBUS extends GeneralBusiness {
     }
    
     
-    private Vector<RequirementTO> getListByProject(ProjectTO pto, String status, String requester, String priority, 
-    		String categoryName, String templateId, boolean dummy) throws BusinessException {
-
-        Vector<RequirementTO> response = new Vector<RequirementTO>();
-        ProjectBUS pbus = new ProjectBUS();
-        try {
-            
-            //get the requirements of child projects 
-            Vector<ProjectTO> childs = pbus.getProjectListByParent(pto, true);
-            Iterator<ProjectTO> i = childs.iterator();
-            while(i.hasNext()){
-                ProjectTO childProj = i.next();
-                Vector<RequirementTO> reqOfChild = this.getListByProject(childProj, status, requester, priority, categoryName, templateId);
-                response.addAll(reqOfChild);
-            }
-
-            Vector<RequirementTO> reqOfParent = dao.getListByProject(pto, status, requester, priority, categoryName, templateId);
-            response.addAll(reqOfParent);
-            
-        } catch (DataAccessException e) {
-            throw new  BusinessException(e);
-        }
-        return response;
-    }
-
     
     /**
      * Get a list of all Requirement TOs from data base based on project id and
      */
-    public Vector getListByFilter(ProjectTO pto, CustomerTO cto, Vector kwList) throws BusinessException {
-        Vector response = new Vector();
+    public Vector<RequirementTO> getListByFilter(ProjectTO pto, CustomerTO cto, Vector kwList) throws BusinessException {
+    	Vector<RequirementTO> response = new Vector<RequirementTO>();
         try {
             response = dao.getListByFilter(pto, cto, kwList);
         } catch (DataAccessException e) {
@@ -253,8 +238,8 @@ public class RequirementBUS extends GeneralBusiness {
     /**
      * Get a list of Requirement History objects from data base, base on requirement id.
      */
-    public Vector getHistory(String reqId) throws BusinessException{
-        Vector response = new Vector();
+    public Vector<RequirementHistoryTO> getHistory(String reqId) throws BusinessException{
+        Vector<RequirementHistoryTO> response = new Vector<RequirementHistoryTO>();
         try {
             RequirementHistoryDAO dao = new RequirementHistoryDAO();
             response = dao.getListByRequirement(reqId);
@@ -270,10 +255,26 @@ public class RequirementBUS extends GeneralBusiness {
     public void insertRequirement(RequirementTO rto) throws BusinessException{
         try {
             dao.insert(rto);
+        } catch (MandatoryMetaFieldDataException e) {
+        	throw new MandatoryMetaFieldBusinessException(e, e.getAfto());
         } catch (DataAccessException e) {
             throw new  BusinessException(e);
         }
     }
+
+    /**
+     * Insert a list of new Requirements into data base
+     */
+	public void insertRequirement(Vector<RequirementTO> rlist) throws BusinessException{
+        try {
+            dao.insertList(rlist);
+        } catch (MandatoryMetaFieldDataException e) {
+        	throw new MandatoryMetaFieldBusinessException(e, e.getAfto());
+        } catch (DataAccessException e) {
+            throw new BusinessException(e);
+        }
+	}
+    
     
     /**
      * Update data of Requirement object into data base
@@ -321,7 +322,9 @@ public class RequirementBUS extends GeneralBusiness {
             }
             
             dao.update(rto);
-            
+        
+        } catch (MandatoryMetaFieldDataException e) {
+        	throw new MandatoryMetaFieldBusinessException(e, e.getAfto());
         } catch (DataAccessException e) {
             throw new  BusinessException(e);
         }

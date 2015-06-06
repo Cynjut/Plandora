@@ -19,10 +19,11 @@ public class Notification extends GenericPlugin{
     
     private static final String TOKEN_FINAL   = "#";
     
+    protected Vector<Object> columnNames;
     
     /** Should be implemented by each sub class with 
      * notification business rule */
-    public boolean sendNotification(Vector fields, Vector sqlData) throws Exception {
+    public boolean sendNotification(Vector<NotificationFieldTO> fields, Vector<Vector<Object>> sqlData) throws Exception {
         return false;
     }
         
@@ -30,7 +31,7 @@ public class Notification extends GenericPlugin{
      * Should be implemented by each sub class with 
      * the labels of specific fields that will be shown 
      * by PLANdora in GUI */
-    public Vector getFieldLabels() {
+    public Vector<String> getFieldLabels() {
         return null;
     }
     
@@ -45,7 +46,7 @@ public class Notification extends GenericPlugin{
      * <li>Password Text Box = new String("3")</li>
      * 
      */
-    public Vector getFieldTypes() {
+    public Vector<String> getFieldTypes() {
         return null;
     }
     
@@ -54,7 +55,7 @@ public class Notification extends GenericPlugin{
      * Should be implemented by each sub class with
      * the key of each specific field. Each key should be unique.
      */
-    public Vector getFieldKeys(){
+    public Vector<String> getFieldKeys(){
         return null;
     }
     
@@ -63,7 +64,7 @@ public class Notification extends GenericPlugin{
      * Should be (optionally) implemented by each sub class with
      * a list of FieldValueTO objects .
      */
-    public Vector getFields(){
+    public Vector<FieldValueTO> getFields(){
         return null;
     }
     
@@ -78,12 +79,12 @@ public class Notification extends GenericPlugin{
     
     
     
-    protected String getParamByKey(String key, Vector fields){
+    protected String getParamByKey(String key, Vector<NotificationFieldTO> fields){
         String response = null;
         if (fields!=null && !fields.isEmpty()){
-            Iterator i = fields.iterator();
+            Iterator<NotificationFieldTO> i = fields.iterator();
             while(i.hasNext()) {
-                NotificationFieldTO field = (NotificationFieldTO)i.next();
+                NotificationFieldTO field = i.next();
                 if (field.getName().equalsIgnoreCase(key)){
                     response = field.getValue();
                     break;
@@ -94,8 +95,8 @@ public class Notification extends GenericPlugin{
     }
 
     
-    public ArrayList getToken(String content) {
-        ArrayList response = new ArrayList();
+    public ArrayList<Integer> getToken(String content) {
+        ArrayList<Integer> response = new ArrayList<Integer>();
         if (content!=null) {
             String[] raw = content.split(TOKEN_INITIAL); 
             if (raw!=null && raw.length>0) {
@@ -120,8 +121,8 @@ public class Notification extends GenericPlugin{
     }
     
     
-    public String replaceByToken(Vector fieldList, String source) {
-        ArrayList tokenIds = this.getToken(source);
+    public String replaceByToken(Vector<Object> fieldList, String source) {
+        ArrayList<Integer> tokenIds = this.getToken(source);
         for (int i=0; i< tokenIds.size(); i++) {
             Integer tokenId = (Integer)tokenIds.get(i);
             String token = TOKEN_INITIAL + tokenId + TOKEN_FINAL;
@@ -137,7 +138,7 @@ public class Notification extends GenericPlugin{
     }
     
     
-    public String getContent(Vector sqlData, boolean considerFirstRow, boolean showBrackets){
+    public String getContent(Vector<Vector<Object>> sqlData, boolean considerFirstRow, boolean showBrackets){
         String content = "";
         if (sqlData!=null) {
         	
@@ -150,7 +151,7 @@ public class Notification extends GenericPlugin{
             	if (showBrackets) {
             		content = content.concat(sqlData.elementAt(i)+"");	
             	} else {
-            		Vector line = (Vector)sqlData.elementAt(i);
+            		Vector<Object> line = sqlData.elementAt(i);
                     for (int j=0; j<line.size(); j++) {
                     	content = content.concat(line.elementAt(j) + " ");
                     }
@@ -160,13 +161,13 @@ public class Notification extends GenericPlugin{
         return content;
     }
     
-    public String getHtmlContent(Vector sqlData){
+    public String getHtmlContent(Vector<Vector<Object>> sqlData){
         String content = "<TABLE BORDER=\"1\">";
         if (sqlData!=null) {
-			Iterator it = sqlData.iterator();
+			Iterator<Vector<Object>> it = sqlData.iterator();
 			while(it.hasNext()) {
 				content = content + "<TR>";			    
-			    Vector sqlDataItem = (Vector)it.next();
+				Vector<Object> sqlDataItem = it.next();
 	            for (int i= 0; i<sqlDataItem.size(); i++) {
 	                content = content + "<TD>" + sqlDataItem.elementAt(i) + "</TD>";
 	            }
@@ -188,11 +189,11 @@ public class Notification extends GenericPlugin{
     
     public String getType(String key){
     	String response = null;
-    	Vector list = getFields();
+    	Vector<FieldValueTO> list = getFields();
         if (list!=null) {
-            Iterator i = list.iterator();
+            Iterator<FieldValueTO> i = list.iterator();
             while(i.hasNext()) {
-            	FieldValueTO to = (FieldValueTO)i.next();
+            	FieldValueTO to = i.next();
                 if (to.getId().equals(key)) {
                     response = to.getType();
                     break;

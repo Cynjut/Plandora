@@ -4,6 +4,7 @@ import java.util.Vector;
 
 import com.pandora.ProjectTO;
 import com.pandora.UserTO;
+import com.pandora.bus.SystemSingleton;
 import com.pandora.exception.BusinessException;
 
 /**
@@ -23,7 +24,7 @@ public abstract class ExportBUS extends ImportExportBUS {
      
     
     public String getEncoding(){
-    	return "UTF-8";
+    	return SystemSingleton.getInstance().getDefaultEncoding();
     }
 
     public Integer getType() {

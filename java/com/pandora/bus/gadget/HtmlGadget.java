@@ -47,13 +47,13 @@ public class HtmlGadget extends Gadget {
 	}
 
 	
-	public StringBuffer gadgetToHtml(HttpServletRequest request, int width, int height, String loadingLabel) throws BusinessException{
+	public StringBuffer gadgetToHtml(HttpServletRequest request, HttpServletResponse response, int width, int height, String loadingLabel) throws BusinessException{
 	    StringBuffer content = new StringBuffer("");
 	    
 	    String id = getId();
 	    String name = this.getClass().getName();
 	    
-		content.append("<div id=\""+ id + "\" />\n");
+		content.append("<div id=\""+ id + "\" ></div>\n");
 		
 		content.append("<script type=\"text/javascript\">\n");
 
@@ -63,12 +63,13 @@ public class HtmlGadget extends Gadget {
 		content.append("         operation.value = 'renderGadget';\n");	
 		content.append("         gagclass.value = '" + name + "';\n");
 		content.append("      }\n");	
-		content.append("      ajaxProcess(document.forms[\"resourceHomeForm\"], callGadget_" + id + "_callBack, c);\n");
+		content.append("      var ajaxRequestObj = ajaxSyncInit();");
+		content.append("      ajaxSyncProcess(document.forms[\"resourceHomeForm\"], callGadget_" + id + "_callBack, c, '', ajaxRequestObj);\n");
 		content.append("      document.getElementById('ajaxResponse').innerHTML = '';\n");  		
 		content.append("  }\n");
 		
-		content.append("  function callGadget_" + id + "_callBack(c){\n");	
-		content.append("      if(isAjax()){ \n");
+		content.append("  function callGadget_" + id + "_callBack(c, argTp, objRequest){\n");	
+		content.append("      if(isSyncAjax(objRequest)){ \n");
 		content.append("         document.getElementById('ajaxResponse').innerHTML = '';\n");  
 		content.append("         var content = objRequest.responseText;\n");	
 		content.append("         document.getElementById(c).innerHTML = content;\n");
@@ -76,7 +77,7 @@ public class HtmlGadget extends Gadget {
 		content.append("  }\n");
 		content.append("  document.getElementById('"+ id + "').innerHTML = \"<img src='../images/indicator.gif' border='0'>\";\n");		
 		content.append("  window.setTimeout(\"callGadget_" + id + "('" + id + "','" + width + "','" + height + "')\", 1000);");
-	
+
 		content.append("</script>\n");
 
 		return content;

@@ -1,6 +1,7 @@
 
 package com.pandora.gui.struts.action;
 
+import java.util.Iterator;
 import java.util.Vector;
 
 import javax.servlet.http.HttpServletRequest;
@@ -11,7 +12,9 @@ import org.apache.struts.action.ActionForward;
 import org.apache.struts.action.ActionMapping;
 
 import com.pandora.CategoryTO;
+import com.pandora.LeaderTO;
 import com.pandora.MetaFieldTO;
+import com.pandora.PlanningRelationTO;
 import com.pandora.ProjectTO;
 import com.pandora.RiskStatusTO;
 import com.pandora.RiskTO;
@@ -22,7 +25,9 @@ import com.pandora.delegate.MetaFieldDelegate;
 import com.pandora.delegate.ProjectDelegate;
 import com.pandora.delegate.RiskDelegate;
 import com.pandora.delegate.RiskStatusDelegate;
+import com.pandora.delegate.UserDelegate;
 import com.pandora.exception.BusinessException;
+import com.pandora.exception.MetaFieldNumericTypeException;
 import com.pandora.gui.struts.form.RiskForm;
 import com.pandora.helper.SessionUtil;
 
@@ -44,8 +49,10 @@ public class RiskAction extends GeneralStrutsAction {
 			rfrm.setSaveMethod(RiskForm.INSERT_METHOD, uto);
 		
 			ProjectTO pto = pdel.getProjectObject(new ProjectTO(rfrm.getProjectId()), true);
-			rfrm.setProject(pto);
-			rfrm.setProjectName(pto.getName());
+			if (pto!=null) {
+				rfrm.setProject(pto);
+				rfrm.setProjectName(pto.getName());				
+			}
 			
 		    this.refresh(mapping, form, request, response);    
 		    this.refreshAuxiliarList(mapping, form, request, response);			
@@ -75,6 +82,8 @@ public class RiskAction extends GeneralStrutsAction {
 			RiskTO rto = this.getTransferObjectFromActionForm(frm, request);
 						
 			materialized = rdel.isMaterializedRisk(rto);
+		} catch(MetaFieldNumericTypeException e){
+			this.setErrorFormSession(request, e.getMessage(), e.getMetaFieldName(), null, null, null, null, e);
 		} catch(Exception e){
 		    this.setErrorFormSession(request, "error.formRisk.showForm", e);
 		}	    
@@ -126,6 +135,8 @@ public class RiskAction extends GeneralStrutsAction {
 			UserTO uto = SessionUtil.getCurrentUser(request);			
 		    rfrm.setSaveMethod(RiskForm.INSERT_METHOD, uto);
 		    		        			
+		} catch(MetaFieldNumericTypeException e){
+			this.setErrorFormSession(request, e.getMessage(), e.getMetaFieldName(), null, null, null, null, e);
 		} catch(BusinessException e){
 		    this.setErrorFormSession(request, errorMsg, e);
 		} catch(NullPointerException e){
@@ -144,18 +155,25 @@ public class RiskAction extends GeneralStrutsAction {
 		    RiskDelegate rdel = new RiskDelegate();
 		    ProjectTO pto = new ProjectTO(rfrm.getProjectId());
 		    
-		    Vector oList = rdel.getRiskList(pto.getId());
+		    UserTO uto = SessionUtil.getCurrentUser(request);
+		    
+		    Vector<RiskTO> oList = rdel.getRiskList(pto.getId(), uto.getId());
 		    request.getSession().setAttribute("riskList", oList);
 		    
 		    CategoryDelegate cdel = new CategoryDelegate();
-		    Vector cList = cdel.getCategoryListByType(CategoryTO.TYPE_RISK, pto, false);
+		    Vector<CategoryTO> cList = cdel.getCategoryListByType(CategoryTO.TYPE_RISK, pto, false);
 		    request.getSession().setAttribute("categoryList", cList);
 		    
 		    RiskStatusDelegate rsdel = new RiskStatusDelegate();
-		    Vector sList = rsdel.getRiskStatusList();
+		    Vector<RiskStatusTO> sList = rsdel.getRiskStatusList();
 		    request.getSession().setAttribute("riskStatusList", sList);
 
-		    request.getSession().setAttribute("metaFieldList", new Vector());
+	        UserDelegate udel = new UserDelegate();
+		    Vector<LeaderTO> projectLeaders = udel.getLeaderByProject("'" + pto + "'");
+		    Vector<TransferObject> visibilityList = getVisibilityList(projectLeaders, uto, request);
+	        request.getSession().setAttribute("visibilityList", visibilityList);
+		    
+		    request.getSession().setAttribute("metaFieldList", new Vector<MetaFieldTO>());
 		    
 		    rfrm.setShowIssueConfirmation("off");
 		    
@@ -164,6 +182,20 @@ public class RiskAction extends GeneralStrutsAction {
 		}
 	    
 		return mapping.findForward(forward);	    
+	}
+	
+	private Vector<TransferObject> getVisibilityList(Vector<LeaderTO> projectLeaders, UserTO uto, HttpServletRequest request){
+		Vector<TransferObject> visibilityList = new Vector<TransferObject>();
+		visibilityList.add(new TransferObject("1", this.getBundleMessage(request, "label.public")));
+		
+		Iterator<LeaderTO> itleader = projectLeaders.iterator();
+		while(itleader.hasNext()){
+			if(uto.getId().equals(itleader.next().getId())){
+				visibilityList.add(new TransferObject("0", this.getBundleMessage(request, "label.private")));
+				break;
+			}
+		}
+		return visibilityList;
 	}
 	
 
@@ -194,10 +226,10 @@ public class RiskAction extends GeneralStrutsAction {
 		    RiskTO rto = rdel.getRisk(new RiskTO(frm.getId()));
 		    
 			if (frm.getId()!=null && !frm.getId().equals("")) {
-				Vector list = mfdel.getListByProjectAndContainer(frm.getId(), frm.getCategoryId(), MetaFieldTO.APPLY_TO_RISK);
+				Vector<MetaFieldTO> list = mfdel.getListByProjectAndContainer(frm.getId(), frm.getCategoryId(), MetaFieldTO.APPLY_TO_RISK);
 				request.getSession().setAttribute("metaFieldList", list);		    
 			} else {
-			    request.getSession().setAttribute("metaFieldList", new Vector());
+			    request.getSession().setAttribute("metaFieldList", new Vector<MetaFieldTO>());
 			}
 		    
 		    this.getActionFormFromTransferObject(rto, frm, request);
@@ -230,7 +262,7 @@ public class RiskAction extends GeneralStrutsAction {
 			
 			//set success message into http session
 			this.setSuccessFormSession(request, "message.removeRisk");
-			this.refresh(mapping, form, request, response );
+			this.refresh(mapping, form, request, response);
 			
 		    //set the current user connected
 			UserTO uto = SessionUtil.getCurrentUser(request);
@@ -258,7 +290,7 @@ public class RiskAction extends GeneralStrutsAction {
 	    rfrm.clear();
 	    
 	    //set the relationship of risk
-	    request.getSession().setAttribute("riskRelationshipList", new Vector());
+	    request.getSession().setAttribute("riskRelationshipList", new Vector<PlanningRelationTO>());
 	    
 	    this.clearMessages(request);
 	}
@@ -279,7 +311,9 @@ public class RiskAction extends GeneralStrutsAction {
 	    frm.setStatus(to.getStatus().getId());
 	    frm.setStrategy(to.getStrategy());
 	    frm.setTendency(to.getTendency());   
-	    frm.setAdditionalFields(to.getAdditionalFields());	    
+	    frm.setAdditionalFields(to.getAdditionalFields());	 
+	    frm.setVisible(to.getVisible()?"1":"0");
+	    frm.setRiskComment(to.getLastComment());
 	    
 	    frm.setCostImpact(to.getCostImpact());
 	    frm.setTimeImpact(to.getTimeImpact());
@@ -303,7 +337,8 @@ public class RiskAction extends GeneralStrutsAction {
 	}
 	
 	
-	private RiskTO getTransferObjectFromActionForm(RiskForm frm, HttpServletRequest request){
+	@SuppressWarnings("rawtypes")
+	private RiskTO getTransferObjectFromActionForm(RiskForm frm, HttpServletRequest request) throws MetaFieldNumericTypeException{
 	    RiskTO rto = new RiskTO();
         rto.setId(frm.getId());
         rto.setCategory(new CategoryTO(frm.getCategoryId()));
@@ -318,17 +353,19 @@ public class RiskAction extends GeneralStrutsAction {
         rto.setStatus(new RiskStatusTO(frm.getStatus()));        
 	    rto.setDescription(frm.getDescription());
 	    rto.setCreationDate(frm.getCreationDate());	    
+	    rto.setLastComment(frm.getRiskComment());
 	    
 	    rto.setCostImpact(frm.getCostImpact());
 	    rto.setTimeImpact(frm.getTimeImpact());
 	    rto.setQualityImpact(frm.getQualityImpact());
 	    rto.setScopeImpact(frm.getScopeImpact());
 	    rto.setRiskType(new Integer(frm.getRiskType()));
-	    
+	    rto.setVisible(frm.getVisible().equals("1"));
 	    UserTO uto = SessionUtil.getCurrentUser(request);
 	    rto.setHandler(uto);
 
-		Vector metaFieldList = (Vector)request.getSession().getAttribute("metaFieldList");
+		@SuppressWarnings("unchecked")
+		Vector<MetaFieldTO> metaFieldList = (Vector)request.getSession().getAttribute("metaFieldList");
 		super.setMetaFieldValuesFromForm(metaFieldList, request, rto);	    
 		if (metaFieldList!=null) {
 		    frm.setAdditionalFields(rto.getAdditionalFields());
@@ -338,8 +375,8 @@ public class RiskAction extends GeneralStrutsAction {
 	}
 
 	
-	public Vector getProbabilityCombo(HttpServletRequest request){
-	    Vector response = new Vector();
+	public Vector<TransferObject> getProbabilityCombo(HttpServletRequest request){
+	    Vector<TransferObject> response = new Vector<TransferObject>();
 	    for(int i=1; i<=5; i++){
 	        TransferObject to = new TransferObject();
 	        to.setId(i+""); 
@@ -349,8 +386,8 @@ public class RiskAction extends GeneralStrutsAction {
 	    return response;
 	}
 
-	public Vector getImpactCombo(HttpServletRequest request){
-	    Vector response = new Vector();
+	public Vector<TransferObject> getImpactCombo(HttpServletRequest request){
+	    Vector<TransferObject> response = new Vector<TransferObject>();
 	    for(int i=1; i<=5; i++){
 	        TransferObject to = new TransferObject();
 	        to.setId(i+""); 
@@ -360,8 +397,8 @@ public class RiskAction extends GeneralStrutsAction {
 	    return response;
 	}
 	
-	public Vector getTendencyCombo(HttpServletRequest request){
-	    Vector response = new Vector();
+	public Vector<TransferObject> getTendencyCombo(HttpServletRequest request){
+	    Vector<TransferObject> response = new Vector<TransferObject>();
 	    for(int i=1; i<=3; i++){
 	        TransferObject to = new TransferObject();
 	        to.setId(i+"");

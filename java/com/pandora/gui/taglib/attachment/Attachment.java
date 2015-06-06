@@ -11,9 +11,9 @@ import org.apache.struts.util.RequestUtils;
 
 import com.pandora.AttachmentTO;
 import com.pandora.gui.struts.form.GeneralStrutsForm;
-import com.pandora.helper.LogUtil;
 import com.pandora.gui.taglib.decorator.AttachmentGridDownloadDecorator;
 import com.pandora.gui.taglib.decorator.AttachmentGridTypeDecorator;
+import com.pandora.helper.LogUtil;
 
 /**
  * 
@@ -72,7 +72,7 @@ public class Attachment extends TagSupport {
                     
                     buff.append("<tr class=\"formBody\">\n");
                     buff.append("<td>\n");
-                    buff.append("<table class=\"table\" width=\"100%\" border=\"1\" bordercolor=\"#10389C\" cellspacing=\"1\" cellpadding=\"2\">\n");
+                    buff.append("<table class=\"table\" width=\"100%\" border=\"1\" cellspacing=\"1\" cellpadding=\"2\">\n");
                     buff.append("  <tr class=\"rowHighlight\">\n");
                     buff.append("     <th width=\"2%\" class=\"tableCellHeader\">&nbsp;</th>\n");
                     buff.append("     <th width=\"20%\" class=\"tableCellHeader\">" + gridFileName + "</th>\n");

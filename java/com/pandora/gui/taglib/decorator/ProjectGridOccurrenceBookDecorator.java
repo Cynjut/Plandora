@@ -17,7 +17,7 @@ public class ProjectGridOccurrenceBookDecorator extends ColumnDecorator {
 		String image = "";
 		ProjectTO pto = (ProjectTO)this.getObject();
 		String role = pto.getRoleIntoProject();
-		if (role!=null && role.equals(LeaderTO.ROLE_LEADER+"")){
+		if (role!=null && (role.equals(LeaderTO.ROLE_LEADER+"") || role.equals(LeaderTO.ROLE_RESOURCE+""))){
 		    String altValue = this.getBundleMessage("label.grid.project.occurrence");		
 		    image ="<a href=\"javascript:window.location='../do/manageOccurrence?operation=prepareForm&projectId=" + columnValue + "'\" border=\"0\"> \n";
 		    image += "<img border=\"0\" " + HtmlUtil.getHint(altValue) + " src=\"../images/occurrence.gif\" >";

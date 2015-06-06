@@ -11,6 +11,7 @@ import java.sql.Timestamp;
 import java.util.Vector;
 
 import com.pandora.AreaTO;
+import com.pandora.CompanyTO;
 import com.pandora.CustomerTO;
 import com.pandora.DepartmentTO;
 import com.pandora.FunctionTO;
@@ -21,6 +22,7 @@ import com.pandora.RootTO;
 import com.pandora.TransferObject;
 import com.pandora.UserTO;
 import com.pandora.exception.DataAccessException;
+import com.pandora.helper.DateUtil;
 import com.pandora.helper.LogUtil;
 import com.pandora.helper.StringUtil;
 
@@ -59,7 +61,7 @@ public class UserDAO extends DataAccess {
 			
 			pstmt = c.prepareStatement("select id, username, color, email, name, " +
 					   "phone, password, department_id, area_id, function_id, country, language, " +
-					   "birth, auth_mode, permission, pic_file, final_date " +
+					   "birth, company_id, auth_mode, permission, pic_file, final_date, creation_date " +
 					   "from tool_user " + hideWhere + "order by username asc");
 			rs = pstmt.executeQuery();
 			while (rs.next()){
@@ -90,7 +92,7 @@ public class UserDAO extends DataAccess {
 		    UserTO filter = (UserTO)to;
 			pstmt = c.prepareStatement("select id, username, color, email, name, " +
 									   "phone, password, department_id, area_id, function_id, country, " +
-									   "language, birth, auth_mode, permission, pic_file, final_date " +
+									   "language, birth, company_id, auth_mode, permission, pic_file, final_date, creation_date " +
 									   "from tool_user where id = ?");
 			pstmt.setString(1, filter.getId());
 			rs = pstmt.executeQuery();
@@ -123,8 +125,9 @@ public class UserDAO extends DataAccess {
 					    
 			pstmt = c.prepareStatement("insert into tool_user (id, username, color, email, name, " +
 									   "phone, department_id, area_id, function_id, " +
-									   "country, language, birth, auth_mode, permission, pic_file, final_date) " +
-									   "values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
+									   "country, language, birth, auth_mode, permission, pic_file, " +
+									   "final_date, creation_date, company_id) " +
+									   "values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
 			pstmt.setString(1, uto.getId());
 			pstmt.setString(2, uto.getUsername());
 			pstmt.setString(3, uto.getColor());
@@ -153,6 +156,12 @@ public class UserDAO extends DataAccess {
 			} else {
 			    pstmt.setNull(16, java.sql.Types.TIMESTAMP);
 			}
+			pstmt.setTimestamp(17, DateUtil.getNow());
+			if (uto.getCompany()!=null) {
+				pstmt.setString(18, uto.getCompany().getId());	
+			} else {
+				pstmt.setNull(18, java.sql.Types.VARCHAR);
+			}
 			
 			pstmt.executeUpdate();
 
@@ -176,11 +185,16 @@ public class UserDAO extends DataAccess {
 		PreparedStatement pstmt = null; 
 		try {
 		    
+			String picUpdate = "";
+			if (to.getGenericTag()!=null && to.getGenericTag().equals("IS_UPLOAD")) {
+				picUpdate = ", pic_file=? ";
+			}
+			
 		    UserTO uto = (UserTO)to;
 			pstmt = c.prepareStatement("update tool_user set username=?, color=?, email=?, " +
 									   "name=?, phone=?, department_id=?, " +
 									   "area_id=?, function_id=?, country=?, language=?, birth=?, " +
-									   "auth_mode=?, permission=?, pic_file=?, final_date=? " +
+									   "auth_mode=?, permission=?, final_date=?, creation_date=?, company_id=? " + picUpdate +
 									   "where id=?");
 			pstmt.setString(1, uto.getUsername());
 			pstmt.setString(2, uto.getColor());
@@ -199,17 +213,32 @@ public class UserDAO extends DataAccess {
 			    pstmt.setNull(12, java.sql.Types.VARCHAR);
 			}
 			pstmt.setString(13, uto.getPermission());
-			if (uto.getFileInBytes()!=null && uto.getFileInBytes().length > 0) {
-			    pstmt.setBinaryStream(14, uto.getBinaryFile(), uto.getFileInBytes().length);    
-			} else {
-			    pstmt.setNull(14, java.sql.Types.BINARY);
-			}
 			if (uto.getFinalDate()!=null) {
-				pstmt.setTimestamp(15, uto.getFinalDate());			    
+				pstmt.setTimestamp(14, uto.getFinalDate());			    
+			} else {
+			    pstmt.setNull(14, java.sql.Types.TIMESTAMP);
+			}
+			if (uto.getCreationDate()!=null) {
+				pstmt.setTimestamp(15, uto.getCreationDate());			    
 			} else {
 			    pstmt.setNull(15, java.sql.Types.TIMESTAMP);
 			}
-			pstmt.setString(16, uto.getId());
+			if (uto.getCompany()!=null) {
+				pstmt.setString(16, uto.getCompany().getId());	
+			} else {
+				pstmt.setNull(16, java.sql.Types.VARCHAR);
+			}
+
+			if (to.getGenericTag()!=null && to.getGenericTag().equals("IS_UPLOAD")) {
+				if (uto.getFileInBytes()!=null && uto.getFileInBytes().length > 0) {
+				    pstmt.setBinaryStream(17, uto.getBinaryFile(), uto.getFileInBytes().length);    
+				} else {
+				    pstmt.setNull(17, java.sql.Types.BINARY);
+				}
+				pstmt.setString(18, uto.getId());
+			} else {
+				pstmt.setString(17, uto.getId());
+			}
 			
 			pstmt.executeUpdate();
 												
@@ -220,8 +249,28 @@ public class UserDAO extends DataAccess {
 		}
     }
 
+
+	public void updatePicture(UserTO uto) throws DataAccessException {
+        Connection c = null;
+		PreparedStatement pstmt = null;  
+		try {
+			c = getConnection(false);
+			this.updatePicture(uto, c);
+			c.commit();
+		} catch (Exception e) {
+			try {
+				c.rollback();
+			} catch (SQLException er) {
+				LogUtil.log(this, LogUtil.LOG_ERROR, "", er);
+			}			
+			throw new DataAccessException(e);
+		}finally{
+			super.closeStatement(null, pstmt);
+		}			
+	}
+
     
-    /**
+	/**
      * Update the password of user into database
      */
     public void updatePassword(UserTO uto) throws DataAccessException {
@@ -262,6 +311,26 @@ public class UserDAO extends DataAccess {
 		}
     }    
     
+    private void updatePicture(UserTO uto, Connection c) throws DataAccessException {
+		PreparedStatement pstmt = null; 
+		try {
+			pstmt = c.prepareStatement("update tool_user set pic_file=? where id=?");
+			if (uto.getFileInBytes()!=null && uto.getFileInBytes().length > 0) {
+				ByteArrayInputStream inStream = new ByteArrayInputStream(uto.getFileInBytes());
+				pstmt.setBinaryStream(1, inStream, uto.getFileInBytes().length);    
+			} else {
+				pstmt.setNull(1, java.sql.Types.BINARY);
+			}
+			pstmt.setString(2, uto.getId());
+			pstmt.executeUpdate();
+			
+		} catch (SQLException e) {
+			throw new DataAccessException(e);
+		}finally{
+			super.closeStatement(null, pstmt);
+		}
+	}
+    
     
     /**
      * Remove an user of data base.
@@ -274,7 +343,7 @@ public class UserDAO extends DataAccess {
 		    
 		    //if user is not linked with any project (except root project), remove it from customer table
 		    ProjectDAO pdao = new ProjectDAO(); 
-		    Vector v = pdao.getProjectAllocation(uto, null, c);
+		    Vector<ProjectTO> v = pdao.getProjectAllocation(uto, null, c);
 		    if (v.size()==0){
 		        CustomerDAO cdao = new CustomerDAO();
 		        CustomerTO cto = new CustomerTO(uto.getId());
@@ -315,7 +384,7 @@ public class UserDAO extends DataAccess {
     
 
     /**
-     * This method get a User TO from BD based on username.
+     * This method get a User TO from BD based on user name.
      */
     private UserTO getObjectByUsername(UserTO uto, Connection c) throws DataAccessException{
 		UserTO response= null;
@@ -325,7 +394,7 @@ public class UserDAO extends DataAccess {
 		    
 			pstmt = c.prepareStatement("select id, username, color, email, name, " +
 									   "phone, password, department_id, area_id, function_id, country, language, " +
-									   "birth, auth_mode, permission, pic_file, final_date " +
+									   "birth, company_id, auth_mode, permission, pic_file, final_date, creation_date " +
 									   "from tool_user where username = ?");
 			pstmt.setString(1, uto.getUsername());
 			rs = pstmt.executeQuery();
@@ -347,8 +416,8 @@ public class UserDAO extends DataAccess {
      * Search into data base a list of user objects based on a filter 
      * related with username and name fields.
      */
-    public Vector getListByKeyword(Vector kwList) throws DataAccessException {
-        Vector response = null;
+    public Vector<UserTO> getListByKeyword(Vector<String> kwList) throws DataAccessException {
+    	Vector<UserTO> response = null;
         Connection c = null;
 		try {
 			c = getConnection();
@@ -366,30 +435,36 @@ public class UserDAO extends DataAccess {
      * Search into data base a list of user objects based on a filter 
      * related with username and name fields.
      */
-    private Vector getListByKeyword(Vector kwList, Connection c) throws DataAccessException{
-        Vector response= null;
+    private Vector<UserTO> getListByKeyword(Vector<String> kwList, Connection c) throws DataAccessException{
+        Vector<UserTO> response= null;
 		ResultSet rs = null;
 		PreparedStatement pstmt = null; 
 		try {
 		    
 		    //concat keywords...
-		    Vector vfields = new Vector();
-		    vfields.addElement("USERNAME");
-		    vfields.addElement("NAME");
+		    Vector<String> vfields = new Vector<String>();
+		    vfields.addElement("u.username");
+		    vfields.addElement("u.name");
 		    String wc = StringUtil.getSQLKeywordsByFields(kwList, vfields);
 
 		    //select a user from database
-			pstmt = c.prepareStatement("select id, username, color, email, name, " +
-									   "phone, password, department_id, area_id, function_id, country, language, " +
-									   "birth, auth_mode, permission, pic_file, final_date " +
-									   "from tool_user " +
-									   "where username <> 'root' and final_date is null " +
+			pstmt = c.prepareStatement("select u.id, u.username, u.color, u.email, u.name, c.name as COMPANY_NAME, " +
+									   "u.phone, u.password, u.department_id, u.area_id, u.function_id, u.country, u.language, " +
+									   "u.birth, u.company_id, u.auth_mode, u.permission, u.pic_file, u.final_date, u.creation_date " +
+									   "from tool_user u left outer join company c on (c.id = u.company_id) " +
+									   "where u.username <> 'root' and u.final_date is null " +
 									   "and (" + wc + ") order by name");
 			rs = pstmt.executeQuery();
 			while (rs.next()){
 			    UserTO uto = this.populateUserByResultSet(rs);
 			    uto.setPreference(this.getPreferences(uto, c));
-			    if (response==null) response = new Vector();
+			    if (response==null) response = new Vector<UserTO>();
+			    
+			    String companyName = getString(rs, "COMPANY_NAME"); 
+			    if (companyName!=null && uto.getCompany()!=null) {
+			    	uto.getCompany().setName(companyName);
+			    }
+			    
 				response.addElement(uto); 
 			} 
 						
@@ -402,8 +477,8 @@ public class UserDAO extends DataAccess {
     }
 
     
-    public Vector getUserByLeaderInAllProjects(LeaderTO eto, int role) throws DataAccessException {
-        Vector response = null;
+    public Vector<UserTO> getUserByLeaderInAllProjects(LeaderTO eto, int role) throws DataAccessException {
+        Vector<UserTO> response = null;
         Connection c = null;
 		try {
 			c = getConnection();
@@ -417,8 +492,8 @@ public class UserDAO extends DataAccess {
     }    
     
 
-    private Vector getUserByLeaderInAllProjects(LeaderTO eto, int role, Connection c) throws DataAccessException{
-        Vector response= new Vector();
+    private Vector<UserTO> getUserByLeaderInAllProjects(LeaderTO eto, int role, Connection c) throws DataAccessException{
+        Vector<UserTO> response= new Vector<UserTO>();
 		ResultSet rs = null;
 		PreparedStatement pstmt = null;
 		try {
@@ -436,7 +511,7 @@ public class UserDAO extends DataAccess {
 
 			pstmt = c.prepareStatement("select id, username, color, email, name, " +
 					   "phone, password, department_id, area_id, function_id, country, language, " +
-					   "birth, auth_mode, permission, pic_file, final_date " +
+					   "birth, company_id, auth_mode, permission, pic_file, final_date, creation_date " +
 					   "from tool_user " +
 					   "where username <> 'root' and final_date is null " + whereClause + 
 					   "order by name");
@@ -465,6 +540,7 @@ public class UserDAO extends DataAccess {
         DepartmentTO dto = new DepartmentTO();
         AreaTO ato = new AreaTO();
         FunctionTO fto = new FunctionTO();
+        CompanyTO cto = new CompanyTO();
 		ByteArrayInputStream bis = null;
 		ByteArrayOutputStream bos = null;
         
@@ -494,15 +570,26 @@ public class UserDAO extends DataAccess {
         fto.setId(getString(rs, "function_id"));
         response.setFunction(fto);
 
+        String companyId = getString(rs, "company_id");
+        if (companyId!=null) {
+        	cto.setId(companyId);
+        	response.setCompany(cto);
+        } else {
+        	response.setCompany(null);
+        }      
+
         Timestamp finalDate = getTimestamp(rs, "final_date");
         response.setFinalDate(finalDate);
+
+        Timestamp creationDate = getTimestamp(rs, "creation_date");
+        response.setCreationDate(creationDate);
         
         try {
             bis = (ByteArrayInputStream)rs.getBinaryStream("pic_file");
             response.setBinaryFile(bis);
             if (bis!=null) {
-        	    int bytesRead = 0;
-        	    byte[] buffer = new byte[bis.available()];  
+        	    byte[] buffer = new byte[bis.available()]; 
+        	    int bytesRead = 0;        	    
         	    bos = new ByteArrayOutputStream();
         	    while ((bytesRead = bis.read(buffer)) != -1) {
         	        bos.write(buffer, 0, bytesRead);
@@ -535,5 +622,6 @@ public class UserDAO extends DataAccess {
         PreferenceDAO pdao = new PreferenceDAO();
         return pdao.getObjectByUser(uto, c);
     }
+
 
 }

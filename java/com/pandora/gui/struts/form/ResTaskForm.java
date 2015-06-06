@@ -9,11 +9,13 @@ import java.util.Vector;
 
 import javax.servlet.http.HttpServletRequest;
 
+import org.apache.commons.lang.StringEscapeUtils;
 import org.apache.struts.action.ActionError;
 import org.apache.struts.action.ActionErrors;
 import org.apache.struts.action.ActionMapping;
 
 import com.pandora.CategoryTO;
+import com.pandora.ResourceDateAllocTO;
 import com.pandora.ResourceTaskAllocTO;
 import com.pandora.ResourceTaskTO;
 import com.pandora.TaskStatusTO;
@@ -87,8 +89,10 @@ public class ResTaskForm extends HosterRepositoryForm {
     private String showWorkflowDiagram = "off";
 
     private String allowBillable = "off";
-
+    
     private String billableStatus;
+    
+    private String canSeeDiscussion = "off";
     
     /** the Allocation hash cursor for displaying purposes */
     private int allocCursor;
@@ -101,6 +105,9 @@ public class ResTaskForm extends HosterRepositoryForm {
     
     /** List of Allocation values indexed by allocation date in string format */
     private HashMap<String, ResourceTaskAllocTO> allocationList;
+    
+    /** List of Allocation values indexed by allocation date in string format */
+    private Vector<ResourceDateAllocTO> dateAllocTimeList;
 
     /** List of Estimated Allocation values indexed by allocation date in string format */
     private HashMap<String, ResourceTaskAllocTO> estimatedAllocList;
@@ -134,6 +141,10 @@ public class ResTaskForm extends HosterRepositoryForm {
     private String dateMask;
     
     private Locale defaultLocale;
+    
+    private String projectHtmlList;
+    
+    private String selectedProjectId;
     
     
     /**
@@ -169,8 +180,10 @@ public class ResTaskForm extends HosterRepositoryForm {
         this.reportTaskURL = "";
         this.showWorkflowDiagram = "off";
         this.allowBillable = "off";
+        this.canSeeDiscussion = "off";
         this.iterationId = "-1";
         this.billableStatus = "0";
+        this.setAdditionalFields(null);
     }
 
 	/**
@@ -396,7 +409,8 @@ public class ResTaskForm extends HosterRepositoryForm {
 	    }
 	    
 		currDate = DateUtil.getChangedDate(currDate, Calendar.DATE, slotIndex + (this.getAllocCursor()-1));
-		response = DateUtil.getDate(currDate, titleDateMask, loc);
+		response = DateUtil.getDate(currDate, titleDateMask, loc);		
+		response = StringEscapeUtils.escapeHtml(response);
 		
 	    return response;	    
 	}
@@ -521,7 +535,6 @@ public class ResTaskForm extends HosterRepositoryForm {
 				cto = null;
 			}
 		}
-		
 		return label;
 	}
 
@@ -818,6 +831,15 @@ public class ResTaskForm extends HosterRepositoryForm {
 	}
 	
 
+	////////////////////////////////////////	
+	public String getCanSeeDiscussion() {
+		return canSeeDiscussion;
+	}
+	public void setCanSeeDiscussion(String newValue) {
+		this.canSeeDiscussion = newValue;
+	}
+	
+	
 	////////////////////////////////////////////	
 	public String getPlanningId() {
 		return planningId;
@@ -860,5 +882,31 @@ public class ResTaskForm extends HosterRepositoryForm {
     public String getSlotTitle7() {
         return getTitleForSlot(6);
     }
+
+	public String getProjectHtmlList() {
+		return projectHtmlList;
+	}
+
+	public void setProjectHtmlList(String projectHtmlList) {
+		this.projectHtmlList = projectHtmlList;
+	}
+
+	public String getSelectedProjectId() {
+		return selectedProjectId;
+	}
+
+	public void setSelectedProjectId(String selectedProjectId) {
+		this.selectedProjectId = selectedProjectId;
+	}
+
+	public Vector<ResourceDateAllocTO> getDateAllocTimeList() {
+		return dateAllocTimeList;
+	}
+
+	public void setDateAllocTimeList(Vector<ResourceDateAllocTO> dateAllocTimeList) {
+		this.dateAllocTimeList = dateAllocTimeList;
+	}
+    
+	
 
 }

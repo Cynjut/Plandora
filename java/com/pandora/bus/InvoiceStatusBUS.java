@@ -9,15 +9,15 @@ import com.pandora.exception.DataAccessException;
 
 public class InvoiceStatusBUS extends GeneralBusiness {
 
-    /** The Data Acess Object related with current business entity */
+    /** The Data Access Object related with current business entity */
     InvoiceStatusDAO dao = new InvoiceStatusDAO();
     
     
     /**
      * Get all Invoice Status objects from data base.
      */
-	public Vector getList() throws BusinessException {
-        Vector response = new Vector();
+	public Vector<InvoiceStatusTO> getList() throws BusinessException {
+        Vector<InvoiceStatusTO> response = new Vector<InvoiceStatusTO>();
         try {
             response = dao.getList();
         } catch (DataAccessException e) {

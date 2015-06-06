@@ -8,26 +8,26 @@ import javax.servlet.http.HttpServletRequest;
 import org.apache.struts.action.ActionError;
 import org.apache.struts.action.ActionErrors;
 import org.apache.struts.action.ActionMapping;
-import org.apache.struts.util.MessageResources;
 
 import com.pandora.ProjectTO;
 import com.pandora.UserTO;
-import com.pandora.helper.FormValidationUtil;
 import com.pandora.helper.SessionUtil;
 import com.pandora.helper.StringUtil;
 
 public class ResCapacityPanelForm extends GeneralStrutsForm {
 
-	public static final String MODE_ALL = "ALL";
+	public static final String MODE_CAP_USED = "CAP_USED";
+	
+	public static final String MODE_CAP_COST = "CAP_COST";
 	
 	public static final String MODE_ONLY_CAP = "ONLY_CAP";
 	
 	
-	private HashMap hmUserlist = new HashMap();
+	private HashMap<String, UserTO> hmUserlist = new HashMap<String, UserTO>();
 	
-	private HashMap hmProjectlist = new HashMap();
+	private HashMap<String,ProjectTO> hmProjectlist = new HashMap<String,ProjectTO>();
 	
-	private HashMap hmProjectlistToWork = new HashMap();
+	private HashMap<String, ProjectTO> hmProjectlistToWork = new HashMap<String, ProjectTO>();
 
 	
 	private static final long serialVersionUID = 1L;
@@ -48,30 +48,20 @@ public class ResCapacityPanelForm extends GeneralStrutsForm {
 	
 	private boolean hideDisabledUsers;
 	
+	private boolean hideZeroValues;
+	
 	private String elementLabel;
 	
 	private int granularity = 14;
 	
-	private String unitCapacity = "1";
-	
-	private int maxLimit = 480;
-		
-	private String viewMode = MODE_ALL;
+	private String viewMode = MODE_CAP_COST;
 	
 	private String showEditCapacity = "off";
-	
-	private String chartResourceId = null;
-	
-	private String chartProjectId = null;
-	
-	
-	public String getCanShowChart(){
-		return (chartResourceId!=null && chartProjectId!=null && 
-				!chartResourceId.equals("") && !chartProjectId.equals("") ? "on":"off");
-	}
-	
+		
+		
 	public void reset(ActionMapping mapping, HttpServletRequest request) {
 		this.hideDisabledUsers = false;
+		this.hideZeroValues = false;
 	}
 	
 	
@@ -194,24 +184,9 @@ public class ResCapacityPanelForm extends GeneralStrutsForm {
 		this.viewMode = newValue;
 	}
 	
-	////////////////////////////////////////	
-	public String getUnitCapacity() {
-		return unitCapacity;
-	}
-	public void setUnitCapacity(String newValue) {
-		this.unitCapacity = newValue;
-	}
 	
 	////////////////////////////////////////		
-	public int getMaxLimit() {
-		return maxLimit;
-	}
-	public void setMaxLimit(int newValue) {
-		this.maxLimit = newValue;
-	}
-	
-	////////////////////////////////////////		
-	public HashMap getHmUserlist() {
+	public HashMap<String, UserTO> getHmUserlist() {
 		return hmUserlist;
 	}
 	public void addHmUserlist(String key, UserTO newValue) {
@@ -220,7 +195,7 @@ public class ResCapacityPanelForm extends GeneralStrutsForm {
 	
 		
 	////////////////////////////////////////		
-	public HashMap getHmProjectlist() {
+	public HashMap<String, ProjectTO> getHmProjectlist() {
 		return hmProjectlist;
 	}
 	public void addHmProjectlist(String key, ProjectTO newValue) {
@@ -229,7 +204,7 @@ public class ResCapacityPanelForm extends GeneralStrutsForm {
 	
 	
 	////////////////////////////////////////		
-	public HashMap getHmProjectWorklist() {
+	public HashMap<String, ProjectTO> getHmProjectWorklist() {
 		return hmProjectlistToWork;
 	}
 	public void addHmProjectWorklist(String key, ProjectTO newValue) {
@@ -247,24 +222,6 @@ public class ResCapacityPanelForm extends GeneralStrutsForm {
 	
 	
 	////////////////////////////////////////		
-	public String getChartResourceId() {
-		return chartResourceId;
-	}
-	public void setChartResourceId(String newValue) {
-		this.chartResourceId = newValue;
-	}
-	
-	
-	////////////////////////////////////////	
-	public String getChartProjectId() {
-		return chartProjectId;
-	}
-	public void setChartProjectId(String newValue) {
-		this.chartProjectId = newValue;
-	}
-	
-	
-	////////////////////////////////////////		
 	public boolean getHideDisabledUsers() {
 		return hideDisabledUsers;
 	}
@@ -272,5 +229,13 @@ public class ResCapacityPanelForm extends GeneralStrutsForm {
 		this.hideDisabledUsers = newValue;
 	}
 	
+	
+	////////////////////////////////////////		
+	public boolean getHideZeroValues() {
+		return hideZeroValues;
+	}
+	public void setHideZeroValues(boolean newValue) {
+		this.hideZeroValues = newValue;
+	}
 	
 }

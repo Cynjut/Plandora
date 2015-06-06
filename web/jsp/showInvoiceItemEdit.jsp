@@ -94,7 +94,7 @@
 		       	<td width="100" class="formTitle"><bean:message key="label.invoiceForm.itemList.type"/>:&nbsp;</td>
 			    <td class="formBody"  colspan="2">
 				  	<html:select name="invoiceItemForm" property="type" styleClass="textBox">
-				   		<html:options collection="invoiceTypes" property="id" labelProperty="genericTag"/>
+				   		<html:options collection="invoiceTypes" property="id" labelProperty="genericTag" filter="false"/>
 					</html:select>
 		   	    </td>
 	    	    <td width="10">&nbsp;</td>
@@ -114,7 +114,7 @@
 		    
 		    <tr class="pagingFormBody">
 		      <td class="formTitle"><bean:message key="label.invoiceForm.itemList.prc"/>:&nbsp;</td>
-		      <td class="formTitle" width="20"><bean:write name="invoiceItemForm" property="currencySymbol" />&nbsp;</td>
+		      <td class="formTitle" width="20"><bean:write name="invoiceItemForm" property="currencySymbol" filter="false"/>&nbsp;</td>
 		      <td><html:text name="invoiceItemForm" property="price" styleClass="textBox" size="10" maxlength="20"/></td>
 		      <td>&nbsp;</td>
 		    </tr>    		    

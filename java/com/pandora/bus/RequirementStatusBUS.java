@@ -19,8 +19,8 @@ public class RequirementStatusBUS extends GeneralBusiness {
     /**
      * Get a list of all Requirement Status TOs from data base.
      */
-    public Vector getRequirementStatusList() throws BusinessException{
-        Vector response = new Vector();
+    public Vector<RequirementStatusTO> getRequirementStatusList() throws BusinessException{
+        Vector<RequirementStatusTO> response = new Vector<RequirementStatusTO>();
         try {
             response = dao.getList();
         } catch (DataAccessException e) {
@@ -34,6 +34,19 @@ public class RequirementStatusBUS extends GeneralBusiness {
 		RequirementStatusTO response = null;
 		try {
             response = dao.getObjectByStateMachine(state);
+        } catch (DataAccessException e) {
+            throw new  BusinessException(e);
+        }
+		return response;
+	}
+
+
+	public RequirementStatusTO getObjectById(String statusId) throws BusinessException {
+		RequirementStatusTO response = null;
+		try {
+			RequirementStatusTO filter = new RequirementStatusTO();
+			filter.setId(statusId);
+            response = (RequirementStatusTO) dao.getObject(filter);
         } catch (DataAccessException e) {
             throw new  BusinessException(e);
         }

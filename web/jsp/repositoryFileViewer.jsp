@@ -7,7 +7,6 @@
 
    	<logic:equal name="repositoryFileViewerForm" property="outputType" value="1">
 		<head>
-			<meta http-equiv="Content-Type" content="text/html; charset="iso-8859-1" />
 			<title>
 				<bean:write name="repositoryFileViewerForm" property="formTitle" filter="false" />
 			</title>
@@ -69,7 +68,6 @@
    	<logic:equal name="repositoryFileViewerForm" property="outputType" value="2">
 
 	    <head> 
-        	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" /> 
 			<title>
 				<bean:write name="repositoryFileViewerForm" property="formTitle" filter="false" />
 			</title>
@@ -142,7 +140,6 @@
    	<logic:equal name="repositoryFileViewerForm" property="outputType" value="3">
 
 	    <head> 
-        	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" /> 
 			<title>
 				<bean:write name="repositoryFileViewerForm" property="formTitle" filter="false" />
 			</title>

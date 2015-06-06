@@ -25,8 +25,13 @@ public class ReportForm extends GeneralStrutsForm {
     /** The Name of Report */
     private String name;
     
-    /** Type of report (diarily, monthly, weekly) */
+    private String description;
+    
+    /** Type of report (daily, monthly, weekly) */
     private String type;
+
+    /** Type of KPI (custom KPI, CPI, SPI, etc) */
+    private String kpiType;
     
     /** BSC Report Perspective id: Financial, Process, Customer or Training */ 
     private String reportPerspectiveId;
@@ -42,6 +47,8 @@ public class ReportForm extends GeneralStrutsForm {
     
     /** Project related */
     private String projectId;
+    private String appliedProjectList;
+    
     
     /** DateType of report result (date, number, etc) */
     private String dataType;
@@ -69,12 +76,17 @@ public class ReportForm extends GeneralStrutsForm {
     private String toleranceUnit;
     
     
+    private boolean hideClosedReport;
+    
     /**
      * Clear values of Form
      */
     public void clear(){
+    	this.id = null;
         this.name = "";
+        this.description = "";
         this.type = "";
+        this.appliedProjectList = null;
         this.reportFileName = "";
         this.reportPerspectiveId = "";
         this.sqlStement = "";
@@ -89,6 +101,10 @@ public class ReportForm extends GeneralStrutsForm {
         this.toleranceScale = "1";
         this.tolerance="";
     }    
+    
+    public void reset(ActionMapping mapping, HttpServletRequest request) {
+    	this.hideClosedReport = false;
+	}    
     
     
     public boolean getBoolIsKpiForm(){
@@ -114,6 +130,16 @@ public class ReportForm extends GeneralStrutsForm {
     public void setName(String newValue) {
         this.name = newValue;
     }
+
+    
+    ///////////////////////////////////////////////////    
+    public String getDescription() {
+        return description;
+    }
+    public void setDescription(String newValue) {
+        this.description = newValue;
+    }
+
     
     ///////////////////////////////////////////////////    
     public String getProjectId() {
@@ -122,6 +148,16 @@ public class ReportForm extends GeneralStrutsForm {
     public void setProjectId(String newValue) {
         this.projectId = newValue;
     }
+    
+    
+    ///////////////////////////////////////////////////    
+	public String getAppliedProjectList() {
+		return appliedProjectList;
+	}
+	public void setAppliedProjectList(String newValue) {
+		this.appliedProjectList = newValue;
+	}
+    
     
     ///////////////////////////////////////////////////    
     public String getReportPerspectiveId() {
@@ -235,11 +271,28 @@ public class ReportForm extends GeneralStrutsForm {
 	}
 	
 	
+    //////////////////////////////////////////  
+	public boolean getHideClosedReport() {
+		return hideClosedReport;
+	}
+	public void setHideClosedReport(boolean newValue) {
+		this.hideClosedReport = newValue;
+	}	
 
-
+	
+    ////////////////////////////////////////
+    public String getKpiType() {
+        return kpiType;
+    }
+    public void setKpiType(String newValue) {
+        this.kpiType = newValue;
+    }
+    
+    
 	public ActionErrors validate(ActionMapping arg0, HttpServletRequest request) {
 		ActionErrors errors = new ActionErrors();
-		if (this.operation.equals("saveReport")) {		    
+		if (this.operation.equals("saveReport")) {
+			
 			if (this.name==null || this.name.trim().equals("")){             	
 			    errors.add("Nome", new ActionError("validate.manageReport.name") );
 			}
@@ -249,10 +302,15 @@ public class ReportForm extends GeneralStrutsForm {
 			}
 
 			if (isKpiForm!=null && isKpiForm.equals("on")) {
+				
 				if (this.dataType.equals("1") && this.toleranceUnit.equals("2")) {
 					errors.add("", new ActionError("validate.manageReport.percdate") );	
 				}
 
+				if ((this.appliedProjectList==null || this.appliedProjectList.trim().equals("")) && projectId.equals("0")) {
+					errors.add("", new ActionError("validate.manageReport.projList") );	
+				}
+				
 				UserTO uto = SessionUtil.getCurrentUser(request);
 				Locale loc = SessionUtil.getCurrentLocale(request);				
 				if (this.dataType.equals("1")) {
@@ -267,7 +325,7 @@ public class ReportForm extends GeneralStrutsForm {
 						errors.add("", new ActionError("validate.manageReport.goal") );	
 					}
 					
-				} else if (this.dataType.equals("0")) {
+				} else if (this.dataType.equals("0") || this.dataType.equals("2") || this.dataType.equals("3")) {
 					if (!StringUtil.checkIsFloat(this.goal, loc)){
 						errors.add("", new ActionError("validate.manageReport.goal") );	
 					}
@@ -276,6 +334,5 @@ public class ReportForm extends GeneralStrutsForm {
 		}
 		return errors;		
 	}
-	
-	
+		
 }

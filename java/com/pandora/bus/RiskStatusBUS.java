@@ -15,8 +15,8 @@ public class RiskStatusBUS extends GeneralBusiness {
     RiskStatusDAO dao = new RiskStatusDAO();
     
 
-    public Vector getRiskStatusList() throws BusinessException{
-        Vector response = new Vector();
+    public Vector<RiskStatusTO> getRiskStatusList() throws BusinessException{
+        Vector<RiskStatusTO> response = new Vector<RiskStatusTO>();
         try {
             response = dao.getList();
         } catch (DataAccessException e) {

@@ -41,6 +41,9 @@ public class CategoryTO extends TransferObject{
     /** The type value related with cost category */    
     public static final Integer TYPE_COST        = new Integer(9);
     
+    /** The type value related with occurrence category */    
+    public static final Integer TYPE_OCCURRENCE  = new Integer(10);
+
     
     /** The Name of Category */
     private String name;

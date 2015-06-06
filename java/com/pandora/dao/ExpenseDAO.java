@@ -16,12 +16,12 @@ import com.pandora.helper.DateUtil;
 
 public class ExpenseDAO extends PlanningDAO {
 
-	public Vector<ExpenseTO> getListByUserId(String userId) throws DataAccessException {
+	public Vector<ExpenseTO> getListByUserId(String userId, boolean hideClosed) throws DataAccessException {
         Vector<ExpenseTO> response = null;
         Connection c = null;
 		try {
 			c = getConnection();
-			response = this.getListByUserId(userId, c);
+			response = this.getListByUserId(userId, hideClosed, c);
 		} catch(Exception e) {
 			throw new DataAccessException(e);
 		} finally {
@@ -31,15 +31,27 @@ public class ExpenseDAO extends PlanningDAO {
 	}
 
 	
-	private Vector<ExpenseTO> getListByUserId(String userId, Connection c) throws DataAccessException {
+	private Vector<ExpenseTO> getListByUserId(String userId, boolean hideClosed, Connection c) throws DataAccessException {
 		Vector<ExpenseTO> response= new Vector<ExpenseTO>();
 		ResultSet rs = null;
 		PreparedStatement pstmt = null;
 		try {
+			
+			String closedWhere = "";
+			if (hideClosed) {
+				closedWhere = " and (sub.c is not null and sub.c > 0)";
+			}
+			
 			pstmt = c.prepareStatement("select e.id, e.project_id, e.user_id, u.name, p.name as PROJECT_NAME, " +
-									      "a.description, a.creation_date, a.final_date, a.iteration, a.rich_text_desc " +
-									   "from expense e, tool_user u, project p, planning a " +
-									   "where e.user_id=? and e.user_id = u.id and e.project_id = p.id and a.id = e.id");
+										      "a.description, a.creation_date, a.final_date, a.iteration, a.rich_text_desc, sub.c " +
+										"from tool_user u, project p, planning a, expense e  " +
+				                                   "left outer join (select c.expense_id, count(s.state_machine_order) as c " + 
+				                                                      "from cost c, cost_status s, cost_installment i  " +
+								                                     "where i.cost_id = c.id and s.id = i.cost_status_id  " +
+								                                       "and s.state_machine_order<>100 and s.state_machine_order<>101 " +
+								                                     "group by c.expense_id " +
+								                                    ") as sub on sub.expense_id = e.id " +
+			                            "where e.user_id = u.id and e.project_id = p.id and a.id = e.id and e.user_id=?" + closedWhere);
 			pstmt.setString(1, userId);	
 			rs = pstmt.executeQuery();
 			while (rs.next()) {

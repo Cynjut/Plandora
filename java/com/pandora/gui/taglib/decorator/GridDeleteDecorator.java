@@ -30,8 +30,8 @@ public class GridDeleteDecorator extends ColumnDecorator {
 		String image = "";
 		String altValue = this.getBundleMessage("label.grid.remove");
 		image ="<a href=\"javascript:remove('" + columnValue + "'," + tag + ");\" border=\"0\"> \n";
-		image += "<img border=\"0\" " + HtmlUtil.getHint(altValue) + " src=\"../images/remove.gif\" >";
-		image += "</a>"; 				
+		image += "<img border=\"0\" " + HtmlUtil.getHint(altValue) + " src=\"../images/remove.gif\" />\n";
+		image += "</a>\n"; 				
 		return image;
     }
 

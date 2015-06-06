@@ -7,12 +7,6 @@ package org.apache.taglibs.display;
 
 import java.util.Locale;
 
-import javax.servlet.jsp.JspException;
-import javax.servlet.jsp.PageContext;
-
-import org.apache.struts.Globals;
-import org.apache.struts.util.RequestUtils;
-
 import com.pandora.UserTO;
 import com.pandora.delegate.UserDelegate;
 
@@ -56,21 +50,20 @@ public abstract class ColumnDecorator extends Decorator{
    	
    	/**
    	 * This method get a value from resource bundle and can be used for all decorators.
-   	 * @param key
-   	 * @param isTolerant
-   	 * @return
    	 */   	
    	protected String getBundleMessage(String key, boolean isTolerant){
    	    String value = "";
 		try {   	    
-		    PageContext pageContext = getPageContext();				
-		    value = RequestUtils.message(pageContext, null, Globals.LOCALE_KEY, key, null);
-			if (isTolerant) {
-		        if (value.startsWith("???")) {
-		            value = key;
-		        }		    
-			}
-        } catch (JspException e) {
+	   	    UserTO uto = (UserTO)this.getSession().getAttribute(UserDelegate.CURRENT_USER_SESSION);
+	   	    if (uto!=null){
+	   	    	value = uto.getBundle().getMessage(uto.getLocale(), key);
+				if (isTolerant) {
+			        if (value.startsWith("???")) {
+			            value = key;
+			        }		    
+				}
+	   	    }
+        } catch (Exception e) {
             value = "err!";
         }
         return value;
@@ -83,7 +76,7 @@ public abstract class ColumnDecorator extends Decorator{
    	 */
    	protected Locale getCurrentLocale(){
    	    Locale loc = null; 
-   	    UserTO uto = (UserTO)this.getPageContext().getSession().getAttribute(UserDelegate.CURRENT_USER_SESSION);
+   	    UserTO uto = (UserTO)this.getSession().getAttribute(UserDelegate.CURRENT_USER_SESSION);
    	    if (uto!=null){
    	   	    String language = uto.getLanguage();
    	   	    String country = uto.getCountry();            

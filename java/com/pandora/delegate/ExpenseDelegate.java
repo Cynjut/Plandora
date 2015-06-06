@@ -13,8 +13,8 @@ public class ExpenseDelegate extends GeneralDelegate {
     private ExpenseBUS bus = new ExpenseBUS();
 
     
-    public Vector<ExpenseTO> getExpenseList(String userId) throws BusinessException {
-        return bus.getExpenseList(userId);
+    public Vector<ExpenseTO> getExpenseList(String userId, boolean hideClosed) throws BusinessException {
+        return bus.getExpenseList(userId, hideClosed);
     }
 
     

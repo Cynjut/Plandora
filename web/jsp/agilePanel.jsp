@@ -2,6 +2,7 @@
 <%@ taglib uri="/WEB-INF/lib/struts-bean" prefix="bean" %>
 <%@ taglib uri="/WEB-INF/lib/display" prefix="display" %>
 <%@ taglib uri="/WEB-INF/lib/struts-logic" prefix="logic" %>
+<%@ taglib uri="/WEB-INF/lib/plandora-html" prefix="plandora-html" %>
 
 <jsp:include page="header.jsp" />
 
@@ -28,18 +29,19 @@
 	function editPostTask(argId){
    		var splitResult = argId.split("-");
    		if (splitResult.length == 3) {
-		    displayMessage("../do/showAgilePanelTask?operation=showEditPopup&requirementId=&taskId=" + splitResult[0] + "&resourceId=" + splitResult[1] , 480, 300);
+		    displayMessage("../do/showAgilePanelTask?operation=showEditPopup&requirementId=&taskId=" + splitResult[0] + "&resourceId=" + splitResult[1] , 480, 310);
 		}
 	}
 
 	function newPostTask(reqId){
-	    displayMessage("../do/showAgilePanelTask?operation=showEditPopup&taskId=&requirementId=" + reqId, 480, 300);
+	    displayMessage("../do/showAgilePanelTask?operation=showEditPopup&taskId=&requirementId=" + reqId, 480, 310);
 	}
 	
 	function removePostTask(argId){
    		var splitResult = argId.split("-");
    		if (splitResult.length == 3) {
-		    displayMessage("../do/refuse?operation=prepareForm&forwardAfterRefuse=goToAgileForm&refuseType=TSK&refusedId=" + splitResult[0], 475, 220);		
+		    //displayMessage("../do/refuse?operation=prepareForm&forwardAfterRefuse=goToAgileForm&refuseType=TSK&refusedId=" + splitResult[0], 475, 220);
+		    window.location = "../do/showAgilePanel?operation=removeResTask&resourceId=" + splitResult[1] + "&taskId=" + splitResult[0];
 		}
 	}
 
@@ -88,6 +90,7 @@
 	<html:hidden name="agilePanelForm" property="operation"/>
 	<html:hidden name="agilePanelForm" property="maximizedGadgetId"/>
 		
+	<plandora-html:shortcut name="agilePanelForm" property="goToAgileForm" fieldList="projectId"/>
 
 	<table width="100%" height="80%" border="0" cellspacing="0" cellpadding="0">
 	<tr><td width="10">&nbsp;</td><td>
@@ -100,7 +103,7 @@
 </logic:present>
 
 		<display:headerfootergrid width="100%" type="HEADER">
-			<bean:message key="title.agilePanelForm"/>  <bean:write name="agilePanelForm" property="projectName" />
+			<bean:message key="title.agilePanelForm"/>  <bean:write name="agilePanelForm" property="projectName" filter="false"/>
 		</display:headerfootergrid>
 	  	
 	  	<table width="98%" border="0" cellspacing="0" cellpadding="0">
@@ -117,13 +120,13 @@
 	      <td class="formTitle"><bean:message key="label.agilePanelForm.iteration"/>:&nbsp;</td>
 	      <td class="formBody">
 		  	<html:select name="agilePanelForm" property="iterationSelected" styleClass="textBox">
-				<html:options collection="iterationList" property="id" labelProperty="name"/>
+				<html:options collection="iterationList" property="id" labelProperty="name" filter="false"/>
 			</html:select>
 	      </td>
 	      <td class="formTitle"><bean:message key="label.agilePanelForm.group"/>:&nbsp;</td>
 	      <td class="formBody">
 		  	<html:select name="agilePanelForm" property="groupBy" styleClass="textBox">
-				<html:options collection="groupByList" property="id" labelProperty="genericTag"/>
+				<html:options collection="groupByList" property="id" labelProperty="genericTag" filter="false"/>
 			</html:select>
 	      </td>
 	      <td>&nbsp;</td>      
@@ -133,7 +136,7 @@
 	      <td class="formTitle"><bean:message key="label.agilePanelForm.category"/>:&nbsp;</td>
 	      <td class="formBody">
 		  	<html:select name="agilePanelForm" property="categorySelected" styleClass="textBox">
-				<html:options collection="categoryList" property="id" labelProperty="name"/>
+				<html:options collection="categoryList" property="id" labelProperty="name" filter="false"/>
 			</html:select>
 	      </td>
 	      <td>&nbsp;</td>

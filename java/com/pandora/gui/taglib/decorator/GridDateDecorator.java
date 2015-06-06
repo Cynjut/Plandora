@@ -33,13 +33,12 @@ public class GridDateDecorator extends ColumnDecorator {
     public String decorate(Object columnValue, String tag) {
         int dateFormat = 2, timeFormat = 2; //default value
         String response = "&nbsp;";
-        
-        UserTO uto = (UserTO)this.getPageContext().getSession().getAttribute(UserDelegate.CURRENT_USER_SESSION);
-        String language = uto.getLanguage();
-        String country = uto.getCountry();            
-            
+                    
         if (columnValue!=null){
-            
+        
+            UserTO uto = (UserTO)this.getSession().getAttribute(UserDelegate.CURRENT_USER_SESSION);
+            Locale loc = uto.getLocale();
+        	
 	        //get format and locale from tag string
             int c = 0;
 	        StringTokenizer st = new StringTokenizer(tag, ";");
@@ -65,7 +64,6 @@ public class GridDateDecorator extends ColumnDecorator {
 	        }
 	        
 	        //format date!
-	        Locale loc = new Locale(language, country);
 	        if (timeFormat==0){
 	            response = DateUtil.getDate((Timestamp)columnValue, uto.getCalendarMask(), loc);    
 	        } else {

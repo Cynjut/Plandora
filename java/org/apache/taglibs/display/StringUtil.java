@@ -5,11 +5,12 @@ import java.util.Properties;
 import javax.servlet.jsp.JspException;
 import javax.servlet.jsp.PageContext;
 
+import org.apache.struts.util.RequestUtils;
+
 import com.pandora.PreferenceTO;
 import com.pandora.UserTO;
+import com.pandora.bus.SystemSingleton;
 import com.pandora.delegate.UserDelegate;
-
-import org.apache.struts.util.RequestUtils;
 
 /**
  * One line description of what this class does.
@@ -115,7 +116,8 @@ public final class StringUtil {
         results = "";
 
         // Now check for urls...
-        while ((index = work.indexOf("http://")) != -1) {
+        String protoc = SystemSingleton.getInstance().getSystemProtocol();
+        while ((index = work.indexOf(protoc + "://")) != -1) {
             int end = work.length() - 1;
 
             // scan forwards...

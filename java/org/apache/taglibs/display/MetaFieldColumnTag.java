@@ -2,6 +2,7 @@ package org.apache.taglibs.display;
 
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Locale;
 import java.util.Properties;
 import java.util.Vector;
 
@@ -21,10 +22,10 @@ public class MetaFieldColumnTag extends ColumnTag implements Cloneable {
 	private static final long serialVersionUID = 1L;
 	
     /** The elements of the vector is the title of each sub-column of Meta Field column */
-    private Vector metaFieldsTitle = null;
+    private Vector<MetaFieldTO> metaFieldsTitle = null;
     
     /** Vector of AdditionalFieldTO array.
-     * The itens of vector stand for the rows of table.
+     * The items of vector stand for the rows of table.
      * The elements into array stand for the columns of table */
     private Vector additionalFields = null;
     
@@ -35,11 +36,11 @@ public class MetaFieldColumnTag extends ColumnTag implements Cloneable {
         int col = 1;
         
         //first all, process data from parent table...
-        this.metaFieldsTitle = new Vector();
+        this.metaFieldsTitle = new Vector<MetaFieldTO>();
         this.additionalFields = null;
         this.generateMatrix();
         
-        //get the number of sub-collums of Meta Field column
+        //get the number of sub-columns of Meta Field column
         if (metaFieldsTitle.size()>0) {
             col = metaFieldsTitle.size();
         }
@@ -55,11 +56,12 @@ public class MetaFieldColumnTag extends ColumnTag implements Cloneable {
                 
         if (this.additionalFields!=null) {
             AdditionalFieldTO[] array = (AdditionalFieldTO[])this.additionalFields.elementAt(rowcnt);
+            Locale loc = pageContext.getRequest().getLocale();
             for (int j=0; j < array.length; j++){
                 AdditionalFieldTO afto = array[j];
                 if (afto!=null) {
                     MetaFieldTO mfto = afto.getMetaField();
-                    String text = mfto.getValueByKey(afto.getValue());
+                    String text = mfto.getValueByKey(afto, loc);
                     this.setValue(text);
                 } else {
                     this.setValue("");
@@ -77,9 +79,9 @@ public class MetaFieldColumnTag extends ColumnTag implements Cloneable {
 
         if (additionalFields!=null) {
         	int col = 0;
-            Iterator i = metaFieldsTitle.iterator();
+            Iterator<MetaFieldTO> i = metaFieldsTitle.iterator();
             while(i.hasNext()) {
-                MetaFieldTO mfto = (MetaFieldTO)i.next();
+                MetaFieldTO mfto = i.next();
                 this.setTitle(mfto.getName());
              
                 buff.append(super.getHeader(sortOrder, sortAttr, (colNumber+col), anchorParam, url));
@@ -92,7 +94,7 @@ public class MetaFieldColumnTag extends ColumnTag implements Cloneable {
         
     
     /**
-     * Prepare data of metafield to be displayed into column  
+     * Prepare data of meta field to be displayed into column  
      */
     private void generateMatrix(){
         Vector tableData = null;        
@@ -110,7 +112,7 @@ public class MetaFieldColumnTag extends ColumnTag implements Cloneable {
                 
                 //check if obj is a PlanningTO object
                 if (planning!=null) {
-                    Vector addFields = planning.getAdditionalFields();
+                    Vector<AdditionalFieldTO> addFields = planning.getAdditionalFields();
                     this.checkTitleNotExists(addFields);
                     if (planning.getGridRowNumber()>=0) {
                     	hm.put("" + planning.getGridRowNumber(), planning);	
@@ -205,18 +207,18 @@ public class MetaFieldColumnTag extends ColumnTag implements Cloneable {
      * Verify if a specific meta field object is already into the index (meta field titles) 
      * @return
      */
-    private void checkTitleNotExists(Vector addFields){
+    private void checkTitleNotExists(Vector<AdditionalFieldTO> addFields){
         
         if (addFields!=null && addFields.size()>0) {
-            Iterator i = addFields.iterator();
+            Iterator<AdditionalFieldTO> i = addFields.iterator();
             while(i.hasNext()) {
                 AdditionalFieldTO afto =(AdditionalFieldTO)i.next();
                 MetaFieldTO mfto = afto.getMetaField();
                 boolean alreadyExists = false;
                 
-                Iterator j = this.metaFieldsTitle.iterator();
+                Iterator<MetaFieldTO> j = this.metaFieldsTitle.iterator();
                 while (j.hasNext()) {
-                    MetaFieldTO mfTitle = (MetaFieldTO)j.next();
+                    MetaFieldTO mfTitle = j.next();
                     if (mfTitle.getId().equals(mfto.getId()) || mfTitle.getName().equals(mfto.getName())){                    	
                         alreadyExists = true;
                         break;

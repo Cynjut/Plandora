@@ -12,8 +12,8 @@ import com.pandora.exception.DataAccessException;
 public class InvoiceStatusDAO extends DataAccess {
 
 	
-    public Vector getList(Connection c) throws DataAccessException {
-		Vector response= new Vector();
+    public Vector<InvoiceStatusTO> getList(Connection c) throws DataAccessException {
+		Vector<InvoiceStatusTO> response= new Vector<InvoiceStatusTO>();
 		ResultSet rs = null;
 		PreparedStatement pstmt = null; 
 		try {

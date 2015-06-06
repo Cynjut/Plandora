@@ -19,6 +19,7 @@ import com.pandora.TransferObject;
 import com.pandora.UserTO;
 import com.pandora.bus.alert.Notification;
 import com.pandora.delegate.NotificationDelegate;
+import com.pandora.delegate.PreferenceDelegate;
 import com.pandora.delegate.UserDelegate;
 import com.pandora.exception.BusinessException;
 import com.pandora.gui.struts.form.AreaForm;
@@ -39,13 +40,16 @@ public class NotificationAction extends GeneralStrutsAction {
 			HttpServletRequest request, HttpServletResponse response){
 		
 		String forward = "showNotification";
-		
+
 		this.clearForm(form, request);
 		
 		UserTO uto = SessionUtil.getCurrentUser(request);
 		NotificationForm nfrm = (NotificationForm)form;
 		nfrm.setSaveMethod(ResTaskForm.INSERT_METHOD, uto);
-			
+		
+	    String hideDisabled = uto.getPreference().getPreference(PreferenceTO.AGENT_HIDE_DISABLED);
+	    nfrm.setHideClosedAgents(hideDisabled!=null && hideDisabled.equals("on"));
+		
 	    this.refresh(mapping, form, request, response);
 	    this.refreshAuxiliarList(mapping, form, request, response);
 	    
@@ -121,13 +125,24 @@ public class NotificationAction extends GeneralStrutsAction {
 	public ActionForward refresh(ActionMapping mapping, ActionForm form,
 			HttpServletRequest request, HttpServletResponse response){
 	    String forward = "showNotification";
+	    PreferenceDelegate pfdel = new PreferenceDelegate();
+	    
+		try {
+			NotificationForm frm = (NotificationForm)form;
 
-		try {	    
+		    //save the new preference
+		    UserTO uto = SessionUtil.getCurrentUser(request);
+		    PreferenceTO pto = new PreferenceTO(PreferenceTO.AGENT_HIDE_DISABLED, frm.getHideClosedAgents()?"on":"off", uto);
+			uto.getPreference().addPreferences(pto);
+			pto.addPreferences(pto);
+			pfdel.insertOrUpdate(pto);
+
 		    //get all Notification from data base 		    
 		    NotificationDelegate ndel = new NotificationDelegate();
-		    Vector nList = ndel.getNotificationList();
+		    Vector<NotificationTO> nList = ndel.getNotificationList(frm.getHideClosedAgents());
 		    request.getSession().setAttribute("notificationList", nList);
-		    		    		    
+		    		
+			
 		} catch(BusinessException e){
 		   this.setErrorFormSession(request, "error.formNotification.showForm", e);
 		}
@@ -184,9 +199,9 @@ public class NotificationAction extends GeneralStrutsAction {
     	Locale loc = SessionUtil.getCurrentLocale(request);
     	String mask = super.getCalendarMask(request);
     	
-        Iterator i = nbus.getFields().iterator();
+        Iterator<FieldValueTO> i = nbus.getFields().iterator();
         while(i.hasNext()) {
-            FieldValueTO field = (FieldValueTO)i.next();		            
+            FieldValueTO field = i.next();		            
             String fieldLabel = this.getBundleMessage(request, field.getLabel(), true);
 
             if (field.getDomain()!=null) {
@@ -247,7 +262,7 @@ public class NotificationAction extends GeneralStrutsAction {
         String[] labelsForCalendar = new String[2];
         labelsForCalendar[0] = this.getBundleMessage(request, "label.calendar.button");
         labelsForCalendar[1] = this.getBundleMessage(request, "calendar.format");
-        return HtmlUtil.getHtmlField(field, fieldValue, "notificationForm", null, labelsForCalendar);
+        return HtmlUtil.getHtmlField(field, fieldValue, "notificationForm", null, labelsForCalendar, null);
     }
     
     
@@ -309,13 +324,13 @@ public class NotificationAction extends GeneralStrutsAction {
 		try {
 		    NotificationForm nfrm = (NotificationForm)form;
 		    NotificationDelegate ndel = new NotificationDelegate();
-			
-			//clear form and messages
-			this.clearForm(nfrm, request);
-			
+						
 			NotificationTO nto = new NotificationTO();
 			nto.setId(nfrm.getId());
 			ndel.removeNotification(nto);
+			
+			//clear form and messages
+			this.clearForm(nfrm, request);
 			
 			//set success message into http session
 			this.setSuccessFormSession(request, "message.removeNotification");
@@ -405,10 +420,12 @@ public class NotificationAction extends GeneralStrutsAction {
 	    return response;
 	}
 	
+	
 	private Notification getNotificationClass(String className){
         Notification response = null;
         try {
-            Class klass = Class.forName(className);
+            @SuppressWarnings("rawtypes")
+			Class klass = Class.forName(className);
             response = (Notification)klass.newInstance();
         } catch (java.lang.NoClassDefFoundError e) {
         	LogUtil.log(this, LogUtil.LOG_ERROR, "A error occures getting notification class", e);
@@ -454,7 +471,7 @@ public class NotificationAction extends GeneralStrutsAction {
 	    nto.setId(frm.getId());
 	    nto.setName(frm.getName());
 	    nto.setDescription(frm.getDescription());
-	    if (frm.getEnableStatus().equals("1")) {
+	    if (frm.getEnableStatus()==null || frm.getEnableStatus().equals("1")) {
 	        nto.setFinalDate(null);    
 	    } else {
 	        nto.setFinalDate(DateUtil.getNow());

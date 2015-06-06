@@ -26,6 +26,8 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.w3c.dom.Text;
 
+import com.pandora.bus.SystemSingleton;
+
 /**
  * This class handle a DOM XML document. <br> 
  * The methods of getting specifics pieces of document (Nodes) is includes into this class too.
@@ -436,7 +438,8 @@ public final class XmlDomParse {
 	public static String getDecode(String buff){
 		String response = "";
 		try {
-			response = URLDecoder.decode(buff, "UTF-8");
+			String encoding = SystemSingleton.getInstance().getDefaultEncoding();			
+			response = URLDecoder.decode(buff, encoding);
 		} catch (Exception e){
 		    e.printStackTrace();
 		}
@@ -452,7 +455,8 @@ public final class XmlDomParse {
 		String response = "";
 		try {
 		    if (buff!=null){
-		        response = URLEncoder.encode(buff, "UTF-8");    
+		    	String encoding = SystemSingleton.getInstance().getDefaultEncoding();		    	
+		        response = URLEncoder.encode(buff, encoding);    
 		    }
 		} catch (Exception e){
 		    e.printStackTrace();

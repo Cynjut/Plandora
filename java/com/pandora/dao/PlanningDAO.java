@@ -7,6 +7,10 @@ import java.sql.SQLException;
 import java.sql.Types;
 import java.util.Vector;
 
+import com.pandora.ArtifactTO;
+import com.pandora.CostTO;
+import com.pandora.ExpenseTO;
+import com.pandora.InvoiceTO;
 import com.pandora.OccurrenceTO;
 import com.pandora.PlanningRelationTO;
 import com.pandora.PlanningTO;
@@ -18,6 +22,7 @@ import com.pandora.TransferObject;
 import com.pandora.UserTO;
 import com.pandora.bus.kb.IndexEngineBUS;
 import com.pandora.exception.DataAccessException;
+import com.pandora.exception.MandatoryMetaFieldDataException;
 import com.pandora.helper.LogUtil;
 import com.pandora.helper.StringUtil;
 
@@ -54,8 +59,8 @@ public class PlanningDAO extends DataAccess {
 		try {
 		    PlanningTO pto = (PlanningTO)to;
 			pstmt = c.prepareStatement("insert into planning (id, description, " +
-									   "creation_date, final_date, iteration) " +
-									   "values (?,?,?,?,?)");
+									   "creation_date, final_date, iteration, visible) " +
+									   "values (?,?,?,?,?,?)");
 			pstmt.setString(1, pto.getId());
 			pstmt.setString(2, pto.getDescription());
 			pstmt.setTimestamp(3, pto.getCreationDate());
@@ -66,6 +71,7 @@ public class PlanningDAO extends DataAccess {
 				pstmt.setNull(5, Types.VARCHAR);
 			}
 			
+			pstmt.setString(6, (pto.getVisible() ? "1" : "0"));
 			pstmt.executeUpdate();
 
 			//save the additional fields into data base
@@ -74,9 +80,11 @@ public class PlanningDAO extends DataAccess {
 			//save the discussion topics into data base
 			dtdao.insert(pto.getDiscussionTopics(), pto, c);
 
+		} catch (MandatoryMetaFieldDataException e) {
+			throw e;			
 		} catch (SQLException e) {
 			throw new DataAccessException(e);
-		}finally{
+		} finally{
 			super.closeStatement(null, pstmt);
 		}       
     }
@@ -93,7 +101,7 @@ public class PlanningDAO extends DataAccess {
 		try {
 		    PlanningTO pto = (PlanningTO)to;
 			pstmt = c.prepareStatement("update planning set description=?, final_date=?, " +
-									   "creation_date=?, iteration=? where id=?");
+									   "creation_date=?, iteration=?, visible=? where id=?");
 			pstmt.setString(1, pto.getDescription());
 			pstmt.setTimestamp(2, pto.getFinalDate());
 			if (pto.getCreationDate()!=null){
@@ -102,7 +110,8 @@ public class PlanningDAO extends DataAccess {
 			    throw new DataAccessException("Creation date cannot be null");
 			}
 			pstmt.setString(4, pto.getIteration());
-			pstmt.setString(5, pto.getId());
+			pstmt.setString(5, (pto.getVisible()?"1":"0"));
+			pstmt.setString(6, pto.getId());
 			pstmt.executeUpdate();
 					
 			//save the additional fields into data base
@@ -115,6 +124,8 @@ public class PlanningDAO extends DataAccess {
 	        IndexEngineBUS ind = new IndexEngineBUS();
 	        ind.update(to);
 			
+		} catch (MandatoryMetaFieldDataException e) {
+			throw e;
 		} catch (SQLException e) {
 			throw new DataAccessException(e);
 		} catch (Exception e) {
@@ -145,11 +156,16 @@ public class PlanningDAO extends DataAccess {
 		PreparedStatement pstmt = null; 
 		try {
 			String id = to.getId();
-			String sql = "select p.id, (select id from requirement where p.id = id) as is_req, " +
-					     "(select id from task where p.id = id) as is_task, " +
-					     "(select id from occurrence where p.id = id) as is_occ, " +
-					     "(select id from project where p.id = id) as is_prj, " +
-					     "(select id from risk where p.id = id) as is_risk " +
+			String sql = "select p.id, " +
+						     "(select id from requirement where p.id = id) as is_req, " +
+						     "(select id from task where p.id = id) as is_task, " +
+						     "(select id from occurrence where p.id = id) as is_occ, " +
+						     "(select id from project where p.id = id) as is_prj, " +
+						     "(select id from risk where p.id = id) as is_risk, " +
+						     "(select id from cost where p.id = id) as is_cost, " +
+						     "(select id from expense where p.id = id) as is_exp, " +
+						     "(select id from artifact where p.id = id) as is_art, " +
+						     "(select id from invoice where p.id = id) as is_inv " +
 					     "from planning as p where p.id=?";
 		    pstmt = c.prepareStatement(sql);
 			pstmt.setString(1, id);
@@ -172,19 +188,14 @@ public class PlanningDAO extends DataAccess {
 							OccurrenceDAO dao = new OccurrenceDAO();
 							response = (OccurrenceTO)dao.getObject(new OccurrenceTO(id));
 							response.setType(PlanningRelationTO.ENTITY_OCCU);
-							
-							//if the occurrence visibility is private...
-							if (!((OccurrenceTO)response).isVisible()) {
-								((OccurrenceTO)response).setName("** Prvt.Info. **");
-								response.setDescription("** Prvt.Info. **");
-							}
 
 						} else {
 							buff = getString(rs, "is_prj");
 							if (buff!=null) {
 								ProjectDAO dao = new ProjectDAO();
-								response = (ProjectTO)dao.getObject(new ProjectTO(id));
+								response = (ProjectTO)dao.getProjectById(new ProjectTO(id), true);
 								response.setType(PlanningRelationTO.ENTITY_PROJ);
+								
 							} else {
 								buff = getString(rs, "is_risk");
 								if (buff!=null) {
@@ -192,9 +203,39 @@ public class PlanningDAO extends DataAccess {
 									response = (RiskTO)dao.getObject(new RiskTO(id));
 									response.setType(PlanningRelationTO.ENTITY_RISK);
 								} else {
-									LogUtil.log(this, LogUtil.LOG_INFO, "A suitable entity that match with id [" + id + "] was not found.", null);
-								}							
-							}							
+									buff = getString(rs, "is_cost");
+									if (buff!=null) {
+										CostDAO dao = new CostDAO();
+										response = (CostTO)dao.getObject(new CostTO(id));
+										response.setType(PlanningRelationTO.ENTITY_COST);
+										
+									} else {
+										buff = getString(rs, "is_exp");
+										if (buff!=null) {
+											ExpenseDAO dao = new ExpenseDAO();
+											response = (ExpenseTO)dao.getObject(new ExpenseTO(id));
+											response.setType(PlanningRelationTO.ENTITY_EXPE);
+											
+										} else {
+											buff = getString(rs, "is_art");											
+											if (buff!=null) {
+												ArtifactDAO dao = new ArtifactDAO();
+												response = (ArtifactTO)dao.getObjectById(id);
+												response.setType(PlanningRelationTO.ENTITY_ARTF);
+											} else {
+												buff = getString(rs, "is_inv");											
+												if (buff!=null) {
+													InvoiceDAO dao = new InvoiceDAO();
+													response = (InvoiceTO)dao.getObject(new InvoiceTO(id));
+													response.setType(PlanningRelationTO.ENTITY_INVO);
+												} else {
+													LogUtil.log(this, LogUtil.LOG_INFO, "A suitable entity that match with id [" + id + "] was not found.", null);													
+												}
+											}
+										}
+									}
+								}
+							}
 						}
 					}
 				}

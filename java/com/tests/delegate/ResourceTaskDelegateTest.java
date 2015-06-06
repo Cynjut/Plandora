@@ -1,8 +1,8 @@
 package com.tests.delegate;
 
-import com.pandora.delegate.ResourceTaskDelegate;
-
 import junit.framework.TestCase;
+
+import com.pandora.delegate.ResourceTaskDelegate;
 
 public class ResourceTaskDelegateTest extends TestCase {
 

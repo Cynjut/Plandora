@@ -16,13 +16,13 @@
 <html:form  action="projectImportExport" enctype="multipart/form-data">
 <html:hidden name="projectImportExportForm" property="operation"/>
 
-<br>
+<plandora-html:shortcut name="projectImportExport" property="goToImpExp" fieldList="projectId"/>
 
 <table width="100%" height="80%" border="0" cellspacing="0" cellpadding="0">
 <tr><td width="10">&nbsp;</td><td valign="top">
 
 	<display:headerfootergrid width="100%" type="HEADER">
-		<bean:message key="title.importExport"/> - <bean:write name="projectImportExportForm" property="projectName" />
+		<bean:message key="title.importExport"/> - <bean:write name="projectImportExportForm" property="projectName" filter="false"/>
 	</display:headerfootergrid>
     
 	<table width="98%" border="0" cellspacing="0" cellpadding="0">
@@ -37,7 +37,7 @@
         <td class="formTitle"><bean:message key="label.importExport.option"/>:&nbsp;</td>
 		<td>
 			<html:select name="projectImportExportForm" property="importExportOption" styleClass="textBox" onkeypress="javascript:selectOption();" onchange="javascript:selectOption();">
-				<html:options collection="optionList" property="id" labelProperty="genericTag"/>
+				<html:options collection="optionList" property="id" labelProperty="genericTag" filter="false"/>
 			</html:select>		
 		</td>
 		<td>&nbsp;</td>			

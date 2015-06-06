@@ -10,13 +10,16 @@ public class StepNodeTemplateTO extends NodeTemplateTO {
 	private String categoryRegex;
 	
 	private String resourceId;
-
 	
+	private String iterationId;
+	
+
+
 	public StepNodeTemplateTO(String newId) {
 		this.setId(newId);
 	}
-
-
+	
+	
 	/////////////////////////////////
 	public String getCategoryId() {
 		return categoryId;
@@ -41,6 +44,15 @@ public class StepNodeTemplateTO extends NodeTemplateTO {
 	}
 	public void setCategoryRegex(String newValue) {
 		this.categoryRegex = newValue;
+	}
+
+
+	/////////////////////////////////
+	public String getIterationId() {
+		return iterationId;
+	}
+	public void setIterationId(String newValue) {
+		this.iterationId = newValue;
 	}
 
 	

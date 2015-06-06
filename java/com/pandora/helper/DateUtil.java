@@ -13,8 +13,12 @@ import java.util.Locale;
  */
 public final class DateUtil {
 	
-    /** The basic unit of a slot used to calc each gantt slot */
+    /** The basic unit of a day slot used to calc each gantt slot */
     public static final long SLOT_TIME_MILLIS = 86400000;
+
+    /** week slot used to calc each gantt slot */
+    public static final long WEEK_SLOT_TIME_MILLIS = 604800000;
+
     
 	/**
 	 * The constructor was set to private to avoid instancing creation  
@@ -74,7 +78,7 @@ public final class DateUtil {
 		} catch (ParseException e) {
 			tm = null;
 		} 
-		return tm;	    
+		return tm;
 	}
 
 		
@@ -138,13 +142,26 @@ public final class DateUtil {
 	 * Calculate the number of slots between two dates
 	 */
 	public static int getSlotBetweenDates(Timestamp iniDate, Timestamp finalDate){
+	    return getSlotBetweenDates(iniDate, finalDate, SLOT_TIME_MILLIS, false);
+	}
+
+	
+	/**
+	 * Calculate the number of slots between two dates
+	 */	
+	public static int getSlotBetweenDates(Timestamp iniDate, Timestamp finalDate, long slotSizeInMillis, boolean considerCeil){
 	    int response = 0;
 	    if (finalDate.after(iniDate)){
 	        long diff = (finalDate.getTime() - iniDate.getTime());
-	        response = (int)(diff / SLOT_TIME_MILLIS);
+	        double val = (diff / slotSizeInMillis);
+	        if (considerCeil) {
+	        	val = Math.ceil(((double)diff / (double)slotSizeInMillis));	
+	        }
+	        response = (int)(val);
 	    }
 	    return response;
 	}
+	
 	
 	/**
 	 * Increment/Decrement a timestamp using a type and number.<br> 

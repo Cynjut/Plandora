@@ -1,5 +1,6 @@
 package com.pandora.bus.gadget;
 
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Locale;
 import java.util.Vector;
@@ -11,6 +12,7 @@ import com.pandora.FieldValueTO;
 import com.pandora.ProjectTO;
 import com.pandora.TransferObject;
 import com.pandora.UserTO;
+import com.pandora.delegate.DbQueryDelegate;
 import com.pandora.delegate.ProjectDelegate;
 import com.pandora.exception.BusinessException;
 import com.pandora.helper.SessionUtil;
@@ -93,7 +95,7 @@ public class Gadget {
 			//get the current selected paramters...
 			if (overrideParam==null) {
 				UserTO uto = SessionUtil.getCurrentUser(request);
-				Vector ids = this.getSelectedIds(uto);
+				Vector<TransferObject> ids = this.getSelectedIds(uto);
 				
 				//process the gadget body...
 				process(request, response, ids);
@@ -110,14 +112,14 @@ public class Gadget {
 		}
 	}
 
-	protected Vector getSelectedIds(UserTO uto) {
-		Vector ids = this.getFieldsId();
+	protected Vector<TransferObject> getSelectedIds(UserTO uto) {
+		Vector<TransferObject> ids = this.getFieldsId();
 		if (ids!=null) {
-			Iterator i = ids.iterator();
+			Iterator<TransferObject> i = ids.iterator();
 			while(i.hasNext()) {
-				TransferObject idField = (TransferObject)i.next();
+				TransferObject idField = i.next();
 				String selected = uto.getPreference().getPreference(this.getId() + "." + idField.getId());
-				if (selected!=null || selected.trim().length()>0) {
+				if (selected!=null && selected.trim().length()>0) {
 					idField.setGenericTag(selected);
 				}
 			}
@@ -126,12 +128,12 @@ public class Gadget {
 	}
 	
 	
-	public void process(HttpServletRequest request, HttpServletResponse response, Vector selectedFields) throws BusinessException{
+	public void process(HttpServletRequest request, HttpServletResponse response, Vector<?> selectedFields) throws BusinessException{
 		throw new  BusinessException("This method must be implemented by sub-class.");		
 	}
 
 
-	public StringBuffer gadgetToHtml(HttpServletRequest request, int w, int h, String loadingLabel) throws BusinessException{
+	public StringBuffer gadgetToHtml(HttpServletRequest request, HttpServletResponse response, int w, int h, String loadingLabel) throws BusinessException{
 		throw new  BusinessException("This method must be implemented by sub-class.");		
 	}
 	
@@ -144,7 +146,7 @@ public class Gadget {
 	
 	protected Vector<TransferObject> getProjectFromUser(boolean isAlloc) throws BusinessException{
     	ProjectDelegate pdel = new ProjectDelegate();
-    	Vector<ProjectTO> buff = pdel.getProjectListForWork(this.handler, isAlloc);
+    	Vector<ProjectTO> buff = pdel.getProjectListForWork(this.handler, isAlloc, true);
     	
     	Vector<TransferObject> projList = new Vector<TransferObject>();
     	TransferObject defaultOpt = new TransferObject("-1", "label.combo.select");
@@ -195,5 +197,78 @@ public class Gadget {
 		}
 		return response;
 	}
+	
+	protected Vector<TransferObject> getAtiveUsersByProject(String projectId) throws BusinessException {
+		return getAtiveUsers(null, projectId);
+	}
+	
+	
+	protected Vector<TransferObject> getAtiveUsers(String userId) throws BusinessException{
+		return getAtiveUsers(userId, null);
+	}
+	
+	
+	private Vector<TransferObject> getAtiveUsers(String userId, String projectId) throws BusinessException{
+    	Vector<TransferObject> userlist = new Vector<TransferObject>();
+    	DbQueryDelegate qdel = new DbQueryDelegate();
+    	HashMap<String, TransferObject> hm = new HashMap<String, TransferObject>();
+    	
+    	TransferObject defaultOpt = new TransferObject("-1", "label.combo.select");
+    	TransferObject separator = new TransferObject("-1", "");
+    	userlist.addElement(defaultOpt);
+
+    	//get the current active users related to the project where 'userId' is allocated
+    	String sqlData = "select distinct t.id, t.name from resource r, customer c, tool_user t " +
+    			"where t.id = r.id and t.id = c.id and c.project_id = r.project_id and " +
+    			"(c.is_disable = 0 or c.is_disable is null) and t.final_date is null and t.username <> 'root' and ";
+    	if (userId!=null) {
+    		sqlData = sqlData + "r.project_id in (select project_id from resource where id= '" + userId + "' ) ";
+    	} else {
+    		sqlData = sqlData + "r.project_id ='" + projectId + "' ";
+    	}
+    	sqlData = sqlData + "order by name";
+    			
+    	Vector dbAllocList = qdel.performQuery(sqlData, null, null);
+    	if (dbAllocList!=null) {
+    		for (int i=1; i<dbAllocList.size(); i++) {
+    			Vector item = (Vector)dbAllocList.elementAt(i);
+    			TransferObject to = new TransferObject((String)item.elementAt(0), (String)item.elementAt(1));
+    			hm.put(to.getId(), to);
+    			userlist.addElement(to);
+    		}
+    	}
+
+    	//get the inactive users related to the project where 'userId' is allocated    	
+    	String sqlData2 = "select distinct t.id, t.name from resource r, customer c, tool_user t " +
+			"where t.id = r.id and t.id = c.id and c.project_id = r.project_id and " +
+			"c.is_disable = 1 and t.username <> 'root' and t.final_date is null and ";
+    	if (userId!=null) {
+    		sqlData2 = sqlData2 + "r.project_id in (select project_id from resource where id= '" + userId + "' ) ";
+    	} else {
+    		sqlData2 = sqlData2 + "r.project_id ='" + projectId + "' ";
+    	}
+    	sqlData2 = sqlData2 + "order by name";
+    	
+    	dbAllocList = qdel.performQuery(sqlData2, null, null);
+    	if (dbAllocList!=null && dbAllocList.size()>0) {
+    		boolean isSep = false;
+
+    		for (int i=1; i<dbAllocList.size(); i++) {
+    			Vector item = (Vector)dbAllocList.elementAt(i);
+    			TransferObject to = new TransferObject((String)item.elementAt(0), (String)item.elementAt(1));
+    			if (hm.get(to.getId())==null) {
+    				
+    				if (!isSep) {
+    		    		userlist.addElement(separator);
+    		    		isSep = true;
+    				}
+    				
+    				userlist.addElement(to);	
+    			}
+    		}
+    	}
+    	
+		return userlist;
+	}	
 	
 }

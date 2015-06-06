@@ -8,7 +8,6 @@
 
 	<head>
 		<title><bean:message key="header.title" /></title>
-		<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
 		<link href="../css/styleDefault.css" id="style" TYPE="text/css" rel="STYLESHEET">
 		<link rel="shortcut icon" type="image/x-icon" href="../images/favicon.ico" />
 	</head>

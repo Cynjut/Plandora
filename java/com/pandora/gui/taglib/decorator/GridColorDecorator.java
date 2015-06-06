@@ -17,8 +17,8 @@ public class GridColorDecorator extends ColumnDecorator {
 		if (columnValue!=null){
 		    String color = (String)columnValue;
 		    if (color.length()==6){
-		        column = "<center><table border=\"0\" height=\"10\" width=\"15\" cellspacing=\"0\" cellpadding=\"0\">" +
-		                 "<tr><td class=\"tableCell\" bgcolor=\"" + color + "\">&nbsp<td></tr></table></center>";
+		        column = "<center><table border=\"0\" height=\"10\" width=\"15\" cellspacing=\"0\" cellpadding=\"0\">\n" +
+		                 "<tr><td class=\"tableCell\" bgcolor=\"#" + color + "\">&nbsp;</td></tr></table></center>\n";
 		    }
 		} 
 		return column;

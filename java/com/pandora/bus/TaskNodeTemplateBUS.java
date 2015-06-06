@@ -18,6 +18,7 @@ import com.pandora.DecisionNodeTemplateTO;
 import com.pandora.NodeTemplateTO;
 import com.pandora.PlanningTO;
 import com.pandora.ProjectTO;
+import com.pandora.RequirementTO;
 import com.pandora.ResourceTO;
 import com.pandora.ResourceTaskTO;
 import com.pandora.StepNodeTemplateTO;
@@ -36,17 +37,17 @@ import com.pandora.helper.WorkflowUtil;
 
 public class TaskNodeTemplateBUS extends GeneralBusiness {
 
-    /** The Data Acess Object related with current business entity */
+    /** The Data Access Object related with current business entity */
     TaskNodeTemplateDAO dao = new TaskNodeTemplateDAO();
 
     private int seq = 1;
     private int top = 10;
-    private HashMap paintedNodes = new HashMap();
+    private HashMap<String, NodeTemplateTO> paintedNodes = new HashMap<String, NodeTemplateTO>();
     
     
 	public NodeTemplateTO getNodeTemplateTree(NodeTemplateTO node, String planningId) throws BusinessException {
 		NodeTemplateTO response = null;
-		HashMap cache = new HashMap();
+		HashMap<String, String> cache = new HashMap<String, String>();
         try {
             response = (NodeTemplateTO) dao.getObjectInTree(node);
 
@@ -59,18 +60,29 @@ public class TaskNodeTemplateBUS extends GeneralBusiness {
         }
         return response;
 	}
+
 	
+	public boolean checkSavedNodes(Integer instance, String templateId) throws BusinessException {
+		boolean response = false;
+		try {
+			response = dao.checkSavedNodes(instance, templateId);	
+		} catch(Exception e) {
+			throw new BusinessException(e);
+		}
+		return response;
+	}
+
 	
-	public Vector getNodeListByTemplate(String templateId, String instanceId, String planningId) throws BusinessException {
-        Vector response = new Vector();
-        HashMap cache = new HashMap();
+	public Vector<NodeTemplateTO> getNodeListByTemplate(String templateId, String instanceId, String planningId) throws BusinessException {
+        Vector<NodeTemplateTO> response = new Vector<NodeTemplateTO>();
+        HashMap<String, String> cache = new HashMap<String, String>();
         try {
             response = dao.getNodeListByPlanning(templateId);
             
             if (response!=null && planningId!=null) {
-                Iterator i = response.iterator();
+                Iterator<NodeTemplateTO> i = response.iterator();
                 while(i.hasNext()) {
-                	NodeTemplateTO ntto = (NodeTemplateTO)i.next();
+                	NodeTemplateTO ntto = i.next();
         			if (instanceId!=null && !instanceId.equals("")) {
                     	ntto.setInstanceId(new Integer(instanceId));
         			}
@@ -87,7 +99,7 @@ public class TaskNodeTemplateBUS extends GeneralBusiness {
 	
 	public NodeTemplateTO getNodeTemplate(NodeTemplateTO filter, String instanceId, String planningId) throws BusinessException {
 		NodeTemplateTO response = null;
-		HashMap cache = new HashMap();
+		HashMap<String, String> cache = new HashMap<String, String>();
         try {
             response = (NodeTemplateTO) dao.getObject(filter);
             
@@ -109,7 +121,7 @@ public class TaskNodeTemplateBUS extends GeneralBusiness {
 	/**
 	 * If necessary, override some attribute from CustomNodeTemplate values...
 	 */
-	private NodeTemplateTO overrideNodeTemplate(NodeTemplateTO ntto, String planningId, boolean includeSubNodes, HashMap cache) throws DataAccessException{
+	private NodeTemplateTO overrideNodeTemplate(NodeTemplateTO ntto, String planningId, boolean includeSubNodes, HashMap<String, String> cache) throws DataAccessException{
 		
 		//the cache is used to know witch nodes was already loaded considering circle references    
 		if (cache.get(ntto.getId())==null) {
@@ -143,6 +155,7 @@ public class TaskNodeTemplateBUS extends GeneralBusiness {
 				speclass.setCategoryId(cntto.getCategoryId());
 				speclass.setProject(new ProjectTO(cntto.getProjectId()));
 				speclass.setResourceId(cntto.getResource());
+				speclass.setIterationId(cntto.getIterationId());
 			} else if (ntto instanceof DecisionNodeTemplateTO) {
 				DecisionNodeTemplateTO speclass = (DecisionNodeTemplateTO) ntto;
 				speclass.setQuestionContent(cntto.getQuestionContent());
@@ -169,6 +182,14 @@ public class TaskNodeTemplateBUS extends GeneralBusiness {
 	}
 
 	
+	public void saveCustomNodeTemplate(Vector<CustomNodeTemplateTO> cnlist, Vector<TaskTO> tlist, Vector<RequirementTO> rlist, UserTO uto) throws BusinessException {
+        try {
+            dao.saveCustomNodeTemplate(cnlist, tlist, rlist, uto);
+        } catch (DataAccessException e) {
+            throw new  BusinessException(e);
+        }
+	}	
+	
 	public Integer getInstance(String templateId, String planningId) throws BusinessException {
 		Integer response = null;
         try {
@@ -180,11 +201,12 @@ public class TaskNodeTemplateBUS extends GeneralBusiness {
 	}
 	
 	
-	public void saveWorkflow(String nodeTemplateId, Integer instanceId, String planningId, UserTO createBy) throws Exception {
+	public void saveWorkflow(String nodeTemplateId, Integer instanceId, String planningId, String projectId, UserTO createBy) throws Exception {
 		TaskTemplateDelegate tdel = new TaskTemplateDelegate();
 
 		NodeTemplateTO filter = new NodeTemplateTO(nodeTemplateId);
 		filter.setInstanceId(instanceId);
+		filter.setProject(new ProjectTO(projectId));
 		
 		NodeTemplateTO rootNode = tdel.getNodeTemplateTree(filter, planningId);
         dao.saveWorkflowByRequirement(rootNode, planningId, createBy);
@@ -195,7 +217,7 @@ public class TaskNodeTemplateBUS extends GeneralBusiness {
 		BufferedImage buffer = new BufferedImage( 1200, 800, BufferedImage.TYPE_INT_RGB);		
 		try {
 			Graphics g = buffer.createGraphics();
-			int x = 600;
+			int x = 110;
 
 			//clear screen
 			Color bColor = Color.decode("0x" + bgcolor);
@@ -207,7 +229,7 @@ public class TaskNodeTemplateBUS extends GeneralBusiness {
 
 			this.top = WorkflowUtil.paintEgde(g, x, this.top, true, null);
 			this.drawNode(root, uto, x, g, bColor, showNodeStatus); //draw the first node (root)
-			this.paintedNodes = new HashMap(); //empty cache
+			this.paintedNodes = new HashMap<String, NodeTemplateTO>(); //empty cache
 			
 		} catch (Exception e) {
 			throw new BusinessException(e);
@@ -272,7 +294,7 @@ public class TaskNodeTemplateBUS extends GeneralBusiness {
 						
 			if (node.getNodeType().equals(NodeTemplateTO.NODE_TEMPLATE_STEP)) {
 				this.top = WorkflowUtil.paintSquare(g, x, this.top, node, nodeColor, tag);
-				
+
 				if (node.getNextNode()!=null) {
 					this.drawNode(node.getNextNode(), uto, x, g, bColor, showNodeStatus);
 				} else {
@@ -287,16 +309,20 @@ public class TaskNodeTemplateBUS extends GeneralBusiness {
 				int oldTop = this.top; //save the current top position
 				
 				if (decision.getNextNode()!=null) {
-					this.drawNode(decision.getNextNode(), uto, x-80, g, bColor, showNodeStatus);
+					//this.drawNode(decision.getNextNode(), uto, x-80, g, bColor, showNodeStatus);
+					this.drawNode(decision.getNextNode(), uto, x, g, bColor, showNodeStatus);
 				} else {
-					WorkflowUtil.paintEgde(g, x-80, this.top, false, null);
+					//WorkflowUtil.paintEgde(g, x-80, this.top, false, null);
+					WorkflowUtil.paintEgde(g, x, this.top, false, null);
 				}			
 				
 				this.top = oldTop; //restore the top position
 				if (decision.getNextNodeIfFalse()!=null) {
-					this.drawNode(decision.getNextNodeIfFalse(), uto, x+80, g, bColor, showNodeStatus);
+					//this.drawNode(decision.getNextNodeIfFalse(), uto, x+80, g, bColor, showNodeStatus);
+					this.drawNode(decision.getNextNodeIfFalse(), uto, x+160, g, bColor, showNodeStatus);
 				} else {
-					WorkflowUtil.paintEgde(g, x+80, this.top, false, null);
+					//WorkflowUtil.paintEgde(g, x+80, this.top, false, null);
+					WorkflowUtil.paintEgde(g, x+160, this.top, false, null);
 				}			
 			}
 			
@@ -328,7 +354,7 @@ public class TaskNodeTemplateBUS extends GeneralBusiness {
 			String envolved = planningTask.getInvolvedResources();
 			if (envolved!=null && !envolved.trim().equals("")) {
 				String resourceLabel = uto.getBundle().getMessage(uto.getLocale(), "label.showAllReqForm.grid.showResources");
-				response = response + resourceLabel + ":" + envolved;			
+				response = response + resourceLabel + ": " + envolved;			
 			}			
 		}
 		
@@ -340,11 +366,11 @@ public class TaskNodeTemplateBUS extends GeneralBusiness {
 		Color response = defaultColor;
 		if (planningTask!=null) {
 
-			Vector allocResources = this.getResourceTaskList(planningTask);
+			Vector<ResourceTaskTO> allocResources = this.getResourceTaskList(planningTask);
 			if (allocResources!=null) {
-				Iterator i = allocResources.iterator();
+				Iterator<ResourceTaskTO> i = allocResources.iterator();
 				while(i.hasNext()) {
-					ResourceTaskTO rtto = (ResourceTaskTO)i.next();
+					ResourceTaskTO rtto = i.next();
 					if (rtto.getTaskStatus()!=null && rtto.getTaskStatus().getStateMachineOrder()!=null) {
 						Integer s = rtto.getTaskStatus().getStateMachineOrder();
 						if (s.equals(TaskStatusTO.STATE_MACHINE_PROGRESS) || 
@@ -369,27 +395,27 @@ public class TaskNodeTemplateBUS extends GeneralBusiness {
 	}
 
 	
-	private Vector getResourceTaskList(TaskTO planningTask){
+	private Vector<ResourceTaskTO> getResourceTaskList(TaskTO planningTask){
 		TaskDelegate tdel = new TaskDelegate();
-		Vector response = null;
+		Vector<ResourceTaskTO> response = null;
 		
 		//if task is a parent task, get the resource tasks from children tasks...			
 		if (planningTask.isParentTask()) {
 
-			Vector subTasksList = null;
+			Vector<TaskTO> subTasksList = null;
 			try {
 				subTasksList = tdel.getSubTasksList(planningTask);
 			} catch (BusinessException e) {
 				subTasksList = null;
 			}
 			if (subTasksList!=null) {
-				Iterator i = subTasksList.iterator();
+				Iterator<TaskTO> i = subTasksList.iterator();
 				while(i.hasNext()) {
-					TaskTO child = (TaskTO)i.next();
-					Vector resTaskList = child.getAllocResources();
+					TaskTO child = i.next();
+					Vector<ResourceTaskTO> resTaskList = child.getAllocResources();
 					if (resTaskList!=null && resTaskList.size()>0) {
 						if (response==null) {
-							response = new Vector();	
+							response = new Vector<ResourceTaskTO>();	
 						}
 						response.addAll(resTaskList);
 					}
@@ -405,17 +431,12 @@ public class TaskNodeTemplateBUS extends GeneralBusiness {
 
 	
 	
-	
-
-	
-	
-
-	public String getResourceListFromVector(Vector resList) throws Exception {
+	public String getResourceListFromVector(Vector<ResourceTaskTO> resList) throws Exception {
 		String response = "";
 		if (resList!=null) {		
-			Iterator i = resList.iterator();
+			Iterator<ResourceTaskTO> i = resList.iterator();
 			while(i.hasNext()) {
-				ResourceTaskTO rtto = (ResourceTaskTO)i.next();
+				ResourceTaskTO rtto = i.next();
 				response = response + rtto.getResource().getId() + "|" + 
 							getDateOfResourceList(rtto.getStartDate()) + "|" +
 							rtto.getEstimatedTime().toString() + "; ";
@@ -425,8 +446,8 @@ public class TaskNodeTemplateBUS extends GeneralBusiness {
 	}
 
 
-	public Vector getResourceListFromString(String resource, UserTO handler) throws BusinessException {
-		Vector response = new Vector();
+	public Vector<ResourceTaskTO> getResourceListFromString(String resource, TaskTO tto, UserTO handler) throws BusinessException {
+		Vector<ResourceTaskTO> response = new Vector<ResourceTaskTO>();
 		if (resource!=null && !resource.trim().equals("")) {
 			String[] resources = resource.split(";");
 			for (int i=0; i<resources.length; i++) {
@@ -443,6 +464,13 @@ public class TaskNodeTemplateBUS extends GeneralBusiness {
 					
 					rtto.setResource(rto);
 					rtto.setLabel(uto.getName());
+
+					if (tto!=null) {
+						rtto.setTask(tto);
+						if (tto.getCategory()!=null && tto.getCategory().getIsBillable()!=null) {
+							rtto.setBillableStatus(tto.getCategory().getIsBillable());	
+						}						
+					}
 					
 					Timestamp dt = getPreDefinedDate(tokens[1]);
 					if (dt!=null) {
@@ -458,10 +486,14 @@ public class TaskNodeTemplateBUS extends GeneralBusiness {
 		}
 		return response;
 	}
-	
+
 	public static Timestamp getDateOfResourceList(String stringDate){
+		Timestamp response = DateUtil.getDate(DateUtil.getNow(), true);
 		Locale dummyLoc = new Locale("pt", "BR"); //default locale used only to serialize date
-		return DateUtil.getDateTime(stringDate, "dd/MM/yyyy", dummyLoc);
+		if (stringDate!=null && !stringDate.equals("DEFAULT")) {
+			response = DateUtil.getDateTime(stringDate, "dd/MM/yyyy", dummyLoc);		
+		}
+		return response;
 	}
 
 	public static String getDateOfResourceList(Timestamp date){
@@ -476,4 +508,5 @@ public class TaskNodeTemplateBUS extends GeneralBusiness {
 		}
 		return response;
 	}
+
 }

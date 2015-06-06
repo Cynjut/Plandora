@@ -87,11 +87,11 @@ public class GadgetAction extends GeneralStrutsAction {
 	private void saveGadget(String gadId, HttpServletRequest request) throws BusinessException{
 		PreferenceDelegate pdel = new PreferenceDelegate();
 		
-		Vector gadList = this.getAll();		
+		Vector<Gadget> gadList = this.getAll();		
 		if (gadList!=null) {
-			Iterator i = gadList.iterator();
+			Iterator<Gadget> i = gadList.iterator();
 			while(i.hasNext()) {				
-				Gadget gad = (Gadget)i.next();
+				Gadget gad = i.next();
 				if (gad.getId().equals(gadId)) {
 			
 					UserTO uto = SessionUtil.getCurrentUser(request);
@@ -119,12 +119,12 @@ public class GadgetAction extends GeneralStrutsAction {
 		StringBuffer response = new StringBuffer();
 		response.append("<table width=\"100%\" border=\"0\" cellspacing=\"0\" cellpadding=\"0\">\n");
 
-		Vector gadList = getAll();
+		Vector<Gadget> gadList = getAll();
 		if (gadList!=null) {
 			int col = 0;
 			TransferObject cat = null;
 			
-			Iterator i = gadList.iterator();
+			Iterator<Gadget> i = gadList.iterator();
 			while(i.hasNext()) {
 				Gadget gad = (Gadget)i.next();
 				if (gad!=null) {
@@ -132,6 +132,7 @@ public class GadgetAction extends GeneralStrutsAction {
 					if (gcat!=null) {
 						
 						if (!categoryId.trim().equals("")) {
+							@SuppressWarnings("rawtypes")
 							Vector categoryList = (Vector)request.getSession().getAttribute("GADGET_CATEGORY_LIST");
 							if (categoryList!=null) {
 								cat = (TransferObject)categoryList.get(Integer.parseInt(categoryId));
@@ -206,17 +207,17 @@ public class GadgetAction extends GeneralStrutsAction {
 
 
 	private StringBuffer getGadgetList(HttpServletRequest request) throws BusinessException, UnsupportedEncodingException {
-		Vector categoryList = new Vector();
+		Vector<TransferObject> categoryList = new Vector<TransferObject>();
 		
 		StringBuffer response = new StringBuffer();
 		response.append("<table width=\"100%\" border=\"0\" cellspacing=\"0\" cellpadding=\"0\">\n");
 				
-		Vector gadList = getAll();
+		Vector<Gadget> gadList = getAll();
 		if (gadList!=null) {
-			HashMap hm = new HashMap();
-			Iterator i = gadList.iterator();
+			HashMap<String, TransferObject> hm = new HashMap<String, TransferObject>();
+			Iterator<Gadget> i = gadList.iterator();
 			while(i.hasNext()) {	
-				Gadget gad = (Gadget)i.next();
+				Gadget gad = i.next();
 				if (gad!=null) {
 					String label = this.getBundleMessage(request, gad.getCategory(), true);
 					TransferObject to = (TransferObject)hm.get(label);
@@ -253,7 +254,7 @@ public class GadgetAction extends GeneralStrutsAction {
 	}
 	
 	
-	private Vector getAll() throws BusinessException{
+	private Vector<Gadget> getAll() throws BusinessException{
 		UserDelegate udel = new UserDelegate();
 		UserTO root = udel.getRoot();
 		String classList = root.getPreference().getPreference(PreferenceTO.GADGET_BUS_CLASS);

@@ -24,21 +24,21 @@ public class SurveyQuestionAction extends GeneralStrutsAction {
 		String forward = "showSurveyQuestionEdit";
 		
 		try {
-			Vector list = new Vector();
+			Vector<TransferObject> list = new Vector<TransferObject>();
 			for (int i=0; i<=2; i++) {
 				list.addElement(new TransferObject(i+"", super.getBundleMessage(request, "label.formSurvey.type." + i)));
 			}
 			request.getSession().setAttribute("surveyQuestionTypes", list);
 
 			
-			Vector posList = new Vector();
+			Vector<TransferObject> posList = new Vector<TransferObject>();
 			for (int i=1; i<=15; i++) {
 				posList.addElement(new TransferObject(i+"", i+""));
 			}
 			request.getSession().setAttribute("positionList", posList);
 
 
-			Vector manList = new Vector();
+			Vector<TransferObject> manList = new Vector<TransferObject>();
 			manList.addElement(new TransferObject("1", super.getBundleMessage(request, "label.yes")));
 			manList.addElement(new TransferObject("0", super.getBundleMessage(request, "label.no")));
 			request.getSession().setAttribute("mandatoryList", manList);
@@ -58,9 +58,9 @@ public class SurveyQuestionAction extends GeneralStrutsAction {
 						boolean answersExists = sdel.checkIfThereAreAnswers(qto);
 						if (!answersExists) {
 					    	String domain = "";
-					    	Iterator it = qto.getAlterativesList().iterator();
+					    	Iterator<QuestionAlternativeTO> it = qto.getAlterativesList().iterator();
 					    	while(it.hasNext()) {
-					    		QuestionAlternativeTO qato = (QuestionAlternativeTO)it.next();
+					    		QuestionAlternativeTO qato = it.next();
 					    		if (!domain.trim().equals("")){
 					    			domain = domain + "|";	
 					    		}
@@ -87,6 +87,7 @@ public class SurveyQuestionAction extends GeneralStrutsAction {
 	}
 	
 	
+	@SuppressWarnings({ "rawtypes", "unchecked" })
 	public ActionForward saveQuestion(ActionMapping mapping, ActionForm form,
 			HttpServletRequest request, HttpServletResponse response){
 
@@ -104,7 +105,7 @@ public class SurveyQuestionAction extends GeneralStrutsAction {
 				
 			} else {
 			    qto = new SurveyQuestionTO();
-			    Vector questionList = (Vector)request.getSession().getAttribute("questionList");
+			    Vector<SurveyQuestionTO> questionList = (Vector)request.getSession().getAttribute("questionList");
 			    			    
 			    qto.setQuestionType(frm.getType());
 			    qto.setSurvey(new SurveyTO(frm.getSurveyId()));
@@ -113,12 +114,6 @@ public class SurveyQuestionAction extends GeneralStrutsAction {
 			    qto.setPosition(new Integer(frm.getPosition()));
 			    qto.setIsMandatory(new Boolean(frm.getMandatory().equals("1")));
 			    qto.setId("NEW_" + (questionList.size()+1));
-			    
-			    if (questionList==null){
-			    	questionList = new Vector();
-			    } else {
-			        request.getSession().removeAttribute("questionList");
-			    }
 			    
 			    questionList.addElement(qto);
 			    request.getSession().setAttribute("questionList", questionList);		    					
@@ -151,13 +146,14 @@ public class SurveyQuestionAction extends GeneralStrutsAction {
 	}
 		
 	
+	@SuppressWarnings({ "unchecked", "rawtypes" })
 	private SurveyQuestionTO getSurveyQuestion(String qId, HttpServletRequest request){
 		SurveyQuestionTO response = null;
-	    Vector questionList = (Vector)request.getSession().getAttribute("questionList");
+	    Vector<SurveyQuestionTO> questionList = (Vector)request.getSession().getAttribute("questionList");
 	    if (questionList!=null) {
-		    Iterator i = questionList.iterator();
+		    Iterator<SurveyQuestionTO> i = questionList.iterator();
 		    while(i.hasNext()) {
-		    	SurveyQuestionTO qto = (SurveyQuestionTO)i.next();
+		    	SurveyQuestionTO qto = i.next();
 		    	if (qto.getId().equals(qId)) {
 		    		response = qto;
 		    		break;

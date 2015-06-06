@@ -16,7 +16,6 @@ import com.pandora.LeaderTO;
 import com.pandora.QuestionAnswerTO;
 import com.pandora.SurveyQuestionTO;
 import com.pandora.SurveyTO;
-
 import com.pandora.UserTO;
 import com.pandora.delegate.SurveyDelegate;
 import com.pandora.delegate.UserDelegate;
@@ -37,6 +36,13 @@ public class ShowSurveyAction extends GeneralStrutsAction {
 		try {
 			ShowSurveyForm frm = (ShowSurveyForm)form;
 			SurveyDelegate sdel = new SurveyDelegate();
+			
+			UserTO uto = SessionUtil.getCurrentUser(request);
+			if (uto!=null) {
+				frm.setConectedUser(uto.getId());
+			} else {
+				frm.setConectedUser("");
+			}
 			
 			if (frm.getId()!=null && !frm.getId().trim().equals("")) {
 				SurveyTO sto = new SurveyTO(frm.getId());
@@ -63,6 +69,8 @@ public class ShowSurveyAction extends GeneralStrutsAction {
 					frm.setQuestionsBody(this.getQuestionHtmlList(sto, frm, request).toString());				
 				}
 				frm.setAllowAnonymous(sto.getIsAnonymous().booleanValue());
+				frm.setAnonymousUri(sto.getAnonymousKey());
+				frm.setPathContext(request.getHeader("referer"), request.getContextPath());
 				
 			} else {
 				forward = "home";
@@ -81,7 +89,8 @@ public class ShowSurveyAction extends GeneralStrutsAction {
 		String forward = "showUserSurveyList";
 		ShowSurveyForm frm = (ShowSurveyForm)form;
 		
-		Vector v = (Vector)request.getSession().getAttribute(UserDelegate.USER_SURVEY_LIST);
+		@SuppressWarnings({ "unchecked", "rawtypes" })
+		Vector<SurveyTO> v = (Vector)request.getSession().getAttribute(UserDelegate.USER_SURVEY_LIST);
 		String list = getHtmlCombo(request, v);
 		
 		frm.setHtmlList(list);	
@@ -89,7 +98,7 @@ public class ShowSurveyAction extends GeneralStrutsAction {
 	}
 
 
-	public String getHtmlCombo(HttpServletRequest request, Vector v) {
+	public String getHtmlCombo(HttpServletRequest request, Vector<SurveyTO> v) {
 		String list = "<select id=\"surveyId\" name=\"surveyId\" class=\"textBox\">";
 		list = list + "<option value=\"-1\">" + super.getBundleMessage(request, "label.combo.select") + "</option>";
 		if (v!=null) {
@@ -130,22 +139,28 @@ public class ShowSurveyAction extends GeneralStrutsAction {
 		
 		ShowSurveyForm frm = (ShowSurveyForm)form;
 		
-		String key = frm.getKey(); // request.getParameter("key");
+		String key = frm.getKey();
 		if (key!=null && !key.trim().equals("")) {
 			SurveyDelegate sdel = new SurveyDelegate();
+			key = key.replaceAll(" ", "+");
+			
 			SurveyTO sto = sdel.getSurveyByKey(key);
-			frm.setAllowAnonymous(sto.getIsAnonymous().booleanValue());
+			if (sto!=null) {
+				frm.setAllowAnonymous(sto.getIsAnonymous().booleanValue());
 
-			//check if survey allow anonymous fill-in
-			if (sto!=null && sto.getIsAnonymous().booleanValue()) {
-				Timestamp today = DateUtil.getNow();
-				if ((sto.getFinalDate()!=null && sto.getFinalDate().before(today)) ||
-						sto.getPublishingDate().after(today) ) {
-					this.setErrorFormSession(request, "label.formSurvey.surveyClosed", null);					
-				} else {
-					response = sto;
-				}
-			}				
+				//check if survey allow anonymous fill-in
+				if (sto!=null && sto.getIsAnonymous().booleanValue()) {
+					Timestamp today = DateUtil.getNow();
+					if ((sto.getFinalDate()!=null && sto.getFinalDate().before(today)) ||
+							sto.getPublishingDate().after(today) ) {
+						this.setErrorFormSession(request, "label.formSurvey.surveyClosed", null);					
+					} else {
+						response = sto;
+					}
+				}								
+			} else {
+				this.setErrorFormSession(request, "label.formSurvey.surveyNFound", null);
+			}
 		}
 		return response;
 	}
@@ -153,15 +168,15 @@ public class ShowSurveyAction extends GeneralStrutsAction {
 	
 	private StringBuffer getQuestionHtmlList(SurveyTO sto, ShowSurveyForm frm, HttpServletRequest request){
 		StringBuffer c = new StringBuffer();
-		Vector list = sto.getQuestionList();
+		Vector<SurveyQuestionTO> list = sto.getQuestionList();
 		
 		boolean showAnswerButton = frm.isShow();		
 		frm.setShowMandatoryNote(false);
 		
-		Iterator i = list.iterator();
+		Iterator<SurveyQuestionTO> i = list.iterator();
 		String oldValue = "";
 		while(i.hasNext()) {
-			SurveyQuestionTO sqto = (SurveyQuestionTO)i.next();
+			SurveyQuestionTO sqto = i.next();
 			String subtitle = sqto.getSubTitle();
 			if (subtitle!=null && !subtitle.equals(oldValue)) {
 				c.append("<table width=\"60%\" border=\"0\" cellspacing=\"0\" cellpadding=\"0\">");
@@ -225,14 +240,14 @@ public class ShowSurveyAction extends GeneralStrutsAction {
 			if (!frm.isAnonymous()) {
 				uto = SessionUtil.getCurrentUser(request);	
 			}
-			Vector answerList = new Vector();
+			Vector<QuestionAnswerTO> answerList = new Vector<QuestionAnswerTO>();
 			
 			boolean saveAnswer = true;
 			
-			Vector list = sto.getQuestionList();
-			Iterator i = list.iterator();
+			Vector<SurveyQuestionTO> list = sto.getQuestionList();
+			Iterator<SurveyQuestionTO> i = list.iterator();
 			while(i.hasNext()) {
-				SurveyQuestionTO q = (SurveyQuestionTO) i.next();
+				SurveyQuestionTO q = i.next();
 				String value = request.getParameter("field_" + q.getId());
 				this.addPartialAnswer(q.getId(), value, request);
 			}
@@ -283,10 +298,10 @@ public class ShowSurveyAction extends GeneralStrutsAction {
 		if (uto!=null) {
 
 			UserDelegate udel = new UserDelegate();
-			Vector leaderList = udel.getLeaderByProject(sto.getProject());
-			Iterator i = leaderList.iterator();
+			Vector<LeaderTO> leaderList = udel.getLeaderByProject("'" + sto.getProject().getId() + "'");
+			Iterator<LeaderTO> i = leaderList.iterator();
 			while(i.hasNext()) {
-				LeaderTO leader = (LeaderTO)i.next();
+				LeaderTO leader = i.next();
 				if (leader.getId().equals(uto.getId())) {
 					response = true;
 				}
@@ -299,9 +314,10 @@ public class ShowSurveyAction extends GeneralStrutsAction {
 	
 	private void addPartialAnswer(String key, String value, HttpServletRequest request){
 		if (value!=null && key!=null) {
-			HashMap partialAnswers = (HashMap)request.getAttribute(PARTIAL_ANSWERS);
+			@SuppressWarnings("unchecked")
+			HashMap<String, String> partialAnswers = (HashMap<String, String>)request.getAttribute(PARTIAL_ANSWERS);
 			if (partialAnswers==null) {
-				partialAnswers = new HashMap();
+				partialAnswers = new HashMap<String, String>();
 			}
 			partialAnswers.put(key, value);
 			request.setAttribute(PARTIAL_ANSWERS, partialAnswers);
@@ -311,7 +327,8 @@ public class ShowSurveyAction extends GeneralStrutsAction {
 	
 	private String getPartialAnswer(String key, HttpServletRequest request){
 		String response = null;
-		HashMap partialAnswers = (HashMap)request.getAttribute(PARTIAL_ANSWERS);
+		@SuppressWarnings("unchecked")
+		HashMap<String, String> partialAnswers = (HashMap<String, String>)request.getAttribute(PARTIAL_ANSWERS);
 		if (partialAnswers!=null && key!=null) {
 			response = (String)partialAnswers.get(key);
 		}

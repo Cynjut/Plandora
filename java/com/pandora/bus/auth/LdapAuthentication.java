@@ -2,6 +2,7 @@ package com.pandora.bus.auth;
 
 import com.pandora.PreferenceTO;
 import com.pandora.UserTO;
+import com.pandora.bus.PasswordEncrypt;
 import com.pandora.delegate.UserDelegate;
 import com.pandora.exception.BusinessException;
 import com.pandora.helper.SessionUtil;
@@ -29,5 +30,12 @@ public class LdapAuthentication extends Authentication {
 	public String getUniqueName() {
 		return "label.authMode.LDAP";
 	}
+
+	
+	@Override
+	public String encrypt(String rawPassword) throws BusinessException {
+		return PasswordEncrypt.getInstance().encrypt(rawPassword);
+	}
+	
 
 }

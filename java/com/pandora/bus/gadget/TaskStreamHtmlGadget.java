@@ -62,15 +62,15 @@ public class TaskStreamHtmlGadget extends HtmlGadget {
 
 	
 	public Vector getFields() {
-    	Vector response = new Vector();
+    	Vector<FieldValueTO> response = new Vector<FieldValueTO>();
 
     	try {
     		Locale loc = super.handler.getLocale();
 
-        	Vector projList = getProjectFromUser(false);
+        	Vector<TransferObject> projList = getProjectFromUser(false);
         	response.add(new FieldValueTO(STREAM_HTML_PROJECT, "label.manageOption.gadget.taskstream.project", projList));
 
-        	Vector intervalList= new Vector();
+        	Vector<TransferObject> intervalList= new Vector<TransferObject>();
         	for (int j=1; j<=3; j++) {
         		intervalList.add(new TransferObject(j+"", super.getI18nMsg("label.manageOption.gadget.taskstream.interval." + j, loc)));	
         	}
@@ -121,7 +121,6 @@ public class TaskStreamHtmlGadget extends HtmlGadget {
 	private void writeBody(StringBuffer response, ProjectTO pto, String strInterval, int maxEntries) {	
         DbQueryDelegate qdel = new DbQueryDelegate();
         try {
-        	Locale loc = super.handler.getLocale();
 	    	int intervalHours = 24;
 	    	if (strInterval.equals("2")) {
 	    		intervalHours = 72;
@@ -133,7 +132,7 @@ public class TaskStreamHtmlGadget extends HtmlGadget {
 	        Vector params = new Vector();
 	        params.addElement(iniRange);
 	        
-	        String sql = "select t.name, u.username, u.name as fullname, u.id as userid, h.creation_date, " +
+	        String sql = "select t.name, u.username, u.name as fullname, u.id, h.creation_date, " +
 	        		            "h.comment, s.state_machine_order " +
 	        		     "from task_history h , task t, tool_user u, task_status s " + 
 	    			     "where h.creation_date > ? "+ 
@@ -164,7 +163,7 @@ public class TaskStreamHtmlGadget extends HtmlGadget {
 	    			//response.append("<tr class=\"formNotes\">");
 					response.append("<td width=\"23\" valign=\"top\">");				
 					response.append("<img width=\"23\" " + HtmlUtil.getHint(fullname) + 
-										" height=\"30\" border=\"0\" src=\"../do/login?operation=getUserPic&id=" + userId + "\">");
+										" height=\"30\" border=\"0\" src=\"../do/login?operation=getUserPic&id=" + userId + "&ts=" +DateUtil.getNow().toString() + "\">");
 					response.append("</td>");
 			
 					response.append("<td>");				

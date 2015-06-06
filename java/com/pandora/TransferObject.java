@@ -5,7 +5,7 @@ import java.io.Serializable;
 import com.pandora.exception.BusinessException;
 import com.pandora.integration.Integration;
 
-public class TransferObject implements Serializable {
+public class TransferObject implements Serializable, Comparable<TransferObject> {
 	
 	private static final long serialVersionUID = 1L;
 
@@ -19,6 +19,7 @@ public class TransferObject implements Serializable {
      * This sequence ID is used to identify a row independently of grid sorting */
     private int gridRowNumber;
 
+        
     
     public TransferObject(){
     	this.gridRowNumber = -1;
@@ -73,4 +74,11 @@ public class TransferObject implements Serializable {
 	public String toString() {
 		return id;
 	}
+
+
+	@Override
+	public int compareTo(TransferObject o) {
+        return this.getGenericTag().compareToIgnoreCase(o.getGenericTag());  
+	}
+
 }

@@ -1,5 +1,6 @@
 package com.pandora.gui.struts.action;
 
+import java.text.NumberFormat;
 import java.util.Iterator;
 import java.util.Locale;
 import java.util.Vector;
@@ -34,12 +35,15 @@ import com.pandora.delegate.UserDelegate;
 import com.pandora.exception.BusinessException;
 import com.pandora.exception.IncompatibleUsrsBetweenPrjException;
 import com.pandora.exception.InvalidProjectUserReplaceException;
+import com.pandora.exception.MandatoryMetaFieldBusinessException;
+import com.pandora.exception.MetaFieldNumericTypeException;
 import com.pandora.exception.ProjectCannotBeClosedException;
 import com.pandora.gui.struts.form.GeneralStrutsForm;
 import com.pandora.gui.struts.form.ProjectForm;
 import com.pandora.gui.struts.form.UserForm;
 import com.pandora.gui.taglib.decorator.ProjectGridCheckBoxDecorator;
 import com.pandora.helper.DateUtil;
+import com.pandora.helper.HtmlUtil;
 import com.pandora.helper.SessionUtil;
 import com.pandora.helper.StringUtil;
 
@@ -62,12 +66,11 @@ public class ProjectAction extends GeneralStrutsAction {
 			this.clearMessages(request);
 			ProjectForm frm = (ProjectForm) form;
 
-			Vector kwList = StringUtil.getKeyworks(frm.getUserSearch());
-			Vector userList = udel.getListByKeyword(kwList);
+			Vector<String> kwList = StringUtil.getKeyworks(frm.getUserSearch());
+			Vector<UserTO> userList = udel.getListByKeyword(kwList);
 			if (userList == null) {
-				this.setErrorFormSession(request, "error.project.userSearch",
-						null);
-				userList = new Vector();
+				this.setErrorFormSession(request, "error.project.userSearch", null);
+				userList = new Vector<UserTO>();
 			}
 			request.getSession().setAttribute("UserList", userList);
 
@@ -123,7 +126,7 @@ public class ProjectAction extends GeneralStrutsAction {
 			}
 
 			ProjectTO pto = pdel.getProjectObject(new ProjectTO(frm.getId()), false);
-			request.getSession().setAttribute("allocList", pto.getAllocUsers());
+			request.getSession().setAttribute("allocList", this.getAllocUsersToViewLayer(pto));
 
 			this.setSuccessFormSession(request, "message.rolechanged");
 
@@ -138,6 +141,7 @@ public class ProjectAction extends GeneralStrutsAction {
 	/**
 	 * Add a user into allocation user list.
 	 */
+	@SuppressWarnings("unchecked")
 	public ActionForward addUser(ActionMapping mapping, ActionForm form,
 			HttpServletRequest request, HttpServletResponse response) {
 
@@ -153,14 +157,15 @@ public class ProjectAction extends GeneralStrutsAction {
 			uto = udel.getUser(uto);
 			CustomerTO cto = new CustomerTO(uto);
 			cto.setProject(new ProjectTO(frm.getId()));
-			Vector allocList = (Vector) request.getSession().getAttribute("allocList");
-
+			
+			@SuppressWarnings("rawtypes")
+			Vector<UserTO> allocList = (Vector) request.getSession().getAttribute("allocList");
 			if (allocList == null) {
-				allocList = new Vector();
+				allocList = new Vector<UserTO>();
 			} else {
 				request.getSession().removeAttribute("allocList");
 			}
-			Vector temp = new Vector();
+			Vector<UserTO> temp = new Vector<UserTO>();
 			temp.addElement(cto);
 			temp.addAll(allocList);
 			request.getSession().setAttribute("allocList", temp);
@@ -175,6 +180,7 @@ public class ProjectAction extends GeneralStrutsAction {
 	/**
 	 * Remove a user object from session list of allocation users.
 	 */
+	@SuppressWarnings("unchecked")
 	public ActionForward removeUser(ActionMapping mapping, ActionForm form,
 			HttpServletRequest request, HttpServletResponse response) {
 		String forward = "showProject";
@@ -184,17 +190,16 @@ public class ProjectAction extends GeneralStrutsAction {
 			this.clearMessages(request);
 			ProjectForm frm = (ProjectForm) form;
 
-			Vector allocList = (Vector) request.getSession().getAttribute(
-					"allocList");
+			Vector<UserTO> allocList = (Vector<UserTO>) request.getSession().getAttribute("allocList");
 			if (allocList != null) {
-				Iterator i = allocList.iterator();
+				Iterator<UserTO> i = allocList.iterator();
 				int c = 0;
 				while (i.hasNext()) {
-					UserTO uto = (UserTO) i.next();
+					UserTO uto = i.next();
 					if (uto.getId().equals(frm.getRemovedUserId())) {
 						request.getSession().removeAttribute("allocList");
 						allocList.remove(c);
-						Vector temp = new Vector();
+						Vector<UserTO> temp = new Vector<UserTO>();
 						temp.addAll(allocList);
 						request.getSession().setAttribute("allocList", temp);
 						break;
@@ -203,7 +208,7 @@ public class ProjectAction extends GeneralStrutsAction {
 				}
 			}
 
-		} catch (NullPointerException e) {
+		} catch (Exception e) {
 			this.setErrorFormSession(request, "error.showProjForm", e);
 		}
 		return mapping.findForward(forward);
@@ -234,7 +239,9 @@ public class ProjectAction extends GeneralStrutsAction {
 			// displayed by grid)
 			this.refreshList(request);
 
-		} catch (BusinessException e) {
+		} catch(MetaFieldNumericTypeException e){
+			this.setErrorFormSession(request, e.getMessage(), e.getMetaFieldName(), null, null, null, null, e);
+		} catch (Exception e) {
 			this.setErrorFormSession(request, "error.showProjForm", e);
 		}
 
@@ -259,12 +266,21 @@ public class ProjectAction extends GeneralStrutsAction {
 			// set current operation status for Updating
 			frm.setSaveMethod(UserForm.UPDATE_METHOD, SessionUtil.getCurrentUser(request));
 
-			// get data of projet from data base
+			// get data of project from data base
 			ProjectDelegate pdel = new ProjectDelegate();
 			ProjectTO pto = this.getTransferObjectFromActionForm(frm, request);
 			pto = pdel.getProjectObject(pto, false);
 			frm.setCreationDate(pto.getCreationDate());
 
+			if (pto != null) {
+				Repository rep = RepositoryBUS.getRepositoryClass(pto.getRepositoryClass());
+				if (rep != null) {
+					frm.setShowRepositoryUserPwd(rep.showUserPwdFields() ? "on" : "off");
+				} else {
+					frm.setShowRepositoryUserPwd("off");
+				}
+			}
+			
 			// get all open Projects and Project Status List
 			this.refreshAuxLists(form, request);
 
@@ -273,19 +289,36 @@ public class ProjectAction extends GeneralStrutsAction {
 
 			// set data of allocated users and occurrences
 			if (pto.getAllocUsers() != null) {
-				request.getSession().setAttribute("allocList", pto.getAllocUsers());
+				request.getSession().setAttribute("allocList", this.getAllocUsersToViewLayer(pto));
 			}
-			if (pto.getOccurrenceList() != null) {
-				request.getSession().setAttribute("projOccList", pto.getOccurrenceList());
+			
+			if (request.getSession().getAttribute("projectList")==null) {
+				refreshList(request);	
 			}
-
-		} catch (BusinessException e) {
+			
+			
+		} catch(MetaFieldNumericTypeException e){
+			this.setErrorFormSession(request, e.getMessage(), e.getMetaFieldName(), null, null, null, null, e);
+		} catch (Exception e) {
 			this.setErrorFormSession(request, "error.showProjForm", e);
 		}
 
 		return mapping.findForward(forward);
 	}
 	
+
+	private Object getAllocUsersToViewLayer(ProjectTO pto) {
+		Vector<UserTO> response = new Vector<UserTO>();
+		if (pto!=null && pto.getAllocUsers()!=null) {
+			for (UserTO uto : pto.getAllocUsers()) {
+				if (uto.getUsername()!=null && !uto.getUsername().equals(RootTO.ROOT_USER)) {
+					response.add(uto);
+				}
+			}
+		}
+		return response;
+	}
+
 
 	/**
 	 * This method is performed after Save button click event.<br>
@@ -326,22 +359,29 @@ public class ProjectAction extends GeneralStrutsAction {
 			// get all projects from data base and put into http session (to be
 			// displayed by grid)
 			this.refreshList(request);
-
+			if (frm.getSaveMethod().equals(GeneralStrutsForm.INSERT_METHOD)) {
+				this.reloadParentProjectList(request, null);
+			} else {
+				this.reloadParentProjectList(request, pto);	
+			}
 			
+		} catch(MandatoryMetaFieldBusinessException e){
+			this.setErrorFormSession(request, "errors.required", e.getAfto().getMetaField().getName(), null, null, null, null, e);
+		} catch(MetaFieldNumericTypeException e){
+			this.setErrorFormSession(request, e.getMessage(), e.getMetaFieldName(), null, null, null, null, e);
 		} catch (ProjectCannotBeClosedException e) {
 			this.setErrorFormSession(request, "error.project.projectCannotBeClosed", e);
 		} catch (InvalidProjectUserReplaceException e) {
 			this.setErrorFormSession(request, "error.project.InvalidProjectUserReplace", e);
 		} catch (IncompatibleUsrsBetweenPrjException e) {
 			this.setErrorFormSession(request, "error.project.imcompatibleCustomers", e);
-		} catch (BusinessException e) {
-			this.setErrorFormSession(request, errorMsg, e);
-		} catch (NullPointerException e) {
+		} catch (Exception e) {
 			this.setErrorFormSession(request, errorMsg, e);
 		}
 		return mapping.findForward(forward);
 	}
 
+	
 	/**
 	 * Refresh requirement form
 	 */
@@ -357,12 +397,13 @@ public class ProjectAction extends GeneralStrutsAction {
 			// displayed by grid)
 			this.refreshList(request);
 
-		} catch (BusinessException e) {
+		} catch (Exception e) {
 			this.setErrorFormSession(request, "error.showProjForm", e);
 		}
 		return mapping.findForward(forward);
 	}
 
+	
 	/**
 	 * Clear all values of current form.
 	 */
@@ -370,13 +411,17 @@ public class ProjectAction extends GeneralStrutsAction {
 			HttpServletRequest request, HttpServletResponse response) {
 		String forward = "showProject";
 		try {
+			request.getSession().removeAttribute("parentPrjStatusList");
 			this.clearForm(form, request);
 			this.clearMessages(request);
 
 			// get all open Projects and Project Status List
 			this.refreshAuxLists(form, request);
+			this.reloadParentProjectList(request, null);
 
-		} catch (BusinessException e) {
+		} catch(MetaFieldNumericTypeException e){
+			this.setErrorFormSession(request, e.getMessage(), e.getMetaFieldName(), null, null, null, null, e);
+		} catch (Exception e) {
 			this.setErrorFormSession(request, "error.showProjForm", e);
 		}
 
@@ -396,104 +441,61 @@ public class ProjectAction extends GeneralStrutsAction {
 				.getCurrentUser(request));
 
 		// set empty to user list
-		request.getSession().setAttribute("UserList", new Vector());
-		request.getSession().setAttribute("allocList", new Vector());
+		request.getSession().setAttribute("UserList", new Vector<UserTO>());
+		request.getSession().setAttribute("allocList", new Vector<UserTO>());
 	}
 
 	/**
 	 * Get information about all open Projects and Project Status List from data
 	 * base.
 	 */
-	private void refreshAuxLists(ActionForm form, HttpServletRequest request)
-			throws BusinessException {
+	private void refreshAuxLists(ActionForm form, HttpServletRequest request) throws BusinessException {
 		MetaFieldDelegate mfdel = new MetaFieldDelegate();
 		UserDelegate udel = new UserDelegate();
 		ProjectDelegate prjdel = new ProjectDelegate();
 
 		ProjectForm frm = (ProjectForm) form;
 		ProjectTO pto = this.getTransferObjectFromActionForm(frm, request);
-		if (pto.getProjectStatus() == null
-				|| pto.getProjectStatus().getId() == null) {
+		if (pto.getProjectStatus() == null || pto.getProjectStatus().getId() == null) {
 			pto = prjdel.getProjectObject(pto, true);
 		}
 
-		if (pto != null) {
-			Repository rep = RepositoryBUS.getRepositoryClass(pto.getRepositoryClass());
-			if (rep != null) {
-				frm.setShowRepositoryUserPwd(rep.showUserPwdFields() ? "on" : "off");
-			} else {
-				frm.setShowRepositoryUserPwd("off");
-			}
-		}
-
-		// get current user
-		UserTO uto = SessionUtil.getCurrentUser(request);
-		LeaderTO lto = new LeaderTO(uto);
-
-		// get all open Projects from data base and put into http session (to be
-		// displayed by combo)
-		Vector prjList = null;
-		if (lto.getUsername().equals(RootTO.ROOT_USER)) {
-			prjList = prjdel.getProjectRoot();
-		} else {
-			prjList = prjdel.getProjectListByUser(lto);
-		}
-		
-		// create a root project object to be add into combo
-		Vector temp = new Vector();
-		if (!lto.getUsername().equals(RootTO.ROOT_USER)) {
-			ProjectTO rootParent = new ProjectTO(ProjectTO.PROJECT_ROOT_ID);
-			rootParent = prjdel.getProjectObject(rootParent, true);
-			temp.addElement(rootParent);
-		}
-		temp.addAll(prjList);
-		request.getSession().setAttribute("parentPrjList", temp);
+		this.reloadParentProjectList(request, pto);
 
 		// get Project Status List
 		ProjectStatusDelegate psdel = new ProjectStatusDelegate();
 		if (pto != null) {
-			Vector prjStsList = psdel.getProjectStatusListByProject(pto);
+			Vector<ProjectStatusTO> prjStsList = psdel.getProjectStatusListByProject(pto);
 			request.getSession().setAttribute("parentPrjStatusList", prjStsList);
 		} else {
 			if (request.getSession().getAttribute("parentPrjStatusList")==null) {
-				Vector prjStsList = new Vector();
+				Vector<ProjectStatusTO> prjStsList = new Vector<ProjectStatusTO>();
 				prjStsList.add(psdel.getProjectStatus(ProjectStatusTO.STATE_MACHINE_OPEN));
 				request.getSession().setAttribute("parentPrjStatusList", prjStsList);	
-			}			
+			}
 		}
 
 		// clear search user combo box
-		request.getSession().setAttribute("UserList", new Vector());
-
-		// clear occurrence list
-		request.getSession().setAttribute("projOccList", new Vector());
+		request.getSession().setAttribute("UserList", new Vector<UserTO>());
 
 		if (!frm.getId().equals("")) {
-			Vector list = mfdel.getListByProjectAndContainer(frm.getId(), null,
-					MetaFieldTO.APPLY_TO_PROJECT);
+			Vector<MetaFieldTO> list = mfdel.getListByProjectAndContainer(frm.getId(), null, MetaFieldTO.APPLY_TO_PROJECT);
 			request.getSession().setAttribute("metaFieldList", list);
 		} else {
-			request.getSession().setAttribute("metaFieldList", new Vector());
+			request.getSession().setAttribute("metaFieldList", new Vector<MetaFieldTO>());
 		}
 
-		Vector canAllocList = new Vector();
-		TransferObject obj1 = new TransferObject("1", this.getBundleMessage(
-				request, "label.yes"));
-		canAllocList.add(obj1);
-		TransferObject obj2 = new TransferObject("0", this.getBundleMessage(
-				request, "label.no"));
-		canAllocList.add(obj2);
+		Vector<TransferObject> canAllocList = new Vector<TransferObject>();
+		canAllocList.add(new TransferObject("1", this.getBundleMessage(request, "label.yes")));
+		canAllocList.add(new TransferObject("0", this.getBundleMessage(request, "label.no")));
 		request.getSession().setAttribute("canAllocList", canAllocList);
 
-		Vector repositoryList = new Vector();
-		TransferObject rep1 = new TransferObject("-1", this.getBundleMessage(
-				request, "label.none"));
-		repositoryList.add(rep1);
-
+		Vector<TransferObject> repositoryList = new Vector<TransferObject>();
+		repositoryList.add(new TransferObject("-1", this.getBundleMessage(request, "label.none")));
+		
 		// get repository list by repository class names
 		UserTO root = udel.getRoot();
-		String repClasses = root.getPreference().getPreference(
-				PreferenceTO.REPOSITORY_BUS_CLASS);
+		String repClasses = root.getPreference().getPreference(PreferenceTO.REPOSITORY_BUS_CLASS);
 		if (repClasses != null) {
 			String[] classList = repClasses.split(";");
 			if (classList != null && classList.length > 0) {
@@ -517,6 +519,71 @@ public class ProjectAction extends GeneralStrutsAction {
 		request.getSession().setAttribute("repositoryList", repositoryList);
 	}
 
+	
+	private String renderHtmlQualifications(ProjectTO pto, HttpServletRequest request) {
+		String response = "";
+		int colNumber = 0;
+	
+		if (pto.getQualifications()!=null) {
+			for (MetaFieldTO mfto : pto.getQualifications()) {
+				
+				String label = super.getBundleMessage(request, mfto.getName(), true);
+				String content = HtmlUtil.getComboBox("QUALI_" + mfto.getId(), mfto.getDomain(), "textBox", mfto.getGenericTag(), request.getSession(), 0, null, false);
+				colNumber++;
+				
+				if (colNumber==1) {
+					response = response + "<tr class=\"gapFormBody\"><td>&nbsp;</td>" +
+										  "<td class=\"formTitle\">" + label + ":&nbsp;</td><td>" + content + "</td>";
+				} else {
+					response = response + "<td class=\"formTitle\">" + label + ":&nbsp;</td><td>" + content + "</td>";
+					if (colNumber==3) {
+						response = response + "</tr>\n";
+						colNumber=0;	
+					}
+				}
+
+			}			
+		}
+	
+		return response;
+	}
+
+
+	/**
+	 * get all open Projects from data base and put into http session (to be displayed by combo)
+	 */
+	private void reloadParentProjectList(HttpServletRequest request, ProjectTO pto) throws BusinessException {
+		ProjectDelegate prjdel = new ProjectDelegate();
+		Vector<ProjectTO> prjList = null;
+		
+		// get current user
+		UserTO uto = SessionUtil.getCurrentUser(request);
+		LeaderTO lto = new LeaderTO(uto);
+		
+		if (lto.getUsername().equals(RootTO.ROOT_USER)) {
+			prjList = prjdel.getProjectRoot();
+		} else {
+			prjList = prjdel.getProjectListByUser(lto);
+			if (prjList!=null) {
+				
+				if (pto!=null) {
+					for (ProjectTO item : prjList) {
+						if (item.getId().equals(pto.getId())) {
+							prjList.remove(item);
+							break;
+						}
+					}					
+				}
+				
+				ProjectTO rootParent = new ProjectTO(ProjectTO.PROJECT_ROOT_ID);
+				rootParent = prjdel.getProjectObject(rootParent, true);
+				prjList.add(0, rootParent);				
+			}
+		}
+		request.getSession().setAttribute("parentPrjList", prjList);
+	}
+
+	
 	/**
 	 * Refresh grid with list of all projects from data base.
 	 */
@@ -528,9 +595,8 @@ public class ProjectAction extends GeneralStrutsAction {
 		UserTO uto = SessionUtil.getCurrentUser(request);
 		LeaderTO lto = new LeaderTO(uto);
 
-		Vector projList = new Vector();
-		if (uto.getUsername().toLowerCase().toLowerCase().equals(
-				RootTO.ROOT_USER)) {
+		Vector<ProjectTO> projList = new Vector<ProjectTO>();
+		if (uto.getUsername().toLowerCase().toLowerCase().equals(RootTO.ROOT_USER)) {
 			projList = pdel.getProjectRoot();
 		} else {
 			projList = pdel.getProjectListByUser(lto);
@@ -540,9 +606,11 @@ public class ProjectAction extends GeneralStrutsAction {
 
 	/**
 	 * Put data of TransferObject (from DB) into html fields (ActionForm)
+	 * @throws BusinessException 
 	 */
 	private void getActionFormFromTransferObject(ProjectTO to, ProjectForm frm,
-			HttpServletRequest request) {
+			HttpServletRequest request) throws BusinessException {
+		UserDelegate udel = new UserDelegate();
 		Locale loc = SessionUtil.getCurrentLocale(request);
 
 		frm.setDescription(to.getDescription());
@@ -578,22 +646,34 @@ public class ProjectAction extends GeneralStrutsAction {
 		// set the additional Fields to current form
 		frm.setAdditionalFields(to.getAdditionalFields());
 		frm.setRepositoryPolicies(to.getRepositoryPolicies());
+		
+		if (to.getBudget()!=null) {
+	        double val = to.getBudget().doubleValue() / 100;
+	        String valStr = StringUtil.getDoubleToString(val, "0.00" , loc);
+	        frm.setBudget(valStr);			
+		}
+		
+        Locale locCurrency = udel.getCurrencyLocale();
+		NumberFormat nf = NumberFormat.getCurrencyInstance(locCurrency);
+		String cs = nf.getCurrency().getSymbol(loc);
+		frm.setBudgetCurrencySymbol(cs);
+		
+		frm.setHtmlQualifications(this.renderHtmlQualifications(to, request));
+		
 	}
 
 	/**
 	 * Put data of html fields into TransferObject
+	 * @throws BusinessException 
 	 */
-	private ProjectTO getTransferObjectFromActionForm(ProjectForm frm,
-			HttpServletRequest request) {
+	private ProjectTO getTransferObjectFromActionForm(ProjectForm frm, HttpServletRequest request) throws BusinessException {
 		ProjectTO pto = new ProjectTO();
 		Locale loc = SessionUtil.getCurrentLocale(request);
+		ProjectDelegate pdel = new ProjectDelegate();
 
 		pto.setCreationDate(frm.getCreationDate());
-		if (frm.getEstimatedClosureDate() != null
-				&& !frm.getEstimatedClosureDate().trim().equals("")) {
-			pto.setEstimatedClosureDate(DateUtil.getDateTime(frm
-					.getEstimatedClosureDate(), super.getCalendarMask(request),
-					loc));
+		if (frm.getEstimatedClosureDate() != null && !frm.getEstimatedClosureDate().trim().equals("")) {
+			pto.setEstimatedClosureDate(DateUtil.getDateTime(frm.getEstimatedClosureDate(), super.getCalendarMask(request),	loc));
 		} else {
 			pto.setEstimatedClosureDate(null);
 		}
@@ -612,15 +692,11 @@ public class ProjectAction extends GeneralStrutsAction {
 		pto.setRepositoryUser(frm.getRepositoryUser());
 
 		// populate user objects allocated into project
-		pto.setInsertCustomers(this.getAllocUserVector(request,
-				CustomerTO.ROLE_CUSTOMER));
-		pto.setInsertResources(this.getAllocUserVector(request,
-				ResourceTO.ROLE_RESOURCE));
-		pto.setInsertLeaders(this.getAllocUserVector(request,
-				LeaderTO.ROLE_LEADER));
+		pto.setInsertCustomers(this.getAllocUserVector(request, CustomerTO.ROLE_CUSTOMER));
+		pto.setInsertResources(this.getAllocUserVector(request, ResourceTO.ROLE_RESOURCE));
+		pto.setInsertLeaders(this.getAllocUserVector(request, LeaderTO.ROLE_LEADER));
 
-		Vector metaFieldList = (Vector) request.getSession().getAttribute(
-				"metaFieldList");
+		Vector<MetaFieldTO> metaFieldList = (Vector) request.getSession().getAttribute("metaFieldList");
 		super.setMetaFieldValuesFromForm(metaFieldList, request, pto);
 		if (metaFieldList != null) {
 			frm.setAdditionalFields(pto.getAdditionalFields());
@@ -630,22 +706,32 @@ public class ProjectAction extends GeneralStrutsAction {
 		// with her allocUser objects...
 		pto.setId(frm.getId());
 
-		pto.addRepositoryPolicy(getPolicy(pto,
-				RepositoryPolicyTO.POLICY_COMMENT_MANDATORY, frm
-						.getPolicyMandatoryComment()));
-		pto.addRepositoryPolicy(getPolicy(pto,
-				RepositoryPolicyTO.POLICY_OPEN_PROJ, frm
-						.getPolicyAllowOnlyOpenProj()));
-		pto.addRepositoryPolicy(getPolicy(pto,
-				RepositoryPolicyTO.POLICY_PROJ_RESOURCE, frm
-						.getPolicyAllowOnlyResources()));
-		pto.addRepositoryPolicy(getPolicy(pto,
-				RepositoryPolicyTO.POLICY_REPOS_SAME_PROJ, frm
-						.getPolicyCheckRepositorySource()));
-		pto.addRepositoryPolicy(getPolicy(pto,
-				RepositoryPolicyTO.POLICY_ENTITY_REF, frm
-						.getPolicyCheckEntityReference()));
+		pto.addRepositoryPolicy(getPolicy(pto, RepositoryPolicyTO.POLICY_COMMENT_MANDATORY, frm.getPolicyMandatoryComment()));
+		pto.addRepositoryPolicy(getPolicy(pto, RepositoryPolicyTO.POLICY_OPEN_PROJ, frm.getPolicyAllowOnlyOpenProj()));
+		pto.addRepositoryPolicy(getPolicy(pto, RepositoryPolicyTO.POLICY_PROJ_RESOURCE, frm.getPolicyAllowOnlyResources()));
+		pto.addRepositoryPolicy(getPolicy(pto, RepositoryPolicyTO.POLICY_REPOS_SAME_PROJ, frm.getPolicyCheckRepositorySource()));
+		pto.addRepositoryPolicy(getPolicy(pto, RepositoryPolicyTO.POLICY_ENTITY_REF, frm.getPolicyCheckEntityReference()));
 
+		if (frm.getBudget()!=null) {
+			pto.setBudget(StringUtil.getStringToCents(frm.getBudget(), loc));	
+		}
+		
+		Vector<MetaFieldTO> qualifications = new Vector<MetaFieldTO>();
+		ProjectTO currentPto = pdel.getProjectObject(pto, true);
+		if (currentPto!=null && currentPto.getQualifications()!=null) {
+			for (MetaFieldTO qualif : currentPto.getQualifications()) {
+				qualif.setName(super.getBundleMessage(request, qualif.getName(), true));
+				String fieldValue = request.getParameter("QUALI_" + qualif.getId());
+				if (fieldValue!=null) {
+					qualif.setGenericTag(fieldValue);					
+				} else{
+					qualif.setGenericTag("");
+				}
+				qualifications.add(qualif);
+			}
+		}
+		pto.setQualifications(qualifications);		
+		
 		return pto;
 	}
 
@@ -661,11 +747,12 @@ public class ProjectAction extends GeneralStrutsAction {
 	/**
 	 * Get data from form object based on allocUser vector into session and
 	 * convert into vector of user objects with the attributes set.
+	 * @throws BusinessException 
 	 */
-	private Vector getAllocUserVector(HttpServletRequest request, Integer role) {
-		Vector vlist = null;
-		Vector sessionUserList = (Vector) request.getSession().getAttribute(
-				"allocList");
+	private Vector getAllocUserVector(HttpServletRequest request, Integer role) throws BusinessException {
+		UserDelegate udel = new UserDelegate();
+		Vector<UserTO> vlist = null;
+		Vector<UserTO> sessionUserList = (Vector) request.getSession().getAttribute("allocList");
 
 		// define the appropriate column type based on role desired
 		String colType = "";
@@ -679,19 +766,23 @@ public class ProjectAction extends GeneralStrutsAction {
 
 		// create a specific user object based on keys from array
 		if (sessionUserList != null) {
+			
+			UserTO root = udel.getRoot();
+			boolean rootExists = false;
+			
 			for (int i = 0; i < sessionUserList.size(); i++) {
-				if (vlist == null)
-					vlist = new Vector();
+				if (vlist == null) {
+					vlist = new Vector<UserTO>();
+				}
+					
 				UserTO uto = (UserTO) sessionUserList.elementAt(i);
-				String value = request.getParameter("cb_" + uto.getId() + "_"
-						+ colType);
+				String value = request.getParameter("cb_" + uto.getId() + "_" + colType);
 
 				if (role.equals(CustomerTO.ROLE_CUSTOMER) && value != null) {
 					CustomerTO cto = new CustomerTO(uto.getId());
 					this.getSpecificCustomerAttr(request, cto);
 					vlist.addElement(cto);
-				} else if (role.equals(ResourceTO.ROLE_RESOURCE)
-						&& value != null) {
+				} else if (role.equals(ResourceTO.ROLE_RESOURCE) && value != null) {
 					ResourceTO rto = new ResourceTO(uto.getId());
 					this.getSpecificResourceAttr(request, rto);
 					vlist.addElement(rto);
@@ -700,6 +791,24 @@ public class ProjectAction extends GeneralStrutsAction {
 					this.getSpecificLeaderAttr(request, eto);
 					vlist.addElement(eto);
 				}
+				
+				if (uto.getId().equals(root.getId())) {
+					rootExists = true;
+				}
+			}
+			
+			//force the allocation of root user such as a resource and customer of this project...
+			if (!rootExists) {
+				if (vlist == null) {
+					vlist = new Vector<UserTO>();
+				}				
+				if (role.equals(CustomerTO.ROLE_CUSTOMER)) {
+					CustomerTO cto = new CustomerTO(root.getId());
+					vlist.addElement(cto);
+				} else if (role.equals(ResourceTO.ROLE_RESOURCE)) {
+					ResourceTO rto = new ResourceTO(root.getId());
+					vlist.addElement(rto);
+				}				
 			}
 		}
 

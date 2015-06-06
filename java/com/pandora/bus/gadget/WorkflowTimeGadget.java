@@ -18,6 +18,7 @@ import com.pandora.delegate.DbQueryDelegate;
 import com.pandora.delegate.ProjectDelegate;
 import com.pandora.delegate.TaskTemplateDelegate;
 import com.pandora.exception.BusinessException;
+import com.pandora.helper.DBUtil;
 import com.pandora.helper.DateUtil;
 import com.pandora.helper.StringUtil;
 
@@ -27,7 +28,7 @@ public final class WorkflowTimeGadget extends ChartGadget {
 	private static final String WORKFLOW_TIME_WORKFLOW = "WORFLOW";
 	private static final String WORKFLOW_TIME_INTERVAL = "INTERVAL";
 	
-	private HashMap granularity = new HashMap();
+	private HashMap<String,Integer> granularity = new HashMap<String,Integer>();
 
 	
 	public String getUniqueName(){
@@ -69,23 +70,23 @@ public final class WorkflowTimeGadget extends ChartGadget {
 	
 	
     public Vector getFields(){
-    	Vector response = new Vector();
+    	Vector<FieldValueTO> response = new Vector<FieldValueTO>();
 
     	try {
-         	Vector buff = super.getProjectFromUser(true);
+         	Vector<TransferObject> buff = super.getProjectFromUser(true);
         	response.add(new FieldValueTO(WORKFLOW_TIME_PROJECT, "label.manageOption.gadget.workflowtime.project", buff));
 
-        	Vector wfList = new Vector();
+        	Vector<TransferObject> wfList = new Vector<TransferObject>();
         	TaskTemplateDelegate ttdel = new TaskTemplateDelegate();
-        	Vector workfList = ttdel.getTemplateListByProject(null, false);
-        	Iterator i = workfList.iterator();
+        	Vector<TemplateTO> workfList = ttdel.getTemplateListByProject(null, false);
+        	Iterator<TemplateTO> i = workfList.iterator();
         	while(i.hasNext()) {
-        		TemplateTO tto = (TemplateTO)i.next();
+        		TemplateTO tto = i.next();
         		wfList.add(new TransferObject(tto.getId(), tto.getName()));		
         	}
         	response.add(new FieldValueTO(WORKFLOW_TIME_WORKFLOW, "label.manageOption.gadget.workflowtime.workflow", wfList));
         	
-            Vector intervList = new Vector();
+            Vector<TransferObject> intervList = new Vector<TransferObject>();
             intervList.add(new TransferObject("1", "label.manageOption.gadget.workflowtime.interval.1"));
             intervList.add(new TransferObject("2", "label.manageOption.gadget.workflowtime.interval.2"));
             intervList.add(new TransferObject("3", "label.manageOption.gadget.workflowtime.interval.3"));
@@ -135,14 +136,14 @@ public final class WorkflowTimeGadget extends ChartGadget {
                 String xaxis[] = this.getXAxisLabel(intervType, slotNumber, iniRange);
                 
                 DbQueryDelegate qdel = new DbQueryDelegate();            	
-            	HashMap templateHash = new HashMap();
+            	HashMap<String, Integer> templateHash = new HashMap<String, Integer>();
             	
             	String[] labels = new String[100];
                 float[][] valBar = new float[slotNumber][100];
             	
         		//get data related to allocation from data base...
                 int[] types = new int[] {Types.VARCHAR, Types.VARCHAR, Types.TIMESTAMP};
-                Vector params = new Vector();
+                Vector<Object> params = new Vector<Object>();
                 params.addElement(templateId);
                 params.addElement(templateId);
                 params.addElement(iniRange);
@@ -152,12 +153,14 @@ public final class WorkflowTimeGadget extends ChartGadget {
                 sqlData.append("select n.name, sum(sub1.alloc_time), sub1.bucket_date, sub1.project_id " +
                 				"from node_template n, " +
                 				"custom_node_template c LEFT OUTER JOIN ( ");
-                sqlData.append("  select a.task_id, a.alloc_time, a.project_id, ");                
-                if (dbname.equalsIgnoreCase("MySQL")) {
-                	sqlData.append("ADDDATE(rt.actual_date, a.sequence-1) as bucket_date ");
-        		} else {
-        			sqlData.append("rt.actual_date+ cast((a.sequence-1) || ' day' as interval) as bucket_date ");
-        		}
+                sqlData.append("  select a.task_id, a.alloc_time, a.project_id, ");  
+                sqlData.append(DBUtil.addDate(dbname, "rt.actual_date", "a.sequence-1") + " as bucket_date ");
+                
+                //if (dbname.equalsIgnoreCase("MySQL")) {
+                //	sqlData.append("ADDDATE(rt.actual_date, a.sequence-1) as bucket_date ");
+        		//} else {
+        		//	sqlData.append("rt.actual_date+ cast((a.sequence-1) || ' day' as interval) as bucket_date ");
+        		//}
                 sqlData.append("  from resource_task_alloc a, task t, resource_task rt ");
                	sqlData.append("  where a.task_id = t.id  ");
                 sqlData.append("   and a.task_id = rt.task_id ");
@@ -171,10 +174,10 @@ public final class WorkflowTimeGadget extends ChartGadget {
                 sqlData.append("and sub1.project_id in (" + super.getProjectIn( pto.getId() )+ ") ");
                 sqlData.append("group by n.name, sub1.bucket_date, sub1.project_id");
                 
-                Vector dbAllocList = qdel.performQuery(sqlData.toString(), types, params);
+                Vector<Vector<Object>> dbAllocList = qdel.performQuery(sqlData.toString(), types, params);
                 if (dbAllocList!=null) {
                 	for (int i=1; i<dbAllocList.size(); i++) {
-                    	Vector item = (Vector)dbAllocList.elementAt(i);
+                    	Vector<Object> item = (Vector<Object>)dbAllocList.elementAt(i);
                     	int index = i;
                     	
                     	Timestamp tm = (Timestamp)item.elementAt(2); 
@@ -184,7 +187,6 @@ public final class WorkflowTimeGadget extends ChartGadget {
             				index = slot.intValue();
             			} else {
             				index = -1;
-            				System.out.println("index is null. dt:" + tm + " gran.list:" + this.granularity);
             			}
                     	         
             			if (index>-1) {

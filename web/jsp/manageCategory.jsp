@@ -1,5 +1,6 @@
 <%@ taglib uri="/WEB-INF/lib/struts-html" prefix="html" %>
 <%@ taglib uri="/WEB-INF/lib/struts-bean" prefix="bean" %>
+<%@ taglib uri="/WEB-INF/lib/plandora-html" prefix="plandora-html" %>
 <%@ taglib uri="/WEB-INF/lib/display" prefix="display" %>
 
 <jsp:include page="header.jsp" />
@@ -94,7 +95,7 @@
 		  <td class="formTitle"><bean:message key="label.category.type"/>:&nbsp;</td>
 		   <td class="formBody">
 				<html:select name="categoryForm" property="type" styleClass="textBox" onkeypress="javascript:changeType();" onchange="javascript:changeType();">
-					<html:options collection="typeList" property="id" labelProperty="genericTag"/>
+					<html:options collection="typeList" property="id" labelProperty="genericTag" filter="false"/>
 				</html:select>
 		   </td>       	   
 		  <td>&nbsp;</td>
@@ -113,7 +114,7 @@
 		  <td class="formTitle"><bean:message key="label.category.project"/>:&nbsp;</td>
 		  <td class="formBody">
 			<html:select name="categoryForm" property="projectId" styleClass="textBox">
-				<html:options collection="projectList" property="id" labelProperty="name"/>
+				<html:options collection="projectList" property="id" labelProperty="name" filter="false"/>
 			</html:select>
 		  </td>
 		  <td>&nbsp;</td>
@@ -167,7 +168,7 @@
 			<table width="98%" border="0" cellspacing="0" cellpadding="0"><tr>
 			  <td width="120">
 				  <html:button property="save" styleClass="button" onclick="javascript:buttonClick('categoryForm', 'saveCategory');">
-					<bean:write name="categoryForm" property="saveLabel" />
+					<bean:write name="categoryForm" property="saveLabel" filter="false" />
 				  </html:button>    
 			  </td>
 			  <td width="120">
@@ -193,14 +194,14 @@
 		<table width="98%" border="0" cellspacing="0" cellpadding="0">
 		<tr class="formBody">
 			<td>
-				<display:table border="1" width="100%" name="categoryList" scope="session" pagesize="13" requestURI="../do/manageCategory?operation=prepareForm">
-					  <display:column width="20%" likeSearching="true" property="name" align="center" title="label.category.name" />
-					  <display:column property="description" likeSearching="true" title="label.category.description" />					  
-					  <display:column width="15%" align="center" comboFilter="true" property="id" title="label.category.project" decorator="com.pandora.gui.taglib.decorator.CategoryProjectDecorator" />
-					  <display:column width="20%" property="type" align="center" title="label.category.type" decorator="com.pandora.gui.taglib.decorator.CategoryTypeDecorator"/>
-					  <display:column width="2%" property="id" align="center" title="grid.title.empty" decorator="com.pandora.gui.taglib.decorator.GridEditDecorator" tag="'categoryForm', 'editCategory'" />
-					  <display:column width="2%" property="id" align="center" title="grid.title.empty" decorator="com.pandora.gui.taglib.decorator.GridDeleteDecorator" tag="'categoryForm', 'removeCategory'" />						  
-				</display:table>		
+				<plandora-html:ptable width="100%" name="categoryList" scope="session" pagesize="13" frm="categoryForm" >
+					  <plandora-html:pcolumn width="20%" likeSearching="true" sort="1" property="name" align="center" title="label.category.name" />
+					  <plandora-html:pcolumn property="description" likeSearching="true" title="label.category.description" />					  
+					  <plandora-html:pcolumn width="15%" align="center" comboFilter="true" property="id" title="label.category.project" decorator="com.pandora.gui.taglib.decorator.CategoryProjectDecorator" />
+					  <plandora-html:pcolumn width="20%" property="type" comboFilter="true" align="center" sort="1" title="label.category.type" decorator="com.pandora.gui.taglib.decorator.CategoryTypeDecorator"/>
+					  <plandora-html:pcolumn width="2%" property="id" align="center" title="grid.title.empty" decorator="com.pandora.gui.taglib.decorator.GridEditDecorator" tag="'categoryForm', 'editCategory'" />
+					  <plandora-html:pcolumn width="2%" property="id" align="center" title="grid.title.empty" decorator="com.pandora.gui.taglib.decorator.GridDeleteDecorator" tag="'categoryForm', 'removeCategory'" />						  
+				</plandora-html:ptable>		
 			</td>
 		</tr> 
 		</table>
@@ -212,6 +213,11 @@
 					<bean:message key="button.refresh"/>
 				  </html:button>    
 			  </td>
+			  <td class="textBoxOverTitleArea">
+				  <html:checkbox property="hideClosedCategory" name="categoryForm" >
+					  <bean:message key="label.category.hideClosed"/>
+				  </html:checkbox>
+			  </td>	   		
 			  <td>&nbsp;</td>
 			</tr></table>  	
 		</display:headerfootergrid> 

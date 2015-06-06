@@ -32,13 +32,12 @@ import com.pandora.helper.XmlDomParse;
 
 /**
  * This class contain the business rules to get information 
- * about tasks and resource_task from XML file comming from
- * MSProject application.
+ * about tasks and resource_task from MSProject's XML file.
  */
 public class MsProjectXmlImportBUS extends ImportBUS {
 
-    private HashMap taskNodesHash = new HashMap();
-    private HashMap calendarHash = new HashMap();
+    private HashMap<String,Node> taskNodesHash = new HashMap<String,Node>();
+    private HashMap<String,String> calendarHash = new HashMap<String,String>();
     private boolean ignoreAssignmentProblems = false;
     private boolean ignoreResourceProblems = false;
     private int dependencePolicy = 0;
@@ -47,13 +46,13 @@ public class MsProjectXmlImportBUS extends ImportBUS {
     /* (non-Javadoc)
      * @see com.pandora.imp.ExportBUS#getFields()
      */
-    public Vector getFields() throws BusinessException {    	
-    	Vector list = new Vector();
+    public Vector<FieldValueTO> getFields() throws BusinessException {    	
+    	Vector<FieldValueTO> list = new Vector<FieldValueTO>();
     	
-    	String lbl0 = super.handler.getBundle().getMessage("label.importExport.msProjectXmlImport.assignment.0");
-    	String lbl1 = super.handler.getBundle().getMessage("label.importExport.msProjectXmlImport.assignment.1");
+    	String lbl0 = super.handler.getBundle().getMessage(super.handler.getLocale(),"label.importExport.msProjectXmlImport.assignment.0");
+    	String lbl1 = super.handler.getBundle().getMessage(super.handler.getLocale(),"label.importExport.msProjectXmlImport.assignment.1");
     	
-    	Vector options = new Vector();
+    	Vector<TransferObject> options = new Vector<TransferObject>();
     	options.add(new TransferObject("0", lbl0));
     	options.add(new TransferObject("1", lbl1));
     	
@@ -61,10 +60,10 @@ public class MsProjectXmlImportBUS extends ImportBUS {
     	list.add(assigmentProblem);
 
     	
-    	String lbl2 = super.handler.getBundle().getMessage("label.importExport.msProjectXmlImport.resource.0");
-    	String lbl3 = super.handler.getBundle().getMessage("label.importExport.msProjectXmlImport.resource.1");
+    	String lbl2 = super.handler.getBundle().getMessage(super.handler.getLocale(),"label.importExport.msProjectXmlImport.resource.0");
+    	String lbl3 = super.handler.getBundle().getMessage(super.handler.getLocale(),"label.importExport.msProjectXmlImport.resource.1");
     	
-    	Vector options2 = new Vector();
+    	Vector<TransferObject> options2 = new Vector<TransferObject>();
     	options2.add(new TransferObject("0", lbl2));
     	options2.add(new TransferObject("1", lbl3));
     	
@@ -72,11 +71,11 @@ public class MsProjectXmlImportBUS extends ImportBUS {
     	list.add(resourceProblem);
 
     	
-    	String lbl4 = super.handler.getBundle().getMessage("label.importExport.msProjectXmlImport.dependence.0");
-    	String lbl5 = super.handler.getBundle().getMessage("label.importExport.msProjectXmlImport.dependence.1");
-    	String lbl6 = super.handler.getBundle().getMessage("label.importExport.msProjectXmlImport.dependence.2");
+    	String lbl4 = super.handler.getBundle().getMessage(super.handler.getLocale(),"label.importExport.msProjectXmlImport.dependence.0");
+    	String lbl5 = super.handler.getBundle().getMessage(super.handler.getLocale(),"label.importExport.msProjectXmlImport.dependence.1");
+    	String lbl6 = super.handler.getBundle().getMessage(super.handler.getLocale(),"label.importExport.msProjectXmlImport.dependence.2");
     	
-    	Vector options3 = new Vector();
+    	Vector<TransferObject> options3 = new Vector<TransferObject>();
     	options3.add(new TransferObject("0", lbl4));
     	options3.add(new TransferObject("1", lbl5));
     	options3.add(new TransferObject("2", lbl6));
@@ -98,11 +97,15 @@ public class MsProjectXmlImportBUS extends ImportBUS {
      */
     public void validate(InputStream is, ProjectTO pto, Vector fields) throws BusinessException {
     	UserDelegate udel = new UserDelegate();
-    	HashMap resourceList = new HashMap();
-    	HashMap taskList = new HashMap();           
+    	HashMap<String, String> resourceList = new HashMap<String, String>();
+    	HashMap<String, String> taskList = new HashMap<String, String>();           
     	
         try {
             
+        	if (!handler.isLeader(pto)) {
+        		throw new BusinessException("Sorry. To perform this feature it is mandatory to be the leader of the project [ " + pto.getName() + "]");
+        	}
+        	
             Document doc = XmlDomParse.getXmlDom(is);
             Element root = doc.getDocumentElement();
 
@@ -121,7 +124,7 @@ public class MsProjectXmlImportBUS extends ImportBUS {
             	this.dependencePolicy = Integer.parseInt(field3.getCurrentValue());
             }
 
-            //checks if the first elemet is project tag
+            //checks if the first element is project tag
             if (!root.getNodeName().toLowerCase().equals("project")){
             	throw new Exception("The XML file from MSProject is invalid.");
             	
@@ -129,7 +132,7 @@ public class MsProjectXmlImportBUS extends ImportBUS {
             } else {
             
             	if (!pto.getBollCanAlloc()) {
-            		throw new Exception("This project [" + pto.getName() + "] is not able to be allocated. Check the allocation status inti the Project Form.");	
+            		throw new Exception("This project [" + pto.getName() + "] is not able to be allocated. Check the allocation status at 'Project Form'.");	
             	}
             	
             	NodeList taskNodes = doc.getElementsByTagName("Task");
@@ -216,19 +219,32 @@ public class MsProjectXmlImportBUS extends ImportBUS {
             Document doc = XmlDomParse.getXmlDom(is);
             
             //get a list of task objects
+            HashMap<String, TaskTO> taskList = null;
             NodeList taskNodes = doc.getElementsByTagName("Task");
-            HashMap taskList = this.getTaskList(taskNodes, pto);
+            if (taskNodes!=null) {
+            	taskList = this.getTaskList(taskNodes, pto);	
+            }
 
             //get a list of resource objects
+            HashMap<String,ResourceTO> resList = null;
             NodeList resNodes = doc.getElementsByTagName("Resource");
-            HashMap resList = this.getResourceList(doc, resNodes, pto);
+            if (resNodes!=null) {
+            	resList = this.getResourceList(doc, resNodes, pto);
+            }
 
             //get a list of resourceTask objects
             NodeList resTaskNodes = doc.getElementsByTagName("Assignment");
-            this.getResTaskList(resTaskNodes, resList ,taskList);
+            if (resTaskNodes!=null) {
+            	this.getResTaskList(resTaskNodes, resList ,taskList);	
+            }
             
-            Vector tasks = this.getVectorFromHash(taskList, taskNodes);
-            tdel.insertTask(tasks);
+            Vector<TaskTO> tasks = this.getVectorFromHash(taskList, taskNodes);
+            if (tasks!=null) {
+            	tdel.insertTask(tasks);	
+            } else {
+            	throw new Exception("The tasks were not found into the file.");
+            }
+            
             
 		} catch (Exception e) {
 			throw new BusinessException(e);
@@ -236,12 +252,14 @@ public class MsProjectXmlImportBUS extends ImportBUS {
     }
 
 
-    private Vector getVectorFromHash(HashMap taskList, NodeList taskNodes) {
-        Vector response = new Vector();
+    private Vector<TaskTO> getVectorFromHash(HashMap<String,TaskTO> taskList, NodeList taskNodes) {
+        Vector<TaskTO> response = new Vector<TaskTO>();
         for (int i = 0; i< taskNodes.getLength(); i++){
             Node taskNode = taskNodes.item(i);
             String taskUid = XmlDomParse.getFirstTextByTag(taskNode, "UID");
-            response.addElement((TaskTO)taskList.get(taskUid));
+            if (taskUid!=null) {
+            	response.addElement((TaskTO)taskList.get(taskUid));	
+            }
         }
         return response;
     }
@@ -302,9 +320,9 @@ public class MsProjectXmlImportBUS extends ImportBUS {
     }
 
 
-    private HashMap getResourceList(Document doc, NodeList resNodes, ProjectTO pto) throws BusinessException {
+    private HashMap<String, ResourceTO> getResourceList(Document doc, NodeList resNodes, ProjectTO pto) throws BusinessException {
         UserDelegate udel = new UserDelegate();
-        HashMap response = new HashMap();
+        HashMap<String, ResourceTO> response = new HashMap<String, ResourceTO>();
         NodeList calNodes = doc.getElementsByTagName("Calendar");
         
         for (int i = 0; i< resNodes.getLength(); i++){ 
@@ -344,39 +362,43 @@ public class MsProjectXmlImportBUS extends ImportBUS {
             String uid = XmlDomParse.getFirstTextByTag(calNode, "UID");
             if (uid!=null && uid.trim().equals(calendarId.trim())){
             	Node weekDays = XmlDomParse.getFirstNodeByTag(calNode, "WeekDays");
-            	ArrayList daysList = XmlDomParse.getNodesByTag(weekDays, "WeekDay");
-            	
-            	for (int j=0; j < daysList.size(); j++) {
-            		Node day = (Node)daysList.get(j);
-            		String dayType = XmlDomParse.getFirstTextByTag(day, "DayType");
-            		String dayWorking = XmlDomParse.getFirstTextByTag(day, "DayWorking");
-            		String workTime = "OFF";
-            		if (dayWorking.equals("1")) {
-            			Node wtimeNode = XmlDomParse.getFirstNodeByTag(day, "WorkingTimes");
-            			ArrayList wtimeList = XmlDomParse.getNodesByTag(wtimeNode, "WorkingTime");
-            			int minutesDiff = 0;
-                    	for (int k=0; k < wtimeList.size(); k++) {
-                    		Node wt = (Node)wtimeList.get(k);
-                    		Timestamp fromTime = this.getDateTime(XmlDomParse.getFirstTextByTag(wt, "FromTime"));
-                    		Timestamp toTime = this.getDateTime(XmlDomParse.getFirstTextByTag(wt, "ToTime"));
-                    		if (fromTime.before(toTime)){
-                    	        long diff = (toTime.getTime() - fromTime.getTime());
-                    	        minutesDiff = minutesDiff + ((int)(diff / 60000));
+            	if (weekDays!=null) {
+                	ArrayList daysList = XmlDomParse.getNodesByTag(weekDays, "WeekDay");
+                	
+                	if (daysList!=null) {
+                    	for (int j=0; j < daysList.size(); j++) {
+                    		Node day = (Node)daysList.get(j);
+                    		String dayType = XmlDomParse.getFirstTextByTag(day, "DayType");
+                    		String dayWorking = XmlDomParse.getFirstTextByTag(day, "DayWorking");
+                    		String workTime = "OFF";
+                    		if (dayWorking.equals("1")) {
+                    			Node wtimeNode = XmlDomParse.getFirstNodeByTag(day, "WorkingTimes");
+                    			ArrayList wtimeList = XmlDomParse.getNodesByTag(wtimeNode, "WorkingTime");
+                    			int minutesDiff = 0;
+                            	for (int k=0; k < wtimeList.size(); k++) {
+                            		Node wt = (Node)wtimeList.get(k);
+                            		Timestamp fromTime = this.getDateTime(XmlDomParse.getFirstTextByTag(wt, "FromTime"));
+                            		Timestamp toTime = this.getDateTime(XmlDomParse.getFirstTextByTag(wt, "ToTime"));
+                            		if (fromTime.before(toTime)){
+                            	        long diff = (toTime.getTime() - fromTime.getTime());
+                            	        minutesDiff = minutesDiff + ((int)(diff / 60000));
+                            		}
+                            	}
+                            	workTime = minutesDiff+"";
                     		}
-                    	}
-                    	workTime = minutesDiff+"";
-            		}
-            		
-            		this.calendarHash.put(rto.getUsername() + "|" + dayType, workTime);
+                    		
+                    		this.calendarHash.put(rto.getUsername() + "|" + dayType, workTime);
+                    	}                		
+                	}
             	}
             }
         }
     }
     
     
-    private HashMap getTaskList(NodeList taskNodes, ProjectTO pto) throws BusinessException {
-        HashMap response = new HashMap();
-        HashMap lastLoadTaskByLevelHash = new HashMap();
+    private HashMap<String,TaskTO> getTaskList(NodeList taskNodes, ProjectTO pto) throws BusinessException {
+        HashMap<String,TaskTO> response = new HashMap<String,TaskTO>();
+        HashMap<String,TaskTO> lastLoadTaskByLevelHash = new HashMap<String,TaskTO>();
                 
         //create a hash of all plandora task objects
         for (int i = 0; i< taskNodes.getLength(); i++){
@@ -397,7 +419,12 @@ public class MsProjectXmlImportBUS extends ImportBUS {
             tto.setFinalDate(null);
             tto.setHandler(super.handler);
             tto.setCreatedBy(super.handler);
-            tto.setName(XmlDomParse.getFirstTextByTag(taskNode, "Name"));
+            
+            String name = XmlDomParse.getFirstTextByTag(taskNode, "Name");
+            if (name!=null && !name.trim().equals("") && name.length()>50) {
+            	name = name.substring(0, 50);
+            }
+            tto.setName(name);
             tto.setProject(pto); 
             tto.setRequirement(null);
             

@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="ISO-8859-1" ?>
+<?xml version="1.0" encoding="UTF-8" ?>
      <!DOCTYPE struts-config PUBLIC
        "-//Apache Software Foundation//DTD Struts Configuration 1.2//EN"
        "lib/struts-config_1_2.dtd">
@@ -17,6 +17,10 @@
 	        <!-- Specific Forms -->
 	    	<form-bean 	name="loginForm" type="com.pandora.gui.struts.form.LoginForm">
  	    	</form-bean>
+	    	<form-bean 	name="shortCutForm" type="com.pandora.gui.struts.form.ShortCutForm">
+ 	    	</form-bean>
+	    	<form-bean 	name="ediForm" type="com.pandora.gui.struts.form.EdiForm">
+ 	    	</form-bean> 	    	
 	    	<form-bean 	name="userForm" type="com.pandora.gui.struts.form.UserForm">
  	    	</form-bean>
  	    	<form-bean 	name="custReqForm" type="com.pandora.gui.struts.form.CustReqForm">
@@ -35,8 +39,10 @@
  	    	</form-bean> 	    	
  	    	<form-bean 	name="searchPlanningForm" type="com.pandora.gui.struts.form.SearchPlanningForm">
  	    	</form-bean> 	    	
- 	    	<form-bean 	name="ganttViewerForm" type="com.pandora.gui.struts.form.GanttViewerForm">
- 	    	</form-bean> 	    	
+ 	    	<form-bean 	name="ganttPanelForm" type="com.pandora.gui.struts.form.GanttPanelForm">
+ 	    	</form-bean>
+ 	    	<form-bean 	name="ganttPanelEditForm" type="com.pandora.gui.struts.form.GanttPanelEditForm">
+ 	    	</form-bean> 	    	 	    	 	    	 	    	
  	    	<form-bean 	name="projectImportExportForm" type="com.pandora.gui.struts.form.ProjectImportExportForm">
  	    	</form-bean> 	    	
  	    	<form-bean 	name="resTaskForm" type="com.pandora.gui.struts.form.ResTaskForm">
@@ -139,9 +145,19 @@
  	    	</form-bean>
  	    	<form-bean 	name="costEditForm" type="com.pandora.gui.struts.form.CostEditForm">
  	    	</form-bean>
+ 	    	<form-bean 	name="costListForm" type="com.pandora.gui.struts.form.CostListForm">
+ 	    	</form-bean> 	    	
 			<form-bean 	name="expenseForm" type="com.pandora.gui.struts.form.ExpenseForm">
  	    	</form-bean>
 			<form-bean 	name="snipArtifactForm" type="com.pandora.gui.struts.form.SnipArtifactForm">
+ 	    	</form-bean>
+			<form-bean 	name="optionPictureForm" type="com.pandora.gui.struts.form.OptionPictureForm">
+ 	    	</form-bean>
+			<form-bean 	name="companyForm" type="com.pandora.gui.struts.form.CompanyForm">
+ 	    	</form-bean>
+			<form-bean 	name="projectPanelForm" type="com.pandora.gui.struts.form.ProjectPanelForm">
+ 	    	</form-bean>
+			<form-bean 	name="projectPanelPopupForm" type="com.pandora.gui.struts.form.ProjectPanelPopupForm">
  	    	</form-bean>
         </form-beans>
 
@@ -155,17 +171,31 @@
     	  	<forward name="goToAgileForm" path="/do/showAgilePanel?operation=prepareForm"/>
     	  	<forward name="goToBscForm" path="/do/viewBSCPanel?operation=prepareForm"/>
     	  	<forward name="goToAgilePanel" path="/do/showAgilePanel?operation=navigate"/>
+    	  	<forward name="goToRiskForm" path="/do/manageRisk?operation=navigate"/>
+    	  	<forward name="goToOccForm" path="/do/manageOccurrence?operation=navigate"/>
     	  	<forward name="goToSurveyForm" path="/do/manageSurvey?operation=navigate"/>
     	  	<forward name="goToInvoiceForm" path="/do/manageInvoice?operation=navigate"/>
     	  	<forward name="goToExpenseForm" path="/do/manageExpense?operation=navigate"/>
     	  	<forward name="goToCostForm" path="/do/showCostPanel?operation=navigate"/>
+    	  	<forward name="goToCostList" path="/do/showCostList?operation=refresh"/>
     	  	<forward name="goToCapacityForm" path="/do/showResCapacityPanel?operation=navigate"/>
     	  	<forward name="worflowResTaskForm" path="/do/manageResTask?operation=showWorkflow" />
+    	  	<forward name="goToResTaskForm" path="/do/manageResTask?operation=navigate" />
     	  	<forward name="worflowMainForm" path="/do/manageResourceHome?operation=showWorkflow" />    	  	
     	  	<forward name="refreshCustAfterAttach" path="/do/manageCustRequest?operation=refreshAfterAttach" />
+    	  	<forward name="refreshTaskAfterAttach" path="/do/manageResTask?operation=refreshAfterAttach" />    	  	
+    	  	<forward name="goToCustRequest" path="/do/manageCustRequest?operation=navigate" />
     	  	<forward name="goToArtifact" path="/do/manageArtifact?operation=navigate"/>
     	  	<forward name="goToRepository" path="/do/showRepositoryViewer?operation=refresh"/>
+    	  	<forward name="goToKB" path="/do/viewKb?operation=navigate"/>
+    	  	<forward name="goToOption" path="/do/manageOption?operation=prepareForm"/>
     	  	<forward name="showAllReqsAfterRefuse" path="/do/showAllRequirement?operation=prepareForm"/>
+    	  	<forward name="goToShowAllReq" path="/do/showAllRequirement?operation=navigate"/>
+    	  	<forward name="goToShowAllTsk" path="/do/showAllTask?operation=navigate"/>
+    	  	<forward name="goToReport" path="/do/viewReport?operation=navigate"/>
+    	  	<forward name="goToImpExp" path="/do/projectImportExport?operation=navigate"/>
+    	  	<forward name="goToProject" path="/do/manageProject?operation=navigate"/>
+    	  	<forward name="goToGantt" path="/do/ganttPanel?operation=prepareForm"/>
     	</global-forwards>
 
         <!-- Action declaration -->
@@ -179,6 +209,30 @@
                 <forward name="resourceHome" path="/do/manageResourceHome?operation=prepareForm"/>
                 <forward name="customerHome" path="/do/manageCustRequest?operation=prepareForm"/>
         	</action>
+
+            <action path="/showProjectPanel" name="projectPanelForm" scope="session"
+	                type="com.pandora.gui.struts.action.ProjectPanelAction"
+	                input="/jsp/projectPanel.jsp" parameter="operation">       
+                <forward name="showProjectPanel" path="/jsp/projectPanel.jsp"/>
+        	</action>        	        	
+        	<action path="/showProjectPanelPopup" name="projectPanelPopupForm" scope="session"
+	                type="com.pandora.gui.struts.action.ProjectPanelPopupAction"
+    	            parameter="operation" input="/jsp/projectPanelPopup.jsp">
+                <forward name="showProjectPanelPopup" path="/jsp/projectPanelPopup.jsp"/>                
+        	</action>
+        	
+
+            <action path="/showRssPopup" name="ediForm" scope="session"
+	                type="com.pandora.gui.struts.action.EdiAction"
+	                input="/jsp/rssPopup.jsp" parameter="operation">       
+                <forward name="showRssPopup" path="/jsp/rssPopup.jsp"/>
+        	</action>        	        	
+        	
+            <action path="/showShortCutPopup" name="shortCutForm" scope="session"
+	                type="com.pandora.gui.struts.action.ShortCutAction"
+	                input="/jsp/shortCutPopup.jsp" parameter="operation">       
+                <forward name="showShortCutPopup" path="/jsp/shortCutPopup.jsp"/>
+        	</action>        	        	
             <action path="/manageUser" name="userForm" scope="session"
 	                type="com.pandora.gui.struts.action.UserAction"
 	                input="/jsp/manageUser.jsp" parameter="operation">       
@@ -202,7 +256,8 @@
         	</action>
             <action path="/manageResourceHome" name="resourceHomeForm" scope="session"
 	                type="com.pandora.gui.struts.action.ResourceHomeAction"
-	                input="/jsp/resourceHome.jsp" parameter="operation">       
+	                input="/jsp/resourceHome.jsp" parameter="operation">
+	            <forward name="infoTopicReply" path="/jsp/infoTopicReply.jsp"/>       
                 <forward name="showResourceHome" path="/jsp/resourceHome.jsp"/>
         	</action>
             <action path="/refuse" name="refuseForm" scope="session"
@@ -227,16 +282,23 @@
 	                input="/jsp/searchPlanning.jsp" parameter="operation">       
                 <forward name="showSearch" path="/jsp/searchPlanning.jsp"/>
         	</action>        	
-            <action path="/ganttViewer" name="ganttViewerForm" scope="session"
-	                type="com.pandora.gui.struts.action.GanttViewerAction"
-	                input="/jsp/ganttViewer.jsp" parameter="operation">       
-                <forward name="showGantt" path="/jsp/ganttViewer.jsp"/>
+            <action path="/ganttPanel" name="ganttPanelForm" scope="session"
+	                type="com.pandora.gui.struts.action.GanttPanelAction"
+	                input="/jsp/ganttPanel.jsp" parameter="operation">       
+                <forward name="showGanttPanel" path="/jsp/ganttPanel.jsp"/>
+                <forward name="showGanttEdit" path="/jsp/ganttPanelEdit.jsp"/>
         	</action>        	
+        	<action path="/showGanttEdit" name="ganttPanelEditForm" scope="session"
+	                type="com.pandora.gui.struts.action.GanttPanelEditAction"
+    	            parameter="operation" input="/jsp/ganttPanelEdit.jsp">
+                <forward name="showGanttEdit" path="/jsp/ganttPanelEdit.jsp"/>                
+        	</action>
             <action path="/manageResTask" name="resTaskForm" scope="session"
 	                type="com.pandora.gui.struts.action.ResTaskAction"
 	                input="/jsp/manageResTask.jsp" parameter="operation">       
                 <forward name="showResTask" path="/jsp/manageResTask.jsp"/>
                 <forward name="showCloseMacroTaskConfirm" path="/jsp/manageResTaskMTConfirm.jsp"/>
+                 <forward name="showChangeProjResTask" path="/jsp/showChangeProjResTask.jsp"/>
         	</action>        	
             <action path="/manageDB" name="dbForm" scope="session"
 	                type="com.pandora.gui.struts.action.DbAction"
@@ -384,7 +446,7 @@
 	                input="/jsp/viewMindMap.jsp" parameter="operation">       
                 <forward name="viewMindMap" path="/jsp/viewMindMap.jsp"/>
         	</action>
-  			<action path="/visorFreemind" forward="/jsp/visorFreemind.swf" />
+  			<action path="/visorFreemind.swf" forward="/jsp/visorFreemind.swf" />
   			<action path="/expressInstall" forward="/jsp/expressInstall.swf" />
   			<action path="/open-flash-chart" forward="/jsp/open-flash-chart.swf" />
   			<action path="/FlexPaperViewer" forward="/jsp/FlexPaperViewer.swf" />
@@ -424,6 +486,7 @@
                 <forward name="showRepositoryViewer" path="/jsp/repositoryViewer.jsp"/>
                 <forward name="showRepositoryBrowse" path="/jsp/repositoryBrowse.jsp"/>
                 <forward name="showRepositoryLogViewer" path="/jsp/repositoryLogViewer.jsp"/>
+                <forward name="showPublicDownloadPopup" path="/jsp/publicDownloadPopup.jsp"/>                
         	</action>
         	<action path="/manageTemplate" name="templateForm" scope="session"
 	                type="com.pandora.gui.struts.action.TemplateAction"
@@ -513,6 +576,11 @@
                 <forward name="showCostPanel" path="/jsp/costPanel.jsp"/>
                 <forward name="showCostEdit" path="/jsp/costEdit.jsp"/>                
         	</action>
+        	<action path="/showCostList" name="costListForm" scope="session"
+	                type="com.pandora.gui.struts.action.CostListAction"
+    	            parameter="operation" input="/jsp/costList.jsp">
+                <forward name="showCostList" path="/jsp/costList.jsp"/>
+        	</action>
         	<action path="/showCostEdit" name="costEditForm" scope="session"
 	                type="com.pandora.gui.struts.action.CostEditAction"
     	            parameter="operation" input="/jsp/costEdit.jsp">
@@ -528,8 +596,16 @@
     	            parameter="operation" input="/jsp/snipArtifact.jsp">
                 <forward name="showSnipArtifact" path="/jsp/snipArtifact.jsp"/>
         	</action>
-        	
-        	        	 	
+            <action path="/manageOptionPicture" name="optionPictureForm" scope="session"
+	                type="com.pandora.gui.struts.action.OptionPictureAction"
+	                input="/jsp/manageOptionPicture.jsp" parameter="operation">       
+                <forward name="showOptionPicture" path="/jsp/manageOptionPicture.jsp"/>
+        	</action>
+        	<action path="/manageCompany" name="companyForm" scope="session"
+	                type="com.pandora.gui.struts.action.CompanyAction"
+    	            parameter="operation" input="/jsp/manageCompany.jsp">
+                <forward name="showCompany" path="/jsp/manageCompany.jsp"/>
+        	</action>
         </action-mappings>
 
         <!-- resources.properties file -->

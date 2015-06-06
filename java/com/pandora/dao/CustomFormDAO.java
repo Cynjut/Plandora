@@ -14,7 +14,6 @@ import com.pandora.PlanningTO;
 import com.pandora.TransferObject;
 import com.pandora.exception.DataAccessException;
 import com.pandora.helper.DateUtil;
-import com.pandora.helper.LogUtil;
 
 /**
 */
@@ -46,7 +45,7 @@ public class CustomFormDAO extends PlanningDAO {
 			pstmt.setString(1, metaFormId);
 			rs = pstmt.executeQuery();			
 			while (rs.next()){
-			    CustomFormTO cfto = this.populateObjectByResultSet(rs, iniRange, c);
+			    CustomFormTO cfto = this.populateObjectByResultSet(rs, iniRange, true, c);
 			    if (cfto!=null) {
 			    	response.addElement(cfto);	
 			    }
@@ -71,7 +70,7 @@ public class CustomFormDAO extends PlanningDAO {
 			pstmt.setString(1, filter.getId());
 			rs = pstmt.executeQuery();						
 			if (rs.next()){
-				response = this.populateObjectByResultSet(rs, null, c);
+				response = this.populateObjectByResultSet(rs, null, false, c);
 			} 
 						
 		} catch (SQLException e) {
@@ -97,11 +96,7 @@ public class CustomFormDAO extends PlanningDAO {
 		} catch (SQLException e) {
 			throw new DataAccessException(e);
 		}finally{
-			try {
-				if(pstmt != null) pstmt.close();
-			} catch (SQLException ec) {
-			    LogUtil.log(this, LogUtil.LOG_ERROR, "DB Closing statement error", ec);
-			} 		
+			super.closeStatement(null, pstmt);
 		}        
     }
     
@@ -125,11 +120,7 @@ public class CustomFormDAO extends PlanningDAO {
 		} catch (SQLException e) {
 			throw new DataAccessException(e);
 		}finally{
-			try {
-				if(pstmt != null) pstmt.close();
-			} catch (SQLException ec) {
-			    LogUtil.log(this, LogUtil.LOG_ERROR, "DB Closing statement error", ec);
-			} 		
+			super.closeStatement(null, pstmt);
 		}               
     }
     
@@ -146,7 +137,7 @@ public class CustomFormDAO extends PlanningDAO {
 			pstmt.executeUpdate();
 			
 			//remove data related to the meta_field and current meta_form
-			adao.removeByPlanning(new PlanningTO(cto.getId()), c);
+			adao.removeByPlanning(new PlanningTO(cto.getId()), false, c);
 			
 
 		} catch (SQLException e) {
@@ -157,16 +148,33 @@ public class CustomFormDAO extends PlanningDAO {
     }
     
     
-    private CustomFormTO populateObjectByResultSet(ResultSet rs, Timestamp iniRange, Connection c) throws DataAccessException{
-
+    private CustomFormTO populateObjectByResultSet(ResultSet rs, Timestamp iniRange, boolean filterCols, Connection c) throws DataAccessException{
+    	MetaFormDAO mfdao = new MetaFormDAO();
         CustomFormTO response = new CustomFormTO();
-        response.setId(getString(rs, "id"));        
-        response.setMetaForm(new MetaFormTO(getString(rs, "meta_form_id")));
-    	
+        response.setId(getString(rs, "id"));
+        
+        MetaFormTO mfto = new MetaFormTO(getString(rs, "meta_form_id"));
+        mfto = (MetaFormTO) mfdao.getObject(mfto, c);
+        response.setMetaForm(mfto);
+
 	    //get the additional fields
         Vector<AdditionalFieldTO> list = afdao.getListByPlanning(response, iniRange, c);
     	if (list!=null && list.size()>0) {
-    	    response.setAdditionalFields(list);
+    		
+    		Vector<AdditionalFieldTO> newList = new Vector<AdditionalFieldTO>();
+    		if (mfto.getViewableCols()!=null && filterCols && !mfto.getViewableCols().trim().equals("")) {
+    			
+    			String[] viewable = mfto.getViewableCols().split(";");
+    			for(int i=0; i<list.size(); i++) {
+    				if (this.contain(i, viewable)) {
+    					newList.add(list.elementAt(i));
+    				}
+				}
+    		} else {
+    			newList = list;
+    		}
+    		
+    	    response.setAdditionalFields(newList);
     	} else {
     		response = null;
     	}
@@ -174,5 +182,24 @@ public class CustomFormDAO extends PlanningDAO {
         
         return response;
     }
+
+
+	private boolean contain(int i, String[] viewable) {
+		boolean response = false;
+		if (viewable!=null) {
+			for (String col : viewable) {
+				try {
+					if (Integer.parseInt(col.trim())==(i+1)){
+						response = true;
+						break;
+					}					
+				}catch(Exception e) {
+					e.printStackTrace();
+					response = false;
+				}
+			}
+		}
+		return response;
+	}
     
 }

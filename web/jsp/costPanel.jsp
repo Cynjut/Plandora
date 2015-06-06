@@ -32,7 +32,14 @@
 		}	    	    
     }
 
-    	
+	function showCostList(){
+		var prjId;
+		with(document.forms["costForm"]){
+			prjId = projectId.value;
+		}
+		window.location = "../do/showCostList?operation=prepareForm&projectId=" + prjId;	
+	}
+	    	
 	function showHideChild(parentId){
 		var img = document.getElementById("IMG_" + parentId);
 		if (img!=null) {
@@ -92,8 +99,8 @@
 	<html:hidden name="costForm" property="projectId"/>
 	<html:hidden name="costForm" property="expenseId"/>
 	<html:hidden name="costForm" property="expenseReportURL"/>
-	
-	<br>
+
+	<plandora-html:shortcut name="costForm" property="goToCostForm" fieldList="projectId"/>
 	
 	<table width="100%" border="0" cellspacing="0" cellpadding="0">
 	<tr><td width="10">&nbsp;</td><td>
@@ -109,10 +116,10 @@
 	   
 	    <tr class="pagingFormBody">
 	      <td width="10">&nbsp;</td>
-	      <td width="120" class="formTitle"><bean:message key="label.cost.type"/>:&nbsp;</td>
+	      <td width="130" class="formTitle"><bean:message key="label.cost.type"/>:&nbsp;</td>
 	      <td class="formBody" colspan="3">
 				<html:select name="costForm" property="type" styleClass="textBox" onkeypress="javascript:refreshBody();" onchange="javascript:refreshBody();">
-					<html:options collection="costPanelTypes" property="id" labelProperty="genericTag"/>
+					<html:options collection="costPanelTypes" property="id" labelProperty="genericTag" filter="false"/>
 				</html:select>
 	      </td>
 	    </tr>
@@ -120,8 +127,8 @@
 		<tr class="formBody">
 			<td>&nbsp;</td>	
 	        <td class="formTitle"><bean:message key="label.cost.initialDate"/>:&nbsp;</td>
-			<td width="100"><plandora-html:calendar name="costForm" property="initialDate" styleClass="textBoxDisabled" /></td>
-	        <td width="70" class="formTitle"><bean:message key="label.cost.finalDate"/>:&nbsp;</td>		
+			<td width="130"><plandora-html:calendar name="costForm" property="initialDate" styleClass="textBoxDisabled" /></td>
+	        <td width="130" class="formTitle"><bean:message key="label.cost.finalDate"/>:&nbsp;</td>		
 			<td><plandora-html:calendar name="costForm" property="finalDate" styleClass="textBoxDisabled" /></td>
 		</tr> 
 	
@@ -130,7 +137,7 @@
 	        <td class="formTitle"><bean:message key="label.cost.gran"/>:&nbsp;</td>		
 			<td colspan="3">
 				<html:select name="costForm" property="granularity" styleClass="textBox" onkeypress="javascript:refreshBody();" onchange="javascript:refreshBody();">
-					<html:options collection="costPanelGran" property="id" labelProperty="genericTag"/>
+					<html:options collection="costPanelGran" property="id" labelProperty="genericTag" filter="false"/>
 				</html:select>			
 			</td>
 		</tr> 
@@ -140,7 +147,7 @@
 	        <td class="formTitle"><bean:message key="label.cost.viewMode"/>:&nbsp;</td>		
 			<td colspan="3">
 				<html:select name="costForm" property="viewMode" styleClass="textBox" onkeypress="javascript:refreshBody();" onchange="javascript:refreshBody();">
-					<html:options collection="costPanelViewModes" property="id" labelProperty="genericTag"/>
+					<html:options collection="costPanelViewModes" property="id" labelProperty="genericTag" filter="false"/>
 				</html:select>			
 			</td>
 		</tr> 
@@ -162,16 +169,21 @@
 	
 		<display:headerfootergrid type="FOOTER">			
 			<table width="97%" border="0" cellspacing="0" cellpadding="0"><tr>
-			  <td width="120">
+			  <td width="100">
 				  <html:button property="refresh" styleClass="button" onclick="javascript:buttonClick('costForm', 'refresh');">
 					<bean:message key="button.refresh"/>
 				  </html:button>    
 			  </td>
-			  <td width="120">      
+			  <td width="140">      
 			      <html:button property="showEditPanel" styleClass="button" onclick="javascript:buttonClick('costForm', 'showEditPanel');">
 				    <bean:message key="label.cost.new"/>
 			      </html:button>    
-			  </td>		
+			  </td>	
+			  <td width="140">
+				  <html:button property="showCList" styleClass="button" onclick="javascript:showCostList();">
+					<bean:message key="title.costlist.list"/>
+				  </html:button>    
+			  </td>			  	
 			  <td>&nbsp;</td>
 			  <td width="120">
 			  	  <html:button property="backward" styleClass="button" onclick="javascript:buttonClick('costForm', 'backward');">
@@ -265,6 +277,10 @@
 		</tr></table>  	
 	</display:headerfootergrid>
 
+	<script language="javascript">
+		<bean:write name="costForm" property="costHtmlScript" filter="false" />
+	</script>
+	
   </td><td width="10">&nbsp;</td>
   </tr></table>
 </html:form>

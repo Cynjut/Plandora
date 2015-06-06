@@ -22,7 +22,7 @@ public class ExpenseApproverRefuserDecorator extends ColumnDecorator {
 		try {
 			CostTO cto = (CostTO)getObject();
 			Locale currencyLoc = udel.getCurrencyLocale();
-			UserTO uto = (UserTO)this.getPageContext().getSession().getAttribute(UserDelegate.CURRENT_USER_SESSION);
+			UserTO uto = (UserTO)this.getSession().getAttribute(UserDelegate.CURRENT_USER_SESSION);
 			
 			if (uto!=null && currencyLoc!=null && cto.getInstallments()!=null) {
 				String description = "";

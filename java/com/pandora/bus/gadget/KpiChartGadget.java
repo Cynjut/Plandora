@@ -12,6 +12,7 @@ import com.pandora.ProjectTO;
 import com.pandora.ReportResultTO;
 import com.pandora.ReportTO;
 import com.pandora.TransferObject;
+import com.pandora.delegate.ProjectDelegate;
 import com.pandora.delegate.ReportDelegate;
 import com.pandora.exception.BusinessException;
 import com.pandora.helper.DateUtil;
@@ -56,6 +57,7 @@ public class KpiChartGadget extends ChartGadget {
 	@Override	
     public Vector<TransferObject> getFieldsId(){
     	Vector<TransferObject> response = new Vector<TransferObject>();
+    	response.add(new TransferObject(KPI_PROJECT, "-1"));
        	response.add(new TransferObject(KPI_ID, "-1"));
        	response.add(new TransferObject(KPI_INTEVAL, "1"));
        	response.add(new TransferObject(KPI_GROUP, "1"));
@@ -89,6 +91,7 @@ public class KpiChartGadget extends ChartGadget {
 	public Vector<FieldValueTO> getFields(Vector<TransferObject> currentValues) {
     	Vector<FieldValueTO> response = new Vector<FieldValueTO>();
     	ReportDelegate rdel = new ReportDelegate();
+    	ProjectDelegate pdel = new ProjectDelegate(); 
     	
     	try {
     		
@@ -108,10 +111,21 @@ public class KpiChartGadget extends ChartGadget {
                         	Iterator<ReportTO> j = list.iterator();
                         	while(j.hasNext()) {
                         		ReportTO rto = j.next();
-                        		if (rto.getDataType().equals(ReportTO.FLOAT_DATA_TYPE) || 
-                        		        rto.getDataType().equals(ReportTO.CURRENCY_DATA_TYPE)) {
-                        			kpiList.addElement(new TransferObject(rto.getId(), rto.getName()));   
-                        		}
+                        		for (ProjectTO relatedPrj : rto.getAppliedProjectList()) {
+                        			String name = rto.getName();
+                        			
+                        			ProjectTO relatedPrjObj =null;
+                        			if (name.indexOf("#PROJECT_NAME#")>-1) {
+                        		    	relatedPrjObj = pdel.getProjectObject(relatedPrj, true);                        				
+                        				name = name.replaceAll("\\?#PROJECT_NAME#", relatedPrjObj.getName());	
+                        			}
+                        			
+                            		if (rto.getDataType().equals(ReportTO.FLOAT_DATA_TYPE) ||
+                            				rto.getDataType().equals(ReportTO.PERCENTUAL_DATA_TYPE) ||
+                            		        rto.getDataType().equals(ReportTO.CURRENCY_DATA_TYPE)) {
+                            			kpiList.addElement(new TransferObject(rto.getId() + (relatedPrjObj!=null?"|"+relatedPrjObj.getId():""), name));   
+                            		}									
+								}
                         	}
                     	}  
                     	break;
@@ -152,20 +166,35 @@ public class KpiChartGadget extends ChartGadget {
 	public String generate(Vector selectedFields) throws BusinessException {
         String response = "";
         ReportDelegate del = new ReportDelegate();
+        ProjectDelegate pdel = new ProjectDelegate(); 
         String xaxis[] = null;
         float[][] valBar = null;
         float[][] goalVals = null;
         ReportTO rtoComp = null;
         String[] goalLbl = new String[1];
-        Vector compValues = null;
+        Vector<ReportResultTO> compValues = null;
         
         String kpiId = super.getSelected(KPI_ID, selectedFields);
-    	
-    	ReportTO rto = del.getReport(new ReportTO(kpiId));    	
+        String projectId = super.getSelected(KPI_PROJECT, selectedFields);
+        
+        if (kpiId.indexOf("|")>-1) {
+        	String[] tokens = kpiId.split("\\|");
+            kpiId = tokens[0];
+            projectId = tokens[1];
+        }
+
+    	ReportTO rto = del.getReport(new ReportTO(kpiId));		    	
         if (rto!=null && 
-                (rto.getDataType().equals(ReportTO.FLOAT_DATA_TYPE) 
+                (rto.getDataType().equals(ReportTO.FLOAT_DATA_TYPE) || rto.getDataType().equals(ReportTO.PERCENTUAL_DATA_TYPE)   
                         || rto.getDataType().equals(ReportTO.CURRENCY_DATA_TYPE))) {
-            
+        	
+        	String prefix = null, sufix = null;
+        	if (rto.getDataType().equals(ReportTO.PERCENTUAL_DATA_TYPE)) {
+        		sufix = "%";
+        	} else if (rto.getDataType().equals(ReportTO.CURRENCY_DATA_TYPE)) {
+        		prefix = "$";
+        	}
+        	            
         	String intervType = super.getSelected(KPI_INTEVAL, selectedFields);
         	if (intervType==null || intervType.equals("")) {
         	    intervType = "1";
@@ -219,16 +248,16 @@ public class KpiChartGadget extends ChartGadget {
         	}        	
         	
         	if (rtoComp!=null) {
-    		    del.getKpiValues(initalDbDate, finalDbDate, rtoComp);
+    		    del.getKpiValues(initalDbDate, finalDbDate, rtoComp, projectId);
     		    compValues = rtoComp.getResultList();
         	}
         	
-		    del.getKpiValues(initalDbDate, finalDbDate, rto);
-		    Vector values = rto.getResultList();
+		    del.getKpiValues(initalDbDate, finalDbDate, rto, projectId);
+		    Vector<ReportResultTO> values = rto.getResultList();
 		    if (values!=null) {
-		    	Vector[] compValList = null;
+		    	Vector<Float>[] compValList = null;
 
-		    	Vector[] valList = this.getValues(intervType, initalDbDate, values, slotNumber);
+		    	Vector<Float>[] valList = this.getValues(intervType, initalDbDate, values, slotNumber);
 		    	if (compValues!=null) {
 		    		valBar = new float[slotNumber][2];	
 		    		compValList = this.getValues(intervType, initalDbDate, compValues, slotNumber);
@@ -240,20 +269,24 @@ public class KpiChartGadget extends ChartGadget {
 		        	goalLbl[0] = this.getI18nMsg("label.manageReport.goal");		    		
 		    		goalVals =  this.getGoal(rto, slotNumber);
 		    	}
-		    	
+
                 this.setIntoList(valBar, groupBy, valList, 0);
 		    	if (compValues!=null) {
 		    		this.setIntoList(valBar, groupBy, compValList, 1);	
 		    	}
                 
             }
-
+		    		    
+		    String chartName = rto.getName();
+	    	ProjectTO pto = pdel.getProjectObject(new ProjectTO(projectId), true);
+	    	chartName = chartName.replaceAll("\\?#PROJECT_NAME#", pto.getName());
+		    
     		//draw the bars
             response = "{ \n" + 
-            	getJSonTitle(rto.getName()) + "," +
+            	getJSonTitle(chartName) + "," +
             	getJSonYLegend(" ") + "," +
             	getBarStackValues(valBar, null, goalVals, goalLbl, new String[]{"800000"}, false) + "," +            	
-            	getJSonAxis(xaxis, null, "x_axis") + "," + getJSonAxis(null, valBar, "y_axis") + "}";            
+            	getJSonAxis(xaxis, null, "x_axis") + "," + getJSonAxis(null, valBar, null, "y_axis", true, prefix, sufix) + "}";            
             
         } else {
 
@@ -268,21 +301,22 @@ public class KpiChartGadget extends ChartGadget {
 	}
 
 
-	private void setIntoList(float[][] valBar, String groupBy, Vector[] list, int idx) {
+	private void setIntoList(float[][] valBar, String groupBy, Vector<Float>[] list, int idx) {
 		for (int j=0; j<list.length; j++ ) {
-			Vector item = list[j];
+						              
+			Vector<Float> item = list[j];
 			if (item!=null && item.size()>0) {
 				
 				if (groupBy.equals("1") || groupBy.equals("2")) { //sum and average calc
-			    	Iterator k = item.iterator();
+			    	Iterator<Float> k = item.iterator();
 			    	
 			    	while(k.hasNext()) {
-			    		Float val = (Float)k.next();
+			    		Float val = k.next();
 			        	if (groupBy.equals("1") || groupBy.equals("2")) {
 			        		valBar[j][idx] = valBar[j][idx] + val.floatValue();	
 			        	}
 			    	}
-			    	
+
 			    	if (groupBy.equals("2")) {
 			    		valBar[j][idx] = valBar[j][idx] / item.size();	
 			    	}
@@ -299,15 +333,15 @@ public class KpiChartGadget extends ChartGadget {
 	}
 
 
-	private Vector[] getValues(String intervType, Timestamp initalDbDate, Vector values, int slotNumber) {
-    	Vector[] response = new Vector[slotNumber];
+	private Vector<Float>[] getValues(String intervType, Timestamp initalDbDate, Vector<ReportResultTO> values, int slotNumber) {
+    	Vector<Float>[] response = new Vector[slotNumber];
     	
-		Iterator i = values.iterator();
+		Iterator<ReportResultTO> i = values.iterator();
 		while(i.hasNext()) {
-			ReportResultTO result = (ReportResultTO)i.next();
+			ReportResultTO result = i.next();
 			if (result!=null && result.getValue()!=null) {
 
-		    	int index = 0;
+		    	int index =  0;
 		    	if (intervType.equals("1")) {
 		    		index = DateUtil.getSlotBetweenDates(initalDbDate, result.getLastExecution());
 		    		
@@ -329,7 +363,7 @@ public class KpiChartGadget extends ChartGadget {
 
 		    	if (index >= 0 && response.length>index) {
 		    		if (response[index]==null) {
-		    			response[index] = new Vector();
+		    			response[index] = new Vector<Float>();
 		    		}
 		    		response[index].addElement(new Float(result.getValue()));
 		    	}

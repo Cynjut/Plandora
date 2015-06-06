@@ -28,7 +28,8 @@ public class RootDAO extends LeaderDAO {
 		    UserTO filter = (UserTO)to;
 			pstmt = c.prepareStatement("select ro.ID, ro.PROJECT_ID, u.USERNAME, u.COLOR, u.EMAIL, u.NAME, " +
 			        				   "u.PHONE, u.PASSWORD, u.DEPARTMENT_ID, u.AREA_ID, u.FUNCTION_ID, " +
-			        				   "u.COUNTRY, u.LANGUAGE, u.birth, u.auth_mode, u.permission, u.pic_file, u.final_date, c.pre_approve_req, r.can_see_customer, " +
+			        				   "u.COUNTRY, u.LANGUAGE, u.birth, u.company_id, u.auth_mode, u.permission, u.pic_file, " +
+			        				   "u.final_date, u.creation_date, c.pre_approve_req, r.can_see_customer, " +
 			        				   "c.is_disable, c.is_req_acceptable, c.can_see_tech_comment, " +
 			        				   "c.can_see_discussion, c.can_see_other_reqs, c.can_open_otherowner_reqs, " +
 			        				   "r.can_self_alloc, r.can_see_repository, r.can_see_invoice " +
@@ -42,7 +43,6 @@ public class RootDAO extends LeaderDAO {
 			if (rs.next()){
 				response = this.populateRootByResultSet(rs, c);
 			} 
-						
 		} catch (SQLException e) {
 			throw new DataAccessException(e);
 		}finally{

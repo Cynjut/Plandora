@@ -8,6 +8,7 @@ import javax.servlet.http.HttpSession;
 import org.apache.taglibs.display.ColumnDecorator;
 
 import com.pandora.RepositoryFileTO;
+import com.pandora.bus.SystemSingleton;
 import com.pandora.helper.HtmlUtil;
 
 public class RepositoryEntityRadioBoxDecorator extends ColumnDecorator {
@@ -22,22 +23,28 @@ public class RepositoryEntityRadioBoxDecorator extends ColumnDecorator {
 
 		if (item.getIsDirectory().booleanValue() && !item.getName().equals("..")) {
 			
-			if (getPageContext()!=null && getPageContext().getSession()!=null) {
-				session = getPageContext().getSession(); 
+			if (session==null) {
+				session = super.getSession();	
 			}
-			String entityId = (String)session.getAttribute(RepositoryEntityCheckBoxDecorator.REPOSITORY_ENTITY_ID);
-			String path = (String)session.getAttribute(REPOSITORY_SELECTED_PATH);
 			
-			if (entityId!=null && !entityId.trim().equals("")) {
-				try {
-					
-					boolean related = path!=null && path.equals(item.getPath());
-					
-					response = HtmlUtil.getRadioBox(related, item.getPath(), false, 
-							"javascript:clickRadioBoxRepository('" + URLEncoder.encode(item.getPath(), "UTF-8") + "', '" + entityId + "');");
-				} catch (UnsupportedEncodingException e) {
-					e.printStackTrace();
-				}
+			if (session!=null) {
+				String entityId = (String)session.getAttribute(RepositoryEntityCheckBoxDecorator.REPOSITORY_ENTITY_ID);
+				String path = (String)session.getAttribute(REPOSITORY_SELECTED_PATH);
+				
+				if (entityId!=null && !entityId.trim().equals("")) {
+					try {
+						
+						boolean related = path!=null && path.equals(item.getPath());
+						
+						String encoding = SystemSingleton.getInstance().getDefaultEncoding();									
+						response = HtmlUtil.getRadioBox(related, item.getPath(), false, 
+								"javascript:clickRadioBoxRepository('" + URLEncoder.encode(item.getPath(), encoding) + "', '" + entityId + "');");
+					} catch (UnsupportedEncodingException e) {
+						e.printStackTrace();
+					}
+				} else {
+					response = "&nbsp;";
+				}				
 			} else {
 				response = "&nbsp;";
 			}

@@ -11,16 +11,20 @@ import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionForward;
 import org.apache.struts.action.ActionMapping;
 
+import com.pandora.AttachmentTO;
 import com.pandora.CategoryTO;
 import com.pandora.CustomerTO;
+import com.pandora.DiscussionTopicTO;
 import com.pandora.LeaderTO;
 import com.pandora.MetaFieldTO;
 import com.pandora.OccurrenceTO;
+import com.pandora.PlanningRelationTO;
 import com.pandora.PreferenceTO;
 import com.pandora.ProjectTO;
 import com.pandora.RepositoryFilePlanningTO;
 import com.pandora.RequirementTO;
 import com.pandora.ResourceTO;
+import com.pandora.RootTO;
 import com.pandora.TransferObject;
 import com.pandora.UserTO;
 import com.pandora.bus.occurrence.Occurrence;
@@ -33,6 +37,8 @@ import com.pandora.delegate.RepositoryDelegate;
 import com.pandora.delegate.RequirementDelegate;
 import com.pandora.delegate.UserDelegate;
 import com.pandora.exception.BusinessException;
+import com.pandora.exception.MandatoryMetaFieldBusinessException;
+import com.pandora.exception.MetaFieldNumericTypeException;
 import com.pandora.gui.struts.form.CustReqForm;
 import com.pandora.gui.struts.form.GeneralStrutsForm;
 import com.pandora.gui.taglib.decorator.RepositoryEntityCheckBoxDecorator;
@@ -60,7 +66,7 @@ public class CustReqAction extends GeneralStrutsAction {
 		    this.clearForm(form, request);
 		    this.clearMessages(request);
 		    
-		    request.getSession().setAttribute("attachmentList", new Vector());
+		    request.getSession().setAttribute("attachmentList", new Vector<AttachmentTO>());
 		    
 			//get all requests from data base and put into http session (to be displayed by grid)
 			this.refreshList(request, form, null);
@@ -108,7 +114,7 @@ public class CustReqAction extends GeneralStrutsAction {
 				reqfrm.setEstimTime("");		    	
 				
 		    } else {
-		    	request.getSession().setAttribute("attachmentList", new Vector());
+		    	request.getSession().setAttribute("attachmentList", new Vector<AttachmentTO>());
 		    }
 								
 		} catch(BusinessException e){
@@ -195,6 +201,7 @@ public class CustReqAction extends GeneralStrutsAction {
 		request.getSession().removeAttribute("metaFieldList");
 		request.getSession().removeAttribute("discussionTopicList");
 		request.getSession().removeAttribute("attachmentList");
+	    request.getSession().setAttribute("reqRelationshipList", new Vector<PlanningRelationTO>());
 
 	    String defProj = uto.getPreference().getPreference(PreferenceTO.CUSTHOME_DEF_PROJ);
 	    if (!defProj.equals("0")){
@@ -274,34 +281,49 @@ public class CustReqAction extends GeneralStrutsAction {
 			//create an RequirementTO object based on html fields
 			RequirementTO rto = this.getTransferObjectFromActionForm(reqfrm, request);
 									
-			//set the bundle into requester user
-			CustomerTO requester = rto.getRequester();
-			requester.setBundle(uto.getBundle());
-			requester.setProject(rto.getProject());
-			requester = udel.getCustomer(requester);
-			rto.setRequester(requester);
+			if (rto.getRequester()!=null && !rto.getRequester().getId().equals("-1")) {
+				
+				//set the bundle into requester user
+				CustomerTO requester = rto.getRequester();
+				requester.setBundle(uto.getBundle());
+				requester.setProject(rto.getProject());
+				requester = udel.getCustomer(requester);
+				
+				if (requester!=null) {
+					
+					rto.setRequester(requester);
 
-			if (reqfrm.getSaveMethod().equals(GeneralStrutsForm.INSERT_METHOD)){			    
-			    errorMsg = "error.insertReqForm";
-			    succeMsg = "message.insertReq";
-			    rto.setCreationDate(DateUtil.getNow());
-			    rdel.insertRequirement(rto);
-			    this.clearForm(form, request);
+					if (reqfrm.getSaveMethod().equals(GeneralStrutsForm.INSERT_METHOD)){			    
+					    errorMsg = "error.insertReqForm";
+					    succeMsg = "message.insertReq";
+					    rto.setCreationDate(DateUtil.getNow());
+					    rdel.insertRequirement(rto);
+					    this.clearForm(form, request);
+					} else {
+					    errorMsg = "error.updateReqForm";
+					    succeMsg = "message.updateReq";
+					    rdel.updateRequirement(rto);
+					}
+					
+					//set success message into http session
+					this.setSuccessFormSession(request, succeMsg);
+									
+				} else {
+					this.setErrorFormSession(request, "validate.requestForm.adjustRoleCust", null);	
+				}
+				
 			} else {
-			    errorMsg = "error.updateReqForm";
-			    succeMsg = "message.updateReq";
-			    rdel.updateRequirement(rto);
+				this.setErrorFormSession(request, "validate.requestForm.requester", null);
 			}
-			
-			//set success message into http session
-			this.setSuccessFormSession(request, succeMsg);
 			
 			//get all Requirements from data base and put into http session (to be displayed by grid)
 			this.refreshList(request, form, rto);
 			
-		} catch(BusinessException e){
-		    this.setErrorFormSession(request, errorMsg, e);
-		} catch(NullPointerException e){
+		} catch(MandatoryMetaFieldBusinessException e) {
+			this.setErrorFormSession(request, "errors.required", e.getAfto().getMetaField().getName(), null, null, null, null, e);			
+		} catch(MetaFieldNumericTypeException e){
+			this.setErrorFormSession(request, e.getMessage(), e.getMetaFieldName(), null, null, null, null, e);
+		} catch(Exception e){
 		    this.setErrorFormSession(request, errorMsg, e);		    
 		}
 		return mapping.findForward(forward);		
@@ -447,11 +469,11 @@ public class CustReqAction extends GeneralStrutsAction {
 		}
 	
 		//assembly a list of priorities to be used by html combo		
-		Vector priorList = this.getPriorityCombo(request);
+		Vector<TransferObject> priorList = this.getPriorityCombo(request);
 		request.getSession().setAttribute("priorityList", priorList);
 				
 		//get all customer from DB based on user id (in order to get the preApproveReq status for each project)
-		Vector custList = udel.getCustomerByUser(uto);
+		Vector<CustomerTO> custList = udel.getCustomerByUser(uto);
 		crfrm.setPreApproveList(this.getCustomerHidden(custList, prjList, true));
 
 		//refresh the meta fields related with current project
@@ -463,8 +485,8 @@ public class CustReqAction extends GeneralStrutsAction {
 	    UserDelegate udel = new UserDelegate();
 	    MetaFieldDelegate mfdel = new MetaFieldDelegate();	    
 	    CustReqForm crfrm = (CustReqForm)form;
-	    
-		Vector list = mfdel.getListByProjectAndContainer(crfrm.getProjectRelated(), crfrm.getCategoryId(), MetaFieldTO.APPLY_TO_REQUIREMENT);
+
+		Vector<MetaFieldTO> list = mfdel.getListByProjectAndContainer(crfrm.getProjectRelated(), crfrm.getCategoryId(), MetaFieldTO.APPLY_TO_REQUIREMENT);
 		request.getSession().setAttribute("metaFieldList", list);
 		
 		//reload the discussion topics related to the requirement
@@ -473,45 +495,60 @@ public class CustReqAction extends GeneralStrutsAction {
 	    //get all categories from data base and put into http session (to be displayed by combo)
 		ProjectTO pto = new ProjectTO(crfrm.getProjectRelated());
 	    CategoryDelegate cdel = new CategoryDelegate();
-	    Vector catlist = cdel.getCategoryListByType(CategoryTO.TYPE_REQUIREMENT, pto, false);
+	    Vector<CategoryTO> catlist = cdel.getCategoryListByType(CategoryTO.TYPE_REQUIREMENT, pto, false);
 	    request.getSession().setAttribute("categoryList", catlist);	    
-		
-	    //check if current user could open a requirement of current project in the name of someone else
+
+	    crfrm.setShowTechComments("off");
+	    crfrm.setCanChangeRequester("off");	    
 	    UserTO uto = SessionUtil.getCurrentUser(request);
 	    CustomerTO cto = new CustomerTO(uto);
 	    cto.setProject(pto);
 	    cto = udel.getCustomer(cto);
 	    if (cto!=null) {
-	    	crfrm.setCanChangeRequester(cto.getBoolCanOpenOtherOwnerReq()?"on":"off");	
+		    //check if current user could open a requirement of current project in the name of someone else	    	
+	    	crfrm.setCanChangeRequester(cto.getBoolCanOpenOtherOwnerReq()?"on":"off");
+	    	
+	    	crfrm.setShowTechComments(cto.getBoolCanSeeTechComments()?"on":"off");
 	    }
 	    
 	    //create a fake resource to be the first option into combo
 		ResourceTO dummy = new ResourceTO("-1");
 		dummy.setName(this.getBundleMessage(request, "label.request.chooseRes"));
-		Vector projResList = new Vector();
+		Vector<ResourceTO> projResList = new Vector<ResourceTO>();
 		projResList.add(dummy);
 
 		//get all resources of selected project		
-		Vector resourceList = udel.getResourceByProject(pto.getId(), false, true);
+		Vector<ResourceTO> resourceList = udel.getResourceByProject(pto.getId(), false, true);
 		projResList.addAll(resourceList);
 		request.getSession().setAttribute("projResList", projResList);
 
 		//get all customer of selected project		
-		Vector customerList = udel.getCustomerByProject(pto, false);
+		Vector<CustomerTO> customerList = udel.getCustomerByProject(pto, false);
+		for (CustomerTO cuto : customerList) {
+			if (cuto.getUsername().equals(RootTO.ROOT_USER)) {
+				customerList.remove(cuto);
+				break;
+			}
+		}
 		request.getSession().setAttribute("projCustomerList", customerList);
+		CustomerTO cdummy = new CustomerTO("-1");
+		cdummy.setName(this.getBundleMessage(request, "label.combo.select"));
+		customerList.add(0, cdummy);
 
+		
 		if (crfrm.getSaveMethod().equals(CustReqForm.INSERT_METHOD)) {
 		    crfrm.setIsPreApproveRequest("on");
 		} else {
 		    crfrm.setIsPreApproveRequest("off");
 		}
+		
 	}
 
 	
 	private void getDiscussionData(HttpServletRequest request, CustReqForm crfrm) throws BusinessException{
 	    DiscussionTopicDelegate dtdel = new DiscussionTopicDelegate();		
 		if (crfrm.getId()!=null) {
-			Vector listDt = dtdel.getListByPlanning(crfrm.getId());
+			Vector<DiscussionTopicTO> listDt = dtdel.getListByPlanning(crfrm.getId());
 			request.getSession().setAttribute("discussionTopicList", listDt);			
 		}		
 	}
@@ -520,16 +557,16 @@ public class CustReqAction extends GeneralStrutsAction {
 	 * Define the value of reqAccept or PreApprove html hidden based on 
 	 * current attribute status of customer for each project. 
 	 */
-	private String getCustomerHidden(Vector custList, Vector prjList, boolean isPreApproveAttribute){
+	private String getCustomerHidden(Vector<CustomerTO> custList, Vector<ProjectTO> prjList, boolean isPreApproveAttribute){
 	    String response = "";
-	    Iterator i = prjList.iterator();
+	    Iterator<ProjectTO> i = prjList.iterator();
 	    while(i.hasNext()){
-	        ProjectTO pto = (ProjectTO)i.next();
+	        ProjectTO pto = i.next();
 	        
 	        boolean value = false;
-	        Iterator j = custList.iterator();
+	        Iterator<CustomerTO> j = custList.iterator();
 	        while(j.hasNext()){
-	            CustomerTO cto = (CustomerTO)j.next();
+	            CustomerTO cto = j.next();
 	            if (cto.getProject().getId().equals(pto.getId())){
 	                if (isPreApproveAttribute) {
 	                    value = cto.getBoolPreApproveReq();
@@ -567,8 +604,9 @@ public class CustReqAction extends GeneralStrutsAction {
 	 * Put data of html fields into TransferObject 
 	 * @param frm
 	 * @return
+	 * @throws BusinessException 
 	 */
-	private RequirementTO getTransferObjectFromActionForm(CustReqForm frm, HttpServletRequest request){
+	private RequirementTO getTransferObjectFromActionForm(CustReqForm frm, HttpServletRequest request) throws MetaFieldNumericTypeException{
 	    RequirementTO rto = new RequirementTO();
 	    UserTO uto = SessionUtil.getCurrentUser(request);
 	    Locale loc = SessionUtil.getCurrentLocale(request);
@@ -597,13 +635,15 @@ public class CustReqAction extends GeneralStrutsAction {
 		}
 		rto.setCreationDate(frm.getCreationDate());		
 		
-		Vector metaFieldList = (Vector)request.getSession().getAttribute("metaFieldList");
+		@SuppressWarnings("unchecked")
+		Vector<MetaFieldTO> metaFieldList = (Vector<MetaFieldTO>)request.getSession().getAttribute("metaFieldList");
 		super.setMetaFieldValuesFromForm(metaFieldList, request, rto);
 		if (metaFieldList!=null) {
 		    frm.setAdditionalFields(rto.getAdditionalFields());
 		}
 		
-		Vector discussionTopicList = (Vector)request.getSession().getAttribute("discussionTopicList");
+		@SuppressWarnings("unchecked")
+		Vector<DiscussionTopicTO> discussionTopicList = (Vector<DiscussionTopicTO>)request.getSession().getAttribute("discussionTopicList");
 		rto.setDiscussionTopics(discussionTopicList);
 		
 		//comment for reopening...
@@ -652,15 +692,8 @@ public class CustReqAction extends GeneralStrutsAction {
 	    
 	    frm.setPriority(rto.getPriority()+"");
 	    frm.setPreviousPriority(frm.getPriority());
-	    
-	    CustomerTO cto = new CustomerTO(uto.getId());
-	    cto.setProject(rto.getProject());
-	    cto = udel.getCustomer(cto);
-	    if (cto.getBoolCanSeeDiscussion()) {
-	    	frm.setCanSeeDiscussion("on");	
-	    } else {
-	    	frm.setCanSeeDiscussion("off");
-	    }
+
+	    frm.setCanSeeDiscussion(udel.checkCustomerViewDiscussion(uto, rto.getProject()));
 
 	    if (uto instanceof ResourceTO) {
 	    	frm.setCanSeeArtifacts("on");
@@ -685,11 +718,11 @@ public class CustReqAction extends GeneralStrutsAction {
 	    
 	    //check if current user is the leader of requirement project
 	    frm.setIsRequesterLeader("off");
-	    Vector allLeaders = udel.getLeaderByProject(rto.getProject());
+	    Vector<LeaderTO> allLeaders = udel.getLeaderByProject("'" + rto.getProject().getId() + "'");
 	    if (allLeaders!=null) {
-	        Iterator i = allLeaders.iterator();
+	        Iterator<LeaderTO> i = allLeaders.iterator();
 	        while(i.hasNext()) {
-	            LeaderTO lto = (LeaderTO)i.next();
+	            LeaderTO lto = i.next();
 	            if (lto.getId().equals(rto.getRequester().getId())) {
 	                frm.setIsRequesterLeader("on");
 	                break;
@@ -716,6 +749,10 @@ public class CustReqAction extends GeneralStrutsAction {
 	    }
 	    
 		request.getSession().setAttribute("attachmentList", rto.getAttachments());
+		
+		
+		request.getSession().setAttribute("reqRelationshipList", rto.getRelationList());
+		
 	}
 
 }

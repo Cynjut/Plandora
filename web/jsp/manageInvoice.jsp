@@ -46,6 +46,14 @@
 		window.open(pathWindow, 'invHist', 'width=780, height=300, location=no, menubar=no, status=no, toolbar=no, scrollbars=no, resizable=no');	
 	}
      
+	function gridComboFilterRefresh(url, param, cbName){
+		javascript:buttonClick('invoiceForm', 'refresh');
+	}
+
+	function gridTextFilterRefresh(url, param, fldName){
+		javascript:buttonClick('invoiceForm', 'refresh');
+	}
+     
 </script>
 
 <html:form action="manageInvoice">
@@ -57,7 +65,7 @@
 	<html:hidden name="invoiceForm" property="editInvoiceItemId"/>	
 	<html:hidden name="invoiceForm" property="showEditInvoiceItem"/>	
 		
-	<br>
+	<plandora-html:shortcut name="invoiceForm" property="goToInvoiceForm" fieldList="projectId"/>
 	
 	<table width="100%" border="0" cellspacing="0" cellpadding="0">
 	<tr><td width="10">&nbsp;</td><td>
@@ -76,7 +84,7 @@
       <td width="10">&nbsp;</td>
       <td width="150" class="formTitle"><bean:message key="label.invoiceForm.project"/>:&nbsp;</td>
       <td width="210" class="formBody">
-        <bean:write name="invoiceForm" property="projectName" />
+        <bean:write name="invoiceForm" property="projectName" filter="false"/>
       </td>
       <td width="110">&nbsp;</td>
       <td width="250">&nbsp;</td>
@@ -141,7 +149,7 @@
       <td class="formTitle"><bean:message key="label.invoiceForm.category"/>:&nbsp;</td>
       <td class="formBody">
 	  		<html:select name="invoiceForm" property="categoryId" styleClass="textBox">
-	             <html:options collection="categoryList" property="id" labelProperty="name"/>
+	             <html:options collection="categoryList" property="id" labelProperty="name" filter="false"/>
 			</html:select>
       </td>
       <td>&nbsp;</td>
@@ -154,7 +162,7 @@
       <td class="formTitle"><bean:message key="label.invoiceForm.status"/>:&nbsp;</td>
       <td class="formBody">
 	  		<html:select name="invoiceForm" property="invoiceStatusId" styleClass="textBox">
-	             <html:options collection="invoiceStatusList" property="id" labelProperty="name"/>
+	             <html:options collection="invoiceStatusList" property="id" labelProperty="name" filter="false"/>
 			</html:select>
       </td>
       <td>&nbsp;</td>
@@ -214,14 +222,14 @@
 				</tr>
 				<tr class="pagingFormBody">
 					<td colspan="3" class="formBody">
-						<display:table border="1" width="100%" name="invoiceItemList" pagesize="0" scope="session">
-							  <display:column align="center" property="type" title="label.invoiceForm.itemList.type" decorator="com.pandora.gui.taglib.decorator.InvoiceTypeDecorator" />
-							  <display:column width="150" property="itemName" title="label.invoiceForm.itemList.name"/>
-							  <display:column width="50" align="center" property="amount" title="label.invoiceForm.itemList.qty"/>
-  							  <display:column width="140" align="center" property="price" title="label.invoiceForm.itemList.prc" decorator="com.pandora.gui.taglib.decorator.InvoicePriceDecorator"/>
-  					  		  <display:column width="15" align="center" property="id" title="grid.title.empty" decorator="com.pandora.gui.taglib.decorator.InvoiceItemEditDecorator" />
-					  		  <display:column width="15" align="center" property="id" title="grid.title.empty" decorator="com.pandora.gui.taglib.decorator.InvoiceItemRemoveDecorator" />							  
-						</display:table>
+						<plandora-html:ptable width="100%" name="invoiceItemList" pagesize="10" scope="session" frm="invoiceForm">
+							  <plandora-html:pcolumn align="center" property="type" title="label.invoiceForm.itemList.type" decorator="com.pandora.gui.taglib.decorator.InvoiceTypeDecorator" />
+							  <plandora-html:pcolumn width="150" property="itemName" title="label.invoiceForm.itemList.name"/>
+							  <plandora-html:pcolumn width="50" align="center" property="amount" title="label.invoiceForm.itemList.qty"/>
+  							  <plandora-html:pcolumn width="140" align="center" property="price" title="label.invoiceForm.itemList.prc" decorator="com.pandora.gui.taglib.decorator.InvoicePriceDecorator"/> 							  
+  					  		  <plandora-html:pcolumn width="15" align="center" property="id" title="grid.title.empty" decorator="com.pandora.gui.taglib.decorator.InvoiceItemEditDecorator" />
+					  		  <plandora-html:pcolumn width="15" align="center" property="id" title="grid.title.empty" decorator="com.pandora.gui.taglib.decorator.InvoiceItemRemoveDecorator" />							  
+						</plandora-html:ptable>
 					</td>
 				</tr>
 				<tr class="pagingFormBody">
@@ -229,7 +237,7 @@
 						<table width="100%" border="0" cellspacing="0" cellpadding="4">
 							<tr class="rowHighlight">
 								<td align="right"><b><bean:message key="title.invoiceForm.total"/>:&nbsp;</b></td>
-								<td width="140"><center><b><bean:write name="invoiceForm" property="totalInvoice" /></b></center></td>
+								<td width="140"><center><b><bean:write name="invoiceForm" property="totalInvoice" filter="false"/></b></center></td>
 								<td width="30">&nbsp;</td>
 							</tr>					
 						</table>
@@ -252,7 +260,7 @@
 		<table width="98%" border="0" cellspacing="0" cellpadding="0"><tr>
 		  <td width="120">
 			  <html:button property="save" styleClass="button" onclick="javascript:buttonClick('invoiceForm', 'saveInvoice');">
-				<bean:write name="invoiceForm" property="saveLabel" />
+				<bean:write name="invoiceForm" property="saveLabel" filter="false" />
 			  </html:button>    
 		  </td>
 		  <td width="120">
@@ -278,22 +286,22 @@
 	<table width="98%" border="0" cellspacing="0" cellpadding="0">
 	<tr class="formBody">
 		<td>
-			<display:table border="1" width="100%" name="invoiceList" scope="session" pagesize="6" requestURI="../do/manageInvoice?operation=navigate">
-				  <display:column width="2%" property="id" align="center" title="grid.title.empty"/>			
-				  <display:column sort="true" property="name" likeSearching="true" title="label.invoiceForm.name" description="title.invoiceForm.grid.name" visibleProperty="<%=PreferenceTO.INV_INVLIST_SW_NAME%>"/>
-				  <display:column width="80"  align="center" sort="true" likeSearching="true" property="invoiceNumber" title="title.invoiceForm.grid.number" description="label.invoiceForm.number" visibleProperty="<%=PreferenceTO.INV_INVLIST_SW_NUMBER%>" />
-				  <display:column width="80"  align="center" sort="true" likeSearching="true" property="purchaseOrder" title="title.invoiceForm.grid.purchaseorder" description="label.invoiceForm.purchaseOrder" visibleProperty="<%=PreferenceTO.INV_INVLIST_SW_PO%>" />				  
-				  <display:column width="120" align="center" sort="true" property="project.name" title="label.invoiceForm.project" description="label.invoiceForm.project" visibleProperty="<%=PreferenceTO.INV_INVLIST_SW_PRJ%>"/>
-				  <display:column width="80"  align="center" sort="true" property="id" title="label.invoiceForm.status" comboFilter="true" description="label.invoiceForm.status" decorator="com.pandora.gui.taglib.decorator.InvoiceStatusDecorator" />
-				  <display:column width="100" align="center" sort="true" property="id" title="label.invoiceForm.category" description="label.invoiceForm.category" decorator="com.pandora.gui.taglib.decorator.InvoiceCategoryDecorator" visibleProperty="<%=PreferenceTO.INV_INVLIST_SW_CATEG%>" />
-				  <display:column width="80"  align="center" property="dueDate" title="title.invoiceForm.grid.duedate" description="label.invoiceForm.duedate" decorator="com.pandora.gui.taglib.decorator.GridDateDecorator" tag="2;0" visibleProperty="<%=PreferenceTO.INV_INVLIST_SW_DUEDT%>" />
-				  <display:column width="80"  align="center" property="invoiceDate" title="title.invoiceForm.grid.invoicedate" description="label.invoiceForm.invoicedate" decorator="com.pandora.gui.taglib.decorator.GridDateDecorator" tag="2;0" visibleProperty="<%=PreferenceTO.INV_INVLIST_SW_INVDT%>" />
-				  <display:column width="80"  align="center" sort="true" likeSearching="true" property="contact" title="label.invoiceForm.contact" description="label.invoiceForm.contact" visibleProperty="<%=PreferenceTO.INV_INVLIST_SW_CONTACT%>" />
-				  <display:column width="80"  align="center" sort="true" property="id" title="title.invoiceForm.total" description="title.invoiceForm.grid.total" decorator="com.pandora.gui.taglib.decorator.InvoiceTotalDecorator" visibleProperty="<%=PreferenceTO.INV_INVLIST_SW_TOTAL%>" />
-				  <display:column width="15" align="center" property="id" title="grid.title.empty" decorator="com.pandora.gui.taglib.decorator.GridEditDecorator" tag="'invoiceForm', 'editInvoice'" />
-				  <display:column width="15" align="center" property="id" title="grid.title.empty" decorator="com.pandora.gui.taglib.decorator.GridDeleteDecorator" tag="'invoiceForm', 'removeInvoice'" />
-				  <display:column width="15" align="center" property="id" title="grid.title.empty" decorator="com.pandora.gui.taglib.decorator.GridDetailDecorator" tag="'INV'" />				  
-			</display:table>		
+			<plandora-html:ptable width="100%" name="invoiceList" scope="session" pagesize="6"  frm="invoiceForm">
+				  <plandora-html:pcolumn width="2%" property="id" align="center" title="grid.title.empty"/>			
+				  <plandora-html:pcolumn sort="true" property="name" likeSearching="true" title="label.invoiceForm.name" description="title.invoiceForm.grid.name" visibleProperty="<%=PreferenceTO.INV_INVLIST_SW_NAME%>"/>
+				  <plandora-html:pcolumn width="80"  align="center" sort="true" likeSearching="true" property="invoiceNumber" title="title.invoiceForm.grid.number" description="label.invoiceForm.number" visibleProperty="<%=PreferenceTO.INV_INVLIST_SW_NUMBER%>" />
+				  <plandora-html:pcolumn width="80"  align="center" sort="true" likeSearching="true" property="purchaseOrder" title="title.invoiceForm.grid.purchaseorder" description="label.invoiceForm.purchaseOrder" visibleProperty="<%=PreferenceTO.INV_INVLIST_SW_PO%>" />				  
+				  <plandora-html:pcolumn width="120" align="center" sort="true" property="project.name" comboFilter="true" title="label.invoiceForm.project" description="label.invoiceForm.project" visibleProperty="<%=PreferenceTO.INV_INVLIST_SW_PRJ%>"/>
+				  <plandora-html:pcolumn width="80"  align="center" sort="true" property="id" comboFilter="true" title="label.invoiceForm.status" description="label.invoiceForm.status" decorator="com.pandora.gui.taglib.decorator.InvoiceStatusDecorator" />
+				  <plandora-html:pcolumn width="100" align="center" sort="true" property="id" comboFilter="true" title="label.invoiceForm.category" description="label.invoiceForm.category" decorator="com.pandora.gui.taglib.decorator.InvoiceCategoryDecorator" visibleProperty="<%=PreferenceTO.INV_INVLIST_SW_CATEG%>" />
+				  <plandora-html:pcolumn width="80"  align="center" property="dueDate" title="title.invoiceForm.grid.duedate" description="label.invoiceForm.duedate" decorator="com.pandora.gui.taglib.decorator.GridDateDecorator" tag="2;0" visibleProperty="<%=PreferenceTO.INV_INVLIST_SW_DUEDT%>" />
+				  <plandora-html:pcolumn width="80"  align="center" property="invoiceDate" title="title.invoiceForm.grid.invoicedate" description="label.invoiceForm.invoicedate" decorator="com.pandora.gui.taglib.decorator.GridDateDecorator" tag="2;0" visibleProperty="<%=PreferenceTO.INV_INVLIST_SW_INVDT%>" />
+				  <plandora-html:pcolumn width="80"  align="center" sort="true" likeSearching="true" property="contact" title="label.invoiceForm.contact" description="label.invoiceForm.contact" visibleProperty="<%=PreferenceTO.INV_INVLIST_SW_CONTACT%>" />
+				  <plandora-html:pcolumn width="80"  align="center" sort="true" property="id" title="title.invoiceForm.total" description="title.invoiceForm.grid.total" decorator="com.pandora.gui.taglib.decorator.InvoiceTotalDecorator" visibleProperty="<%=PreferenceTO.INV_INVLIST_SW_TOTAL%>" />
+				  <plandora-html:pcolumn width="15" align="center" property="id" title="grid.title.empty" decorator="com.pandora.gui.taglib.decorator.GridEditDecorator" tag="'invoiceForm', 'editInvoice'" />
+				  <plandora-html:pcolumn width="15" align="center" property="id" title="grid.title.empty" decorator="com.pandora.gui.taglib.decorator.GridDeleteDecorator" tag="'invoiceForm', 'removeInvoice'" />
+				  <plandora-html:pcolumn width="15" align="center" property="id" title="grid.title.empty" decorator="com.pandora.gui.taglib.decorator.GridDetailDecorator" tag="'INV'" />				  
+			</plandora-html:ptable>		
 		</td>
 	</tr> 
 	</table>

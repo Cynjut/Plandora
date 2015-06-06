@@ -5,6 +5,7 @@ import java.util.Vector;
 
 import com.pandora.OccurrenceHistoryTO;
 import com.pandora.OccurrenceTO;
+import com.pandora.ProjectTO;
 import com.pandora.bus.occurrence.Occurrence;
 import com.pandora.bus.occurrence.OccurrenceBUS;
 import com.pandora.exception.BusinessException;
@@ -23,12 +24,19 @@ public class OccurrenceDelegate extends GeneralDelegate {
 
 
     public Vector<OccurrenceTO> getOccurenceList(String projectId, boolean hideClosed) throws BusinessException  {
-        return bus.getOccurrenceList(projectId, hideClosed);
+        return bus.getOccurrenceList(projectId, null, hideClosed, true);
+    }
+    
+    public Vector<OccurrenceTO> getOccurenceList(String projectId, String userId, boolean hideClosed) throws BusinessException  {
+        return bus.getOccurrenceList(projectId, userId, hideClosed, true);
     }
 
-    
     public Vector<OccurrenceTO> getOccurenceListByType(String projectId, String occClass) throws BusinessException  {
-        return bus.getOccurrenceListByType(projectId, occClass);
+        return bus.getOccurrenceListByType(projectId, occClass, true);
+    }
+
+    public Vector<OccurrenceTO> getOccurenceListByType(String projectId, String occClass, boolean includeSubProjects) throws BusinessException  {
+        return bus.getOccurrenceListByType(projectId, occClass, includeSubProjects);
     }
 
     
@@ -69,5 +77,10 @@ public class OccurrenceDelegate extends GeneralDelegate {
 
 	public Vector<OccurrenceTO> getIterationListByProject(String projectId, boolean includeChildren) throws BusinessException{
 		return bus.getIterationListByProject(projectId, includeChildren);
+	}
+
+
+	public OccurrenceTO getOccurrenceByName(String occName, ProjectTO pto) throws BusinessException {
+		return bus.getOccurrenceByName(occName, pto);
 	}    
 }

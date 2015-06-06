@@ -8,6 +8,7 @@ import java.util.Locale;
 import java.util.Vector;
 
 import com.pandora.CustomerTO;
+import com.pandora.FieldValueTO;
 import com.pandora.LeaderTO;
 import com.pandora.ProjectTO;
 import com.pandora.ResourceTO;
@@ -15,8 +16,8 @@ import com.pandora.ResourceTaskTO;
 import com.pandora.TaskStatusTO;
 import com.pandora.TaskTO;
 import com.pandora.UserTO;
-
 import com.pandora.bus.ResourceTaskBUS;
+import com.pandora.bus.SystemSingleton;
 import com.pandora.delegate.TaskDelegate;
 import com.pandora.delegate.UserDelegate;
 import com.pandora.exception.BusinessException;
@@ -32,13 +33,13 @@ public class GanttProject20XmlExportBUS extends ExportBUS {
     
     private StringBuffer alloBuff = new StringBuffer();
     
-    private HashMap hashRoles = new HashMap();
+    private HashMap<String, String> hashRoles = new HashMap<String, String>();
     
     
     /* (non-Javadoc)
      * @see com.pandora.imp.ExportBUS#getFields()
      */
-    public Vector getFields() throws BusinessException {
+    public Vector<FieldValueTO> getFields() throws BusinessException {
     	return null;
     }
 
@@ -75,7 +76,7 @@ public class GanttProject20XmlExportBUS extends ExportBUS {
      * @see com.pandora.imp.ExportBUS#getContentType()
      */
     public String getContentType() throws BusinessException {
-        return "application/gan; charset=UTF-8";
+        return "application/gan; charset=" + SystemSingleton.getInstance().getDefaultEncoding();
     }    
     
     
@@ -86,8 +87,9 @@ public class GanttProject20XmlExportBUS extends ExportBUS {
 	    StringBuffer response = new StringBuffer();
 
 	    String viewDate = getStrDate(pto.getCreationDate(),"-");
+	    String encoding = SystemSingleton.getInstance().getDefaultEncoding();
 	    
-	    response.append("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
+	    response.append("<?xml version=\"1.0\" encoding=\"" + encoding + "\"?>\n");
 	    response.append("<project name=\"" + pto.getName() + "\" company=\"\" webLink=\"\" view-date=\"" + viewDate + "\" version=\"1.11\">\n");
 	    response.append("	<view zooming-state=\"default:3\"/>\n\n");
 	    
@@ -214,11 +216,11 @@ public class GanttProject20XmlExportBUS extends ExportBUS {
 	    
 	    //get list of resources allocated into project
 	    UserDelegate udel = new UserDelegate();
-	    Vector resList = udel.getResourceByProject(pto.getId(), true, false);
+	    Vector<ResourceTO> resList = udel.getResourceByProject(pto.getId(), true, false);
 	    
-	    Iterator i = resList.iterator();
+	    Iterator<ResourceTO> i = resList.iterator();
 	    while(i.hasNext()){
-	        UserTO uto = (UserTO)i.next();
+	    	ResourceTO uto = i.next();
 	        response.append("		<resource id=\"" + uto.getId() + "\" name=\"" + 
 	                uto.getName() + "\" function=\"" + hashRoles.get(uto.getId()) + "\" contacts=\"" + 
 	                uto.getEmail() + "\" phone=\"" + uto.getPhone() + "\" />\n");
@@ -229,11 +231,11 @@ public class GanttProject20XmlExportBUS extends ExportBUS {
 	
 	
 	private void populateHashRoles(ProjectTO pto){
-	    Iterator r = pto.getAllocUsers().iterator();
+	    Iterator<UserTO> r = pto.getAllocUsers().iterator();
 	    String keyRole = "";
 	    
 	    while(r.hasNext()){
-	        UserTO uto = (UserTO)r.next();
+	        UserTO uto = r.next();
 		    if (uto instanceof LeaderTO) {
 		        keyRole = "2";
 		    } else if (uto instanceof ResourceTO) {
@@ -282,11 +284,11 @@ public class GanttProject20XmlExportBUS extends ExportBUS {
 	    }
         
         //format the current task...
-        Iterator j = tto.getAllocResources().iterator();
+        Iterator<ResourceTaskTO> j = tto.getAllocResources().iterator();
         while(j.hasNext()) {
             objId++;
             
-            ResourceTaskTO rtto = (ResourceTaskTO)j.next();
+            ResourceTaskTO rtto = j.next();
             String taskId = objId + "";
             
             response = response + this.getSubTaskExportFormat(taskId, tto.getName(), rtto);
@@ -298,9 +300,9 @@ public class GanttProject20XmlExportBUS extends ExportBUS {
         
         //format the childs tasks...
         if (tto.getChildTasks()!=null){
-            Iterator i = tto.getChildTasks().values().iterator();
+            Iterator<TaskTO> i = tto.getChildTasks().values().iterator();
             while(i.hasNext()){
-                TaskTO child = (TaskTO)i.next();
+                TaskTO child = i.next();
                 response = response.concat(this.getTaskExportFormat(child));
             }
         }            
@@ -365,6 +367,9 @@ public class GanttProject20XmlExportBUS extends ExportBUS {
         	cursor = rtto.getStartDate();
         }
         int capacity = rtto.getResource().getCapacityPerDay(cursor).intValue();
+        if (capacity==0) {
+        	capacity = ResourceTO.DEFAULT_FULLDAY_CAPACITY;
+        }
         
         response = (refTime.intValue() / capacity);
         float r = (refTime.intValue() % capacity);
@@ -385,9 +390,9 @@ public class GanttProject20XmlExportBUS extends ExportBUS {
         
         //search among her child tasks the earliest or latest startDate...
         if (tto.getChildTasks()!=null){
-            Iterator i = tto.getChildTasks().values().iterator();
+            Iterator<TaskTO> i = tto.getChildTasks().values().iterator();
             while(i.hasNext()) {
-                TaskTO childTask = (TaskTO)i.next();
+                TaskTO childTask = i.next();
                 Timestamp temp = this.getGPDate(isEarliest, childTask);
                 start = this.compareDates(start, temp, isEarliest);
             }
@@ -395,9 +400,9 @@ public class GanttProject20XmlExportBUS extends ExportBUS {
 
         //search among her ResourceTask the earliest startDate...        
         if (tto.getAllocResources()!=null){
-            Iterator i = tto.getAllocResources().iterator();
+            Iterator<ResourceTaskTO> i = tto.getAllocResources().iterator();
             while(i.hasNext()) {
-                ResourceTaskTO childRTask = (ResourceTaskTO)i.next();
+                ResourceTaskTO childRTask = i.next();
                 Timestamp temp = rtbus.getPreferedDate(childRTask);
                 if (!isEarliest) {
                     int slots = childRTask.getAllocList().size();

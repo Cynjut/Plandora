@@ -55,7 +55,7 @@ public class MetaFieldAction extends GeneralStrutsAction {
 
 		    request.getSession().setAttribute("projectList", prjList);
 
-		    this.refresh(mapping, form, request, response );
+		    this.refresh(mapping, form, request, response);
 
 		    //set the current user connected
 		    mffrm.setSaveMethod(ResTaskForm.INSERT_METHOD, uto);
@@ -153,15 +153,19 @@ public class MetaFieldAction extends GeneralStrutsAction {
 		    MetaFieldForm mffrm = (MetaFieldForm)form;
 		    MetaFieldDelegate mfdel = new MetaFieldDelegate();
 			
+		    //create an Meta Field TO object based on html fields
+			MetaFieldTO mfto = new MetaFieldTO();
+			mfto.setId(mffrm.getId());
+		    
 			//clear form and messages
 			this.clearForm(mffrm, request);
 			
-			//create an Meta Field TO object based on html fields
-			MetaFieldTO mfto = new MetaFieldTO();
-			mfto.setId(mffrm.getId());
-			
 			//remove MetaField from data base
 			mfdel.removeMetaField(mfto);
+			
+			/* TODO
+			 * org.postgresql.util.PSQLException: ERRO: atualização ou exclusão em tabela "meta_field" viola restrição de chave estrangeira "addinfo_field_meta_field" em "additional_field" Detalhe: Chave (id)=(41990) ainda é referenciada pela tabela "additional_field"
+			 * */
 			
 			//set success message into http session
 			this.setSuccessFormSession(request, "message.removeMetaField");
@@ -196,7 +200,7 @@ public class MetaFieldAction extends GeneralStrutsAction {
 	    
 		return mapping.findForward(forward);		
 	}	
-	
+
 	/**
 	 * Refresh data of form
 	 */
@@ -236,6 +240,8 @@ public class MetaFieldAction extends GeneralStrutsAction {
 	            type = CategoryTO.TYPE_REQUIREMENT;
 	        } else if (mffrm.getApplyTo().equals(MetaFieldTO.APPLY_TO_TASK+"")) {
 	            type = CategoryTO.TYPE_TASK;
+	        } else if (mffrm.getApplyTo().equals(MetaFieldTO.APPLY_TO_OCCURRENCE+"")) {
+	        	type = CategoryTO.TYPE_OCCURRENCE;
 	        }
 	    }
 	    
@@ -301,7 +307,7 @@ public class MetaFieldAction extends GeneralStrutsAction {
 	private Vector<TransferObject> getTypeList(HttpServletRequest request){
 	    Vector<TransferObject> typeList = new Vector<TransferObject>();
 	    
-	    for (int i=1; i<=5; i++) {
+	    for (int i=1; i<=6; i++) {
 		    TransferObject option = new TransferObject();
 		    option.setId(i+"");
 		    option.setGenericTag(this.getBundleMessage(request, "label.formMetaField.type" + i));
@@ -352,6 +358,11 @@ public class MetaFieldAction extends GeneralStrutsAction {
 		    option7.setId(MetaFieldTO.APPLY_TO_COST.toString());
 		    option7.setGenericTag(this.getBundleMessage(request, "label.formMetaField.applyTo.cost"));
 		    applyToList.addElement(option7);
+
+		    TransferObject option8 = new TransferObject();
+		    option8.setId(MetaFieldTO.APPLY_TO_OCCURRENCE.toString());
+		    option8.setGenericTag(this.getBundleMessage(request, "label.formMetaField.applyTo.occurrence"));
+		    applyToList.addElement(option8);
 		    
 		    //get a list of meta forms and put into list
 		    Vector<MetaFormTO> v = mfrmDel.getMetaFormList();
@@ -383,6 +394,13 @@ public class MetaFieldAction extends GeneralStrutsAction {
 	    frm.setType(to.getType().toString());
 	    frm.setProjectId(to.getProject().getId());
 	    
+	    if (to.getOrder()!=null) {
+	    	frm.setOrder(to.getOrder().toString());	
+	    } else {
+	    	frm.setOrder(null);
+	    }
+	    
+	    
 	    if (to.getApplyTo().equals(MetaFieldTO.APPLY_TO_CUSTOM_FORM)) {
 	        frm.setApplyTo("F" + to.getMetaform().getId());
 	        frm.setMetaFormId(to.getMetaform().getId());
@@ -407,6 +425,14 @@ public class MetaFieldAction extends GeneralStrutsAction {
 	        frm.setMetaFormId(to.getMetaform().getId());    
 	    }
 	    
+	    if (to.isMandatory() != null) {
+	        frm.setIsMandatory(to.isMandatory()); 
+	    }
+
+	    if (to.getIsQualifier() != null) {
+	        frm.setIsQualifier(to.getIsQualifier()); 
+	    }
+	    
 	    frm.setHelpContent(to.getHelpContent());
 	}
 
@@ -419,6 +445,7 @@ public class MetaFieldAction extends GeneralStrutsAction {
 	    mfto.setId(frm.getId());
 	    mfto.setName(frm.getName());
 	    mfto.setType(new Integer(frm.getType()));
+    	mfto.setOrder(frm.getOrder() != null && !frm.getOrder().trim().equals("") ? new Integer(frm.getOrder()) : null);	
 	    
 	    if (frm.getApplyTo().startsWith("F")) {
 	        mfto.setApplyTo(MetaFieldTO.APPLY_TO_CUSTOM_FORM);
@@ -431,7 +458,7 @@ public class MetaFieldAction extends GeneralStrutsAction {
 	    mfto.setDomain(frm.getDomain());
 	    mfto.setProject(new ProjectTO(frm.getProjectId()));
 	    
-	    if (frm.getCategoryId()!=null && !frm.getCategoryId().equals("0")) {
+	    if (frm.getCategoryId()!=null && !frm.getCategoryId().equals("") && !frm.getCategoryId().equals("0")) {
 	        CategoryTO cto = new CategoryTO(frm.getCategoryId());
 	        mfto.setCategory(cto);
 	    } else {
@@ -440,6 +467,13 @@ public class MetaFieldAction extends GeneralStrutsAction {
 	    
 	    if (frm.getIsDisabledRequest()!=null && frm.getIsDisabledRequest().equals("on")) {
 	        mfto.setDisableDate(DateUtil.getNow());
+	    }
+	    
+	    if(frm.getIsMandatory() != null) {
+	    	mfto.setIsMandatory(frm.getIsMandatory());
+	    }
+	    if(frm.getIsQualifier() != null) {
+	    	mfto.setIsQualifier(frm.getIsQualifier());
 	    }
 	    
 	    mfto.setHelpContent(frm.getHelpContent());

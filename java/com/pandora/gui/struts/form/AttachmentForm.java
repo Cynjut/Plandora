@@ -4,7 +4,6 @@ import java.sql.Timestamp;
 
 import javax.servlet.http.HttpServletRequest;
 
-import org.apache.struts.action.ActionError;
 import org.apache.struts.action.ActionErrors;
 import org.apache.struts.action.ActionMapping;
 import org.apache.struts.upload.FormFile;
@@ -14,6 +13,8 @@ import org.apache.struts.upload.FormFile;
 public class AttachmentForm extends GeneralStrutsForm {
 
 	private static final long serialVersionUID = 1L;
+	
+	private String fileId;
 	
     private String name;
     
@@ -47,7 +48,7 @@ public class AttachmentForm extends GeneralStrutsForm {
      * Clear values of Form
      */
     public void clear(){
-    	this.id = null;
+    	this.fileId = null;
         this.name = null;
         this.status = null;
         this.user = null;
@@ -61,12 +62,16 @@ public class AttachmentForm extends GeneralStrutsForm {
 	public ActionErrors validate(ActionMapping arg0, HttpServletRequest request) {
 		ActionErrors errors = new ActionErrors();
 		
-		if (this.operation.equals("saveRisk")) {
+		if (this.operation.equals("save")) {
+			//TODO pensar em uma forma melhor de fazer a validacao do popup de anexos
+		    //if (this.name==null || this.name.trim().equals("")){
+		    //   errors.add("Name", new ActionError("validate.formAttachment.blankFileName") );
+		    //}
 
-		    if (this.name==null || this.name.trim().equals("")){
-		        errors.add("Name", new ActionError("validate.formAttachment.blankName") );
-		    }
-		    
+		    //if (this.type==null || this.type.trim().equals("") || this.type.trim().equals("-1")){
+		    //    errors.add("Name", new ActionError("validate.formAttachment.emptyType") );
+		    //}
+
 		}	
 		return errors;		
 	}
@@ -178,6 +183,16 @@ public class AttachmentForm extends GeneralStrutsForm {
 	public void setFwd(String newValue) {
 		this.fwd = newValue;
 	}
+
+	
+	/////////////////////////////////////////
+	public String getFileId() {
+		return fileId;
+	}
+	public void setFileId(String newValue) {
+		this.fileId = newValue;
+	}
     
+	
     
 }

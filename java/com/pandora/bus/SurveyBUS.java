@@ -4,6 +4,7 @@ import java.util.Iterator;
 import java.util.Vector;
 
 import com.pandora.ProjectTO;
+import com.pandora.QuestionAnswerTO;
 import com.pandora.SurveyQuestionTO;
 import com.pandora.SurveyTO;
 import com.pandora.UserTO;
@@ -40,8 +41,8 @@ public class SurveyBUS extends GeneralBusiness {
 	}
 
 	
-	public Vector getSurveyListByUser(UserTO uto, boolean ignoreClosed) throws BusinessException {
-		Vector response = null;
+	public Vector<SurveyTO> getSurveyListByUser(UserTO uto, boolean ignoreClosed) throws BusinessException {
+		Vector<SurveyTO> response = null;
         try {
             response = dao.getSurveyListByUser(uto, ignoreClosed) ;
         } catch (DataAccessException e) {
@@ -62,21 +63,21 @@ public class SurveyBUS extends GeneralBusiness {
 	}	
 	
 	
-	public Vector getSurveyList(String projectId) throws BusinessException {
-		Vector response = new Vector();
+	public Vector<SurveyTO> getSurveyList(String projectId, boolean ignoreClosed) throws BusinessException {
+		Vector<SurveyTO> response = new Vector<SurveyTO>();
 		ProjectBUS pbus = new ProjectBUS();
         try {
         	ProjectTO pto = new ProjectTO(projectId);
         	
-            Vector childs = pbus.getProjectListByParent(pto, true);
-            Iterator i = childs.iterator();
+            Vector<ProjectTO> childs = pbus.getProjectListByParent(pto, true);
+            Iterator<ProjectTO> i = childs.iterator();
             while(i.hasNext()){
-                ProjectTO childProj = (ProjectTO)i.next();
-                Vector rskOfChild = this.getSurveyList(childProj.getId());
+                ProjectTO childProj = i.next();
+                Vector<SurveyTO> rskOfChild = this.getSurveyList(childProj.getId(), ignoreClosed);
                 response.addAll(rskOfChild);
             }
                     
-            response.addAll(dao.getSurveyListByProject(pto));
+            response.addAll(dao.getSurveyListByProject(pto, ignoreClosed));
             
         } catch (DataAccessException e) {
             throw new BusinessException(e);
@@ -85,7 +86,7 @@ public class SurveyBUS extends GeneralBusiness {
 	}
 
 
-	public void saveAnswer(Vector answerList) throws BusinessException {
+	public void saveAnswer(Vector<QuestionAnswerTO> answerList) throws BusinessException {
         try {
         	dao.saveAnswer(answerList) ;
         } catch (DataAccessException e) {

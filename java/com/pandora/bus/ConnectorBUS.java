@@ -11,29 +11,28 @@ import com.pandora.dao.ConnectorDAO;
 import com.pandora.exception.BusinessException;
 import com.pandora.exception.DataAccessException;
 import com.pandora.integration.Integration;
-import com.pandora.bus.PasswordEncrypt;
 
 /**
  * This class contain the business rules related with Connector Integration entity.
  */
 public class ConnectorBUS extends GeneralBusiness {
 
-    /** The Data Acess Object related with current business entity */
+    /** The Data Access Object related with current business entity */
     ConnectorDAO dao = new ConnectorDAO();
     
     /**
      * Process a list of Integration objects
      */
-    public boolean process(HttpServletRequest request, ArrayList list) throws BusinessException {
+    public boolean process(HttpServletRequest request, ArrayList<Integration> list) throws BusinessException {
         boolean response = false;
         try {
         	Object obj = request.getSession().getServletContext().getAttribute("com.plandora.connector");
         	if (obj!=null) {
         		HashMap hmContext = (HashMap)obj;
         		
-    	        Iterator i = list.iterator();
+    	        Iterator<Integration> i = list.iterator();
     	        while(i.hasNext()){
-    	            Integration iobj = (Integration)i.next();
+    	            Integration iobj = i.next();
     	            
     	            String publicKey = iobj.getPassword();
     	            publicKey = publicKey.replaceAll("\\+", " ");

@@ -1,5 +1,6 @@
 package com.pandora.gui.struts.form;
 
+import java.util.Locale;
 import java.util.regex.Pattern;
 
 import javax.servlet.ServletRequest;
@@ -11,6 +12,10 @@ import org.apache.struts.action.ActionMapping;
 import org.apache.struts.upload.FormFile;
 
 import com.pandora.RootTO;
+import com.pandora.UserTO;
+import com.pandora.helper.DateUtil;
+import com.pandora.helper.FormValidationUtil;
+import com.pandora.helper.SessionUtil;
 
 /**
  * This class handle the data of Manage User Form 
@@ -42,7 +47,10 @@ public class UserForm extends GeneralStrutsForm{
     
     /** Department selected */
     private String userDepartment;
-    
+
+    /** Company selected */
+    private String userCompanyId;
+
     /** Area selected */
     private String userArea;
     
@@ -64,6 +72,7 @@ public class UserForm extends GeneralStrutsForm{
     
     private String permissionListHtmlBody;
     
+    private String creationDate;
     
     /**
      * Clear values of UserTO
@@ -78,6 +87,7 @@ public class UserForm extends GeneralStrutsForm{
         password= null;
         confirmation= null;
         userDepartment="1";
+        userCompanyId = null;
         userArea="1";
         userFunction="1";
         birth = null;
@@ -85,6 +95,7 @@ public class UserForm extends GeneralStrutsForm{
         enableStatus = "1";
         this.isUpload = true;
         permissionListHtmlBody=null;
+        creationDate=null;
         this.setSaveMethod(null, null);
     }
     
@@ -232,18 +243,38 @@ public class UserForm extends GeneralStrutsForm{
 		this.permissionListHtmlBody = newValue;
 	}
 
+	
+    /////////////////////////////////////// 	
+	public String getCreationDate() {
+		return creationDate;
+	}
+	public void setCreationDate(String newValue) {
+		this.creationDate = newValue;
+	}
+
+	
+    ///////////////////////////////////////	
+	public String getUserCompanyId() {
+		return userCompanyId;
+	}
+	public void setUserCompanyId(String newValue) {
+		this.userCompanyId = newValue;
+	}
+	
 
 	///////////////////////////////////////	
 	public String getUserPictureHtml(){
-	  	return "<img width=\"50\" height=\"60\" border=\"0\" src=\"../do/login?operation=getUserPic&id=" +  this.id + "\" />";    
+	  	return "<img width=\"50\" height=\"60\" border=\"0\" src=\"../do/login?operation=getUserPic&id=" +  this.id + "&ts=" +DateUtil.getNow().toString() + "\" />";    
 	}
-	
-	
+		
 	/**
 	 * Validate the form.
 	 */
-	public ActionErrors validate(ActionMapping arg0, HttpServletRequest arg1) {
+	public ActionErrors validate(ActionMapping mapping, HttpServletRequest request) {
 		ActionErrors errors = new ActionErrors();
+		
+		Locale loc = SessionUtil.getCurrentLocale(request);
+		UserTO uto = SessionUtil.getCurrentUser(request);
 		
 		if (this.operation.equals("saveUser")){
 		    
@@ -263,6 +294,12 @@ public class UserForm extends GeneralStrutsForm{
 		            errors.add("Cor", new ActionError("validate.invalidColor") );
 		        }			    
 			}	
+			
+			String creaDt = uto.getBundle().getMessage(loc, "label.admission");
+			FormValidationUtil.checkDate(errors, creaDt, this.creationDate, loc, uto.getCalendarMask());
+			
+			String birthDt = uto.getBundle().getMessage(loc, "label.birth");
+			FormValidationUtil.checkDate(errors, birthDt, this.birth, loc, uto.getCalendarMask());
 		}
 		
 		if (this.operation.equals("changePassword")){

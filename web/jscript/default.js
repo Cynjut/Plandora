@@ -35,9 +35,26 @@ function buttonClick(argForm, argOperation){
 }
 
 
+//--------------------------------------
+// The function below is used by shortcut feature
+//--------------------------------------
+function goToForm(src, openingType){
+   	if (src=="REQ") {
+      	src = "../do/manageCustRequest?operation=prepareForm&showBackward=on";
+   	} 
+
+	if (openingType==1) {
+		window.location = src;
+	} else {
+		window.open(src,'_blank');
+	}			
+}
+
+
+
 function removeAttachment(argId, argForm, argFwd, message){
     if ( confirm(message)) {
-		window.location = "../do/manageAttachment?operation=removeAttachment&fwd=" + argFwd + "&id=" + argId;
+		window.location = "../do/manageAttachment?operation=removeAttachment&fwd=" + argFwd + "&fileId=" + argId;
     }
 }    
 
@@ -47,10 +64,19 @@ function downloadAttachment(argId){
 }
 
 //--------------------------------------
+// function to open the link relation popup
+//--------------------------------------
+function openLinkRelationPopup(projectId){
+	var pathWindow ="../do/searchPlanning?operation=prepareForm&type=ALL&projectId=" + projectId;
+	window.open(pathWindow, 'searchPlanning', 'width=650, height=300, location=no, menubar=no, status=no, toolbar=no, scrollbars=no, resizable=no');
+	return false;
+}
+
+//--------------------------------------
 // Generic function to call the MindMap popup
 //--------------------------------------
 function loadMindMap(id){
-	window.open('../do/viewMindMap?operation=prepareForm&entityid=' + id, 'MindMap', 'width=640, height=300, location=no, menubar=no, status=no, toolbar=no, scrollbars=no, resizable=no');
+	window.open('../do/viewMindMap?operation=prepareForm&entityid=' + id, 'MindMap', 'width=800, height=600, location=no, menubar=no, status=no, toolbar=no, scrollbars=no, resizable=yes');
 }
 
 //--------------------------------------
@@ -60,11 +86,12 @@ function showUserInfo(argForm, username){
 	with(document.forms[argForm]){
 		operation.value = "getUserInfo";
    		id.value = username;
-    }         
-	ajaxProcess(document.forms[argForm], callBackShowUserInfoClick, username);		
+    }
+    var ajaxRequestObj = ajaxSyncInit();         
+	ajaxSyncProcess(document.forms[argForm], callBackShowUserInfoClick, username, argForm, ajaxRequestObj);		
 }
-function callBackShowUserInfoClick(username) {  
-    if(isAjax()){  
+function callBackShowUserInfoClick(username, argForm, objRequest) {  
+    if(isSyncAjax(objRequest)){  
        	document.getElementById("ajaxResponse").innerHTML = ""; //hide ajax icon  
 		var content = objRequest.responseText;
 		document.getElementById("floatPanelContent").innerHTML = content;		
@@ -94,6 +121,17 @@ function replyPost(argForm, topicInfo){
     	submit();
     }         
 }
+
+function removePost(argForm, topicInfo, confirmation){
+	with(document.forms[argForm]){
+    	if ( confirm(confirmation)) {
+        	operation.value = 'removeTopic';
+        	genericTag.value = topicInfo;
+        	submit();
+     	}		
+    }         
+}
+
 
 //--------------------------------------
 // Generic routine performed by 'add' and 'remove' icons at Meta Table
@@ -208,21 +246,12 @@ function removeSelectBox(formName, selName, errMsg){
 //--------------------------------------
 // Generic routine used to select all elements of list box multiple=true
 //--------------------------------------
-
 function selectAllItens(formName, selName){
   	selectName = document.forms[formName].elements[selName];
  	var end = selectName.length - 1;
   	for(var i = end; i >=0; i--){
 		selectName.options[i].selected = true;
   	}
-}
-
-
-//--------------------------------------
-// This function can be used by forms to jump to html anchors
-//--------------------------------------
-function goToAnchor(anc) {
-	this.location = "#" + anc;
 }
 
 
@@ -245,6 +274,26 @@ function isAllDigits(argvalue) {
     }
     return true;
 }
+
+
+function isFloatNumber(argvalue, isCommaDecimal) {
+    argvalue = argvalue.toString();
+    
+    var validChars = "0123456789.";
+    if (isCommaDecimal) {
+    	validChars = "0123456789,";
+    }
+    
+    var startFrom = 0;
+    if (argvalue.charAt(0) == "-") {
+        startFrom = 1;
+    }
+    for (var n = startFrom; n < argvalue.length; n++) {
+        if (validChars.indexOf(argvalue.substring(n, n+1)) == -1) return false;
+    }
+    return true;
+}
+
 
 
 function isCurrency(argvalue){
@@ -270,3 +319,253 @@ function endsWith(str, suffix) {
 	return str.indexOf(suffix, str.length - suffix.length) !== -1;
 }
 
+
+//--------------------------------------
+// This function is used only by popup of upload picture (called by manageOption)
+//--------------------------------------
+function uploadPicture(path, confimMsg){
+	with(document.forms["optionPictureForm"]){
+		var saveit = false;
+		
+		if (path) {
+			saveit = true;
+		} else {
+			if ( confirm(confimMsg)) {
+				saveit = true;
+			}		
+		}
+		
+		if (saveit) {
+			operation.value = "savePic";
+			closeMessage();
+			submit();			
+		}
+	}
+}
+
+
+//--------------------------------------
+// The functions below are used by SnipArtifactAction during the ajax refresh procedures...
+//--------------------------------------
+function refreshSnip(snipId, commandId, divId){
+	with(document.forms['snipArtifactForm']){
+		operation.value = "refreshSnip";
+   		snip.value = snipId;
+   		refreshCommand.value = commandId;
+    }         
+    var ajaxRequestObj = ajaxSyncInit();         
+	ajaxSyncProcess(document.forms['snipArtifactForm'], callBackRefreshSnip, divId, commandId, ajaxRequestObj);		
+}
+function callBackRefreshSnip(divId, commandId, objRequest) {  
+    if(isSyncAjax(objRequest)){  
+       	document.getElementById("ajaxResponse").innerHTML = ""; //hide ajax icon  
+		var content = objRequest.responseText;
+		document.getElementById(divId).innerHTML = content;		
+    }  
+}
+	
+
+	
+//--------------------------------------
+// The functions below are used by ManageAttachment popup
+//--------------------------------------
+function editAttachment(argId, argForm){
+	displayMessage('../do/manageAttachment?operation=editAttachment&fileId=' + argId, 600, 385);
+}            
+
+function removeAttach(argId, argForm, msg){
+	with(document.forms["attachmentForm"]){
+		removeAttachment(argId, argForm, fwd.value, msg);			
+	}
+}            
+
+function openAttachmentHistPopup(id){
+	var pathWindow ="../do/manageHistAttach?operation=prepareForm&attachmentId=" + id;
+	window.open(pathWindow, 'attachHist', 'width=470, height=175, location=no, menubar=no, status=no, toolbar=no, scrollbars=no, resizable=no');
+}	
+
+function saveAttachment(){
+	with(document.forms["attachmentForm"]){
+		if (type.value=="-1") {
+			alert('The [Content Type] field is mandatory.');
+		} else {
+			buttonClick('attachmentForm', 'save');
+		}
+	}
+}	
+
+//the function below is used by repositoryUpload.jsp
+function uploadFile(){
+	with(document.forms["repositoryUploadForm"]){
+    	operation.value = "save";
+    	closeMessage();
+    	submit();			
+	}	
+}
+
+
+//--------------------------------------
+// The functions below are used by snipArtifact popup
+//--------------------------------------
+function submitSnip(){
+	var snp;
+	with(document.forms["snipArtifactForm"]){
+		operation.value = "submitSnip";
+		snp = snip.value;
+	}
+    var ajaxRequestObj = ajaxSyncInit();   
+	ajaxSyncProcess(document.forms["snipArtifactForm"], callBackSubmitSnip, snp, '', ajaxRequestObj);		
+}
+function callBackSubmitSnip(snipId, dummy, objRequest) {
+	if(isSyncAjax(objRequest)){
+		document.getElementById("ajaxResponse").innerHTML = ""; //hide ajax icon
+		var content = objRequest.responseText;
+
+		//call the method from manageArtifact.jsp that shows the content into mceTiny object
+		showEditor(content);
+	}  
+}
+
+
+//--------------------------------------
+//The function below are used by forms to request the relation grid in ajax format 
+//--------------------------------------
+function requestArtifactBody(pTableID, frm, params){
+	with(document.forms[frm]){
+		operation.value = "requestArtifactBody";
+	}
+    var ajaxRequestObj = ajaxSyncInit();         
+	ajaxSyncProcess(document.forms[frm], callbackRequestArtifactBody, pTableID, params, ajaxRequestObj);		
+}
+
+function callbackRequestArtifactBody(pTableID, params, objRequest) {
+	if(isSyncAjax(objRequest)){
+	
+		//hide ajax icon
+		var obj = document.getElementById("ajaxResponse");
+		if (obj) {
+			obj.innerHTML = ""; 
+		}
+	
+		var content = objRequest.responseText;
+		if (content) {
+			var d = document.getElementById(pTableID);
+			if (d) {
+				d.innerHTML = content;				
+			}
+		}
+	}  
+}
+
+
+//--------------------------------------
+//The function below are used by forms to request the data of grids
+//--------------------------------------
+function requestPTableBody(pTableID, frm, params){
+	with(document.forms[frm]){
+		operation.value = "requestPTableBody";
+	}
+    var ajaxRequestObj = ajaxSyncInit();         
+	ajaxSyncProcess(document.forms[frm], callBackRequestPTableBody, pTableID, params, ajaxRequestObj);		
+}
+
+function callBackRequestPTableBody(pTableID, params, objRequest) {
+	if(isSyncAjax(objRequest)){
+	
+		//hide ajax icon
+		var obj = document.getElementById("ajaxResponse");
+		if (obj) {
+			obj.innerHTML = ""; 
+		}
+	
+		var content = objRequest.responseText;
+		if (content) {
+			var d = document.getElementById("DIV_" + pTableID);
+			if (d) {
+				d.innerHTML = content;				
+			}
+		}
+	}  
+}
+function requestPTablePanel(pTableID, frm, params){
+	with(document.forms[frm]){
+		operation.value = "requestPTableBody";
+	}
+    var ajaxRequestObj = ajaxSyncInit();         
+	ajaxSyncProcess(document.forms[frm], callBackrequestPTablePanel, pTableID, params, ajaxRequestObj);		
+}
+function callBackrequestPTablePanel(pTableID, params, objRequest) {
+	if(isSyncAjax(objRequest)){
+		document.getElementById("ajaxResponse").innerHTML = ""; //hide ajax icon
+		var content = objRequest.responseText;
+		if (content) {
+			
+			var sufix = "COL";
+			if (params.substr(0,6)=='search') {
+				sufix = "SCH";
+			}
+			
+			var d = document.getElementById("DIV_PANEL_" + sufix + "_" + pTableID);
+			if (d) {
+				d.innerHTML = content;				
+			}
+		}
+	}  
+	return false;
+}
+
+
+//--------------------------------------
+// generate a URL to be used by Shortcut taglib
+//--------------------------------------
+function getShortcutURL(fieldList){
+	var contentOfRequest = "";
+	var currentUrl = document.URL;
+	if (fieldList) {
+	
+		if ( currentUrl.indexOf('?')>0 ) {
+			contentOfRequest = "&";
+		} else {
+			contentOfRequest = "?";
+		}					
+	
+		var tokens = fieldList.split(",")
+		if (tokens) {
+		    for(i = 0; i < tokens.length; i++){  
+		    	token = tokens[i];
+			
+				//try to get parameter by ID
+		    	var obj = document.getElementById(token);
+				if (!obj) {
+					//try to get parameter by NAME
+					obj = document.forms[0].elements[token];
+				}
+
+		        if(obj){
+		            contentOfRequest = contentOfRequest + token + "=" + escape(obj.value) + "&";  
+		        }
+		    }
+		    
+		    if ( contentOfRequest.indexOf('operation')<0 ) {
+		    	contentOfRequest = contentOfRequest + "operation=prepareForm";
+		    }
+		}	
+	}
+
+	return escape(currentUrl + contentOfRequest);
+}
+
+
+function getTs2Str() {
+	return '' + (new Date()).getTime();
+}
+
+//--------------------------------------
+// the function below is called by rssPopup.jsp
+//--------------------------------------
+function changeEdiLink(uri, ediID) {
+	var edidivObs = document.getElementById("EDI_LINK")
+	if (edidivObs){
+		edidivObs.innerHTML = uri + ediID;
+	}	
+}

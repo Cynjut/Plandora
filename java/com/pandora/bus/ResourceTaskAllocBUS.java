@@ -1,7 +1,10 @@
 package com.pandora.bus;
 
+import java.sql.Timestamp;
 import java.util.Vector;
 
+import com.pandora.ResourceDateAllocTO;
+import com.pandora.ResourceTO;
 import com.pandora.ResourceTaskAllocTO;
 import com.pandora.ResourceTaskTO;
 import com.pandora.dao.ResourceTaskAllocDAO;
@@ -13,7 +16,7 @@ import com.pandora.exception.DataAccessException;
  */
 public class ResourceTaskAllocBUS extends GeneralBusiness {
 
-    /** The Data Acess Object related with current business entity */
+    /** The Data Access Object related with current business entity */
     ResourceTaskAllocDAO dao = new ResourceTaskAllocDAO();
 
     /**
@@ -29,5 +32,23 @@ public class ResourceTaskAllocBUS extends GeneralBusiness {
         return list;        
     }
     
+    public Vector<ResourceDateAllocTO> getResourceDateAllocList(ResourceTO rto, Timestamp inicialDate, Timestamp finalDate) throws BusinessException {
+        Vector<ResourceDateAllocTO> list = null;
+        try {
+            list = dao.getResourceDateAllocList(rto, inicialDate, finalDate);
+        } catch (DataAccessException e) {
+            throw new  BusinessException(e);
+        }
+        return list;        
+    }
+
+	public void updateResourceTask(ResourceTaskAllocTO rtato) throws BusinessException {
+        try {
+        	dao.update(rtato);	
+        } catch (DataAccessException e) {
+            throw new BusinessException(e);
+        }
+	}
+
     
 }

@@ -10,6 +10,10 @@ import com.pandora.ExpenseTO;
 public class ExpenseStatusDecorator extends ColumnDecorator {
 
 	public String decorate(Object columnValue) {
+		return getStatus();
+	}
+
+	private String getStatus() {
 		String response = "ERR";
 		int waitingCount = 0;
 		int budgetedCount = 0;
@@ -54,16 +58,17 @@ public class ExpenseStatusDecorator extends ColumnDecorator {
 				response = "err";
 			}
 		}
-		
 		return response;
 	}
 
+	
 	public String decorate(Object columnValue, String tag) {
 		return decorate(columnValue);
 	}
 
+	
 	public String contentToSearching(Object columnValue) {
-		return null;
+		return getStatus();
 	}
 	
 

@@ -13,12 +13,12 @@ public class ShowAllTaskForm extends GeneralStrutsForm {
 	
     /** Id of project related with task */
     private String projectRelated;
-    
-    /** Id of resource selected by combo. Value = -1 is All resources of project */    
-    private String resourceSelected = "-1";
-    
+        
     /** Id of status selected by combo. Value = -2 is All status; Value = -1 is All status except Close and Canceled */
     private String statusSelected = "-1";
+
+    /** type of range date: "-1"=all; 7=one week; 30=one month; 90=three months) */    
+    private String dateRangeSelected = "30";    
     
     private String htmlMap = null;
       
@@ -26,19 +26,13 @@ public class ShowAllTaskForm extends GeneralStrutsForm {
     private String instanceId;
     private String planningId;
     private BufferedImage workFlowDiagram;
+    private String requirementContent;
+    private String followupContent;
     
     public void clear(){      
         this.showWorkflowDiagram = "off";
     }  
     
-	public String getShowUpdateInBatch() {
-    	String response = "off";
-    	if (this.getShowIteration().equals("on") || this.getShowBillableTask().equals("on")) {
-    		response = "on";
-    	}
-    	return response;
-    }
-
     
     ////////////////////////////////////////////
     public String getShowIteration() {
@@ -48,6 +42,11 @@ public class ShowAllTaskForm extends GeneralStrutsForm {
     public String getShowBillableTask() {
         return super.getCurrentUser().getPreference().getPreference(PreferenceTO.LIST_ALL_TSK_BILLABLE);
     }
+
+    public String getShowRequestParent() {
+        return super.getCurrentUser().getPreference().getPreference(PreferenceTO.HOME_TASKLIST_SW_REL_REQ);
+    }
+    
     
     ////////////////////////////////////////////    
     public String getProjectRelated() {
@@ -57,14 +56,6 @@ public class ShowAllTaskForm extends GeneralStrutsForm {
         this.projectRelated = newValue;
     }
 
-    ////////////////////////////////////////////        
-    public String getResourceSelected() {
-        return resourceSelected;
-    }
-    public void setResourceSelected(String newValue) {
-        this.resourceSelected = newValue;
-    }
-    
     ////////////////////////////////////////////        
     public String getStatusSelected() {
         return statusSelected;
@@ -115,6 +106,33 @@ public class ShowAllTaskForm extends GeneralStrutsForm {
 	}
 	public void setWorkFlowDiagram(BufferedImage newValue) {
 		this.workFlowDiagram = newValue;
+	}
+
+	
+    ////////////////////////////////////////////
+	public String getRequirementContent() {
+		return requirementContent;
+	}
+	public void setRequirementContent(String newValue) {
+		this.requirementContent = newValue;
+	}
+
+	
+    ////////////////////////////////////////////
+	public String getFollowupContent() {
+		return followupContent;
+	}
+	public void setFollowupContent(String newValue) {
+		this.followupContent = newValue;
+	}
+
+	
+    ////////////////////////////////////////////	
+	public String getDateRangeSelected() {
+		return dateRangeSelected;
+	}
+	public void setDateRangeSelected(String newValue) {
+		this.dateRangeSelected = newValue;
 	}
 	
 	

@@ -14,6 +14,7 @@ import com.pandora.MetaFieldTO;
 import com.pandora.PlanningTO;
 import com.pandora.TransferObject;
 import com.pandora.exception.DataAccessException;
+import com.pandora.exception.MandatoryMetaFieldDataException;
 
 
 /**
@@ -38,10 +39,10 @@ public class AdditionalFieldDAO extends DataAccess {
 			}
 			
 			pstmt = c.prepareStatement("select af.planning_id, af.meta_field_id, af.value, " +
-					                        "af.date_value, mf.domain, mf.name, mf.type " +
+					                        "af.date_value, mf.domain, mf.name, mf.type, af.numeric_value " +
 								       "from additional_field af, meta_field mf, planning pl " +
 								       "where af.planning_id = pl.id and af.planning_id=? " + rangeWhere +
-								       "and af.meta_field_id = mf.id and mf.final_date is null");
+								       "and af.meta_field_id = mf.id and mf.final_date is null order by mf.field_order");
 			pstmt.setString(1, pto.getId());
 			if (iniRange!=null) {
 				pstmt.setTimestamp(2, iniRange);
@@ -77,15 +78,16 @@ public class AdditionalFieldDAO extends DataAccess {
      * But first, remove all additional fields from data base
      */
     public void insert(Vector<AdditionalFieldTO> addFields, PlanningTO me, Connection c) throws DataAccessException {
-        
+
         //remove all additional Fields related with current Planning object
-        this.removeByPlanning(me, c);
+        this.removeByPlanning(me, false, c);
         
         //insert into data base all additional fields of list
         if (addFields!=null) {
             Iterator<AdditionalFieldTO> i =  addFields.iterator();
             while(i.hasNext()) {
                 AdditionalFieldTO afto = i.next();
+                afto.setPlanning(me);
                 this.insert(afto, c);
             }
         }
@@ -94,15 +96,20 @@ public class AdditionalFieldDAO extends DataAccess {
     /**
      * Remove all additional Fields related with current Planning object
      */
-    public void removeByPlanning(PlanningTO pto, Connection c) throws DataAccessException {
+    public void removeByPlanning(PlanningTO pto, boolean isQualifier, Connection c) throws DataAccessException {
 		PreparedStatement pstmt = null; 
 		try {
 
-			pstmt = c.prepareStatement("delete from additional_field where planning_id=?");
+			String qualifConstraint = "";
+			if (isQualifier) {
+				qualifConstraint = " and meta_field_id in (select id from meta_field where is_qualifier='1')";	
+			}
+
+			pstmt = c.prepareStatement("delete from additional_field where planning_id=?" + qualifConstraint);
 			pstmt.setString(1, pto.getId());
 			pstmt.executeUpdate();
 
-			pstmt = c.prepareStatement("delete from additional_table where planning_id=?");
+			pstmt = c.prepareStatement("delete from additional_table where planning_id=?" + qualifConstraint);
 			pstmt.setString(1, pto.getId());
 			pstmt.executeUpdate();
 			
@@ -120,11 +127,22 @@ public class AdditionalFieldDAO extends DataAccess {
 		PreparedStatement pstmt = null; 
 		try {
 		    AdditionalFieldTO afto = (AdditionalFieldTO)to;
-			pstmt = c.prepareStatement("insert into additional_field (planning_id, meta_field_id, value, date_value) values (?,?,?,?)");
+		    if( afto.getMetaField().isMandatory() && (afto.getValue() == null || afto.getValue().trim().equals(""))){
+		    	throw new MandatoryMetaFieldDataException(afto);
+		    }
+		    	
+			pstmt = c.prepareStatement("insert into additional_field (planning_id, meta_field_id, value, date_value, numeric_value) values (?,?,?,?,?)");
 			pstmt.setString(1, afto.getPlanning().getId());
 			pstmt.setString(2, afto.getMetaField().getId());
 			pstmt.setString(3, afto.getValue());
 			pstmt.setTimestamp(4, afto.getDateValue());
+			
+			if(afto.getNumericValue() != null){
+				pstmt.setFloat(5, afto.getNumericValue());
+			}else{
+				pstmt.setNull(5, java.sql.Types.FLOAT);
+			}
+			
 			pstmt.executeUpdate();
 			
             if (afto.getMetaField().getType().equals(MetaFieldTO.TYPE_TABLE)) {
@@ -138,6 +156,45 @@ public class AdditionalFieldDAO extends DataAccess {
                 }
             }
             
+												
+		} catch (SQLException e) {
+			throw new DataAccessException(e);
+		}finally{
+			super.closeStatement(null, pstmt);
+		}       
+    }
+    
+    public void update(TransferObject to) throws DataAccessException {
+        Connection c = null;
+		try {
+			c = getConnection();
+			this.update(to, c);
+			c.commit();
+		} catch(Exception e) {
+			throw new DataAccessException(e);
+		} finally {
+			this.closeConnection(c);
+		}
+    }
+    
+    public void update(TransferObject to, Connection c) throws DataAccessException {
+		PreparedStatement pstmt = null; 
+		try {
+		    AdditionalFieldTO afto = (AdditionalFieldTO)to;
+			pstmt = c.prepareStatement("update additional_field set value = ?, date_value = ?, numeric_value = ? where planning_id = ? and meta_field_id = ?");
+			
+			pstmt.setString(1, afto.getValue());
+			pstmt.setTimestamp(2, afto.getDateValue());
+			
+			if(afto.getNumericValue() != null){
+				pstmt.setFloat(3, afto.getNumericValue());
+			}else{
+				pstmt.setNull(3, java.sql.Types.FLOAT);
+			}
+			
+			pstmt.setString(4, afto.getPlanning().getId());
+			pstmt.setString(5, afto.getMetaField().getId());
+			pstmt.executeUpdate();
 												
 		} catch (SQLException e) {
 			throw new DataAccessException(e);
@@ -204,6 +261,7 @@ public class AdditionalFieldDAO extends DataAccess {
         response.setPlanning(pto);
         response.setValue(getString(rs, "value"));
         response.setDateValue(getTimestamp(rs, "date_value"));
+        response.setNumericValue(getFloat(rs, "numeric_value"));
         
         return response;
     }

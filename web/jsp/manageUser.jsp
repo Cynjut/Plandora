@@ -1,11 +1,15 @@
 <%@ taglib uri="/WEB-INF/lib/struts-html" prefix="html" %>
 <%@ taglib uri="/WEB-INF/lib/struts-bean" prefix="bean" %>
-<%@ taglib uri="/WEB-INF/lib/display" prefix="display" %>
 <%@ taglib uri="/WEB-INF/lib/struts-logic" prefix="logic" %>
 <%@ taglib uri="/WEB-INF/lib/plandora-html" prefix="plandora-html" %>
+<%@ taglib uri="/WEB-INF/lib/display" prefix="display" %>
 <%@ page import="com.pandora.gui.struts.form.GeneralStrutsForm"%>
 
 <jsp:include page="header.jsp" />
+
+<%@ page import="com.pandora.PreferenceTO"%>
+
+<script type="text/javascript" src="/jscript/jscolor.js"></script>
 
 <script language="javascript">
      function remove(argId, argForm, argOperation){
@@ -18,6 +22,8 @@
 <html:form action="manageUser" enctype="multipart/form-data"> 
 	<html:hidden name="userForm" property="operation"/>
 	<html:hidden name="userForm" property="id"/>
+	<html:hidden name="userForm" property="genericTag"/>
+	
 	<br>
 	
 	<table width="100%" border="0" cellspacing="0" cellpadding="0">
@@ -47,6 +53,16 @@
       <td class="formTitle"><bean:message key="label.userName"/>:&nbsp;</td>
       <td class="formBody">
         <html:text name="userForm" property="username" styleClass="textBox" size="10" maxlength="30"/>
+      </td>
+      <td>&nbsp;</td>
+    </tr>    
+    <tr class="pagingFormBody">
+      <td>&nbsp;</td>
+      <td class="formTitle"><bean:message key="label.userCompany"/>:&nbsp;</td>
+      <td class="formBody">
+	  	<html:select name="userForm" property="userCompanyId" styleClass="textBox">
+			<html:options collection="userCompany" property="id" labelProperty="name"/>
+		</html:select>
       </td>
       <td>&nbsp;</td>
     </tr>    
@@ -108,6 +124,7 @@
       <td>&nbsp;</td>
       <td class="formTitle"><bean:message key="label.color"/>:&nbsp;</td>
       <td class="formBody">
+<!-- Color Picker -->
         <html:text name="userForm" property="color" styleClass="textBox" size="10" maxlength="10"/>      
       </td>
       <td>&nbsp;</td>
@@ -122,6 +139,14 @@
       </td>
       <td>&nbsp;</td>
     </tr>
+    <tr class="pagingFormBody">
+      <td>&nbsp;</td>
+      <td class="formTitle"><bean:message key="label.admission"/>:&nbsp;</td>
+      <td class="formBody">
+  	  	<plandora-html:calendar name="userForm" property="creationDate" styleClass="textBox" />
+      </td>
+      <td>&nbsp;</td>
+    </tr>    
     <tr class="pagingFormBody">
       <td>&nbsp;</td>
       <td class="formTitle"><bean:message key="label.userenabled"/>:&nbsp;</td>
@@ -256,20 +281,20 @@
 	<table width="98%" border="0" cellspacing="0" cellpadding="0">
 	<tr class="formBody">
 		<td>
-			<display:table border="1" width="100%" name="userList" scope="session" pagesize="6" requestURI="../do/manageUser?operation=navigate">
-				  <display:column property="name" title="label.name" />
-				  <display:column width="6%" property="username" title="label.userName" />
-				  <display:column width="5%" property="color" title="label.colorGrid" decorator="com.pandora.gui.taglib.decorator.GridColorDecorator"/>		  
-				  <display:column width="25%" property="email" title="label.email" />	
-				  <display:column width="10%" property="phone" title="label.phone" />
-				  <display:column width="15%" property="finalDate" align="center" title="label.userdisabled" decorator="com.pandora.gui.taglib.decorator.GridDateDecorator" tag="2;2" />
-				  <display:column width="2%" property="id" title="grid.title.empty" decorator="com.pandora.gui.taglib.decorator.GridEditDecorator" tag="'userForm', 'editUser'" />
-				  <display:column width="2%" property="id" title="grid.title.empty" decorator="com.pandora.gui.taglib.decorator.GridDeleteDecorator" tag="'userForm', 'removeUser'" />
-			</display:table>		
+			<plandora-html:ptable width="100%" name="userList" scope="session" pagesize="6" frm="userForm">
+				  <plandora-html:pcolumn likeSearching="true" property="name" title="label.name" />
+				  <plandora-html:pcolumn width="6%" likeSearching="true" sort="1" property="username" title="label.userName" />
+				  <plandora-html:pcolumn width="5%" sort="1" property="color" title="label.colorGrid" decorator="com.pandora.gui.taglib.decorator.GridColorDecorator"/>		  
+				  <plandora-html:pcolumn width="25%" sort="1" property="email" title="label.email" description="label.formRisk.status.desc" />	
+				  <plandora-html:pcolumn width="10%" description="label.formRisk.impact.time" property="phone" title="label.phone" />
+				  <plandora-html:pcolumn width="15%" property="finalDate" align="center" title="label.userdisabled" decorator="com.pandora.gui.taglib.decorator.GridDateDecorator" tag="2;2" />
+				  <plandora-html:pcolumn width="2%" property="id" title="grid.title.empty" decorator="com.pandora.gui.taglib.decorator.GridEditDecorator" tag="'userForm', 'editUser'" />
+				  <plandora-html:pcolumn width="2%" property="id" title="grid.title.empty" decorator="com.pandora.gui.taglib.decorator.GridDeleteDecorator" tag="'userForm', 'removeUser'" />
+			</plandora-html:ptable>		
 		</td>
 	</tr> 
 	</table>
-		
+		 
 	<display:headerfootergrid type="FOOTER">
 		<table width="98%" border="0" cellspacing="0" cellpadding="0"><tr>
 		  <td width="120">      

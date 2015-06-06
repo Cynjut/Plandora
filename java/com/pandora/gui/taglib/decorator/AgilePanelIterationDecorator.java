@@ -1,6 +1,5 @@
 package com.pandora.gui.taglib.decorator;
 
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Vector;
 
@@ -8,7 +7,6 @@ import org.apache.taglibs.display.ColumnDecorator;
 
 import com.pandora.OccurrenceTO;
 import com.pandora.RequirementWithTasksTO;
-import com.pandora.delegate.RequirementDelegate;
 import com.pandora.delegate.RequirementHistoryDelegate;
 import com.pandora.exception.BusinessException;
 import com.pandora.gui.struts.form.AgilePanelForm;
@@ -16,8 +14,8 @@ import com.pandora.gui.struts.form.AgilePanelForm;
 public class AgilePanelIterationDecorator extends ColumnDecorator {
 
 	public String decorate(Object columnValue) {
-		Vector iterations = (Vector)this.getPageContext().getSession().getAttribute("iterationList");
-		Object obj = this.getPageContext().getSession().getAttribute("agilePanelForm");
+		Vector iterations = (Vector)this.getSession().getAttribute("iterationList");
+		Object obj = this.getSession().getAttribute("agilePanelForm");
 
 		RequirementWithTasksTO rwt = (RequirementWithTasksTO)getObject();
 		if (rwt!=null) {
@@ -41,7 +39,7 @@ public class AgilePanelIterationDecorator extends ColumnDecorator {
 		return columnValue+"";
 	}
 
-	private String getIterationName(String reqId, String id, Vector iterations, boolean hideOldIterations) {
+	private String getIterationName(String reqId, String id, Vector<OccurrenceTO> iterations, boolean hideOldIterations) {
 		RequirementHistoryDelegate rhdel = new RequirementHistoryDelegate();
 		String response = "";
 				
@@ -76,11 +74,11 @@ public class AgilePanelIterationDecorator extends ColumnDecorator {
 		return response;
 	}
 
-	private String getIterationName(String id, Vector iterations) {
+	private String getIterationName(String id, Vector<OccurrenceTO> iterations) {
 		String response = "";
-		Iterator i = iterations.iterator();
+		Iterator<OccurrenceTO> i = iterations.iterator();
 		while(i.hasNext()) {
-			OccurrenceTO oto = (OccurrenceTO)i.next();
+			OccurrenceTO oto = i.next();
 			if (oto.getId().equals(id)) {
 				response = oto.getName();
 				break;	

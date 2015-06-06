@@ -1,0 +1,363 @@
+<html>
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+		<script LANGUAGE="JavaScript">
+			
+			// global variables used while dragging and event handlers
+			var offsetXReference = 0;
+			var selectedObj;
+			var SEPARATOR_WIDTH = 7;
+			
+			document.onmousedown = function(event) {
+				evt = event || window.event;
+				return grabObject(evt);
+			};			
+
+			document.onmouseup = function(event) {
+				evt = event || window.event;
+				return releaseObject(evt);
+			};			
+			
+			// positioning an object at a specific 'x' coordinate
+			function shiftTo(toChangeObj, x) {
+				if (toChangeObj.id == "boxSeparator") {
+					
+					var ref = document.getElementById('ganttlabelBoxTable');
+					if (x > ref.offsetWidth) {
+						x = ref.offsetWidth;
+					}
+				}
+				toChangeObj.style.left = x;
+			}
+						
+			// set selectedObj with the reference to dragged element
+			function setSelectedObj(evt) {
+				var objectToBeChanged = evt.srcElement? evt.srcElement : evt.target; 
+				if (objectToBeChanged) {
+					if (objectToBeChanged.id == "boxSeparator") {
+						selectedObj = objectToBeChanged;
+						return;
+					}				
+				}
+				selectedObj = null;
+				return;
+			}
+			
+			function dragIt(evt) {
+				if (selectedObj) {			
+					shiftTo(selectedObj, (evt.clientX - offsetXReference));
+					return false;
+				}
+			}
+			
+			function grabObject(evt) {
+				setSelectedObj(evt);
+				if (selectedObj) {
+					//selectedObj.z-index = 0;
+					var offX = (!evt.offsetX)? evt.layerX : evt.offsetX; 
+					offsetXReference = offX - document.body.scrollLeft;
+					
+					document.onmousemove = function(e) {
+						evt = e || window.event;
+						return dragIt(evt);
+					};					
+				}
+			}
+			
+			// perform boxes repositioning
+			function releaseObject(evt) {
+				if (selectedObj) {					
+					if (selectedObj.id == "boxSeparator") {	
+						changePanelPosition(evt, selectedObj.offsetLeft);
+					}
+					document.onmousemove = null;
+					selectedObj = null;
+				}
+			}
+			
+			function changePanelPosition(evt, xpos){
+				var panel = document.getElementById('ganttlabelBox');
+				panel.style.width = xpos + "px";
+
+				var bars = document.getElementById('ganttBarBox');
+				
+				var currentLeft = bars.offsetLeft;
+				bars.style.left = (xpos + SEPARATOR_WIDTH) + "px";  
+				var diff = currentLeft - bars.offsetLeft;
+
+				bars.style.width = bars.offsetWidth + diff + "px";
+			}			
+			
+		</script>
+		
+		<style type="text/css">
+			body{
+				margin:0;
+				padding:0;
+			}
+			
+			#ganttlabelBox{ 
+				position:absolute;
+				top:0 !important;
+				overflow: auto;
+				overflow-y: hidden;
+			}
+						
+			.gantttitle{
+				background-color: #003366;
+				color: #FFFFFF;
+				line-height: 30px;
+				border: 1px solid #ffffff;
+				font-family: "Verdana";
+				font-size: 9px;
+				text-align: center;
+				vertical-align: middle;
+			}
+			
+			.ganttlabel{
+				color: #FFFFFF;
+				line-height: 20px;
+				border: 1px solid #ffffff;
+				font-family: "Verdana";
+				font-size: 9px;
+				text-align: center;
+				vertical-align: middle;
+				background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAB4AAAAZCAYAAAAmNZ4aAAAABGdBTUEAALGPC/xhBQAAAIZJREFUSEvt0EEKggAARNHp/meSMEmSJMMwDMMwAzEMwxDcTbfobxp464G/WpbFIjbPswn6TJMJeo+jCXoNgwl69r0J6rrOBD3a1gTdm8YE3eraBF2rygRdytIEnYvCBJ3y3AQds8wEHdLUBO2TxATt4tgEbaPIBG3C0AStg8CE//HPsmOpv05A1pSbgwOUAAAAAElFTkSuQmCC);
+			}
+
+			#boxSeparator{ 
+				position:absolute;
+				top:1px;
+				width:7px;
+				left:399px;
+				cursor: w-resize;
+				background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAcAAAAUCAIAAADOcrCxAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAAmSURBVChTY/j////379/fvXv37Nmze/fuXb169ezZswyjooM8HAAA63loWD+TJwAAAABJRU5ErkJggg==);
+			}
+			
+			#ganttBarBox{ 
+				position: absolute;
+				overflow-y:hidden;
+				overflow-x: scroll;
+				top:0 !important;
+				left:407px;
+				width:60%;
+			}
+
+			.ganttBarRow {
+				vertical-align: middle;
+				text-align: center;
+			}
+			
+			.gantttimelineUp{
+				border: 1px solid #ffffff;
+				font-family: "Verdana";
+				font-size: 9px;
+				line-height: 13px;
+				background-color: #003366;
+				color: #FFFFFF;
+			}
+
+			.gantttimelineDown{
+				border: 1px solid #ffffff;
+				font-family: "Verdana";
+				font-size: 9px;				
+				line-height: 14px;
+				color: #FFFFFF;
+				background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAB4AAAAZCAYAAAAmNZ4aAAAABGdBTUEAALGPC/xhBQAAAIZJREFUSEvt0EEKggAARNHp/meSMEmSJMMwDMMwAzEMwxDcTbfobxp464G/WpbFIjbPswn6TJMJeo+jCXoNgwl69r0J6rrOBD3a1gTdm8YE3eraBF2rygRdytIEnYvCBJ3y3AQds8wEHdLUBO2TxATt4tgEbaPIBG3C0AStg8CE//HPsmOpv05A1pSbgwOUAAAAAElFTkSuQmCC);				
+			}
+
+			.ganttArea{
+				position:relative;
+				top:0px;
+				left:0px;
+				font-family: "Verdana";
+				font-size: 9px;
+				color: #FFFFFF;
+				background-color: #fefefe;
+			}
+			
+			#ganttBar{
+				position:relative;
+				cursor: move;
+				font-family: "Verdana";
+				font-size: 9px;
+				color: #FFFFFF;				
+				background-color: #ff0000;
+			}
+		</style>
+	</head>
+	
+	<body>
+		<div id="ganttlabelBox" style="width:400px; height:200px">
+			<table id="ganttlabelBoxTable" border="0" width="500px" cellspacing="0" cellpadding="0">
+				<tr>
+					<th class="gantttitle" width="40px">ID</th>
+					<th class="gantttitle" width="200px">Task</th>
+					<th class="gantttitle" width="100px">Assigne</th>
+					<th class="gantttitle" width="100px">Start</th>
+					<th class="gantttitle" width="100px">End</th>
+					<th class="gantttitle" width="50px">Pred.</th>
+				</tr>
+				<tr>
+					<th class="ganttlabel">&nbsp;</th>
+					<th class="ganttlabel">&nbsp;</th>
+					<th class="ganttlabel">&nbsp;</th>
+					<th class="ganttlabel">&nbsp;</th>
+					<th class="ganttlabel">&nbsp;</th>
+					<th class="ganttlabel">&nbsp;</th>		
+				</tr>
+				<tr>
+					<th class="ganttlabel">&nbsp;</th>
+					<th class="ganttlabel">&nbsp;</th>
+					<th class="ganttlabel">&nbsp;</th>
+					<th class="ganttlabel">&nbsp;</th>
+					<th class="ganttlabel">&nbsp;</th>
+					<th class="ganttlabel">&nbsp;</th>		
+				</tr>
+				<tr>
+					<th class="ganttlabel">&nbsp;</th>
+					<th class="ganttlabel">&nbsp;</th>
+					<th class="ganttlabel">&nbsp;</th>
+					<th class="ganttlabel">&nbsp;</th>
+					<th class="ganttlabel">&nbsp;</th>
+					<th class="ganttlabel">&nbsp;</th>		
+				</tr>					
+				<tr>
+					<th class="ganttlabel">&nbsp;</th>
+					<th class="ganttlabel">&nbsp;</th>
+					<th class="ganttlabel">&nbsp;</th>
+					<th class="ganttlabel">&nbsp;</th>
+					<th class="ganttlabel">&nbsp;</th>
+					<th class="ganttlabel">&nbsp;</th>		
+				</tr>					
+				<tr>
+					<th class="ganttlabel">&nbsp;</th>
+					<th class="ganttlabel">&nbsp;</th>
+					<th class="ganttlabel">&nbsp;</th>
+					<th class="ganttlabel">&nbsp;</th>
+					<th class="ganttlabel">&nbsp;</th>
+					<th class="ganttlabel">&nbsp;</th>		
+				</tr>					
+				<tr>
+					<th class="ganttlabel">&nbsp;</th>
+					<th class="ganttlabel">&nbsp;</th>
+					<th class="ganttlabel">&nbsp;</th>
+					<th class="ganttlabel">&nbsp;</th>
+					<th class="ganttlabel">&nbsp;</th>
+					<th class="ganttlabel">&nbsp;</th>		
+				</tr>					
+				<tr>
+					<th class="ganttlabel">&nbsp;</th>
+					<th class="ganttlabel">&nbsp;</th>
+					<th class="ganttlabel">&nbsp;</th>
+					<th class="ganttlabel">&nbsp;</th>
+					<th class="ganttlabel">&nbsp;</th>
+					<th class="ganttlabel">&nbsp;</th>		
+				</tr>					
+				
+			</table>
+		</div>
+		
+		<div id="ganttBarBox">
+			<table id="ganttBarTable" border="0" width="1260px" cellspacing="0" cellpadding="0">
+				<tr class="ganttBarRow">
+					<th class="gantttimelineUp" colspan="7">semana 1</th>
+					<th class="gantttimelineUp" colspan="7">semana 2</th>
+					<th class="gantttimelineUp" colspan="7">semana 3</th>
+					<th class="gantttimelineUp" colspan="7">semana 4</th>
+					<th class="gantttimelineUp" colspan="7">semana 5</th>
+					<th class="gantttimelineUp" colspan="7">semana 6</th>
+					<th class="gantttimelineUp" colspan="7">semana 7</th>
+					<th class="gantttimelineUp" colspan="7">semana 8</th>
+					<th class="gantttimelineUp" colspan="7">semana 9</th>
+				</tr>
+				<tr class="ganttBarRow">
+					<th class="gantttimelineDown">D</th>
+					<th class="gantttimelineDown">S</th>
+					<th class="gantttimelineDown">T</th>
+					<th class="gantttimelineDown">Q</th>
+					<th class="gantttimelineDown">Q</th>
+					<th class="gantttimelineDown">S</th>
+					<th class="gantttimelineDown">S</th>
+					
+					<th class="gantttimelineDown">D</th>
+					<th class="gantttimelineDown">S</th>
+					<th class="gantttimelineDown">T</th>
+					<th class="gantttimelineDown">Q</th>
+					<th class="gantttimelineDown">Q</th>
+					<th class="gantttimelineDown">S</th>
+					<th class="gantttimelineDown">S</th>
+
+					<th class="gantttimelineDown">D</th>
+					<th class="gantttimelineDown">S</th>
+					<th class="gantttimelineDown">T</th>
+					<th class="gantttimelineDown">Q</th>
+					<th class="gantttimelineDown">Q</th>
+					<th class="gantttimelineDown">S</th>
+					<th class="gantttimelineDown">S</th>
+					
+					<th class="gantttimelineDown">D</th>
+					<th class="gantttimelineDown">S</th>
+					<th class="gantttimelineDown">T</th>
+					<th class="gantttimelineDown">Q</th>
+					<th class="gantttimelineDown">Q</th>
+					<th class="gantttimelineDown">S</th>
+					<th class="gantttimelineDown">S</th>
+
+					<th class="gantttimelineDown">D</th>
+					<th class="gantttimelineDown">S</th>
+					<th class="gantttimelineDown">T</th>
+					<th class="gantttimelineDown">Q</th>
+					<th class="gantttimelineDown">Q</th>
+					<th class="gantttimelineDown">S</th>
+					<th class="gantttimelineDown">S</th>
+
+					<th class="gantttimelineDown">D</th>
+					<th class="gantttimelineDown">S</th>
+					<th class="gantttimelineDown">T</th>
+					<th class="gantttimelineDown">Q</th>
+					<th class="gantttimelineDown">Q</th>
+					<th class="gantttimelineDown">S</th>
+					<th class="gantttimelineDown">S</th>
+
+					<th class="gantttimelineDown">D</th>
+					<th class="gantttimelineDown">S</th>
+					<th class="gantttimelineDown">T</th>
+					<th class="gantttimelineDown">Q</th>
+					<th class="gantttimelineDown">Q</th>
+					<th class="gantttimelineDown">S</th>
+					<th class="gantttimelineDown">S</th>
+					
+					<th class="gantttimelineDown">D</th>
+					<th class="gantttimelineDown">S</th>
+					<th class="gantttimelineDown">T</th>
+					<th class="gantttimelineDown">Q</th>
+					<th class="gantttimelineDown">Q</th>
+					<th class="gantttimelineDown">S</th>
+					<th class="gantttimelineDown">S</th>
+					
+					<th class="gantttimelineDown">D</th>
+					<th class="gantttimelineDown">S</th>
+					<th class="gantttimelineDown">T</th>
+					<th class="gantttimelineDown">Q</th>
+					<th class="gantttimelineDown">Q</th>
+					<th class="gantttimelineDown">S</th>
+					<th class="gantttimelineDown">S</th>						
+				</tr>
+				
+			</table>
+
+			<div class="ganttArea" style="width:1260px; height:152px;">
+				<div id="ganttBar" style="height:15px; width:100px; left:100px; top:10px">aaa</div>			
+				<div id="ganttBar" style="height:15px; width:80px; left:30px; top:30px">aaa</div>	
+				<div id="ganttBar" style="height:15px; width:90px; left:10px; top:40px">aaa</div>	
+				<div id="ganttBar" style="height:15px; width:150px; left:200px; top:90px">aaa</div>	
+			</div>
+
+		</div>
+
+		<div id="boxSeparator" style="height:200px;"></div>
+	</body>
+</html>
+

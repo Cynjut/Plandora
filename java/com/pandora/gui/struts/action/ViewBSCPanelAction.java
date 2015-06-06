@@ -1,6 +1,7 @@
 package com.pandora.gui.struts.action;
 
 import java.sql.Timestamp;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Locale;
@@ -24,10 +25,12 @@ import com.pandora.bus.gadget.Gadget;
 import com.pandora.bus.gadget.GadgetBUS;
 import com.pandora.delegate.CategoryDelegate;
 import com.pandora.delegate.PreferenceDelegate;
+import com.pandora.delegate.ProjectDelegate;
 import com.pandora.delegate.ReportDelegate;
 import com.pandora.delegate.UserDelegate;
 import com.pandora.exception.BusinessException;
 import com.pandora.gui.struts.form.ViewBSCPanelForm;
+import com.pandora.gui.taglib.form.NoteIcon;
 import com.pandora.helper.DateUtil;
 import com.pandora.helper.HtmlUtil;
 import com.pandora.helper.SessionUtil;
@@ -35,7 +38,7 @@ import com.pandora.helper.StringUtil;
 
 public class ViewBSCPanelAction extends GeneralStrutsAction {
 
-	private HashMap statusHm = new HashMap();
+	private HashMap<String, Vector<TransferObject>> statusHm = new HashMap<String, Vector<TransferObject>>();
 	
 	public ActionForward prepareForm(ActionMapping mapping, ActionForm form,
 			 HttpServletRequest request, HttpServletResponse response) {
@@ -47,9 +50,9 @@ public class ViewBSCPanelAction extends GeneralStrutsAction {
 		    Locale loc = SessionUtil.getCurrentLocale(request);
 		    Timestamp now = DateUtil.getNow();
 		    frm.setRefDate(DateUtil.getDate(now, super.getCalendarMask(request), loc));
-	    	
+	
 	    	CategoryDelegate cdel = new CategoryDelegate();
-	    	Vector categoryListFrmDB = cdel.getCategoryListByType(CategoryTO.TYPE_KPI, new ProjectTO(""), false);		    
+	    	Vector<CategoryTO> categoryListFrmDB = cdel.getCategoryListByType(CategoryTO.TYPE_KPI, new ProjectTO(""), false);		    
 	    	request.getSession().setAttribute("categoryList", categoryListFrmDB);
 	    	
 	    	CategoryTO cto = (CategoryTO)categoryListFrmDB.get(0);
@@ -67,7 +70,7 @@ public class ViewBSCPanelAction extends GeneralStrutsAction {
 		    	frm.setShowOnlyOpenedKpi(onlyOpened.equals("on"));
 		    } 
 		    	    	
-	    	this.refresh(frm, request);
+	    	this.refresh(frm, request, response);
 	    	
 	    } catch(Exception e){
 		    this.setErrorFormSession(request, "error.prepareViewBSCForm", e);		    
@@ -85,13 +88,14 @@ public class ViewBSCPanelAction extends GeneralStrutsAction {
 		    String newChartId = frm.getKpiId();
 		    
 		    if (newChartId!=null && !newChartId.equals("")) {
+			    String newProjectId = frm.getProjectId();		    	
 			    Gadget gad = GadgetBUS.getGadgetClass("com.pandora.bus.gadget.KpiChartGadget");
 			    
 			    if (gad!=null) {
 				    UserTO uto = SessionUtil.getCurrentUser(request);
 				    PreferenceTO pref = uto.getPreference();
-					PreferenceTO newPto = new PreferenceTO(gad.getId() + ".KPI_ID", newChartId, uto);
-					pref.addPreferences(newPto);
+					pref.addPreferences(new PreferenceTO(gad.getId() + ".KPI_ID", newChartId, uto));
+					pref.addPreferences(new PreferenceTO(gad.getId() + ".KPI_PROJECT", newProjectId, uto));	
 					pdel.insertOrUpdate(pref);
 			    }
 		    }
@@ -110,7 +114,7 @@ public class ViewBSCPanelAction extends GeneralStrutsAction {
 	    
 	    try {
 		    ViewBSCPanelForm frm = (ViewBSCPanelForm)form;
-		    this.refresh(frm, request);
+		    this.refresh(frm, request, response);
 		    
 	    	//save the new option configuration...		    
 		    this.saveOptions(request, frm);
@@ -122,42 +126,50 @@ public class ViewBSCPanelAction extends GeneralStrutsAction {
 	}
 
 
-	private void refresh(ViewBSCPanelForm frm, HttpServletRequest request) throws BusinessException {
+	private void refresh(ViewBSCPanelForm frm, HttpServletRequest request, HttpServletResponse response) throws BusinessException {
 		ReportDelegate rdel = new ReportDelegate();
 	    StringBuffer sb = new StringBuffer("");
+	    ProjectDelegate pdel = new ProjectDelegate();
 	    
 	    Locale loc = SessionUtil.getCurrentLocale(request);
 	    Timestamp refDate = DateUtil.getDateTime(frm.getRefDate(), super.getCalendarMask(request), loc);	    	
-    	Vector list = rdel.getBSC(refDate, new ProjectTO(frm.getProjectId()), 
+	    Vector<BSCReportTO> list = rdel.getBSC(refDate, new ProjectTO(frm.getProjectId()), 
     			new CategoryTO(frm.getCategoryId()), !frm.getShowOnlyCurrentProject() );
     	String sessionOld = null;
     	boolean onlyOpened = frm.getShowOnlyOpenedKpi();
     	
     	if (list!=null) {
     		
+    		Vector<ProjectTO> validProjects = pdel.getAllProjectsByParent(new ProjectTO(frm.getProjectId()), false);
+    		validProjects.add(new ProjectTO(frm.getProjectId()));
+    		
     		//create a hash indexed by strategy id and grouping the status of each KPI
     		statusHm = this.getStatusByStrategy(list, loc, onlyOpened);
     		
-	    	Iterator i = list.iterator();
-	    	while(i.hasNext()) {
-	    		BSCReportTO bsc = (BSCReportTO)i.next();
+    		BSCReportTO[] orderedList = new BSCReportTO[list.size()];
+    		for(int i=0; i<list.size(); i++) {
+   				orderedList[i] = (BSCReportTO)list.get(i);
+    		}
+    		Arrays.sort(orderedList);
 
-	    		if (!onlyOpened || (onlyOpened && bsc.getKpi().getFinalDate()==null) ) {
-		    		String sessionId = bsc.getStrategyId() + "|" + bsc.getProjectId();
-		    		if (sessionId==null) {
-		    			sessionId = "";
-		    		}
-		    		
-		    		if (sessionOld==null || !sessionOld.equals(sessionId)){
-		    		    if (sessionOld!=null) {  
-		    		        sb.append("\n</table>");    
-		    		    }
-		    		    sb.append(this.getTitle(bsc, request));
-		    		    sessionOld = sessionId;
-		    		}
-		    		
-		    		sb.append(getBody(bsc, request, loc));		    			
-	    		}
+    		
+    		for(int i=0; i<orderedList.length; i++) {
+    			BSCReportTO bsc = orderedList[i];
+    			if (this.contain(validProjects, bsc.getProjectId())) {
+        			
+    	    		if (!onlyOpened || (onlyOpened && bsc.getKpi().getFinalDate()==null) ) {
+    		    		String sessionId = bsc.getStrategyId() + "|" + bsc.getProjectId();
+    		    		if (sessionOld==null || !sessionOld.equals(sessionId)){
+    		    		    if (sessionOld!=null) {  
+    		    		        sb.append("\n</table>");    
+    		    		    }
+    		    		    sb.append(this.getTitle(bsc, request));
+    		    		    sessionOld = sessionId;
+    		    		}
+    		    		
+    		    		sb.append(getBody(bsc, request, loc));		    			
+    	    		}    				
+    			}
 	    	}
     	}
     	
@@ -166,10 +178,22 @@ public class ViewBSCPanelAction extends GeneralStrutsAction {
     	}
     	frm.setBscTable(sb.toString());
 
-    	this.refreshGadgets(request, frm);	    		    	    
+    	this.refreshGadgets(request, response, frm);	    		    	    
 	}
 	
 	
+	private boolean contain(Vector<ProjectTO> validProjects, String projectId) {
+		boolean response = false;
+		for (ProjectTO pto : validProjects) {
+			if (pto.getId().equals(projectId)) {
+				response = true;
+				break;
+			}
+		}
+		return response;
+	}
+
+
 	private void saveOptions(HttpServletRequest request, ViewBSCPanelForm frm) throws BusinessException {
 	    PreferenceDelegate pdel = new PreferenceDelegate();
 	    UserTO uto = SessionUtil.getCurrentUser(request);
@@ -183,20 +207,20 @@ public class ViewBSCPanelAction extends GeneralStrutsAction {
 	private StringBuffer getBody(BSCReportTO bsc, HttpServletRequest request, Locale loc) throws BusinessException {
 	    StringBuffer sb = new StringBuffer("");
 	    UserDelegate udel = new UserDelegate();
-	    
+
 	    Integer dataType = bsc.getKpiDataType();
 		if (dataType!=null) {
 			
 			Locale currencyLoc = udel.getCurrencyLocale();
-			
+
 			String mask = super.getCalendarMask(request);
 			sb.append("<tr class=\"formBody\">");
 
-			if (dataType.equals(ReportTO.FLOAT_DATA_TYPE) || dataType.equals(ReportTO.CURRENCY_DATA_TYPE)) {
+			if (dataType.equals(ReportTO.FLOAT_DATA_TYPE) || dataType.equals(ReportTO.CURRENCY_DATA_TYPE)  || dataType.equals(ReportTO.PERCENTUAL_DATA_TYPE)) {
 				String lineLbl = super.getBundleMessage(request, "label.viewBSCPanel.chart");
 				String hint = HtmlUtil.getHint(lineLbl);
 				sb.append("   <td class=\"tableCell\" align=\"center\" valign=\"center\">");
-				sb.append("     <a href=\"javascript:showChart(" + bsc.getKpi().getId() + ")\"><img border=\"0\" " + hint + " src=\"../images/linechart.gif\" ></a>");
+				sb.append("     <a href=\"javascript:showChart('" + bsc.getKpi().getId() + "', '" + (bsc.getResult()!=null?bsc.getResult().getProjectId():bsc.getProjectId()) + "')\"><img border=\"0\" " + hint + " src=\"../images/linechart.gif\" ></a>");
 				sb.append("   </td>\n");			    
 			} else {
 				sb.append("   <td class=\"tableCell\" align=\"center\" valign=\"center\">");
@@ -205,12 +229,30 @@ public class ViewBSCPanelAction extends GeneralStrutsAction {
 			}
 
 			sb.append("   <td class=\"tableCell\" align=\"center\" valign=\"center\">");
+			if (bsc.getKpi().getDescription()!=null && !bsc.getKpi().getDescription().trim().equals("")) {
+				NoteIcon n = new NoteIcon();
+				try {
+					String d = bsc.getKpi().getDescription();
+					sb.append(n.getContent(d, "info"));
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+			} else {
+				sb.append("     &nbsp;");
+			}
+			sb.append("   </td>\n");
+			
+			sb.append("   <td class=\"tableCell\" align=\"center\" valign=\"center\">");
 			String perspLbl = super.getBundleMessage(request, "title.viewBSCPanel.persp." + bsc.getKpi().getReportPerspectiveId());
 			sb.append(perspLbl);
 			sb.append("   </td>\n");
 
 			sb.append("   <td class=\"tableCell\" align=\"right\" valign=\"center\">");
-			sb.append(bsc.getKpi().getName());
+			
+			String kpiLabel = bsc.getKpi().getName();
+			kpiLabel = kpiLabel.replaceAll("\\?#PROJECT_NAME#", bsc.getResult().getProjectName());				
+			
+			sb.append(kpiLabel);
 			sb.append("   &nbsp;</td>\n");
 
 			sb.append("   <td class=\"tableCell\" align=\"center\" valign=\"center\">");
@@ -241,7 +283,7 @@ public class ViewBSCPanelAction extends GeneralStrutsAction {
 			sb.append("   </td>\n");
 
 			String rowspan= "";
-			Vector statusList = (Vector)statusHm.get(bsc.getStrategyId());
+			Vector<TransferObject> statusList = (Vector<TransferObject>)statusHm.get(bsc.getStrategyId());
 			if (statusList!=null) {
 				rowspan = " rowspan=\""+ statusList.size() + "\" ";
 			}
@@ -300,7 +342,8 @@ public class ViewBSCPanelAction extends GeneralStrutsAction {
 
 		sb.append("<table width=\"100%\" border=\"0\" cellspacing=\"0\" cellpadding=\"0\">");		
 		sb.append("<tr class=\"tableRowHeader\">");
-		sb.append("   <th class=\"tableCellHeader\" width=\"16\" align=\"center\">&nbsp;</th>\n");		
+		sb.append("   <th class=\"tableCellHeader\" width=\"20\" align=\"center\">&nbsp;</th>\n");
+		sb.append("   <th class=\"tableCellHeader\" width=\"20\" align=\"center\">&nbsp;</th>\n");
 		sb.append("   <th class=\"tableCellHeader\" width=\"120\" align=\"center\">" + perspecLbl + "</th>\n");
 		sb.append("   <th class=\"tableCellHeader\" align=\"center\">" + kpiLbl + "</th>\n");
 		sb.append("   <th class=\"tableCellHeader\" width=\"25\" align=\"center\">" + statLbl + "</th>\n");
@@ -334,7 +377,7 @@ public class ViewBSCPanelAction extends GeneralStrutsAction {
 		    
 			if (type.equals("1") || type.equals("2") || type.equals("3")) {
 			    String unitLbl = "";
-			    if (dataType.equals(ReportTO.FLOAT_DATA_TYPE) || dataType.equals(ReportTO.CURRENCY_DATA_TYPE)) {
+			    if (dataType.equals(ReportTO.FLOAT_DATA_TYPE) || dataType.equals(ReportTO.CURRENCY_DATA_TYPE)  || dataType.equals(ReportTO.PERCENTUAL_DATA_TYPE)) {
 			    	unitLbl = super.getBundleMessage(request, "label.manageReport.tolerance.unit.1");	
 			    } else if (dataType.equals(ReportTO.DATE_DATA_TYPE)) {
 			    	unitLbl = super.getBundleMessage(request, "label.manageReport.tolerance.days");	
@@ -372,7 +415,7 @@ public class ViewBSCPanelAction extends GeneralStrutsAction {
         
         if (bsc.getResult()!=null && bsc.getResult().getValue()!=null){
             String val = bsc.getResult().getValue();
-            if (dataType.equals(ReportTO.FLOAT_DATA_TYPE) || dataType.equals(ReportTO.CURRENCY_DATA_TYPE)) {
+            if (dataType.equals(ReportTO.FLOAT_DATA_TYPE) || dataType.equals(ReportTO.CURRENCY_DATA_TYPE) || dataType.equals(ReportTO.PERCENTUAL_DATA_TYPE)) {
             	floatValue = StringUtil.getStringToFloat(val, ReportTO.KPI_DEFAULT_LOCALE);	
             } else if (dataType.equals(ReportTO.DATE_DATA_TYPE)) {
             	dtValue = DateUtil.getDateTime(val, ReportTO.KPI_DEFAULT_MASK, ReportTO.KPI_DEFAULT_LOCALE);
@@ -381,7 +424,7 @@ public class ViewBSCPanelAction extends GeneralStrutsAction {
         
         if (bsc.getKpiGoal()!=null){
         	String val = bsc.getKpiGoal();
-            if (dataType.equals(ReportTO.FLOAT_DATA_TYPE)|| dataType.equals(ReportTO.CURRENCY_DATA_TYPE)) {
+            if (dataType.equals(ReportTO.FLOAT_DATA_TYPE)|| dataType.equals(ReportTO.CURRENCY_DATA_TYPE)  || dataType.equals(ReportTO.PERCENTUAL_DATA_TYPE)) {
             	floatGoal = StringUtil.getStringToFloat(val, ReportTO.KPI_DEFAULT_LOCALE);
             } else if (dataType.equals(ReportTO.DATE_DATA_TYPE)) {
             	dtGoal = DateUtil.getDateTime(val, ReportTO.KPI_DEFAULT_MASK, ReportTO.KPI_DEFAULT_LOCALE);
@@ -392,7 +435,7 @@ public class ViewBSCPanelAction extends GeneralStrutsAction {
             tolerance = StringUtil.getStringToFloat(bsc.getKpiTolerance(), ReportTO.KPI_DEFAULT_LOCALE);    
         }          
         
-        if (dataType.equals(ReportTO.FLOAT_DATA_TYPE)|| dataType.equals(ReportTO.CURRENCY_DATA_TYPE)) {
+        if (dataType.equals(ReportTO.FLOAT_DATA_TYPE)|| dataType.equals(ReportTO.CURRENCY_DATA_TYPE)  || dataType.equals(ReportTO.PERCENTUAL_DATA_TYPE)) {
         	response = rdel.getKpiStatus(floatValue, floatGoal, tolerance, type);	
         } else if (dataType.equals(ReportTO.DATE_DATA_TYPE)) {
         	response = rdel.getKpiStatus(dtValue, dtGoal, tolerance, type);
@@ -403,20 +446,20 @@ public class ViewBSCPanelAction extends GeneralStrutsAction {
 	}
 	
 	
-	private HashMap getStatusByStrategy(Vector list, Locale loc, boolean showOnlyOpenedKpi){
-		HashMap response = new HashMap();
+	private HashMap<String, Vector<TransferObject>> getStatusByStrategy(Vector<BSCReportTO> list, Locale loc, boolean showOnlyOpenedKpi){
+		HashMap<String, Vector<TransferObject>> response = new HashMap<String, Vector<TransferObject>>();
 		
-    	Iterator j = list.iterator();
+    	Iterator<BSCReportTO> j = list.iterator();
     	while(j.hasNext()) {
-    		BSCReportTO bsc = (BSCReportTO)j.next();
+    		BSCReportTO bsc = j.next();
     		
     		if (!showOnlyOpenedKpi || (showOnlyOpenedKpi && bsc.getKpi().getFinalDate()==null) ) {
     			
         		int status = this.getStatus(bsc, loc);
 
-        		Vector statusList = (Vector)response.get(bsc.getStrategyId());
+        		Vector<TransferObject> statusList = (Vector<TransferObject>)response.get(bsc.getStrategyId());
         		if (statusList==null) {
-        			statusList = new Vector();
+        			statusList = new Vector<TransferObject>();
         			response.put(bsc.getStrategyId(), statusList);
         		}
         		
@@ -434,7 +477,7 @@ public class ViewBSCPanelAction extends GeneralStrutsAction {
 	}
 	
 	
-	private int getStrategyStatus(Vector statusList){
+	private int getStrategyStatus(Vector<TransferObject> statusList){
 		int response = 0;
 		
 		if (statusList!=null) {
@@ -502,7 +545,10 @@ public class ViewBSCPanelAction extends GeneralStrutsAction {
 	        
 	        } else if (val!=null && dataType.equals(ReportTO.CURRENCY_DATA_TYPE)) {
 	            response = response + action.formatCurrencyValue(val, ReportTO.KPI_DEFAULT_LOCALE, currencyLoc);
-	            
+
+	        } else if (val!=null && dataType.equals(ReportTO.PERCENTUAL_DATA_TYPE)) {
+	        	float f = StringUtil.getStringToFloat(val, ReportTO.KPI_DEFAULT_LOCALE);
+	        	response = response + StringUtil.getFloatToString(f, loc) + "%";	            
 	        } else {
 	        	response = "&nbsp;";
 	        }
@@ -511,7 +557,7 @@ public class ViewBSCPanelAction extends GeneralStrutsAction {
 		return response;
 	}
 	
-	private void refreshGadgets(HttpServletRequest request, ViewBSCPanelForm frm) throws BusinessException {
+	private void refreshGadgets(HttpServletRequest request, HttpServletResponse response, ViewBSCPanelForm frm) throws BusinessException {
 	    StringBuffer content =  new StringBuffer("");
 	    ResourceHomeAction resHome = new ResourceHomeAction();
 	    
@@ -519,7 +565,7 @@ public class ViewBSCPanelAction extends GeneralStrutsAction {
 		Gadget gad = GadgetBUS.getGadgetClass("com.pandora.bus.gadget.KpiChartGadget");
 
 		int gadWidth = 485;
-		content.append(gad.gadgetToHtml(request, gadWidth, 115, loadingLabel));
+		content.append(gad.gadgetToHtml(request, response, gadWidth, 115, loadingLabel));
 		frm.setGadgetHtmlBody("<td width=\"" + gadWidth + "\" valign=\"top\" align=\"center\">" + content.toString() + "</td>");
 		
 		if (gad.getFieldsId()!=null && gad.getFieldsId().size()>0) {

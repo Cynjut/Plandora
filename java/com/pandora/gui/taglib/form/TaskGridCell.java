@@ -3,6 +3,7 @@ package com.pandora.gui.taglib.form;
 import java.sql.Timestamp;
 import java.util.Calendar;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Locale;
 
 import javax.servlet.jsp.JspWriter;
@@ -11,6 +12,7 @@ import javax.servlet.jsp.tagext.TagSupport;
 import org.apache.struts.Globals;
 import org.apache.struts.util.RequestUtils;
 
+import com.pandora.ResourceDateAllocTO;
 import com.pandora.ResourceTaskAllocTO;
 import com.pandora.UserTO;
 import com.pandora.delegate.UserDelegate;
@@ -29,7 +31,7 @@ public class TaskGridCell extends TagSupport {
     
     private String property;    
     
-    private String isTop;
+    private String line;
     
     
     
@@ -46,34 +48,34 @@ public class TaskGridCell extends TagSupport {
                 String hourLabel = RequestUtils.message(pageContext, null, Globals.LOCALE_KEY, "label.hour", null);
                 UserTO uto = (UserTO)pageContext.getSession().getAttribute(UserDelegate.CURRENT_USER_SESSION);
                 
-            	boolean top = isTop.equalsIgnoreCase("TRUE");
+            	boolean isDisable = line.equalsIgnoreCase("1") || line.equalsIgnoreCase("3");
             	int slotIndex = Integer.parseInt(slot) - 1;
-        		String value = this.getValueForSlot(frm, slotIndex, top, uto);
+        		String value = this.getValueForSlot(frm, slotIndex, uto);
         		
-        		if (this.isTodaySlot(frm, slotIndex) && !top) {
+        		if (this.isTodaySlot(frm, slotIndex) && !isDisable) {
         			buff = "<td class=\"tableCellHeaderHighlight\">";	
-        		} else if (this.isWeekEndSlot(frm, slotIndex, top)) {
+        		} else if (this.isWeekEndSlot(frm, slotIndex, isDisable)) {
         			buff = "<td class=\"tableCellHeader\">";	
         		} else {
         			buff = "<td class=\"formBody\">";
         		}
         		
         		String styleClass = "";
-        		boolean alloc = this.isAllocatedSlot(frm, slotIndex, top, value);
-        		if (alloc && top) {
+        		boolean alloc = this.isAllocatedSlot(frm, slotIndex, isDisable, value);
+        		if (alloc && isDisable) {
         			styleClass = "textBoxDisabledAlloc";
-        		} else if (!alloc && top) {
+        		} else if (!alloc && isDisable) {
         			styleClass = "textBoxDisabled";
-        		} else if (alloc && !top) {
+        		} else if (alloc && !isDisable) {
         			styleClass = "textBoxAlloc";
         		} else {
         			styleClass = "textBox";
         		}
         		
-                buff = buff + "\n" + HtmlUtil.getTextBox(this.property, value, top, null, 5, 2, "text", styleClass);
+                buff = buff + "\n" + HtmlUtil.getTextBox(this.property, value, isDisable, null, 5, 2, "text", styleClass);
                 buff = buff + "&nbsp;" + hourLabel + "\n";
                 
-                if (top) {
+                if (isDisable) {
                 	buff = buff + "<input type=\"hidden\" name=\"" + this.property + "\" value=\"" + value + "\">\n";	
                 }
                 buff = buff + "</td>\n";
@@ -92,7 +94,7 @@ public class TaskGridCell extends TagSupport {
 	private boolean isAllocatedSlot(ResTaskForm frm, int slotIndex, boolean isTop, String value){
 	    boolean isAllocated = false;
 		if (value!=null && !value.trim().equals("0") && 
-				!value.trim().equals("-") && !value.trim().equals("")) {
+				!value.trim().equals("-") && !value.trim().equals("") && !line.equals("3")) {
 			isAllocated = true;
 		}
 	    return isAllocated;	    
@@ -146,43 +148,55 @@ public class TaskGridCell extends TagSupport {
     /**
      * Return the correct value to be displayed into Allocation time grid
      */
-	private String getValueForSlot(ResTaskForm frm, int slotIndex, boolean isTopPosition, UserTO uto){
+	private String getValueForSlot(ResTaskForm frm, int slotIndex, UserTO uto){
 	    String response = "";
+	    Locale loc =  uto.getLocale();
+	    String mask = uto.getCalendarMask();
 	    Timestamp currDate = null;
-	    
-	    HashMap allocation = new HashMap();
-	    if (isTopPosition) {
-	    	allocation = frm.getEstimAllocList();
+	    if (frm.getActualDate()!=null) {
+	        currDate = DateUtil.getDateTime(frm.getActualDate(), mask, loc);    
 	    } else {
-	    	allocation = frm.getAllocationList();
+	        currDate = DateUtil.getDateTime(frm.getEstimDate(), mask, loc);
 	    }
 	    
-	    if (allocation!=null) {
-	    	Locale loc =  uto.getLocale();
-	    	String mask = uto.getCalendarMask();
-	    	
-		    if (frm.getActualDate()!=null) {
-		        currDate = DateUtil.getDateTime(frm.getActualDate(), mask, loc);    
-		    } else {
-		        currDate = DateUtil.getDateTime(frm.getEstimDate(), mask, loc);
+        currDate = DateUtil.getChangedDate(currDate, Calendar.DATE, slotIndex + (frm.getAllocCursor()-1));
+	    
+	    if(line.equals("3")){
+	    	Iterator<ResourceDateAllocTO> itDateAllocList = frm.getDateAllocTimeList().iterator();
+	    	while(itDateAllocList.hasNext()){
+	    		ResourceDateAllocTO rdato = itDateAllocList.next();
+	    		if(rdato.getDate().equals(currDate)){
+	    			if (!frm.isDecimalInput()) {
+	            		response = rdato.getAllocTimeInTimeFormat(loc);
+	            	} else {
+	            		response = rdato.getAllocTimeInHours(loc);
+	            	}
+	    			break;
+	    		}
+	    	}
+	    }else{
+		    HashMap<String, ResourceTaskAllocTO> allocation = new HashMap<String, ResourceTaskAllocTO>();
+		    if (line.equals("1")) {
+		    	allocation = frm.getEstimAllocList();
+		    } else  if (line.equals("2")){
+		    	allocation = frm.getAllocationList();
 		    }
 		    
-	        currDate = DateUtil.getChangedDate(currDate, Calendar.DATE, slotIndex + (frm.getAllocCursor()-1));
-	        
-            String key = DateUtil.getDate(currDate, mask, loc);
-            ResourceTaskAllocTO rtato = (ResourceTaskAllocTO)allocation.get(key);
-            if (rtato!=null && rtato.getAllocTime()!=null) {
-            	if (!frm.isDecimalInput()) {
-            		response = rtato.getAllocTimeInTimeFormat(loc);
-            	} else {
-            		response = rtato.getAllocTimeInHours(loc);
-            	}
-                    
-            } else {
-                response = "0";
-            }
+		    if (allocation!=null) {
+	            String key = DateUtil.getDate(currDate, mask, loc);
+	            ResourceTaskAllocTO rtato = (ResourceTaskAllocTO)allocation.get(key);
+	            if (rtato!=null && rtato.getAllocTime()!=null) {
+	            	if (!frm.isDecimalInput()) {
+	            		response = rtato.getAllocTimeInTimeFormat(loc);
+	            	} else {
+	            		response = rtato.getAllocTimeInHours(loc);
+	            	}
+	                    
+	            } else {
+	                response = "0";
+	            }
+		    }
 	    }
-
 	    return response;
 	}
 
@@ -214,14 +228,14 @@ public class TaskGridCell extends TagSupport {
 	}
 
 
-    ///////////////////////////////////////////////   	
-	public String getIsTop() {
-		return isTop;
+	///////////////////////////////////////////////   	
+	public String getLine() {
+		return line;
 	}
-	public void setIsTop(String newValue) {
-		this.isTop = newValue;
+	public void setLine(String line) {
+		this.line = line;
 	}
-        
-	
+
+
 	
 }

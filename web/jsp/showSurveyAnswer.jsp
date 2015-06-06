@@ -16,7 +16,7 @@
 		</tr>
 		<tr><td>&nbsp</td>
 			<td class="formBody" valign="top">
-				<center><bean:write name="showSurveyForm" property="questionContent" /></center>
+				<center><bean:write name="showSurveyForm" property="questionContent" filter="false"/></center>
 			</td>
 			<td>&nbsp</td>
 		</tr>

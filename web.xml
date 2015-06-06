@@ -1,15 +1,15 @@
-<?xml version="1.0" encoding="ISO-8859-1"?>
+<?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE web-app PUBLIC "-//Sun Microsystems, Inc.//DTD Web Application 2.2//EN" "lib/web-app_2_2.dtd">
 
 <web-app>
-	<display-name>pandora</display-name>
+	<display-name>Plandora</display-name>
     <session-config>
     	<session-timeout>360</session-timeout>    <!-- in minutes -->
 	</session-config>
 
 	<!-- Main servlet of Struts -->
 	<servlet>
-  		<servlet-name>pandora</servlet-name>
+  		<servlet-name>main</servlet-name>
   		<servlet-class>com.pandora.gui.struts.action.GeneralStruts</servlet-class>
   		<init-param>
     		<param-name>config</param-name>
@@ -21,8 +21,9 @@
   		</init-param>
   		<load-on-startup>1</load-on-startup>
   	</servlet>
+
 	<servlet-mapping> 
-		<servlet-name>pandora</servlet-name>
+		<servlet-name>main</servlet-name>
 		<url-pattern>/do/*</url-pattern>
 	</servlet-mapping>
 
@@ -34,13 +35,114 @@
 			<param-name>timer</param-name>
 			<param-value>ON</param-value>  		
   		</init-param>
+
+		<!-- If the parameter below is defined, means that connection will be created from Tomcat connection pooling.
+			In this case, the context.xml of Tomcat must be appropriately defined and the database library must be
+			placed at TOMCAT lib folder (for example, mysql-connector-java-xxxx-bin.jar or hsqldb.jar, etc).
+			For example: jdbc/plandora 
+			-->  		
   		<init-param>
 			<param-name>data_source</param-name>
 			<param-value>jdbc/plandora</param-value>  		
-  		</init-param>  		  		  		
+  		</init-param>
+
+		<!-- If the parameters below is defined (and the previous parameter 'data_source' is empty), means that connection 
+		     will be created directly by PLANDORA using the JDBC definitions. In this case, check if the database library is 
+		     placed at Plandora lib folder (for example, mysql-connector-java-xxxx-bin.jar or hsqldb.jar, etc) --> 
+  		<init-param>
+			<param-name>jdbc_driver</param-name>
+			<param-value>com.mysql.jdbc.Driver</param-value>  		
+  		</init-param>
+  		<init-param>
+			<param-name>jdbc_host</param-name>
+			<param-value>jdbc:mysql://localhost:3306/plandora</param-value>  		
+  		</init-param>
+  		<init-param>
+			<param-name>jdbc_user</param-name>
+			<param-value>root</param-value>  		
+  		</init-param>
+  		<init-param>
+			<param-name>jdbc_pass</param-name>
+			<param-value></param-value>  		
+  		</init-param>
+  		
+  		<init-param>
+			<param-name>sys_protocol</param-name>
+			<param-value>http</param-value>  		
+  		</init-param>
+  		
+  		<init-param>
+			<param-name>default_encoding</param-name>
+			<param-value>UTF-8</param-value>  		
+  		</init-param>  		  		  		  		  		  		  		
+  		  		  		  		  		  		  		  		
   		<load-on-startup>2</load-on-startup>
   	</servlet>	
+ 
+	<!-- this servlet is used to expose public link for file downloads (only public attachments). -->
+	<servlet>
+  		<servlet-name>file</servlet-name>
+  		<servlet-class>com.pandora.gui.struts.action.PublicFileDownload</servlet-class>
+  		<init-param>
+			<param-name>enable</param-name>
+			<param-value>ON</param-value>  		
+  		</init-param>  		  		  		  		
+  		<load-on-startup>3</load-on-startup>
+  	</servlet>  	
+
+	<servlet-mapping> 
+		<servlet-name>file</servlet-name>
+		<url-pattern>/file/*</url-pattern>
+	</servlet-mapping>
 	
+
+	<!-- this servlet is used to expose public link for artifact downloads (only public artifacts). -->
+	<servlet>
+  		<servlet-name>artifact</servlet-name>
+  		<servlet-class>com.pandora.gui.struts.action.PublicArtifactDownload</servlet-class>
+  		<init-param>
+			<param-name>enable</param-name>
+			<param-value>ON</param-value>  		
+  		</init-param>  		  		  		  		
+  		<load-on-startup>4</load-on-startup>
+  	</servlet>  	
+
+	<servlet-mapping> 
+		<servlet-name>artifact</servlet-name>
+		<url-pattern>/artifact/*</url-pattern>
+	</servlet-mapping>
+	
+	
+	<!-- this servlet is used to expose public link to RSS and icalendar content. -->
+	<servlet>
+  		<servlet-name>edi</servlet-name>
+  		<servlet-class>com.pandora.gui.struts.action.EdiDownload</servlet-class>
+  		<init-param>
+			<param-name>enable</param-name>
+			<param-value>ON</param-value>  		
+  		</init-param>  		  		  		  		
+  		<load-on-startup>5</load-on-startup>
+  	</servlet>  	
+
+	<servlet-mapping> 
+		<servlet-name>edi</servlet-name>
+		<url-pattern>/edi/*</url-pattern>
+	</servlet-mapping>	
+	
+<!-- 	
+	<filter>
+	   <filter-name>SetCharacterEncoding</filter-name>
+	   <filter-class>filters.SetCharacterEncodingFilter</filter-class>
+			 <init-param>
+			 <param-name>encoding</param-name>
+			 <param-value>UTF-8</param-value>
+			 </init-param>
+	</filter>	
+	<filter-mapping>
+			<filter-name>SetCharacterEncoding</filter-name>
+			<url-pattern>/*</url-pattern>
+	</filter-mapping>	
+ -->	
 	<taglib>
   		<taglib-uri>/WEB-INF/lib/struts-bean</taglib-uri>
   		<taglib-location>/WEB-INF/lib/struts-bean.tld</taglib-location>

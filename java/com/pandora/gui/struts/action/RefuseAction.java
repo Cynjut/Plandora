@@ -119,12 +119,12 @@ public class RefuseAction extends GeneralStrutsAction {
             	        
             TaskTO tto = tdel.getTaskObject(new TaskTO(rfrm.getRefusedId()));
             if (tto.getRequirementId()!=null) {
-                Vector list = tdel.getTaskListByRequirement(tto.getRequirement(), tto.getProject(), false);
+                Vector<TaskTO> list = tdel.getTaskListByRequirement(tto.getRequirement(), tto.getProject(), false);
                 response = tto.getRequirementId();
                 
-                Iterator i = list.iterator();
+                Iterator<TaskTO> i = list.iterator();
                 while(i.hasNext()) {
-                	TaskTO t = (TaskTO)i.next();
+                	TaskTO t = i.next();
                 	if (!t.getId().equals(tto.getId())) {
                 		response = null;
                 		break;

@@ -21,10 +21,9 @@ public class RiskHistoryDAO extends DataAccess {
 		try {
 		    RiskHistoryTO hto = (RiskHistoryTO)to;
 		    
-			pstmt = c.prepareStatement("insert into risk_history (risk_id, risk_status_id, " +
-									   "creation_date, user_id, history, " +
-									   "probability, impact, tendency, impact_cost, impact_time, " +
-									   "impact_quality, impact_scope, risk_type) values (?,?,?,?,?,?,?,?,?,?,?,?,?)");
+			pstmt = c.prepareStatement("insert into risk_history (risk_id, risk_status_id, creation_date, user_id, history, probability, impact, tendency, impact_cost, " +
+									   "impact_time, impact_quality, impact_scope, risk_type, name,	description, responsible, category_id, strategy, contingency, risk_status_label) " +
+									   "values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
 			pstmt.setString(1, hto.getRiskId());
 			pstmt.setString(2, hto.getRiskStatusId());
 			pstmt.setTimestamp(3, hto.getCreationDate());
@@ -42,6 +41,13 @@ public class RiskHistoryDAO extends DataAccess {
 			} else {
 				pstmt.setNull(13, Types.INTEGER);
 			}
+			pstmt.setString(14, hto.getName());
+			pstmt.setString(15, hto.getDescription());
+			pstmt.setString(16, hto.getResponsible());
+			pstmt.setString(17, hto.getCategoryId());
+			pstmt.setString(18, hto.getStrategy());
+			pstmt.setString(19, hto.getContingency());
+			pstmt.setString(20, hto.getRiskStatusLabel());
 			pstmt.executeUpdate();
 												
 		} catch (SQLException e) {
@@ -74,9 +80,11 @@ public class RiskHistoryDAO extends DataAccess {
 		
 		try {
 		    String sql = "select rh.risk_id, rh.risk_status_id, rh.creation_date, rh.user_id, " +
-		    				    "rh.history, u.name as USER_NAME, rs.name as STATUS_NAME, rs.status_type, " +
+		    				    "rh.history, u.name as NAME_OF_USER, u.username as USER_NAME, rs.name as STATUS_NAME, rs.status_type, " +
 		    				    "rh.probability, rh.impact, rh.tendency, rh.impact_cost, rh.impact_time, " +
-							    "rh.impact_quality, rh.impact_scope, rh.risk_type " +
+							    "rh.impact_quality, rh.impact_scope, rh.risk_type, " +
+							    "rh.name, rh.description, rh.responsible, rh.category_id, rh.strategy, " +
+							    "rh.contingency " +
 		    		     "from risk_history rh, tool_user u, risk_status rs " +
 		    			 "where u.id = rh.user_id and rh.risk_status_id = rs.id " +
 		    			   "and rh.risk_id = ? " +
@@ -97,6 +105,30 @@ public class RiskHistoryDAO extends DataAccess {
 		return response;
     }
 
+    public String getLastCommentByRisk(String riskId, Connection c) throws DataAccessException{
+        String response = "";
+		ResultSet rs = null;
+		PreparedStatement pstmt = null;
+		
+		try {
+		    String sql = "select history, max(creation_date) from risk_history " +
+		    			 "where risk_id = ? group by history";
+			pstmt = c.prepareStatement(sql);
+			pstmt.setString(1, riskId);
+			rs = pstmt.executeQuery();						
+			if (rs.next()){
+			    response = getString(rs, "history");		        
+			} 
+						
+		} catch (SQLException e) {
+			throw new DataAccessException(e);
+		}finally{
+			super.closeStatement(rs, pstmt);
+		}	 
+		return response;
+    }
+    
+    
     
     protected RiskHistoryTO populateByResultSet(ResultSet rs) throws DataAccessException{
         RiskHistoryTO response = new RiskHistoryTO();
@@ -132,8 +164,16 @@ public class RiskHistoryDAO extends DataAccess {
         }
         
         UserTO uto = new UserTO(getString(rs, "user_id"));
-        uto.setName(getString(rs, "USER_NAME"));
+        uto.setUsername(getString(rs, "USER_NAME"));
+        uto.setName(getString(rs, "NAME_OF_USER"));
         response.setUser(uto);
+        
+        response.setName(getString(rs, "name"));
+        response.setDescription(getString(rs, "description"));
+        response.setResponsible(getString(rs, "responsible"));
+        response.setCategoryId(getString(rs, "category_id"));
+        response.setStrategy(getString(rs, "strategy"));
+        response.setContingency(getString(rs, "contingency"));
         
         return response;
     }

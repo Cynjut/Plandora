@@ -18,7 +18,7 @@ public class RequirementStatusDelegate extends GeneralDelegate {
     /* (non-Javadoc)
      * @see com.pandora.bus.RequirementStatusBUS.getRequirementStatusList()
      */    
-    public Vector getRequirementStatusList() throws BusinessException{
+    public Vector<RequirementStatusTO> getRequirementStatusList() throws BusinessException{
         return bus.getRequirementStatusList();
     }
 
@@ -26,5 +26,10 @@ public class RequirementStatusDelegate extends GeneralDelegate {
 	public RequirementStatusTO getObjectByStateMachine(Integer state) throws BusinessException{
 		return bus.getObjectByStateMachine(state);
 	}
-    
+
+	
+	public RequirementStatusTO getObjectById(String statusId) throws BusinessException{
+		return bus.getObjectById(statusId);
+	}
+	
 }

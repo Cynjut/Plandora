@@ -4,12 +4,14 @@ import java.sql.Timestamp;
 import java.util.Iterator;
 import java.util.Vector;
 
+import com.pandora.CategoryTO;
 import com.pandora.FieldValueTO;
 import com.pandora.OccurrenceTO;
 import com.pandora.ProjectTO;
 import com.pandora.RequirementTO;
 import com.pandora.TransferObject;
 import com.pandora.bus.occurrence.IterationOccurrence;
+import com.pandora.delegate.CategoryDelegate;
 import com.pandora.delegate.OccurrenceDelegate;
 import com.pandora.delegate.ProjectDelegate;
 import com.pandora.delegate.RequirementDelegate;
@@ -18,7 +20,8 @@ import com.pandora.helper.DateUtil;
 
 public final class IterationBurndownChartGadget extends ChartGadget {
 	
-	public static final String ITERATION_BURNDOWN_PROJECT = "PROJECT";
+	public static final String ITERATION_BURNDOWN_PROJECT  = "PROJECT";
+	public static final String ITERATION_BURNDOWN_CATEGORY = "CATEGORY";
 
     private float[][] valBar = null;
     private float[][] valLine = null;
@@ -48,29 +51,42 @@ public final class IterationBurndownChartGadget extends ChartGadget {
     public Vector<TransferObject> getFieldsId(){
     	Vector<TransferObject> response = new Vector<TransferObject>();
        	response.add(new TransferObject(ITERATION_BURNDOWN_PROJECT, "-1"));
+       	response.add(new TransferObject(ITERATION_BURNDOWN_CATEGORY, "-1"));
         return response;
     }
 	
+	@Override
     public Vector getFields(){
-    	Vector response = new Vector();
+		return getFields(null);
+    }
+	
+	@Override
+	public Vector<FieldValueTO> getFields(Vector<TransferObject> currentValues) {
+		Vector<FieldValueTO> response = new Vector<FieldValueTO>();
+    	ProjectDelegate pdel = new ProjectDelegate();
+    	CategoryDelegate cdel = new CategoryDelegate();
 
     	try {
-        	ProjectDelegate pdel = new ProjectDelegate();
-        	Vector buff = pdel.getProjectListByUser(super.handler);
+        	Vector<ProjectTO> buff = pdel.getProjectListByUser(super.handler);
         	
-        	Vector projList = new Vector();
+        	Vector<TransferObject> projList = new Vector<TransferObject>();
         	TransferObject defaultOpt = new TransferObject("-1", "label.combo.select");
         	projList.addElement(defaultOpt);
-        	
         	if (buff!=null) {
-            	Iterator i = buff.iterator();
-            	while(i.hasNext()) {
-            		ProjectTO pto = (ProjectTO)i.next();
-            		TransferObject to = new TransferObject(pto.getId(), pto.getName());
-            		projList.add(to);
-            	}    		
+        		projList.addAll(buff);
         	}
         	response.add(new FieldValueTO(ITERATION_BURNDOWN_PROJECT, "label.manageOption.gadget.burndown.project", projList));
+
+        	
+        	Vector<TransferObject> projCategory = new Vector<TransferObject>();
+        	TransferObject defcat = new TransferObject("-1", "label.all2");
+        	projCategory.addElement(defcat);
+        	
+        	ProjectTO pto = new ProjectTO(super.getSelected(ITERATION_BURNDOWN_PROJECT, currentValues));
+        	Vector<CategoryTO> catlist = cdel.getCategoryListByType(CategoryTO.TYPE_REQUIREMENT, pto, false);
+        	projCategory.addAll(catlist);
+        	
+        	response.add(new FieldValueTO(ITERATION_BURNDOWN_CATEGORY, "label.manageOption.gadget.burndown.category", projCategory));
 
     	} catch(Exception e){
     		e.printStackTrace();
@@ -85,9 +101,13 @@ public final class IterationBurndownChartGadget extends ChartGadget {
     }
 
     public int getPropertyPanelHeight(){
-    	return 140;
+    	return 160;
     }
     
+	@Override
+	public boolean canReloadFields() {
+		return true;
+	}	    
    
 	public String generate(Vector selectedFields)  throws BusinessException {		
 	    String response = null;
@@ -99,8 +119,9 @@ public final class IterationBurndownChartGadget extends ChartGadget {
         try {
             ProjectTO pto = pdel.getProjectObject(new ProjectTO(super.getSelected(ITERATION_BURNDOWN_PROJECT, selectedFields)), true);
             if (pto!=null) {
+            	String categoryId = super.getSelected(ITERATION_BURNDOWN_CATEGORY, selectedFields);            	
                 
-                Vector allReqs = rdel.getThinListByProject(pto);
+                Vector<RequirementTO> allReqs = rdel.getThinListByProject(pto, categoryId);
                 if (allReqs!=null) {
                     int remainingReqs = allReqs.size();
                     int createdReqs = 0;
@@ -199,11 +220,11 @@ public final class IterationBurndownChartGadget extends ChartGadget {
         Timestamp cursor = null;
         int gap = 1000000; //contain the small difference (in days) between two iterations
         
-        Vector list = odel.getIterationListByProject(pto.getId(), true);
+        Vector<OccurrenceTO> list = odel.getIterationListByProject(pto.getId(), true);
         if (list!=null) {
-            Iterator i = list.iterator();
+            Iterator<OccurrenceTO> i = list.iterator();
             while(i.hasNext()) {
-                OccurrenceTO oto = (OccurrenceTO)i.next();
+                OccurrenceTO oto = i.next();
                 
         		//check if iteration deadline exists and make sure that must be considered only iterations non-aborted and already started                
     			if (oto.getStatus()!=null && !oto.getStatus().equals(IterationOccurrence.STATE_FINAL_1) && !oto.getStatus().equals(IterationOccurrence.STATE_START)) {

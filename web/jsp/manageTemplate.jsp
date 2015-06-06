@@ -23,7 +23,7 @@
 	<br>
 
 	<table width="100%" border="0" cellspacing="0" cellpadding="0">
-	<tr><td width="10">&nbsp;</td><td colspan="3">
+	<tr><td width="10">&nbsp;</td><td>
 	
 	<display:headerfootergrid width="100%" type="HEADER">
 		<bean:message key="title.manageTemplate"/>
@@ -32,17 +32,17 @@
 	<table width="98%" border="0" cellspacing="0" cellpadding="0">
     <tr class="gapFormBody">
       <td width="10">&nbsp;</td>
-      <td width="70">&nbsp; </td>
-      <td width="100">&nbsp;</td>
-      <td width="100">&nbsp;</td>
+      <td width="100">&nbsp; </td>
       <td>&nbsp;</td>
+	  <td width="100">&nbsp; </td>	  
+	  <td>&nbsp;</td>
       <td width="10">&nbsp;</td>
     </tr>
     <tr class="pagingFormBody">
       <td>&nbsp;</td>
       <td class="formTitle"><bean:message key="label.manageTemplate.name"/>:&nbsp;</td>
-      <td colspan="3" class="formBody">
-        <html:text name="templateForm" property="name" styleClass="textBox" size="50" maxlength="70"/>
+      <td class="formBody" colspan="3">
+        <html:text name="templateForm" property="name" styleClass="textBox" size="70" maxlength="70"/>
       </td>
       <td>&nbsp;</td>
     </tr>
@@ -51,13 +51,13 @@
       <td class="formTitle"><bean:message key="label.manageTemplate.enable"/>:&nbsp;</td>
       <td class="formBody">
 			<html:select name="templateForm" property="enable" styleClass="textBox">
-				<html:options collection="enableList" property="id" labelProperty="genericTag"/>
+				<html:options collection="enableList" property="id" labelProperty="genericTag" filter="false"/>
 			</html:select>
       </td>
       <td class="formTitle"><bean:message key="label.manageTemplate.category"/>:&nbsp;</td>
       <td class="formBody">
 			<html:select name="templateForm" property="category" styleClass="textBox">
-				<html:options collection="categoryList" property="id" labelProperty="name"/>
+				<html:options collection="categoryList" property="id" labelProperty="name" filter="false"/>
 			</html:select>
       </td>
       <td>&nbsp;</td>
@@ -71,7 +71,7 @@
 		<table width="98%" border="0" cellspacing="0" cellpadding="0"><tr>
 		  <td width="120">
 			  <html:button property="save" styleClass="button" onclick="javascript:buttonClick('templateForm', 'saveTemplate');">
-				<bean:write name="templateForm" property="saveLabel" />
+				<bean:write name="templateForm" property="saveLabel" filter="false"/>
 			  </html:button>    
 		  </td>
 		  <td width="120">
@@ -90,7 +90,37 @@
 	
 	<div>&nbsp;</div>
 		
-  </td><td width="10">&nbsp;</td></tr>
+  </td><td width="10">&nbsp;</td>
+  
+		<td width="400" rowspan="2" valign="top" >
+		  
+			<!-- DIAGRAM-->
+			<display:headerfootergrid width="100%" type="HEADER">
+				<bean:message key="title.manageTemplate.diagram"/>
+			</display:headerfootergrid>
+			
+			<table width="90%" border="0" cellspacing="0" cellpadding="0">
+			<tr class="pagingFormBody">
+			  <td class="formBody">
+					<div id="workFlowDiagramDiv" style="width:385px; height:370px; overflow: scroll;">
+						<img border="0" id="workFlowDiagram" src="../do/manageTemplate?operation=renderImage&bgcolor=EFEFEF" usemap="#workFlowDiagramMap" />
+					</div>
+					<map name="workFlowDiagramMap">
+						<bean:write name="templateForm" property="htmlMap" filter="false"/>
+					</map>
+			  </td>
+			</tr>
+			</table>
+
+			<display:headerfootergrid type="FOOTER">
+				<table width="90%" border="0" cellspacing="0" cellpadding="0"><tr>
+				  <td>&nbsp;</td>
+				</tr></table>
+			</display:headerfootergrid>   
+			
+		  </td>  
+		  <td width="10" rowspan="2" >&nbsp;</td>
+  </tr>
   
    	
   <tr><td width="10">&nbsp;</td><td height="300" valign="top">
@@ -131,7 +161,7 @@
 	      <td class="formTitle"><bean:message key="label.formApplyTaskTemplate.project"/>:&nbsp;</td>
 	      <td class="formBody">
 		  	<html:select name="templateForm" property="nodeRelatedProjectId" styleClass="textBox">
-				<html:options collection="projectList" property="id" labelProperty="name"/>
+				<html:options collection="projectList" property="id" labelProperty="name" filter="false"/>
 			</html:select>
 	      </td>
 	      <td>&nbsp;</td>
@@ -141,7 +171,7 @@
 	      <td class="formTitle"><bean:message key="label.manageTemplate.nextNode"/>:&nbsp;</td>
 	      <td class="formBody">
 		  	<html:select name="templateForm" property="nodeNextNodeId" styleClass="textBox">
-				<html:options collection="templateNodeList" property="id" labelProperty="genericTag"/>
+				<html:options collection="templateNodeList" property="id" labelProperty="genericTag" filter="false"/>
 			</html:select>
 	      </td>
 	      <td>&nbsp;</td>
@@ -169,7 +199,7 @@
 	      <td width="150" class="formTitle"><bean:message key="label.formApplyTaskTemplate.category"/>:&nbsp;</td>
 	      <td class="formBody">
 	      	<html:select name="templateForm" property="stepCategory" styleClass="textBox">
-				<html:options collection="taskCategoryList" property="id" labelProperty="name"/>
+				<html:options collection="taskCategoryList" property="id" labelProperty="name" filter="false"/>
 			</html:select>
 	      </td>
 	      <td>&nbsp;</td>
@@ -193,7 +223,7 @@
 	      <td class="formTitle"><bean:message key="label.manageTemplate.nextNodeIfFalse"/>:&nbsp;</td>
 	      <td class="formBody">
 		  	<html:select name="templateForm" property="decisionIfFalseNextNodeId" styleClass="textBox">
-				<html:options collection="templateNodeList" property="id" labelProperty="genericTag"/>
+				<html:options collection="templateNodeList" property="id" labelProperty="genericTag" filter="false"/>
 			</html:select>	        
 	      </td>
 	      <td>&nbsp;</td>
@@ -244,37 +274,6 @@
 		</tr></table>
 	</display:headerfootergrid>   
   
-  </td><td width="10">&nbsp;</td> <td width="400" height="300">
-  
-  
-  	<!-- DIAGRAM-->
-	<display:headerfootergrid width="100%" type="HEADER">
-		<bean:message key="title.manageTemplate.diagram"/>
-	</display:headerfootergrid>
-	
-  	<table width="90%" border="0" cellspacing="0" cellpadding="0">
-    <tr class="pagingFormBody">
-      <td class="formBody">
-			<div id="workFlowDiagramDiv" style="width:385px; height:250px; overflow: scroll;">
-				<img border="0" id="workFlowDiagram" src="../do/manageTemplate?operation=renderImage&bgcolor=EFEFEF" usemap="#workFlowDiagramMap" />
-			</div>
-			<map name="workFlowDiagramMap">
-				<bean:write name="templateForm" property="htmlMap" filter="false"/>
-			</map>
-      </td>
-    </tr>
-    </table>
-
-	<display:headerfootergrid type="FOOTER">
-		<table width="90%" border="0" cellspacing="0" cellpadding="0"><tr>
-		  <td><center>
-			  <html:button property="reset" styleClass="button" onclick="centralizeDiagram();">
-				<bean:message key="title.formApplyTaskTemplate.centralize"/>
-			  </html:button>    
-		  </center></td>
-		</tr></table>
-	</display:headerfootergrid>   
-	
   </td><td width="10">&nbsp;</td></tr>
   
 
@@ -289,13 +288,13 @@
 	<table width="98%" border="0" cellspacing="0" cellpadding="0">
 	<tr class="formBody">
 		<td>
-			<display:table border="1" width="100%" name="templateList" scope="session" pagesize="10" requestURI="../do/manageTemplate?operation=navigate">
-				  <display:column sort="true" likeSearching="true" property="name" title="label.manageTemplate.name" />			
-				  <display:column width="15%" sort="true" property="finalDate" title="label.manageTemplate.disabled" />
-				  <display:column width="15%" sort="true" property="category.name" title="label.manageTemplate.category" />
-				  <display:column width="2%" property="id" title="grid.title.empty" decorator="com.pandora.gui.taglib.decorator.GridEditDecorator" tag="'templateForm', 'editTemplate'" />
-				  <display:column width="2%" property="id" title="grid.title.empty" decorator="com.pandora.gui.taglib.decorator.GridDeleteDecorator" tag="'templateForm', 'removeTemplate'" />
-			</display:table>		
+			<plandora-html:ptable width="100%" name="templateList" pagesize="10" frm="templateForm">
+				  <plandora-html:pcolumn sort="true" likeSearching="true" property="name" title="label.manageTemplate.name" />			
+				  <plandora-html:pcolumn width="15%" sort="true" property="finalDate" title="label.manageTemplate.disabled" />
+				  <plandora-html:pcolumn width="15%" sort="true" property="category.name" title="label.manageTemplate.category" />
+				  <plandora-html:pcolumn width="2%" property="id" title="grid.title.empty" decorator="com.pandora.gui.taglib.decorator.GridEditDecorator" tag="'templateForm', 'editTemplate'" />
+				  <plandora-html:pcolumn width="2%" property="id" title="grid.title.empty" decorator="com.pandora.gui.taglib.decorator.GridDeleteDecorator" tag="'templateForm', 'removeTemplate'" />
+			</plandora-html:ptable>		
 		</td>
 	</tr> 
 	</table>
@@ -326,5 +325,4 @@
 	with(document.forms["templateForm"]){	
 		name.focus();
 	}
-	setTimeout('centralizeDiagram()', 500);
 </script>

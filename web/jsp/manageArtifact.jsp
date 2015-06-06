@@ -6,6 +6,7 @@
 
 <jsp:include page="header.jsp" />
 
+<script language="JavaScript" src="../jscript/flowchartsnip.js" type="text/JavaScript"></script>
 <script language="JavaScript" src="../jscript/tiny_mce/tiny_mce.js" type="text/JavaScript"></script>
 <script language="javascript">
 	
@@ -15,8 +16,10 @@
 		mode : "textareas",
 		language : <bean:write name="artifactForm" property="lang" filter="false"/>,
 		theme : "advanced",
-		plugins : "fullscreen,style,wordcount,table,advlist",
+		plugins : "fullscreen,style,wordcount,table,advlist,contextmenu",
 		execcommand_callback : "callBackAfterSnipSelect",
+
+		<bean:write name="artifactForm" property="snipHtmlOption" filter="false"/>
 
 		// Theme options
 		theme_advanced_buttons1 : "bold,italic,underline,strikethrough,|,justifyleft,justifycenter,justifyright,justifyfull,formatselect,fontselect,fontsizeselect,snipselect",
@@ -58,11 +61,7 @@
 
 	function callBackAfterSnipSelect(editor_id, elm, command, user_interface, value) {
 		if (command=="SnipSelected" && value!="") {
-			var w = 450;
-			var h = 350;
-			<bean:write name="artifactForm" property="snipHtmlDimension" filter="false"/>
-			displayMessage("../do/showSnipArtifact?operation=prepareForm&snip=" + value, w, h);					
-			return true;
+			<bean:write name="artifactForm" property="htmlAfterSnipSelect" filter="false"/>
 		}
 		return false;
 	}
@@ -74,7 +73,35 @@
 
 	function callPlanningEditForm(){
 		<bean:write name="artifactForm" property="backToCaller" filter="false"/>
-	}	
+	}
+
+	function callChangesForm(){
+		<bean:write name="artifactForm" property="hmtlShowChanges" filter="false"/>
+	}
+
+	function callAttachment(){
+		var plid = "";
+		with(document.forms["artifactForm"]){	
+			if (id.value=="" ) {
+				plid = projectId.value;	
+			} else {
+				plid = id.value;
+			}
+		}
+		displayMessage("../do/manageAttachment?operation=prepareForm&planningId=" + plid + "&source=ART", 600, 385);		
+	}
+	
+	function goToForwardPage(){
+	  	buttonClick("artifactForm", "navigate");  
+	}
+
+	function showRepository(){
+		with(document.forms["artifactForm"]){
+			window.location = "../do/showRepositoryViewer?operation=prepareForm&projectId=" + projectId.value;	
+		}
+	}
+	
+		
 </script>
 
     
@@ -98,7 +125,7 @@
 	<tr><td width="10">&nbsp;</td><td>
 	
 	<display:headerfootergrid width="100%" type="HEADER">
-		<bean:write name="artifactForm" property="name" />
+		<bean:write name="artifactForm" property="name" filter="false"/>
 	</display:headerfootergrid>
 		
 	<table width="98%" height="70%" border="0" cellspacing="0" cellpadding="0">
@@ -113,7 +140,7 @@
 		<div>
 			<div>
 				<textarea id="body" name="body" rows="25" cols="80" style="width: 100%">
-					<bean:write name="artifactForm" property="body"/>
+					<bean:write name="artifactForm" property="body" filter="false"/>
 				</textarea>
 			</div>
 		</div>
@@ -131,7 +158,7 @@
 		<table width="98%" border="0" cellspacing="0" cellpadding="0"><tr>
 		  <td width="120">
 			  <html:button property="save" styleClass="button" onclick="javascript:buttonClick('artifactForm', 'saveAsArtifact');">
-				<bean:write name="artifactForm" property="saveLabel" />
+				<bean:write name="artifactForm" property="saveLabel" filter="false"/>
 			  </html:button>    
 		  </td>
 		  <td>&nbsp;</td>
@@ -142,12 +169,32 @@
 				  </html:button>    
 			  </td>	  
 		  </logic:present>
-		  
-		  <td width="120">
+
+		  <td width="100"><center>
+			  <html:button property="repostree" styleClass="button" onclick="javascript:showRepository();">
+				<bean:message key="title.formRepository"/>
+			  </html:button>    
+		  </center></td>		  
+
+		  <td width="100"><center>
+			  <html:button property="callAtch" styleClass="button" onclick="javascript:callAttachment();">
+				<bean:message key="label.artifactTag.attach"/>
+			  </html:button>    
+		  </center></td>		  
+
+		  <logic:present name="artifactForm" property="hmtlShowChanges">
+			  <td width="140"><center>
+				  <html:button property="chgsBt" styleClass="button" onclick="javascript:callChangesForm();">
+					<bean:message key="label.artifactTag.changes"/>
+				  </html:button>    
+			  </center></td>		  
+		  </logic:present>
+
+		  <td width="120"><center>
 			  <html:button property="backward" styleClass="button" onclick="javascript:buttonClick('artifactForm', 'backward');">
 				<bean:message key="button.backward"/>
 			  </html:button>    
-		  </td>
+		  </center></td>
 		</tr></table>
   	</display:headerfootergrid>   
   

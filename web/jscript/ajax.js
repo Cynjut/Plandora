@@ -3,7 +3,7 @@ var action = "";
 var method = "";  
 var conteudoRequisicao = "";  
 
-// Creates a new instante of HttpRequest.  
+// Creates a new instance of HttpRequest.  
 function ajaxInit() {  
 	try {  
 		objRequest = new ActiveXObject("Microsoft.XMLHTTP");  
@@ -12,7 +12,8 @@ function ajaxInit() {
       		objRequest = new ActiveXObject("Msxml2.XMLHTTP");  
 		} catch(ex) {  
       		try {  
-				objRequest = new XMLHttpRequest();  
+				objRequest = new XMLHttpRequest(); 
+				objRequest.overrideMimeType("text/html; charset=ISO-8859-1");
 			} catch(exc) {  
 		       	alert("The browser cannot handler the Ajax resources.");  
        			objRequest = false;  
@@ -39,6 +40,7 @@ function getDataForm(myForm) {
     }  
 }  
    
+
 // Process the request to Server through the form struts
 function ajaxProcess(myForm, fuctionProcess, argId) {
 	if(!objRequest){
@@ -74,14 +76,31 @@ function ajaxProcessUrl(url, fuctionProcess, argId) {
 		objRequest.send(null);  
 	}  
 }  
+
+// send a synchronous request to server using GET format
+function synchRequest(url) {
+	var response = "";
+	if(!objRequest){
+		ajaxInit();
+	}
+
+	if(objRequest){  
+       	objRequest.open("get", url, true);  
+       	objRequest.send(null);
+       	response = objRequest.responseText;
+	}  
+    
+    return response;
+}
+
    
 // Checks if the HttpRequest object contain a valid response.  
 function isAjax() {  
 	if(objRequest.readyState == 4){  
 		if(objRequest.status == 200){  
 			return true;  
-		} else {  
-			alert("Error: "+objRequest.statusText);  
+		//} else {  
+		//	alert("Error: "+objRequest.statusText);  
 		}  
 	}  
     return false;  

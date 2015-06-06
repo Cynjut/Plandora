@@ -36,12 +36,13 @@
 	   			operation.value = "refreshCategory";
 	   			prjId = reqProjectId.value;
 	   		}
-			ajaxProcess(document.forms["agilePanelReqForm"], callBackRefreshProject, prjId);		
+		    var ajaxRequestObj = ajaxSyncInit();         
+			ajaxSyncProcess(document.forms["agilePanelReqForm"], callBackRefreshProject, prjId, true, ajaxRequestObj);		
 		}
 		
 					
-		function callBackRefreshProject(prjId) {
-		    if(isAjax()){
+		function callBackRefreshProject(prjId, dummy, objRequest) {			
+			if(isSyncAjax(objRequest)){
 		       	document.getElementById("ajaxResponse").innerHTML = ""; //hide ajax icon
 				var content = objRequest.responseText;
 			   	(document.getElementById("project_category")).innerHTML = content;  
@@ -82,7 +83,7 @@
 		      <td width="100" class="formTitle"><bean:message key="label.requestProject"/>:&nbsp;</td>		      
 		      <td>
 		  		<html:select name="agilePanelReqForm" property="reqProjectId" styleClass="textBox" onkeypress="javascript:refreshProject();" onchange="javascript:refreshProject();">
-					<html:options collection="projectList" property="id" labelProperty="name" />
+					<html:options collection="projectList" property="id" labelProperty="name" filter="false"/>
 				</html:select>
 		      </td>
 		      <td>&nbsp;</td>
@@ -96,7 +97,7 @@
 		      <td class="formTitle"><bean:message key="label.requestPriority"/>:&nbsp;</td>		      
 		      <td>
 		  		<html:select name="agilePanelReqForm" property="priority" styleClass="textBox">
-					<html:options collection="priorityList" property="id" labelProperty="genericTag"/>
+					<html:options collection="priorityList" property="id" labelProperty="genericTag" filter="false"/>
 				</html:select>
 		      </td>
 		      <td>&nbsp;</td>

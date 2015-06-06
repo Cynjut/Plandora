@@ -21,13 +21,13 @@
 <html:hidden name="viewBSCForm" property="operation"/>
 <html:hidden name="viewBSCForm" property="projectId"/>
 
-<br>
+<plandora-html:shortcut name="viewBSCForm" property="goToBscForm" fieldList="projectId"/>
 
 <table width="100%" height="80%" border="0" cellspacing="0" cellpadding="0">
 <tr><td width="10">&nbsp;</td><td>
 
 	<display:headerfootergrid width="100%" type="HEADER">
-		<bean:message key="title.viewBSC"/> <bean:write name="viewBSCForm" property="projectName" />
+		<bean:message key="title.viewBSC"/> <bean:write name="viewBSCForm" property="projectName" filter="false"/>
 	</display:headerfootergrid>
     
 	<table width="98%" border="0" cellspacing="0" cellpadding="0">
@@ -52,7 +52,7 @@
         <td class="formTitle"><bean:message key="label.viewBSC.category"/>:&nbsp;</td>
 		<td>
 	  		<html:select name="viewBSCForm" property="categoryId" styleClass="textBox">
-	             <html:options collection="categoryList" property="id" labelProperty="name"/>
+	             <html:options collection="categoryList" property="id" labelProperty="name" filter="false"/>
 			</html:select>		
 		</td>
 		<td>&nbsp;</td>	

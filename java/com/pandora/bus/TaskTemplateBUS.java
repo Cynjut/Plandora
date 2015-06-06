@@ -15,17 +15,17 @@ public class TaskTemplateBUS extends GeneralBusiness {
     TaskTemplateDAO dao = new TaskTemplateDAO();
 
     
-	public Vector getTemplateListByProject(String projectId, boolean onCascade) throws BusinessException {
-        Vector response = new Vector();
+	public Vector<TemplateTO> getTemplateListByProject(String projectId, boolean onCascade) throws BusinessException {
+        Vector<TemplateTO> response = new Vector<TemplateTO>();
         ProjectBUS pbus = new ProjectBUS();
         try {
         	
         	if (onCascade) {
-                Vector childs = pbus.getProjectListByParent(new ProjectTO(projectId), true);
-                Iterator i = childs.iterator();
+                Vector<ProjectTO> childs = pbus.getProjectListByParent(new ProjectTO(projectId), true);
+                Iterator<ProjectTO> i = childs.iterator();
                 while(i.hasNext()){
-                    ProjectTO childProj = (ProjectTO)i.next();
-                    Vector rskOfChild = this.getTemplateListByProject(childProj.getId(), true);
+                    ProjectTO childProj = i.next();
+                    Vector<TemplateTO> rskOfChild = this.getTemplateListByProject(childProj.getId(), true);
                     response.addAll(rskOfChild);
                 }        		
         	}

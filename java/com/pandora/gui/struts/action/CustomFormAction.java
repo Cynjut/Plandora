@@ -13,6 +13,7 @@ import org.apache.struts.action.ActionForward;
 import org.apache.struts.action.ActionMapping;
 
 import com.pandora.AdditionalFieldTO;
+import com.pandora.AdditionalTableTO;
 import com.pandora.CustomFormTO;
 import com.pandora.MetaFieldTO;
 import com.pandora.MetaFormTO;
@@ -22,6 +23,7 @@ import com.pandora.bus.PreferenceBUS;
 import com.pandora.delegate.MetaFieldDelegate;
 import com.pandora.delegate.MetaFormDelegate;
 import com.pandora.exception.BusinessException;
+import com.pandora.exception.MetaFieldNumericTypeException;
 import com.pandora.gui.struts.form.CustomFormForm;
 import com.pandora.helper.DateUtil;
 import com.pandora.helper.SessionUtil;
@@ -36,7 +38,9 @@ public class CustomFormAction extends GeneralStrutsAction {
 		    this.loadPreferences(form, request);
 		    
 			request.getSession().setAttribute("customList", new Vector<CustomFormTO>());
-			request.getSession().setAttribute("metaFormFieldList", new Vector<MetaFieldTO>());
+			
+			//Important: the session key below must be metaFieldList because it uses a shared action of GeneralStrutsAction (see method metaTableAddRow)
+			request.getSession().setAttribute("metaFieldList", new Vector<MetaFieldTO>());
 
 		    this.refresh(mapping, form, request, response);    		    
 		    this.clear(mapping, form, request, response);
@@ -63,13 +67,14 @@ public class CustomFormAction extends GeneralStrutsAction {
 		frm.setSaveMethod(CustomFormForm.INSERT_METHOD, SessionUtil.getCurrentUser(request));
 		frm.setAfterSuccessfullySave("off");
 		
-	    Vector<MetaFieldTO> fieldList = (Vector<MetaFieldTO>)request.getSession().getAttribute("metaFormFieldList");
+	    Vector<MetaFieldTO> fieldList = (Vector<MetaFieldTO>)request.getSession().getAttribute("metaFieldList");
 	    Iterator<MetaFieldTO> i = fieldList.iterator();
 	    while(i.hasNext()) {
 	    	MetaFieldTO mto = i.next();
 	    	AdditionalFieldTO afto = frm.getAdditionalField(mto.getId());
 	    	if (afto!=null){
-	    		afto.setValue("");	
+	    		afto.setValue("");
+	    		afto.setTableValues(new Vector<AdditionalTableTO>());
 	    	}
 	    }
 		
@@ -109,25 +114,39 @@ public class CustomFormAction extends GeneralStrutsAction {
 			MetaFormDelegate del = new MetaFormDelegate();
 		    CustomFormTO to = this.getTransferObjectFromActionForm(frm, request);
 			
-			if (frm.getSaveMethod().equals(CustomFormForm.INSERT_METHOD)){
-			    errorMsg = "error.generic.insertFormError";
-			    del.insertRecord(to);
-			} else {
-			    errorMsg = "error.generic.updateFormError";
-			    del.updateRecord(to);
-			}
-		
-			//this.clear(mapping, form, request, response );				
-			this.setSuccessFormSession(request, succeMsg);				
-
-			frm.setAfterSuccessfullySave("on");
-			
-		    //set the current user connected
-			UserTO uto = SessionUtil.getCurrentUser(request);			
-		    frm.setSaveMethod(CustomFormForm.INSERT_METHOD, uto);
+		    boolean validvalues = true;
+		    Iterator<AdditionalFieldTO> itafto = to.getAdditionalFields().iterator();
+		    while(itafto.hasNext()){
+		    	AdditionalFieldTO afto = itafto.next();
+		    	if(afto.getMetaField().isMandatory() && (afto.getValue() == null || afto.getValue().equals("")) ) {
+		    		this.setErrorFormSession(request, "error.generic.invalidValue", afto.getMetaField().getName(), "", "", "", "", new Exception());
+		    		validvalues = false;
+		    	}
+		    }
 		    
-		    this.refresh(mapping, form, request, response);
+		    if(validvalues) {
+				if (frm.getSaveMethod().equals(CustomFormForm.INSERT_METHOD)){
+				    errorMsg = "error.generic.insertFormError";
+				    del.insertRecord(to);
+				} else {
+				    errorMsg = "error.generic.updateFormError";
+				    del.updateRecord(to);
+				}
+			
+				//this.clear(mapping, form, request, response );				
+				this.setSuccessFormSession(request, succeMsg);				
+	
+				frm.setAfterSuccessfullySave("on");
+				
+			    //set the current user connected
+				UserTO uto = SessionUtil.getCurrentUser(request);			
+			    frm.setSaveMethod(CustomFormForm.INSERT_METHOD, uto);
+			    
+			    this.refresh(mapping, form, request, response);
 		        			
+		    }
+		} catch(MetaFieldNumericTypeException e){
+			this.setErrorFormSession(request, e.getMessage(), e.getMetaFieldName(), null, null, null, null, e);
 		} catch(Exception e){
 		    this.setErrorFormSession(request, errorMsg, e);		    
 		}	    
@@ -145,6 +164,8 @@ public class CustomFormAction extends GeneralStrutsAction {
 			this.setSuccessFormSession(request, "message.success");
 			this.refresh(mapping, form, request, response);
 			
+		} catch(MetaFieldNumericTypeException e){
+			this.setErrorFormSession(request, e.getMessage(), e.getMetaFieldName(), null, null, null, null, e);
 		} catch(Exception e){
 			this.setErrorFormSession(request, "error.generic.removeFormError", e);    
 		}	    		
@@ -168,7 +189,7 @@ public class CustomFormAction extends GeneralStrutsAction {
 			    frm.setJsBeforeSave(metaForm.getJsBeforeSave());
 			    
 			    Vector<MetaFieldTO> list = del.getFieldByMetaForm(frm.getMetaFormId());
-			    request.getSession().setAttribute("metaFormFieldList", list);
+			    request.getSession().setAttribute("metaFieldList", list);
 			    
 			    int days = frm.getDaysToHide();
 			    Timestamp iniRange = DateUtil.getChangedDate(DateUtil.getNow(), Calendar.DATE, -days);
@@ -209,18 +230,18 @@ public class CustomFormAction extends GeneralStrutsAction {
 	    	AdditionalFieldTO afto = i.next();
 	    	fieldList.add(afto.getMetaField());
 	    }
-		request.getSession().setAttribute("metaFormFieldList", fieldList);	    
+		request.getSession().setAttribute("metaFieldList", fieldList);	    
 	}
     
 	@SuppressWarnings("unchecked")
-	private CustomFormTO getTransferObjectFromActionForm(CustomFormForm frm, HttpServletRequest request){
+	private CustomFormTO getTransferObjectFromActionForm(CustomFormForm frm, HttpServletRequest request) throws MetaFieldNumericTypeException{
 		CustomFormTO cto = new CustomFormTO();
         cto.setId(frm.getId());
         cto.setMetaForm(new MetaFormTO(frm.getMetaFormId()));
 	    cto.setDescription(null);
 	    cto.setCreationDate(DateUtil.getNow());
 
-	    Vector<MetaFieldTO> metaFieldList = (Vector<MetaFieldTO>)request.getSession().getAttribute("metaFormFieldList");
+	    Vector<MetaFieldTO> metaFieldList = (Vector<MetaFieldTO>)request.getSession().getAttribute("metaFieldList");
 		super.setMetaFieldValuesFromForm(metaFieldList, request, cto);
 		if (metaFieldList!=null) {
 		    frm.setAdditionalFields(cto.getAdditionalFields());

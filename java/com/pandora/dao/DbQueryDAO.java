@@ -12,6 +12,7 @@ import java.util.ArrayList;
 import java.util.Vector;
 
 import com.pandora.DBQueryParam;
+import com.pandora.DBQueryResult;
 import com.pandora.exception.DataAccessException;
 import com.pandora.helper.LogUtil;
 
@@ -24,8 +25,8 @@ public class DbQueryDAO extends DataAccess {
     /**
      * Perform statement into data base
      */
-    public  Vector<Vector<Object>> performQuery(String sql, int[] types, Vector<Object> params) throws DataAccessException{
-    	 Vector<Vector<Object>> response = null;
+    public  DBQueryResult performQuery(String sql, int[] types, Vector<Object> params) throws DataAccessException{
+    	DBQueryResult response = null;
         Connection c = null;
 		try {
 			c = this.getConnectionBasedToSql(sql);
@@ -100,7 +101,7 @@ public class DbQueryDAO extends DataAccess {
         return response;
     }
         
-	public Vector executeQuery(ArrayList sql, ArrayList params) throws DataAccessException {
+	public Vector executeQuery(ArrayList<String> sql, ArrayList<DBQueryParam> params) throws DataAccessException {
         Vector response = null;
         Connection c = null;
 		try {
@@ -162,11 +163,10 @@ public class DbQueryDAO extends DataAccess {
     /**
      * Perform statement into data base
      */
-    private Vector<Vector<Object>> performQuery(String sql, int[] types, Vector<Object> params, Connection c) throws DataAccessException{
-		Vector<Vector<Object>> response = new Vector<Vector<Object>>();
-		Vector<Object> colNames = new Vector<Object>();
+    private DBQueryResult performQuery(String sql, int[] types, Vector<Object> params, Connection c) throws DataAccessException{
+    	DBQueryResult response = new DBQueryResult();
 		ResultSet rs = null;
-		PreparedStatement pstmt = null; 
+		PreparedStatement pstmt = null;
 		try {
 
 			pstmt = c.prepareStatement(sql);			
@@ -181,7 +181,7 @@ public class DbQueryDAO extends DataAccess {
 			    ResultSetMetaData meta = rs.getMetaData();
 			    int size = meta.getColumnCount();
 			    for (int i=1; i<=size ;i++){
-			        String colName = meta.getColumnName(i);
+			        String colName = meta.getColumnLabel(i);
 				    Object colValue = "NULL";
 				    try {
 				    	if (meta.getColumnType(i)==Types.TIMESTAMP) {
@@ -203,14 +203,11 @@ public class DbQueryDAO extends DataAccess {
 				    
 				    //for the first line, get the columns names...
 				    if (response.size()==0){
-				        colNames.addElement(colName);
+				        response.addColumn(colName);				        
 				    }
 			    }
 			    
-			    if (response.size()==0){
-			        response.addElement(colNames);
-			    }
-			    response.addElement(line);
+			    response.add(line);
 			} 
 			
 		} catch (SQLException e) {
@@ -299,7 +296,7 @@ public class DbQueryDAO extends DataAccess {
 		return getConnectionBasedToSql(sql, true);
 	}
 	
-	private Connection getConnectionBasedToSql(String sql, boolean isAutoCommit) throws Exception{
+	public Connection getConnectionBasedToSql(String sql, boolean isAutoCommit) throws Exception{
 		Connection response = null;
 		
 		if (sql.startsWith("[") && sql.indexOf("]", 2)>-1) {
@@ -320,7 +317,7 @@ public class DbQueryDAO extends DataAccess {
 	}
 	
 	
-	private String removeConnStringFromSql(String sql) {
+	public String removeConnStringFromSql(String sql) {
 		String response = sql;
 		if (sql.startsWith("[") && sql.indexOf("]", 2)>-1) {
 			int end = sql.indexOf("]");

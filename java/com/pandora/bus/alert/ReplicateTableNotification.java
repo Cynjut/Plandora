@@ -2,11 +2,12 @@ package com.pandora.bus.alert;
 
 import java.sql.Connection;
 import java.sql.Date;
+import java.sql.PreparedStatement;
 import java.sql.Timestamp;
 import java.util.Vector;
 
-import java.sql.PreparedStatement;
 import com.pandora.FieldValueTO;
+import com.pandora.NotificationFieldTO;
 import com.pandora.TransferObject;
 import com.pandora.delegate.DbQueryDelegate;
 
@@ -26,7 +27,7 @@ public class ReplicateTableNotification extends Notification {
 	private String debug = "NOK";
 	
 	@Override
-	public boolean sendNotification(Vector fields, Vector sqlData) throws Exception {
+	public boolean sendNotification(Vector<NotificationFieldTO> fields, Vector<Vector<Object>> sqlData) throws Exception {
     	DbQueryDelegate dbQuery = new DbQueryDelegate();
     	boolean response = true;
 
@@ -42,7 +43,7 @@ public class ReplicateTableNotification extends Notification {
 			String destTable = this.getParamByKey(REPLI_DEST_TABLE, fields);
 			String insertSql = this.getParamByKey(REPLI_INSERT_SQL, fields);
 			String sql = this.getParamByKey(REPLI_SQL, fields);
-			Vector sourceData = dbQuery.performQuery(sql);
+			Vector<Vector<Object>> sourceData = dbQuery.performQuery(sql);
 			if (sourceData!=null && destTable!=null && insertSql!=null && sourceData.size()>0) {
 				
 				if (this.debug.equals("OK")) {
@@ -66,7 +67,7 @@ public class ReplicateTableNotification extends Notification {
 				}
 				
 				for (int j=1; j<sourceData.size(); j++) {
-					Vector item = (Vector)sourceData.elementAt(j);
+					Vector<Object> item = sourceData.elementAt(j);
 					pstmt = (PreparedStatement) c.prepareStatement(insertSql);
 					
 					for (int k=0; k<item.size(); k++) {
@@ -116,8 +117,8 @@ public class ReplicateTableNotification extends Notification {
     /* (non-Javadoc)
      * @see com.pandora.bus.alert.Notification#getFields()
      */        
-    public Vector getFields(){
-        Vector response = new Vector();
+    public Vector<FieldValueTO> getFields(){
+        Vector<FieldValueTO> response = new Vector<FieldValueTO>();
 
         response.add(new FieldValueTO(REPLI_DEST_DRIVER, "notification.replicate.driver", FieldValueTO.FIELD_TYPE_TEXT, 100, 50));
         response.add(new FieldValueTO(REPLI_DEST_URL, "notification.replicate.url", FieldValueTO.FIELD_TYPE_TEXT, 100, 50));
@@ -128,7 +129,7 @@ public class ReplicateTableNotification extends Notification {
         response.add(new FieldValueTO(REPLI_INSERT_SQL, "notification.replicate.insertSql", FieldValueTO.FIELD_TYPE_AREA, 85, 4));
         response.add(new FieldValueTO(REPLI_DEST_TABLE, "notification.replicate.table", FieldValueTO.FIELD_TYPE_TEXT, 30, 20));
 
-        Vector boolList = new Vector();
+        Vector<TransferObject> boolList = new Vector<TransferObject>();
         boolList.add(new TransferObject("OK", "OK"));
         boolList.add(new TransferObject("NOK", "NOK"));
         response.add(new FieldValueTO(REPLI_DEL_FIRST, "notification.replicate.removeFirst", boolList));
@@ -154,7 +155,7 @@ public class ReplicateTableNotification extends Notification {
     }
     
     
-	public Connection getConnection(boolean isAutoCommit, Vector fields) throws Exception{
+	public Connection getConnection(boolean isAutoCommit, Vector<NotificationFieldTO> fields) throws Exception{
 		Connection con = null;
 
 		try {
@@ -162,6 +163,11 @@ public class ReplicateTableNotification extends Notification {
 	    	String url = this.getParamByKey(REPLI_DEST_URL, fields);
 	    	String user = this.getParamByKey(REPLI_DEST_USER, fields);
 	    	String pass = this.getParamByKey(REPLI_DEST_PASS, fields);
+	    	
+	    	//the workaround below make the BD access with no password because the GUI no allowed empty fields.
+	    	if (pass!=null && pass.equals("!")) {
+	    		pass = null;
+	    	}
 
 		    Class.forName(driver);
 		    con = java.sql.DriverManager.getConnection(url, user, pass);
@@ -184,7 +190,7 @@ public class ReplicateTableNotification extends Notification {
     /* (non-Javadoc)
      * @see com.pandora.bus.alert.Notification#getFieldTypes()
      */    
-    public Vector getFieldTypes() {
+    public Vector<String> getFieldTypes() {
         return null;
     }
 
@@ -192,7 +198,7 @@ public class ReplicateTableNotification extends Notification {
     /* (non-Javadoc)
      * @see com.pandora.bus.alert.Notification#getFieldKeys()
      */    
-    public Vector getFieldKeys() {
+    public Vector<String> getFieldKeys() {
         return null;
     }
 
@@ -200,7 +206,7 @@ public class ReplicateTableNotification extends Notification {
     /* (non-Javadoc)
      * @see com.pandora.bus.alert.Notification#getFieldLabels()
      */
-    public Vector getFieldLabels() {
+    public Vector<String> getFieldLabels() {
         return null;
     }
 	

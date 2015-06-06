@@ -39,8 +39,8 @@ public class TaskTemplateDAO extends PlanningDAO {
 		return response;
     }
 	
-    public Vector getListByProject(String projectId) throws DataAccessException { 
-        Vector response = null;
+    public Vector<TemplateTO> getListByProject(String projectId) throws DataAccessException { 
+        Vector<TemplateTO> response = null;
         Connection c = null;
 		try {
 			c = getConnection();
@@ -69,8 +69,8 @@ public class TaskTemplateDAO extends PlanningDAO {
     }
 
     
-    public Vector getListByProject(String projectId, Connection c) throws DataAccessException {
-		Vector response= new Vector();
+    public Vector<TemplateTO> getListByProject(String projectId, Connection c) throws DataAccessException {
+		Vector<TemplateTO> response= new Vector<TemplateTO>();
 		ResultSet rs = null;
 		PreparedStatement pstmt = null; 
 		try {

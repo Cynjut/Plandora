@@ -10,21 +10,27 @@ import java.util.Calendar;
 import java.util.Iterator;
 import java.util.Vector;
 
+import com.pandora.LeaderTO;
+import com.pandora.PreferenceTO;
+import com.pandora.ProjectTO;
 import com.pandora.ResourceCapacityTO;
 import com.pandora.ResourceTO;
 import com.pandora.TransferObject;
+import com.pandora.UserTO;
+import com.pandora.bus.UserBUS;
+import com.pandora.exception.BusinessException;
 import com.pandora.exception.DataAccessException;
 import com.pandora.helper.DateUtil;
 
 public class ResourceCapacityDAO extends DataAccess {
 
 	
-    public Vector<ResourceCapacityTO> getListByResourceProject(String resourceId, String projectId) throws DataAccessException {
+    public Vector<ResourceCapacityTO> getListByResourceProject(String resourceId, String projectId, UserTO leader) throws DataAccessException {
         Vector<ResourceCapacityTO> response = null;
         Connection c = null;
 		try {
 			c = getConnection();
-			response = this.getListByResourceProject(resourceId, projectId, c);
+			response = this.getListByResourceProject(resourceId, projectId, leader, c);
 		} catch(Exception e) {
 			throw new DataAccessException(e);
 		} finally {
@@ -118,43 +124,54 @@ public class ResourceCapacityDAO extends DataAccess {
     
     /**
      * NOTE: the 'order by' criteria of this method is mandatory, because it is used by
-     * ResourceCapacityChart and CostAction algorithm  
+     * CostAction algorithm  
      */
-    public Vector<ResourceCapacityTO> getListByResourceProject(String resourceId, String projectId, Connection c)  throws DataAccessException {
+    public Vector<ResourceCapacityTO> getListByResourceProject(String resourceId, String projectId, UserTO leader, Connection c)  throws DataAccessException {
     	Vector<ResourceCapacityTO> response = new Vector<ResourceCapacityTO>();
 		ResultSet rs = null;
 		PreparedStatement pstmt = null;
 		String whereClause = "";
-		
+		boolean selectIn = false;
 		try {
-			
+
 			if (projectId!=null) {
-				whereClause = " and project_id=? ";
+				if (projectId.trim().equals("-1")) {
+					whereClause = getProjectIn(leader);
+					selectIn = true;
+				}else {
+					whereClause = " and rc.project_id=? ";
+				}		
 			}
+			
 			if (resourceId!=null) {
-				whereClause = whereClause + " and resource_id=? and project_id in (select id from planning where final_date is null) ";
+				whereClause = whereClause + " and rc.resource_id=? ";
+				//whereClause = whereClause + "and rc.project_id in (select id from planning where final_date is null) ";	
 			}
 			
-			pstmt = c.prepareStatement("select resource_id, project_id, cap_year, cap_month, " +
-									   "cap_day, capacity, cost_per_hour from resource_capacity " +
-									   "where cap_year is not null " + whereClause + 
-									   "order by project_id, cap_year asc, cap_month asc, cap_day asc");
-			
-			
-			if (projectId!=null && resourceId==null) {
-				pstmt.setString(1, projectId);	
-			}
-			if (resourceId!=null && projectId==null) {
-				pstmt.setString(1, resourceId);	
-			}
-			if (resourceId!=null && projectId!=null) {
-				pstmt.setString(1, projectId);
-				pstmt.setString(2, resourceId);	
+			pstmt = c.prepareStatement("select rc.resource_id, rc.project_id, rc.cap_year, rc.cap_month, " +
+									   "rc.cap_day, rc.capacity, rc.cost_per_hour, p.name as PROJECT_NAME, tu.username as RESOURCE_USERNAME " +
+									   "from resource_capacity rc, project p, tool_user tu " +
+									   "where rc.cap_year is not null and rc.project_id = p.id and rc.resource_id = tu.id " + whereClause + 
+									   "order by rc.project_id, rc.cap_year asc, rc.cap_month asc, rc.cap_day asc");
+			if (!selectIn) {
+				if (projectId!=null && resourceId==null) {
+					pstmt.setString(1, projectId);	
+				}
+				if (resourceId!=null && projectId==null) {
+					pstmt.setString(1, resourceId);	
+				}
+				if (resourceId!=null && projectId!=null) {
+					pstmt.setString(1, projectId);
+					pstmt.setString(2, resourceId);	
+				}				
 			}
 			
 			rs = pstmt.executeQuery();
 			while (rs.next()){
-			    response.add(this.populateObjectByResultSet(rs));
+				ResourceCapacityTO rcto = this.populateObjectByResultSet(rs);
+				rcto.setProjectName(getString(rs, "PROJECT_NAME"));
+				rcto.setResourceUserName(getString(rs, "RESOURCE_USERNAME"));
+			    response.add(rcto);
 			}
 						
 		} catch (SQLException e) {
@@ -164,6 +181,26 @@ public class ResourceCapacityDAO extends DataAccess {
 		}	 
 		return response;
     }
+
+
+	private String getProjectIn(UserTO leader) throws DataAccessException {
+		ProjectDAO pdeao = new ProjectDAO();
+		String whereClause = "";
+		if (leader!=null && leader instanceof LeaderTO) {
+		    Vector<ProjectTO> prjlist = pdeao.getProjectListForManagement((LeaderTO)leader, true);
+			Iterator<ProjectTO> j = prjlist.iterator();
+			while(j.hasNext()) {
+				ProjectTO to = j.next();
+				if (whereClause.equals("")) {
+					whereClause = " and project_id in ('" + to.getId()+ "'";		
+				} else {
+					whereClause = whereClause + ", '" + to.getId()+ "'";
+				}
+			}
+			whereClause = whereClause + ") ";
+		}
+		return whereClause;
+	}
     
     private ResourceCapacityTO getMoreRecentObjectByResourceProject(ResourceTO rto, Connection c) throws DataAccessException{
     	ResourceCapacityTO response = null;
@@ -306,10 +343,22 @@ public class ResourceCapacityDAO extends DataAccess {
     }
 
 	private ResourceCapacityTO getNewObject(ResourceTO rto, Timestamp projectIni){
+		UserBUS ubus = new UserBUS();
 		ResourceCapacityTO rcto = new ResourceCapacityTO(rto);
+		
+		//define the default capacity based to the root preferences...
+		try {
+			UserTO root = ubus.getRoot();
+			String defCapacityMinutesStr = root.getPreference().getPreference(PreferenceTO.GENERAL_DEFAULT_CAPACITY);
+			rcto.setCapacity(new Integer(defCapacityMinutesStr));
+		} catch (BusinessException e) {
+			e.printStackTrace();
+		} 
+		
 		rcto.setYear(new Integer(DateUtil.get(projectIni, Calendar.YEAR)));
 		rcto.setMonth(new Integer(DateUtil.get(projectIni, Calendar.MONTH)+1));
 		rcto.setDay(new Integer(DateUtil.get(projectIni, Calendar.DATE)));
+		
 		return rcto;
 	}
 

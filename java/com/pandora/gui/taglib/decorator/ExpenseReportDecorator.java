@@ -18,7 +18,7 @@ public class ExpenseReportDecorator extends ColumnDecorator {
 			image += "<img border=\"0\" " + HtmlUtil.getHint(altValue) + " src=\"../images/report.gif\" >";
 			image += "</a>";
 		} else if (getObject() instanceof CostTO) {
-			UserTO uto = (UserTO)this.getPageContext().getSession().getAttribute(UserDelegate.CURRENT_USER_SESSION);
+			UserTO uto = (UserTO)this.getSession().getAttribute(UserDelegate.CURRENT_USER_SESSION);
 			CostTO cto = (CostTO)getObject();
 			image = getExpenseLink(cto, uto);
 		}

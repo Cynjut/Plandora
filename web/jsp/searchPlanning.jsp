@@ -1,6 +1,7 @@
 <jsp:include page="encoding.jsp" />
 <%@ taglib uri="/WEB-INF/lib/struts-html" prefix="html" %>
 <%@ taglib uri="/WEB-INF/lib/struts-bean" prefix="bean" %>
+<%@ taglib uri="/WEB-INF/lib/plandora-html" prefix="plandora-html" %>
 <%@ taglib uri="/WEB-INF/lib/display" prefix="display" %>
 <%@ taglib uri="/WEB-INF/lib/struts-logic" prefix="logic" %>
 
@@ -20,6 +21,7 @@
 	<body bgColor="#ffffff" leftMargin="0" topMargin="0" marginheight="0" marginwidth="0" >
 
 	<jsp:include page="validator.jsp" />
+    <script language="JavaScript" src="../jscript/ajaxsync.js" type="text/JavaScript"></script>	
 	<script language="JavaScript" src="../jscript/default.js" type=text/JavaScript></script>
 	<script language="JavaScript">
 
@@ -99,14 +101,14 @@
 		      <td class="formBody">
 				<html:select name="searchPlanningForm" property="customerId" styleClass="textBox">
 					<option value=""><bean:message key="label.all"/></option>		
-					<html:options collection="customerList" property="id" labelProperty="name"/>
+					<html:options collection="customerList" property="id" labelProperty="name" filter="false"/>
 				</html:select>
 		      </td>
 		      <td class="formTitle"><bean:message key="label.requestStatus"/>:&nbsp;</td>
 		      <td class="formBody">
 				<html:select name="searchPlanningForm" property="reqStatus" styleClass="textBox">
 					<option value="-1"><bean:message key="label.searchRequirement.allExceptFinishing"/></option>
-					<html:options collection="reqStatusList" property="id" labelProperty="name"/>
+					<html:options collection="reqStatusList" property="id" labelProperty="name" filter="false"/>
 				</html:select>
 		      </td>      		            
 	  </logic:equal>
@@ -143,18 +145,18 @@
 	<table width="98%" border="0" cellspacing="0" cellpadding="0">
 	<tr class="formBody">
 		<td>
-			<display:table border="1" width="100%" name="requirementList" scope="session" pagesize="5">
-				  <display:column width="2%" property="id" align="center" title="grid.title.empty" decorator="com.pandora.gui.taglib.decorator.RadioGridDecorator" />
-				  <display:column width="5%" property="id" title="grid.title.empty" />			
-				  <display:column property="description" maxWords="18" title="label.requestDesc" />
+			<plandora-html:ptable width="100%" name="searchPlanningList" pagesize="10" scope="session" frm="searchPlanningForm">		
+				  <plandora-html:pcolumn width="2%" property="id" align="center" title="grid.title.empty" decorator="com.pandora.gui.taglib.decorator.RadioGridDecorator" />
+				  <plandora-html:pcolumn width="5%" property="id" title="grid.title.empty" />			
+				  <plandora-html:pcolumn property="description" maxWords="18" title="label.requestDesc" />
 				  <logic:equal name="searchPlanningForm" property="type" value="REQ">
-				     <display:column width="15%" property="suggestedDate" align="center" title="label.requestSuggestedDate" decorator="com.pandora.gui.taglib.decorator.GridDateDecorator" tag="2;0" />
-				     <display:column width="7%" property="requester.username" align="center" title="label.requester" />
+				     <plandora-html:pcolumn width="15%" property="suggestedDate" align="center" title="label.requestSuggestedDate" decorator="com.pandora.gui.taglib.decorator.GridDateDecorator" tag="2;0" />
+				     <plandora-html:pcolumn width="7%" property="requester.username" align="center" title="label.requester" />
 				  </logic:equal>
 				  <logic:equal name="searchPlanningForm" property="type" value="ALL">
-				  	<display:column width="15%" property="type" align="center" title="grid.title.empty" decorator="com.pandora.gui.taglib.decorator.GridPlanningTypeDecorator" />
+				  	<plandora-html:pcolumn width="15%" property="type" align="center" title="grid.title.empty" decorator="com.pandora.gui.taglib.decorator.GridPlanningTypeDecorator" />
 				  </logic:equal>
-			</display:table>		
+			</plandora-html:ptable>		
 		</td>
 	</tr> 
 	</table>

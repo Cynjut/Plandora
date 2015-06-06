@@ -12,7 +12,7 @@ public class CancelTaskDecorator extends ColumnDecorator {
 	public String decorate(Object columnValue) {
 		String image = "&nbsp;";
 		
-		UserTO uto = (UserTO)this.getPageContext().getSession().getAttribute(UserDelegate.CURRENT_USER_SESSION);		
+		UserTO uto = (UserTO)this.getSession().getAttribute(UserDelegate.CURRENT_USER_SESSION);		
 		if (uto instanceof LeaderTO) {
 			String altValue = this.getBundleMessage("label.refuse.cancTask");
 		    image ="<a href=\"#\" onclick=\"displayMessage('../do/refuse?operation=prepareForm&forwardAfterRefuse=goToTaskForm&refuseType=TSK&refusedId=" + columnValue + "', 475, 220);return false;\" border=\"0\"> \n";

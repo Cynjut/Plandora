@@ -1,5 +1,11 @@
 package com.pandora.integration;
 
+import java.io.BufferedReader;
+import java.io.StringReader;
+import java.util.ArrayList;
+
+import com.pandora.TransferObject;
+import com.pandora.UserTO;
 import com.pandora.integration.exception.IntegrationException;
 
 public class RepositoryMessageIntegration extends Integration {
@@ -21,6 +27,8 @@ public class RepositoryMessageIntegration extends Integration {
 
 	private String author;
 	
+	private UserTO authorUser;
+	
 	
 	public String getLastTokenPath() {
 		String token = "";
@@ -30,6 +38,39 @@ public class RepositoryMessageIntegration extends Integration {
 			token = token.trim();
 		}
 		return token;
+	}
+	
+	
+	public ArrayList<TransferObject> getParsedFiles(){
+		ArrayList<TransferObject> response = null;
+		
+		try {
+			if (files!=null && !files.trim().equals("")) {
+				
+				BufferedReader br = new BufferedReader(new StringReader(files));
+				if (br!=null) {
+					String strLine = "";
+					while( (strLine = br.readLine()) != null) {
+						String[] filesToken = strLine.split("  ");
+						if (filesToken!=null && filesToken.length>1) {
+							String stat = filesToken[0];
+							String path = filesToken[filesToken.length-1];
+							
+							if (stat!=null && path!=null && !path.trim().equals("")) {
+								if (response==null) {
+									response = new ArrayList<TransferObject>();
+								}
+								TransferObject aFile = new TransferObject(stat.trim(), path);
+								response.add(aFile);								
+							}
+						}
+					}							
+				}							
+			}											
+		} catch(Exception e) {
+			e.printStackTrace();
+		}
+		return response;
 	}
 	
 	
@@ -69,6 +110,15 @@ public class RepositoryMessageIntegration extends Integration {
 	}
 
 
+	///////////////////////////////////////////
+	public UserTO getAuthorUser() {
+		return authorUser;
+	}
+	public void setAuthorUser(UserTO newValue) {
+		this.authorUser = newValue;
+	}
+	
+	
 	public void validateDelete() throws IntegrationException {
 	}
 
@@ -77,5 +127,7 @@ public class RepositoryMessageIntegration extends Integration {
 
 	public void validateUpdate() throws IntegrationException {
 	}
+
+
 
 }

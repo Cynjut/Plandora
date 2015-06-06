@@ -3,11 +3,12 @@ package com.pandora.gui.taglib.decorator;
 import java.util.Vector;
 
 import org.apache.taglibs.display.ColumnDecorator;
-import com.pandora.TransferObject;
+
 import com.pandora.RequirementTO;
+import com.pandora.TransferObject;
 import com.pandora.UserTO;
-import com.pandora.helper.HtmlUtil;
 import com.pandora.delegate.UserDelegate;
+import com.pandora.helper.HtmlUtil;
 
 public class GridComboBoxDecorator extends ColumnDecorator {
 
@@ -21,9 +22,11 @@ public class GridComboBoxDecorator extends ColumnDecorator {
     /* (non-Javadoc)
      * @see org.apache.taglibs.display.ColumnDecorator#decorate(java.lang.Object, java.lang.String)
      */
-    public String decorate(Object columnValue, String tag) {
+    @SuppressWarnings({ "rawtypes", "unchecked" })
+	public String decorate(Object columnValue, String tag) {
 		String response = "&nbsp;";
-		//Vector values = new Vector();
+
+		UserTO user = (UserTO)this.getSession().getAttribute(UserDelegate.CURRENT_USER_SESSION);		
 		TransferObject to = (TransferObject)this.getObject();
 		
 		if (tag!=null) {
@@ -42,11 +45,22 @@ public class GridComboBoxDecorator extends ColumnDecorator {
 						RequirementTO rto = (RequirementTO) to;
 						projectId = rto.getProject().getId();
 					}
-					UserTO user = (UserTO)this.getPageContext().getSession().getAttribute(UserDelegate.CURRENT_USER_SESSION);				
-					Vector<TransferObject> options = HtmlUtil.getQueryData(sql, this.getPageContext(), projectId, user.getId());
-					response = HtmlUtil.getComboBox(name, options, "textBox", ""+columnValue);
+
+					String key = "GRID_COMBOBOX_" + tokens[0] + "_" + projectId + "_" + user.getId();
+					Vector<TransferObject> options = (Vector<TransferObject>)super.getSession().getAttribute(key);
+					if (options==null) {	
+						options = HtmlUtil.getQueryData(sql, this.getSession(), projectId, user.getId());
+						super.getSession().setAttribute(key, options);
+					}
+					response = HtmlUtil.getComboBox(name, options, "textBox", ""+columnValue);						
+					
+				} else if (text.startsWith("$")) {
+					Vector list = (Vector)super.getSession().getAttribute(text.substring(1));
+					if (list!=null) {
+						response = HtmlUtil.getComboBox(name, list, "textbox", ""+columnValue);
+					}
 				} else {
-					response = HtmlUtil.getComboBox(name, text, "textBox", ""+columnValue, this.getPageContext());		
+					response = HtmlUtil.getComboBox(name, text, "textBox", ""+columnValue, this.getSession());		
 				}
 			} else {
 				response = ""+columnValue;
@@ -64,6 +78,5 @@ public class GridComboBoxDecorator extends ColumnDecorator {
     public String contentToSearching(Object columnValue) {
     	return columnValue+"";
     }    
-   
-	
+       
 }

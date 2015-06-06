@@ -15,29 +15,35 @@ import com.pandora.delegate.OccurrenceDelegate;
 import com.pandora.exception.BusinessException;
 import com.pandora.helper.DateUtil;
 
-/**
- */
 public class OccurrenceKbIndex extends KbIndex {
-    
+	
+    @Override
     public String getUniqueName() {
         return "OccurrenceKbIndex";
     }
 
+   
+    @Override
     public String getContextLabel() {
         return "label.viewKb.Ocur";
     }
         
-    
+   
+    @Override
     public Timestamp getCreationDate(Object to){
         OccurrenceTO oto = (OccurrenceTO)to;
         return oto.getCreationDate();
     }
 
+    
+    @Override
     public String getProjectId(Object to){
         OccurrenceTO oto = (OccurrenceTO)to;
         return oto.getProject().getId();
     }
     
+    
+    @Override
     public long getId(Object to) {
         long response = -1;
         OccurrenceTO oto = (OccurrenceTO)to;
@@ -49,18 +55,21 @@ public class OccurrenceKbIndex extends KbIndex {
         
     }
         
-    public Vector call(long initialCursor, long finalCursor) throws Exception {
+    
+    @Override
+    public Vector<?> call(long initialCursor, long finalCursor) throws Exception {
         OccurrenceBUS obus = new OccurrenceBUS();
-        Vector vr = null;
+        Vector<?> vr = null;
         try {
             vr = obus.getListUntilID(initialCursor+"", finalCursor+"");
         } catch (BusinessException e) {
             e.printStackTrace();
         }
         return vr;
-
     }        
     
+    
+    @Override
     public long getMaxId() throws Exception {
         long response = -1;
         try {        
@@ -73,19 +82,20 @@ public class OccurrenceKbIndex extends KbIndex {
     }
     
     
+    @Override
     public Document getObjectToIndex(Object to) throws Exception {
         Document response = new Document();
         OccurrenceDelegate del = new OccurrenceDelegate();
         OccurrenceTO oto = (OccurrenceTO)to;
         String content = "", fieldStr = "", history = ""; 
     
-        if (oto.isVisible()) {
-            Vector hist = del.getHistory(oto.getId());
+        if (oto.getVisible()) {
+            Vector<OccurrenceHistoryTO> hist = del.getHistory(oto.getId());
             if (hist!=null) {
             	history = history.concat("</p>");
-                Iterator i = hist.iterator();
+                Iterator<OccurrenceHistoryTO> i = hist.iterator();
                 while(i.hasNext()){
-                    OccurrenceHistoryTO ohto = (OccurrenceHistoryTO)i.next();
+                    OccurrenceHistoryTO ohto = i.next();
                     history = history.concat("<li>");
                     if (ohto.getContent()!=null) {
                         history = history.concat(ohto.getContent());    
@@ -98,11 +108,11 @@ public class OccurrenceKbIndex extends KbIndex {
             }
             
             
-            Vector fieldList = oto.getFields();
+            Vector<OccurrenceFieldTO> fieldList = oto.getFields();
             if (fieldList!=null) {
-                Iterator i = fieldList.iterator();
+                Iterator<OccurrenceFieldTO> i = fieldList.iterator();
                 while(i.hasNext()){
-                    OccurrenceFieldTO ofto = (OccurrenceFieldTO)i.next();
+                    OccurrenceFieldTO ofto = i.next();
                     fieldStr = fieldStr.concat("<br><i>* " + ofto.getField() + "</i> - ");
                     fieldStr = fieldStr.concat(ofto.getValue());
                 }
@@ -128,7 +138,8 @@ public class OccurrenceKbIndex extends KbIndex {
     }
     
     
-    public Class getBusinessClass() throws Exception {
+    @SuppressWarnings("rawtypes")
+	public Class getBusinessClass() throws Exception {
         return OccurrenceTO.class;
     }
     

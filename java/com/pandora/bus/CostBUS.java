@@ -5,6 +5,7 @@ import java.util.Iterator;
 import java.util.Vector;
 
 import com.pandora.CategoryTO;
+import com.pandora.CostInstallmentTO;
 import com.pandora.CostTO;
 import com.pandora.ProjectTO;
 import com.pandora.ResourceCapacityTO;
@@ -67,15 +68,36 @@ public class CostBUS extends GeneralBusiness {
 	}
 
 	
-	public Vector<CostTO> getListByCategory(CategoryTO catTO, Timestamp iniDate, Timestamp finalDate) throws BusinessException {
+	public Vector<CostTO> getListByCategory(CategoryTO catTO, ProjectTO pto, Timestamp iniDate, Timestamp finalDate) throws BusinessException {
 		Vector<CostTO> response = null;
         try {
-            response = dao.getListByCategory(catTO, iniDate, finalDate) ;
+            response = dao.getListByCategory(catTO, pto, iniDate, finalDate) ;
         } catch (DataAccessException e) {
             throw new BusinessException(e);
         }
         return response;
 	}	
+
+	
+	public Vector<CostTO> getListByMetaFieldValue(String metaFieldId, String metaFieldValue, Timestamp iniDate, Timestamp finalDate) throws BusinessException {
+		Vector<CostTO> response = null;
+        try {
+            response = dao.getListByMetaFieldValue(metaFieldId, metaFieldValue, iniDate, finalDate) ;
+        } catch (DataAccessException e) {
+            throw new BusinessException(e);
+        }
+        return response;
+
+	}
+	
+	
+	public void insertCostHistory(CostTO cto, CostInstallmentTO cito) throws BusinessException {
+        try {
+            dao.insertCostHistory(cto, cito) ;
+        } catch (DataAccessException e) {
+            throw new BusinessException(e);
+        }				
+	}
 
 	
 	public void insertCost(CostTO cto) throws BusinessException {
@@ -95,7 +117,25 @@ public class CostBUS extends GeneralBusiness {
         }		
 	}
 
+	
+	public void liteUpdateCost(CostTO cto) throws BusinessException {
+        try {
+            dao.liteUpdateCost(cto) ;
+        } catch (DataAccessException e) {
+            throw new BusinessException(e);
+        }		
+	}
 
+
+	public void liteUpdateInstallment(CostInstallmentTO cito, UserTO handler) throws BusinessException {
+        try {
+            dao.liteUpdateInstallment(cito, handler) ;
+        } catch (DataAccessException e) {
+            throw new BusinessException(e);
+        }		
+	}
+	
+	
 	public void removeCost(CostTO cto) throws BusinessException {
         try {
             dao.remove(cto) ;
@@ -158,7 +198,6 @@ public class CostBUS extends GeneralBusiness {
 		}
 		return cost;
 	}
-
 
 
 }

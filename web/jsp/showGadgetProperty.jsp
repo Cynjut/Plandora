@@ -6,7 +6,7 @@
 
 <html>
 	<title>
-		<bean:write name="showGadgetPropertyForm" property="propertyTitle" />
+		<bean:write name="showGadgetPropertyForm" property="propertyTitle" filter="false"/>
 	</title>
 	<head>
 		<link href="../css/styleDefault.css" id="style" TYPE="text/css" rel="STYLESHEET">

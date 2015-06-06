@@ -33,7 +33,7 @@ public class ExpenseTotalDecorator extends ColumnDecorator {
 		try {		
 			Object obj = this.getObject();
 			Locale currLoc = udel.getCurrencyLocale();
-			Integer t = null;
+			Long t = null;
 			
 			if (obj instanceof ExpenseTO) {
 				ExpenseTO to = (ExpenseTO)obj;

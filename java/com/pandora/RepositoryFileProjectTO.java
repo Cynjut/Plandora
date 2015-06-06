@@ -14,6 +14,8 @@ public class RepositoryFileProjectTO extends TransferObject {
 	
 	private Boolean isIndexable;
 	
+	private Boolean isDownloadable;
+	
 	private Timestamp lastUpdate;
 
 	
@@ -59,6 +61,15 @@ public class RepositoryFileProjectTO extends TransferObject {
 	}
 	public void setIsIndexable(Boolean newValue) {
 		this.isIndexable = newValue;
+	}
+	
+	
+	////////////////////////////////////////////	
+	public Boolean getIsDownloadable() {
+		return isDownloadable;
+	}
+	public void setIsDownloadable(Boolean newValue) {
+		this.isDownloadable = newValue;
 	}
 	
 	

@@ -5,6 +5,9 @@ import java.util.Vector;
 
 import com.pandora.CustomNodeTemplateTO;
 import com.pandora.NodeTemplateTO;
+import com.pandora.RequirementTO;
+import com.pandora.ResourceTaskTO;
+import com.pandora.TaskTO;
 import com.pandora.TemplateTO;
 import com.pandora.UserTO;
 import com.pandora.bus.TaskNodeTemplateBUS;
@@ -18,7 +21,7 @@ public class TaskTemplateDelegate extends GeneralDelegate {
     private TaskNodeTemplateBUS tnbus = new TaskNodeTemplateBUS();
 
     
-    public Vector getTemplateListByProject(String projectId, boolean onCascade) throws BusinessException{
+    public Vector<TemplateTO> getTemplateListByProject(String projectId, boolean onCascade) throws BusinessException{
         return bus.getTemplateListByProject(projectId, onCascade);
     }
 
@@ -30,15 +33,15 @@ public class TaskTemplateDelegate extends GeneralDelegate {
         return bus.getTaskTemplateByInstance(instanceId);
     }
     
-	public void saveWorkflow(String nodeTemplateId, Integer instanceId, String planningId, UserTO createBy) throws Exception{
-		tnbus.saveWorkflow(nodeTemplateId, instanceId, planningId, createBy);
+	public void saveWorkflow(String nodeTemplateId, Integer instanceId, String planningId, String projectId, UserTO createBy) throws Exception{
+		tnbus.saveWorkflow(nodeTemplateId, instanceId, planningId, projectId, createBy);
 	}
 
     public NodeTemplateTO getNodeTemplateTree(NodeTemplateTO node, String planningId) throws BusinessException {
     	return tnbus.getNodeTemplateTree(node, planningId);
     }
     
-    public Vector getNodeListByTemplate(String templateId, String instanceId, String planningId) throws BusinessException{
+    public Vector<NodeTemplateTO> getNodeListByTemplate(String templateId, String instanceId, String planningId) throws BusinessException{
         return tnbus.getNodeListByTemplate(templateId, instanceId, planningId);
     }
     
@@ -50,12 +53,16 @@ public class TaskTemplateDelegate extends GeneralDelegate {
 		tnbus.saveCustomNodeTemplate(cntto);
 	}
 
-	public String getResourceListFromVector(Vector resList) throws Exception {
+	public void saveCustomNodeTemplate(Vector<CustomNodeTemplateTO> cnlist, Vector<TaskTO> tlist, Vector<RequirementTO> rlist, UserTO handler) throws BusinessException{
+		tnbus.saveCustomNodeTemplate(cnlist, tlist, rlist, handler);
+	}
+
+	public String getResourceListFromVector(Vector<ResourceTaskTO> resList) throws Exception {
 		return tnbus.getResourceListFromVector(resList);
 	}
 
-	public Vector getResourceListFromString(String resource, UserTO handler) throws Exception {
-		return tnbus.getResourceListFromString(resource, handler);
+	public Vector<ResourceTaskTO> getResourceListFromString(String resource, TaskTO tto, UserTO handler) throws Exception {
+		return tnbus.getResourceListFromString(resource, tto, handler);
 	}
 
 	public NodeTemplateTO getNodeTemplate(NodeTemplateTO filter, String instanceId, String planningId) throws BusinessException {
@@ -65,4 +72,9 @@ public class TaskTemplateDelegate extends GeneralDelegate {
 	public Integer getInstance(String templateId, String planningId) throws BusinessException {
 		return tnbus.getInstance(templateId, planningId);
 	}
+
+	public boolean checkSavedNodes(Integer instance, String templateId) throws BusinessException {
+		return tnbus.checkSavedNodes(instance, templateId);
+	}
+
 }

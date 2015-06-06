@@ -2,6 +2,10 @@
 <jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="ExpenseReport" pageWidth="842" pageHeight="595" orientation="Landscape" columnWidth="782" leftMargin="30" rightMargin="30" topMargin="20" bottomMargin="20">
 	<property name="ireport.scriptlethandling" value="0"/>
 	<property name="ireport.encoding" value="UTF-8"/>
+	<property name="ireport.callouts" value="##Tue Apr 12 08:47:34 BRT 2011"/>
+	<property name="ireport.zoom" value="1.0"/>
+	<property name="ireport.x" value="0"/>
+	<property name="ireport.y" value="0"/>
 	<import value="net.sf.jasperreports.engine.*"/>
 	<import value="java.util.*"/>
 	<import value="net.sf.jasperreports.engine.data.*"/>
@@ -46,7 +50,7 @@ where e.user_id = t.id and e.project_id = pr.id and e.id = p.id
 	<field name="due_date" class="java.sql.Timestamp">
 		<fieldDescription><![CDATA[]]></fieldDescription>
 	</field>
-	<field name="value" class="java.lang.Integer">
+	<field name="value" class="java.lang.Long">
 		<fieldDescription><![CDATA[]]></fieldDescription>
 	</field>
 	<field name="approver" class="java.lang.String">
@@ -58,13 +62,13 @@ where e.user_id = t.id and e.project_id = pr.id and e.id = p.id
 	<field name="state_machine_order" class="java.lang.Long">
 		<fieldDescription><![CDATA[]]></fieldDescription>
 	</field>
-	<variable name="TOTAL_APPROVE" class="java.lang.Integer" resetType="Group" resetGroup="EXPENSE_ID" calculation="Sum">
-		<variableExpression><![CDATA[($F{state_machine_order}.intValue()!=101 && $F{state_machine_order}.intValue()!=1 ? $F{value} : new Integer(0))]]></variableExpression>
-		<initialValueExpression><![CDATA[new Integer("0")]]></initialValueExpression>
+	<variable name="TOTAL_APPROVE" class="java.lang.Long" resetType="Group" resetGroup="EXPENSE_ID" calculation="Sum">
+		<variableExpression><![CDATA[($F{state_machine_order}.longValue()!=101 && $F{state_machine_order}.longValue()!=1 ? $F{value} : new Long("0"))]]></variableExpression>
+		<initialValueExpression><![CDATA[new Long("0")]]></initialValueExpression>
 	</variable>
-	<variable name="TOTAL" class="java.lang.Integer" resetType="Group" resetGroup="EXPENSE_ID" calculation="Sum">
+	<variable name="TOTAL" class="java.lang.Long" resetType="Group" resetGroup="EXPENSE_ID" calculation="Sum">
 		<variableExpression><![CDATA[$F{value}]]></variableExpression>
-		<initialValueExpression><![CDATA[new Integer("0")]]></initialValueExpression>
+		<initialValueExpression><![CDATA[new Long("0")]]></initialValueExpression>
 	</variable>
 	<group name="EXPENSE_ID" isStartNewPage="true">
 		<groupExpression><![CDATA[$F{id}]]></groupExpression>
@@ -111,35 +115,28 @@ where e.user_id = t.id and e.project_id = pr.id and e.id = p.id
 					<text><![CDATA[Expenses *]]></text>
 				</staticText>
 				<staticText>
-					<reportElement positionType="Float" mode="Transparent" x="54" y="100" width="42" height="20" forecolor="#000000" backcolor="#FFFFFF"/>
-					<textElement textAlignment="Center" verticalAlignment="Middle" rotation="None" lineSpacing="Single" markup="none">
-						<font fontName="Tahoma" size="9" isBold="true" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfFontName="Helvetica" pdfEncoding="Cp1252" isPdfEmbedded="false"/>
-					</textElement>
-					<text><![CDATA[ID]]></text>
-				</staticText>
-				<staticText>
-					<reportElement positionType="Float" mode="Transparent" x="97" y="100" width="82" height="20" forecolor="#000000" backcolor="#FFFFFF"/>
+					<reportElement positionType="Float" mode="Transparent" x="57" y="100" width="122" height="20" forecolor="#000000" backcolor="#FFFFFF"/>
 					<textElement textAlignment="Center" verticalAlignment="Middle" rotation="None" lineSpacing="Single" markup="none">
 						<font fontName="Tahoma" size="9" isBold="true" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfFontName="Helvetica" pdfEncoding="Cp1252" isPdfEmbedded="false"/>
 					</textElement>
 					<text><![CDATA[Description]]></text>
 				</staticText>
 				<staticText>
-					<reportElement positionType="Float" mode="Transparent" x="458" y="100" width="64" height="20" forecolor="#000000" backcolor="#FFFFFF"/>
+					<reportElement positionType="Float" mode="Transparent" x="436" y="100" width="64" height="20" forecolor="#000000" backcolor="#FFFFFF"/>
 					<textElement textAlignment="Center" verticalAlignment="Middle" rotation="None" lineSpacing="Single" markup="none">
 						<font fontName="Tahoma" size="9" isBold="true" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfFontName="Helvetica" pdfEncoding="Cp1252" isPdfEmbedded="false"/>
 					</textElement>
 					<text><![CDATA[Date]]></text>
 				</staticText>
 				<staticText>
-					<reportElement positionType="Float" mode="Transparent" x="241" y="100" width="101" height="20" forecolor="#000000" backcolor="#FFFFFF"/>
+					<reportElement positionType="Float" mode="Transparent" x="192" y="100" width="135" height="20" forecolor="#000000" backcolor="#FFFFFF"/>
 					<textElement textAlignment="Center" verticalAlignment="Middle" rotation="None" lineSpacing="Single" markup="none">
 						<font fontName="Tahoma" size="9" isBold="true" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfFontName="Helvetica" pdfEncoding="Cp1252" isPdfEmbedded="false"/>
 					</textElement>
 					<text><![CDATA[Category]]></text>
 				</staticText>
 				<staticText>
-					<reportElement positionType="Float" mode="Transparent" x="533" y="100" width="64" height="20" forecolor="#000000" backcolor="#FFFFFF"/>
+					<reportElement positionType="Float" mode="Transparent" x="517" y="100" width="64" height="20" forecolor="#000000" backcolor="#FFFFFF"/>
 					<textElement textAlignment="Center" verticalAlignment="Middle" rotation="None" lineSpacing="Single" markup="none">
 						<font fontName="Tahoma" size="9" isBold="true" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfFontName="Helvetica" pdfEncoding="Cp1252" isPdfEmbedded="false"/>
 					</textElement>
@@ -153,7 +150,7 @@ where e.user_id = t.id and e.project_id = pr.id and e.id = p.id
 					<textFieldExpression class="java.sql.Timestamp"><![CDATA[$F{creation_date}]]></textFieldExpression>
 				</textField>
 				<staticText>
-					<reportElement positionType="Float" mode="Transparent" x="361" y="100" width="85" height="20" forecolor="#000000" backcolor="#FFFFFF"/>
+					<reportElement positionType="Float" mode="Transparent" x="341" y="100" width="85" height="20" forecolor="#000000" backcolor="#FFFFFF"/>
 					<textElement textAlignment="Center" verticalAlignment="Middle" rotation="None" lineSpacing="Single" markup="none">
 						<font fontName="Tahoma" size="9" isBold="true" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfFontName="Helvetica" pdfEncoding="Cp1252" isPdfEmbedded="false"/>
 					</textElement>
@@ -187,28 +184,28 @@ where e.user_id = t.id and e.project_id = pr.id and e.id = p.id
 					<reportElement key="line-8" x="53" y="0" width="721" height="1"/>
 				</line>
 				<staticText>
-					<reportElement positionType="Float" mode="Transparent" x="397" y="29" width="119" height="20" forecolor="#000000" backcolor="#FFFFFF"/>
+					<reportElement positionType="Float" mode="Transparent" x="386" y="29" width="119" height="20" forecolor="#000000" backcolor="#FFFFFF"/>
 					<textElement textAlignment="Right" verticalAlignment="Middle" rotation="None" lineSpacing="Single" markup="none">
 						<font fontName="Tahoma" size="10" isBold="true" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfFontName="Helvetica" pdfEncoding="Cp1252" isPdfEmbedded="false"/>
 					</textElement>
 					<text><![CDATA[Total Approved:]]></text>
 				</staticText>
 				<textField isStretchWithOverflow="true" pattern="¤ #,##0.00" isBlankWhenNull="true">
-					<reportElement x="531" y="29" width="72" height="20"/>
-					<textElement textAlignment="Center" verticalAlignment="Middle">
+					<reportElement x="509" y="29" width="115" height="20"/>
+					<textElement textAlignment="Left" verticalAlignment="Middle">
 						<font fontName="Tahoma" isBold="true" isItalic="false"/>
 					</textElement>
 					<textFieldExpression class="java.lang.Float"><![CDATA[new Float($V{TOTAL_APPROVE}!=null?$V{TOTAL_APPROVE}.floatValue()/100:0)]]></textFieldExpression>
 				</textField>
 				<textField isStretchWithOverflow="true" pattern="¤ #,##0.00" isBlankWhenNull="true">
-					<reportElement x="529" y="7" width="72" height="20"/>
-					<textElement textAlignment="Center" verticalAlignment="Middle">
+					<reportElement x="509" y="7" width="115" height="20"/>
+					<textElement textAlignment="Left" verticalAlignment="Middle">
 						<font fontName="Tahoma" isBold="false" isItalic="false"/>
 					</textElement>
 					<textFieldExpression class="java.lang.Float"><![CDATA[new Float($V{TOTAL}!=null?$V{TOTAL}.floatValue()/100:0)]]></textFieldExpression>
 				</textField>
 				<staticText>
-					<reportElement positionType="Float" mode="Transparent" x="397" y="7" width="119" height="20" forecolor="#000000" backcolor="#FFFFFF"/>
+					<reportElement positionType="Float" mode="Transparent" x="386" y="7" width="119" height="20" forecolor="#000000" backcolor="#FFFFFF"/>
 					<textElement textAlignment="Right" verticalAlignment="Middle" rotation="None" lineSpacing="Single" markup="none">
 						<font fontName="Tahoma" size="10" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfFontName="Helvetica" pdfEncoding="Cp1252" isPdfEmbedded="false"/>
 					</textElement>
@@ -255,29 +252,22 @@ where e.user_id = t.id and e.project_id = pr.id and e.id = p.id
 	</columnHeader>
 	<detail>
 		<band height="18" splitType="Prevent">
-			<textField>
-				<reportElement x="57" y="2" width="39" height="14"/>
-				<textElement textAlignment="Center" verticalAlignment="Middle">
-					<font fontName="Tahoma"/>
-				</textElement>
-				<textFieldExpression class="java.lang.String"><![CDATA[$F{COST_ID}]]></textFieldExpression>
-			</textField>
 			<textField isStretchWithOverflow="true" pattern="" isBlankWhenNull="true">
-				<reportElement mode="Transparent" x="104" y="2" width="149" height="14" forecolor="#000000" backcolor="#FFFFFF"/>
+				<reportElement mode="Transparent" x="67" y="2" width="186" height="14" forecolor="#000000" backcolor="#FFFFFF"/>
 				<textElement textAlignment="Left" verticalAlignment="Middle" rotation="None" lineSpacing="Single" markup="none">
 					<font fontName="Tahoma" size="10" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfFontName="Helvetica" pdfEncoding="Cp1252" isPdfEmbedded="false"/>
 				</textElement>
 				<textFieldExpression class="java.lang.String"><![CDATA[$F{COST_NAME}]]></textFieldExpression>
 			</textField>
 			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
-				<reportElement x="228" y="2" width="128" height="14"/>
+				<reportElement x="186" y="2" width="149" height="14"/>
 				<textElement textAlignment="Center" verticalAlignment="Middle">
 					<font fontName="Tahoma"/>
 				</textElement>
 				<textFieldExpression class="java.lang.String"><![CDATA[$F{CATEGORY}]]></textFieldExpression>
 			</textField>
 			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
-				<reportElement x="339" y="2" width="119" height="14"/>
+				<reportElement x="319" y="2" width="119" height="14"/>
 				<textElement textAlignment="Center" verticalAlignment="Middle">
 					<font fontName="Tahoma"/>
 				</textElement>
@@ -290,15 +280,15 @@ where e.user_id = t.id and e.project_id = pr.id and e.id = p.id
 				<reportElement stretchType="RelativeToTallestObject" x="774" y="0" width="1" height="18"/>
 			</line>
 			<textField isStretchWithOverflow="true" pattern="dd/MMM/yyyy" isBlankWhenNull="true">
-				<reportElement mode="Transparent" x="455" y="2" width="71" height="14" forecolor="#000000" backcolor="#FFFFFF"/>
+				<reportElement mode="Transparent" x="436" y="2" width="64" height="14" forecolor="#000000" backcolor="#FFFFFF"/>
 				<textElement textAlignment="Center" verticalAlignment="Middle" rotation="None" lineSpacing="Single" markup="none">
 					<font fontName="Tahoma" size="10" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfFontName="Helvetica" pdfEncoding="Cp1252" isPdfEmbedded="false"/>
 				</textElement>
 				<textFieldExpression class="java.sql.Timestamp"><![CDATA[$F{due_date}]]></textFieldExpression>
 			</textField>
 			<textField isStretchWithOverflow="true" pattern="¤ #,##0.00" isBlankWhenNull="true">
-				<reportElement x="534" y="2" width="63" height="14"/>
-				<textElement textAlignment="Center" verticalAlignment="Middle">
+				<reportElement x="509" y="2" width="97" height="14"/>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
 					<font fontName="Tahoma"/>
 				</textElement>
 				<textFieldExpression class="java.lang.Float"><![CDATA[new Float($F{value}!=null?$F{value}.floatValue()/100:0)]]></textFieldExpression>

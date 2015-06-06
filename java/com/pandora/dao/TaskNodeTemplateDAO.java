@@ -15,6 +15,7 @@ import com.pandora.NodeTemplateTO;
 import com.pandora.PlanningRelationTO;
 import com.pandora.ProjectTO;
 import com.pandora.RequirementTO;
+import com.pandora.ResourceTaskTO;
 import com.pandora.StepNodeTemplateTO;
 import com.pandora.TaskTO;
 import com.pandora.TransferObject;
@@ -23,7 +24,6 @@ import com.pandora.bus.TaskNodeTemplateBUS;
 import com.pandora.delegate.TaskTemplateDelegate;
 import com.pandora.exception.DataAccessException;
 import com.pandora.exception.SaveWorkflowException;
-import com.pandora.exception.ZeroCapacityException;
 import com.pandora.helper.DateUtil;
 import com.pandora.helper.LogUtil;
 
@@ -32,11 +32,54 @@ public class TaskNodeTemplateDAO extends DataAccess {
 	
 	public NodeTemplateTO getObjectInTree(NodeTemplateTO node) throws DataAccessException {
     	NodeTemplateTO response = null;
-    	HashMap cache = new HashMap();
+    	HashMap<String, NodeTemplateTO> cache = new HashMap<String, NodeTemplateTO>();
         Connection c = null;
 		try {
 			c = getConnection();
 			response = this.getObjectInTree(node, c, cache);
+		} catch(Exception e) {
+			throw new DataAccessException(e);
+		} finally {
+			this.closeConnection(c);
+		}
+		return response;
+	}
+
+
+	public boolean checkSavedNodes(Integer instance, String templateId) throws DataAccessException {
+		boolean response = false;
+        Connection c = null;
+		try {
+			c = getConnection();
+
+			String contTemplate = "", contCustom = "";
+			
+			ResultSet rs = null;
+			PreparedStatement pstmt = null; 
+			try {
+			    pstmt = c.prepareStatement("select count(*) from node_template where planning_id=?");		
+				pstmt.setString(1, templateId);
+				rs = pstmt.executeQuery();
+				if (rs.next()){
+					contTemplate = rs.getString(1);
+				}
+				
+			    pstmt = c.prepareStatement("select count(*) from custom_node_template where instance_id=?");		
+				pstmt.setInt(1, instance.intValue());
+				rs = pstmt.executeQuery();
+				if (rs.next()){
+					contCustom = rs.getString(1);
+				} 
+				
+				response = contCustom.equals(contTemplate);
+				
+			} catch (SQLException e) {
+				throw new DataAccessException(e);
+			}finally{
+				super.closeStatement(rs, pstmt);
+			}
+
+			
 		} catch(Exception e) {
 			throw new DataAccessException(e);
 		} finally {
@@ -77,12 +120,7 @@ public class TaskNodeTemplateDAO extends DataAccess {
 			} catch (SQLException er) {
 				LogUtil.log(this, LogUtil.LOG_ERROR, "", er);
 			}
-			
-			if (e instanceof ZeroCapacityException) {
-				throw new ZeroCapacityException(e);
-			} else {
-				throw new SaveWorkflowException(e);	
-			}
+			throw new SaveWorkflowException(e);	
 			
 		} finally{
 			this.closeConnection(c);
@@ -110,6 +148,7 @@ public class TaskNodeTemplateDAO extends DataAccess {
     	TaskDAO tskdao = new TaskDAO();
     	TaskTO tto = null;
     	TaskTO nextTask = null;
+    	CategoryDAO cdao = new CategoryDAO();
     	
     	//FIXME quando se cancela todas as tarefas, o erro abaixo eh lancado e nao deveria. A checagem tera que considerar tambem o status da tarefa
     	if (node.getRelationPlanningId()!=null) {
@@ -120,8 +159,13 @@ public class TaskNodeTemplateDAO extends DataAccess {
     		
     		//override the values of node from custom node...
     		CustomNodeTemplateTO customNode = this.getCustomNodeTemplate(node, requirementId, c);
+    		if (customNode==null) {
+    			customNode = createNewCustomNodeTemplate(node, requirementId, c);	
+    		}
+    		
     		tnBus.overrideNodeTemplate(node, customNode);
-
+    		
+    		
 	    	//check if it is necessary to reopen the next task...
 	    	if (customNode.getRelatedTaskId()!=null) {
 	    		this.reopenTask(customNode.getRelatedTaskId(), createdBy, comment, c);
@@ -146,9 +190,13 @@ public class TaskNodeTemplateDAO extends DataAccess {
 	        	tto = new TaskTO();
 				StepNodeTemplateTO stepNode = (StepNodeTemplateTO) node;
 				
-		    	tto.setCategory(new CategoryTO(stepNode.getCategoryId()));
+		    	CategoryTO cto = new CategoryTO(stepNode.getCategoryId());
+		    	cto = (CategoryTO)cdao.getObject(cto, c);
+		    	tto.setCategory(cto);		    		
+		    	
 		    	tto.setCreatedBy(createdBy);
 		    	tto.setCreationDate(DateUtil.getNow());
+		    	tto.setIteration(stepNode.getIterationId());
 		    	tto.setDescription(stepNode.getDescription());
 		    	tto.setHandler(createdBy);
 		    	tto.setName(stepNode.getName());
@@ -160,14 +208,13 @@ public class TaskNodeTemplateDAO extends DataAccess {
 		    	}
 			   	
 		    	tto.setIsParentTask(new Integer(stepNode.getIsParentTask()?1:0));
-		    	tto.setIteration(null);
 		    	tto.setDiscussionTopics(null);
 		    	tto.setFinalDate(null);
 		    	tto.setParentTask(null);
 		    	
-				Vector allocList;
+				Vector<ResourceTaskTO> allocList;
 				try {
-					allocList = tdel.getResourceListFromString(stepNode.getResourceId(), createdBy);
+					allocList = tdel.getResourceListFromString(stepNode.getResourceId(), tto, createdBy);
 				} catch (Exception e) {
 					throw new SaveWorkflowException("message.formApplyTaskTemplate.saveworkflowErr", e);
 				}
@@ -195,6 +242,21 @@ public class TaskNodeTemplateDAO extends DataAccess {
 		}
         	    	
     	return tto;
+	}
+
+
+	public CustomNodeTemplateTO createNewCustomNodeTemplate(NodeTemplateTO node, String requirementId, Connection c) throws DataAccessException {
+		
+		if (requirementId==null) {
+			requirementId = "-1";
+		}
+		
+		CustomNodeTemplateTO customNode = new CustomNodeTemplateTO(node, requirementId);
+		customNode.setInstanceId(node.getInstanceId());
+		this.saveCustomNodeTemplate(customNode, c);
+		customNode = this.getCustomNodeTemplate(node, requirementId, c);
+		
+		return customNode;
 	}
 
 
@@ -232,7 +294,7 @@ public class TaskNodeTemplateDAO extends DataAccess {
 				planningId = "-1";
 			}
 			
-		    pstmt = c.prepareStatement("select node_template_id, planning_id, template_id, project_id, instance_id, " +
+		    pstmt = c.prepareStatement("select node_template_id, planning_id, template_id, project_id, instance_id, iteration, " +
 		    					       "name, description, category_id, resource_list, question_content, related_task_id," +
 		    					       "is_parent_task, decision_answer from custom_node_template " +
 		    					       "where node_template_id=? and planning_id=? and template_id=? " + whereInstance);		
@@ -256,8 +318,8 @@ public class TaskNodeTemplateDAO extends DataAccess {
 	}
 
 
-	public Vector getNodeListByPlanning(String templateId) throws DataAccessException {
-    	Vector response = null;
+	public Vector<NodeTemplateTO> getNodeListByPlanning(String templateId) throws DataAccessException {
+    	Vector<NodeTemplateTO> response = null;
         Connection c = null;
 		try {
 			c = getConnection();
@@ -301,9 +363,30 @@ public class TaskNodeTemplateDAO extends DataAccess {
 		return response;
 	}
 	
+
+    public NodeTemplateTO getNodeTemplate(String nodeId, Connection c) throws DataAccessException {
+    	NodeTemplateTO response = null;
+		ResultSet rs = null;
+		PreparedStatement pstmt = null;
+		try {
+		    pstmt = c.prepareStatement("select id, name, description, node_type, project_id, " +
+		    						"planning_id, next_node_id from node_template where id = ?");		
+			pstmt.setString(1, nodeId);	
+			rs = pstmt.executeQuery();
+			if (rs.next()){
+				response = this.populateBeanByResultSet(rs);
+			} 
+		} catch (SQLException e) {
+			throw new DataAccessException(e);
+		}finally{
+			super.closeStatement(rs, pstmt);			
+		}	 
+		return response;
+	}
+    
 	
-    private Vector getNodeListByTemplate(String templateId, Connection c) throws DataAccessException {
-		Vector response = new Vector();
+    private Vector<NodeTemplateTO> getNodeListByTemplate(String templateId, Connection c) throws DataAccessException {
+		Vector<NodeTemplateTO> response = new Vector<NodeTemplateTO>();
 		ResultSet rs = null;
 		PreparedStatement pstmt = null;
 		try {
@@ -343,6 +426,70 @@ public class TaskNodeTemplateDAO extends DataAccess {
 		}								
 	}
 
+	
+	public void saveCustomNodeTemplate(Vector<CustomNodeTemplateTO> cnlist, Vector<TaskTO> tlist, Vector<RequirementTO> rlist, UserTO uto) throws DataAccessException {
+        Connection c = null;
+        HashMap<Integer, CustomNodeTemplateTO> firstNodeByInstance = new HashMap<Integer, CustomNodeTemplateTO>();
+        TaskDAO tdao = new TaskDAO();
+        RequirementDAO rdao = new RequirementDAO();
+        
+		try {
+			c = getConnection(false);
+			
+			//insert a list of tasks in batch...
+			tdao.insert(tlist, c);
+
+			//insert a list of custom nodes in batch....
+			for (CustomNodeTemplateTO cntto : cnlist) {
+				this.saveCustomNodeTemplate(cntto, c);
+				if (firstNodeByInstance.get(cntto.getInstanceId())==null) {
+					firstNodeByInstance.put(cntto.getInstanceId(), cntto);
+				}
+			}
+			
+			c.commit();
+			
+		} catch(Exception e){
+			try {
+				c.rollback();
+			} catch (SQLException er) {
+				LogUtil.log(this, LogUtil.LOG_ERROR, "", er);
+			}
+			throw new DataAccessException(e);			
+		} finally{
+			this.closeConnection(c);
+		}
+
+		
+		try {
+			c = getConnection(false);
+			
+			for (CustomNodeTemplateTO cntto : firstNodeByInstance.values()) {
+				NodeTemplateTO first = new NodeTemplateTO(cntto.getNodeTemplateId());
+				first.setInstanceId(cntto.getInstanceId());
+				first = getObjectInTree(first);
+				
+				this.createNewTaskFromWorkflow(first, cntto.getPlanningId(), uto, "workflow created by batch process.", c);
+			}
+			
+			for (RequirementTO rto : rlist) {
+				rdao.updatelite(rto, c);
+			}
+
+			c.commit();
+		} catch(Exception e){
+			try {
+				c.rollback();
+			} catch (SQLException er) {
+				LogUtil.log(this, LogUtil.LOG_ERROR, "", er);
+			}
+			throw new DataAccessException(e);			
+		} finally{
+			this.closeConnection(c);
+		}
+		
+	}	
+	
 	/**
 	 * Return a decision node template object that contain data of a decision node 
 	 * and is related a specific Task. This method is used to define if a task 
@@ -453,7 +600,7 @@ public class TaskNodeTemplateDAO extends DataAccess {
 			if (update) {
 			    pstmt = c.prepareStatement("update custom_node_template " +
 						   "set name=?, description=?, category_id=?, resource_list=?, question_content=?, " +
-						   "related_task_id=?, project_id=?, planning_id=?, is_parent_task=?, decision_answer=? " +
+						   "related_task_id=?, project_id=?, planning_id=?, is_parent_task=?, iteration=?, decision_answer=? " +
 						   "where node_template_id=? and template_id=? and instance_id=?");
 				pstmt.setString(1, cntto.getName());
 				pstmt.setString(2, cntto.getDescription());
@@ -468,10 +615,11 @@ public class TaskNodeTemplateDAO extends DataAccess {
 				} else {
 					pstmt.setNull(9, Types.INTEGER);
 				}
-				pstmt.setString(10, cntto.getDecisionAnswer());
-				pstmt.setString(11, cntto.getNodeTemplateId());
-				pstmt.setString(12, cntto.getTemplateId());				
-				pstmt.setInt(13, cntto.getInstanceId().intValue());
+				pstmt.setString(10, cntto.getIterationId());
+				pstmt.setString(11, cntto.getDecisionAnswer());
+				pstmt.setString(12, cntto.getNodeTemplateId());
+				pstmt.setString(13, cntto.getTemplateId());				
+				pstmt.setInt(14, cntto.getInstanceId().intValue());
 				pstmt.executeUpdate();
 				
 			} else {
@@ -479,8 +627,8 @@ public class TaskNodeTemplateDAO extends DataAccess {
 			    pstmt = c.prepareStatement("insert into custom_node_template (" +
 			    					"node_template_id, instance_id, planning_id, template_id, project_id, " +
 			    					"name, description, category_id, resource_list, question_content, " +
-			    					"is_parent_task, decision_answer) " +
-			    					"values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+			    					"is_parent_task, iteration, decision_answer) " +
+			    					"values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
 
 			    Integer instanceId = cntto.getInstanceId();
 			    if (instanceId==null) {
@@ -502,7 +650,8 @@ public class TaskNodeTemplateDAO extends DataAccess {
 				} else {
 					pstmt.setNull(11, Types.INTEGER);
 				}
-				pstmt.setString(12, cntto.getDecisionAnswer());				
+				pstmt.setString(12, cntto.getIterationId());
+				pstmt.setString(13, cntto.getDecisionAnswer());		
 				pstmt.executeUpdate();
 			}
 		} catch (SQLException e) {
@@ -524,6 +673,7 @@ public class TaskNodeTemplateDAO extends DataAccess {
 	}
 
 	
+
 	public TransferObject getObject(TransferObject to, Connection c) throws DataAccessException {
     	NodeTemplateTO response= null;
 		ResultSet rs = null;
@@ -572,7 +722,7 @@ public class TaskNodeTemplateDAO extends DataAccess {
 	}
 
 	
-    private NodeTemplateTO getObjectInTree(NodeTemplateTO to, Connection c, HashMap cache) throws DataAccessException {
+    private NodeTemplateTO getObjectInTree(NodeTemplateTO to, Connection c, HashMap<String, NodeTemplateTO> cache) throws DataAccessException {
     	NodeTemplateTO response= null;
     	
     	//check into cache if the node is already read from data base
@@ -583,6 +733,7 @@ public class TaskNodeTemplateDAO extends DataAccess {
         	response = (NodeTemplateTO) this.getObject(to, c);
         	if (response!=null) {
         		response.setInstanceId(to.getInstanceId());
+        		response.setProject(to.getProject());
             	cache.put(response.getId(), response);
             	
     			//get specific fields...
@@ -604,8 +755,6 @@ public class TaskNodeTemplateDAO extends DataAccess {
     					other.setInstanceId(to.getInstanceId());
     					other = (NodeTemplateTO) this.getObjectInTree(other, c, cache);
     					((DecisionNodeTemplateTO)response).setNextNodeIfFalse((NodeTemplateTO)cache.get(other.getId()));
-
-    					
     				}
     			}
     			
@@ -613,6 +762,7 @@ public class TaskNodeTemplateDAO extends DataAccess {
     			NodeTemplateTO nextnode = response.getNextNode();
     	        if (nextnode!=null) {
     	        	nextnode.setInstanceId(to.getInstanceId());
+    	        	nextnode.setProject(to.getProject());
     	        	NodeTemplateTO nextNode = (NodeTemplateTO) this.getObjectInTree(nextnode, c, cache);
     	        	response.setNextNode(nextNode);
     	        }        		
@@ -630,7 +780,7 @@ public class TaskNodeTemplateDAO extends DataAccess {
 		try {
 
 	    	if (to.getNodeType().equals(NodeTemplateTO.NODE_TEMPLATE_STEP)) {
-			    pstmt = c.prepareStatement("select category_id, resource_list, category_regex " +
+			    pstmt = c.prepareStatement("select category_id, resource_list, category_regex, iteration " +
 				   						   "from step_node_template where id = ?");		
 			    pstmt.setString(1, to.getId());
 			    rs = pstmt.executeQuery();
@@ -638,6 +788,7 @@ public class TaskNodeTemplateDAO extends DataAccess {
 			    	((StepNodeTemplateTO)to).setCategoryId(getString(rs, "category_id"));
 			    	((StepNodeTemplateTO)to).setResourceId(getString(rs, "resource_list"));
 			    	((StepNodeTemplateTO)to).setCategoryRegex(getString(rs, "category_regex"));
+			    	((StepNodeTemplateTO)to).setIterationId(getString(rs, "iteration"));
 			    }
 	    		
 			} else if (to.getNodeType().equals(NodeTemplateTO.NODE_TEMPLATE_DECISION)) {			
@@ -696,9 +847,11 @@ public class TaskNodeTemplateDAO extends DataAccess {
     private CustomNodeTemplateTO populateCustomNodeTemplateByResultSet(ResultSet rs) throws DataAccessException{
     	CustomNodeTemplateTO response = new CustomNodeTemplateTO();
 		response.setCategoryId(getString(rs, "category_id"));
+		response.setIterationId(getString(rs, "iteration"));
 		response.setDescription(getString(rs, "description"));
 		response.setName(getString(rs, "name"));
 		response.setNodeTemplateId(getString(rs, "node_template_id"));
+		response.setIterationId(getString(rs, "iteration"));
 		response.setPlanningId(getString(rs, "planning_id"));
 		response.setQuestionContent(getString(rs, "question_content"));
 		response.setRelatedTaskId(getString(rs, "related_task_id"));				
@@ -710,6 +863,7 @@ public class TaskNodeTemplateDAO extends DataAccess {
 		response.setDecisionAnswer(getString(rs, "decision_answer"));
     	return response;
     }
+
 
 
 }

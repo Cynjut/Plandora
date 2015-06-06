@@ -56,6 +56,10 @@ public class RiskForm extends GeneralStrutsForm {
     
     private String riskType;
     
+    private String visible;
+    
+    private String riskComment;    
+    
     /**
      * Clear values of Form
      */
@@ -77,6 +81,8 @@ public class RiskForm extends GeneralStrutsForm {
         this.qualityImpact = false;
         this.scopeImpact = false;
         this.timeImpact = false;
+        this.visible = "0";
+        this.riskComment = "";
     }  
     
     
@@ -301,5 +307,24 @@ public class RiskForm extends GeneralStrutsForm {
 		
 		return errors;
 	}
-    
+
+    /////////////////////////////////////     
+    public String getVisible() {
+		return visible;
+	}
+	public void setVisible(String newValue) {
+		this.visible = newValue;
+	}
+
+
+    /////////////////////////////////////    
+	public String getRiskComment() {
+		return riskComment;
+	}
+	public void setRiskComment(String newValue) {
+		this.riskComment = newValue;
+	}
+	
+	
+	
 }

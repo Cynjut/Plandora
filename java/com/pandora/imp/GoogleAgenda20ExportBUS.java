@@ -12,6 +12,7 @@ import com.pandora.ResourceTO;
 import com.pandora.ResourceTaskTO;
 import com.pandora.TaskTO;
 import com.pandora.UserTO;
+import com.pandora.bus.SystemSingleton;
 import com.pandora.delegate.TaskDelegate;
 import com.pandora.exception.BusinessException;
 import com.pandora.helper.DateUtil;
@@ -26,8 +27,8 @@ public class GoogleAgenda20ExportBUS extends ExportBUS {
     /* (non-Javadoc)
      * @see com.pandora.imp.ExportBUS#getFields()
      */
-    public Vector getFields() throws BusinessException {    	
-    	Vector list = new Vector();
+    public Vector<FieldValueTO> getFields() throws BusinessException {    	
+    	Vector<FieldValueTO> list = new Vector<FieldValueTO>();
     	
     	FieldValueTO iniDate = new FieldValueTO("INI_DATE", "label.importExport.inidate", FieldValueTO.FIELD_TYPE_DATE, 10, 10);
     	list.add(iniDate);
@@ -65,7 +66,8 @@ public class GoogleAgenda20ExportBUS extends ExportBUS {
      * @see com.pandora.imp.ExportBUS#getContentType()
      */    
     public String getContentType() throws BusinessException {
-        return "text/calendar; charset=UTF-8";
+    	String encoding = SystemSingleton.getInstance().getDefaultEncoding();
+        return "text/calendar; charset=" + encoding;
     }
 
     
@@ -86,8 +88,7 @@ public class GoogleAgenda20ExportBUS extends ExportBUS {
     /* (non-Javadoc)
      * @see com.pandora.imp.ExportBUS#getBody(com.pandora.ProjectTO, com.pandora.UserTO, java.util.Vector)
      */    
-    public StringBuffer getBody(ProjectTO pto, UserTO handler, Vector fields)
-            throws BusinessException {
+    public StringBuffer getBody(ProjectTO pto, UserTO handler, Vector fields) throws BusinessException {
 	    TaskDelegate tdel = new TaskDelegate();
 	    StringBuffer response = new StringBuffer();
 
@@ -96,10 +97,10 @@ public class GoogleAgenda20ExportBUS extends ExportBUS {
 	    Iterator<TaskTO> j = treeTskList.iterator();
 	    while(j.hasNext()){	    
 	        TaskTO tto = (TaskTO)j.next();
-	        Vector taskResources = tto.getAllocResources(); 
-	        Iterator i = taskResources.iterator();
+	        Vector<ResourceTaskTO> taskResources = tto.getAllocResources(); 
+	        Iterator<ResourceTaskTO> i = taskResources.iterator();
 	        while(i.hasNext()) {
-	            ResourceTaskTO rtto = (ResourceTaskTO)i.next();
+	            ResourceTaskTO rtto = i.next();
 	            
 	            if (rtto.getResource().getId().equals(handler.getId()) && rtto.getTaskStatus().isOpen()) {
 
@@ -108,7 +109,12 @@ public class GoogleAgenda20ExportBUS extends ExportBUS {
 	                	cursor = rtto.getStartDate();
 	                }
 
-	                int daysAhead = rtto.getEstimatedTime().intValue() / ((ResourceTO)handler).getCapacityPerDay(cursor).intValue();
+	                int capacity = ((ResourceTO)handler).getCapacityPerDay(cursor).intValue();
+	                if (capacity==0) {
+	                	capacity = ResourceTO.DEFAULT_FULLDAY_CAPACITY;
+	                }
+
+	                int daysAhead = rtto.getEstimatedTime().intValue() / capacity;
 	                Timestamp endPeriod = DateUtil.getChangedDate(rtto.getStartDate(), Calendar.DATE, daysAhead);
 	                int minutes = rtto.getEstimatedTime().intValue() % ((ResourceTO)handler).getCapacityPerDay(cursor).intValue();
 	                Timestamp dummy = DateUtil.getDate(endPeriod, true );

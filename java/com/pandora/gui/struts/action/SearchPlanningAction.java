@@ -43,8 +43,8 @@ public class SearchPlanningAction extends GeneralStrutsAction {
 	    try {
 	        this.clearMessages(request);
 	        
-	        Vector custList = new Vector();
-	        Vector reqStatusList = new Vector();
+	        Vector<CustomerTO> custList = new Vector<CustomerTO>();
+	        Vector<RequirementStatusTO> reqStatusList = new Vector<RequirementStatusTO>();
 	        if (srfrm.getType().equals(PlanningTO.PLANNING_REQUIREMENT)) {
 	        	
 		        //get the list of all customer of project to be set into filter combo
@@ -59,7 +59,7 @@ public class SearchPlanningAction extends GeneralStrutsAction {
 			request.getSession().setAttribute("reqStatusList", reqStatusList);
 			
 			//set empty to grid of requirements  
-			request.getSession().setAttribute("requirementList", new Vector());
+			request.getSession().setAttribute("searchPlanningList", new Vector<RequirementTO>());
 			srfrm.setHasOptionsList("empty");
 			
 	    } catch(BusinessException e){
@@ -76,13 +76,13 @@ public class SearchPlanningAction extends GeneralStrutsAction {
 			 HttpServletRequest request, HttpServletResponse response) {
 	    
 	    String forward = "showSearch";
-	    Vector list = new Vector();
+	    Vector<?> list = null;
 	    SearchPlanningForm srfrm = (SearchPlanningForm)form;	    
 
 	    try {
 	        if (srfrm.getProjectId()!=null){
 			    
-			    Vector kwList = StringUtil.getKeyworks(srfrm.getKeyword());
+			    Vector<String> kwList = StringUtil.getKeyworks(srfrm.getKeyword());
 			    
 			    if (srfrm.getType().equals(PlanningTO.PLANNING_REQUIREMENT)) {
 				    ProjectTO pto = new ProjectTO(srfrm.getProjectId());			    	
@@ -92,7 +92,7 @@ public class SearchPlanningAction extends GeneralStrutsAction {
 				    if (srfrm.getCustomerId()!=null && !srfrm.getCustomerId().equals("")){
 				        cto = new CustomerTO(srfrm.getCustomerId());
 				    } 
-				    Vector dbList = rdel.getListByFilter(pto, cto, kwList);
+				    Vector<RequirementTO> dbList = rdel.getListByFilter(pto, cto, kwList);
 				    list = this.filterByStatus(dbList, srfrm);
 				    
 			    } else {
@@ -103,10 +103,12 @@ public class SearchPlanningAction extends GeneralStrutsAction {
 			    
 			    if (list!=null && list.size()>0){
 			        srfrm.setHasOptionsList("filled");    
+			    } else {
+			    	list = new Vector<RequirementTO>();
 			    }
 	        }
 		
-	        request.getSession().setAttribute("requirementList", list);
+	        request.getSession().setAttribute("searchPlanningList", list);
 	        
 	    } catch(BusinessException e){
 	        this.setErrorFormSession(request, "error.showSearchReqForm", e);
@@ -115,13 +117,13 @@ public class SearchPlanningAction extends GeneralStrutsAction {
 	    return mapping.findForward(forward);
 	}
 	
-	private Vector filterByStatus(Vector allList, SearchPlanningForm srfrm){
-		Vector response = new Vector();
+	private Vector<RequirementTO> filterByStatus(Vector<RequirementTO> allList, SearchPlanningForm srfrm){
+		Vector<RequirementTO> response = new Vector<RequirementTO>();
 		if (allList!=null) {
 			String stat = srfrm.getReqStatus();
-			Iterator i  = allList.iterator();
+			Iterator<RequirementTO> i  = allList.iterator();
 			while(i.hasNext()) {
-				RequirementTO rto = (RequirementTO)i.next();
+				RequirementTO rto = i.next();
 				RequirementStatusTO rsto = rto.getRequirementStatus();
 				if (stat.equals(rsto.getId())) {
 					response.addElement(rto);

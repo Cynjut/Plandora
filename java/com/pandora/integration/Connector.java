@@ -16,7 +16,7 @@ public class Connector {
      * Send a list of objects to PLANdora for a specific purpose.<br> 
      * When this method is called, the connector validates all records,
      * build a transaction with system and perform the action (inserting, 
-     * updating or removing data). If some error ocurrs all the bunch 
+     * updating or removing data). If some error occurs all the bunch 
      * of changes will be rollbacked.
      */
     public IntegrationResponse execute(ArrayList data, String uri) throws IntegrationException{
@@ -74,7 +74,7 @@ public class Connector {
             poster.addParameter("data", seriliazed);
             poster.openGet();
 
-            //retrieve the http response, deserialize and populate the result object
+            //retrieve the http response, de-serialize and populate the result object
             String httpResponse = "";        
             while (poster.readLine()) {
                 httpResponse+= poster.getLine();

@@ -55,11 +55,11 @@ public class CustomerRoleDecorator extends ColumnDecorator {
     private String getRoles(CustomerTO cto, String key){
     	String response = null;
     	
-    	Vector list = cto.getRoles();
+    	Vector<CustomerFunctionTO> list = cto.getRoles();
     	
     	if (list!=null) {
     		response = "";
-        	Iterator i = list.iterator();
+        	Iterator<CustomerFunctionTO> i = list.iterator();
         	while(i.hasNext()) {
         		CustomerFunctionTO cfto = (CustomerFunctionTO)i.next();
         		String title = cfto.getFunct().getName();

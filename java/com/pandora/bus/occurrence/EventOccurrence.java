@@ -27,6 +27,8 @@ public class EventOccurrence extends Occurrence implements CalendarSyncInterface
     public static final String EVENT_REASON      = "REASON";
     
     public static final String EVENT_LOCATION    = "LOCATION";
+    
+    public static final String EVENT_PARTICIP    = "PARTICIP";
    
     
     public String getUniqueName() {
@@ -34,25 +36,35 @@ public class EventOccurrence extends Occurrence implements CalendarSyncInterface
     }
     
     public Vector getFields(){
-        Vector response = new Vector();
+        Vector<FieldValueTO> response = new Vector<FieldValueTO>();
         response.add(new FieldValueTO(EVENT_DATE,    "label.occurrence.event.date", FieldValueTO.FIELD_TYPE_DATE, 10, 10));
         
-        Vector timeList = this.getTimeForDay();
+        Vector<TransferObject> timeList = this.getTimeForDay();
         response.add(new FieldValueTO(EVENT_TIME, "label.occurrence.event.time", timeList));       
         
         response.add(new FieldValueTO(EVENT_DURATION,"label.occurrence.event.duration", FieldValueTO.FIELD_TYPE_TEXT, 5, 10));
         response.add(new FieldValueTO(EVENT_LOCATION,"label.occurrence.event.location", FieldValueTO.FIELD_TYPE_TEXT, 60, 60));
         
-        Vector resonList = new Vector();
+        Vector<TransferObject> resonList = new Vector<TransferObject>();
         resonList.add(new TransferObject("1", "label.occurrence.event.reason.meeting"));
         resonList.add(new TransferObject("2", "label.occurrence.event.reason.celebration"));
         resonList.add(new TransferObject("3", "label.occurrence.event.reason.workshop"));
         resonList.add(new TransferObject("4", "label.occurrence.event.reason.training"));
         resonList.add(new TransferObject("9", "label.occurrence.event.reason.other"));
-        response.add(new FieldValueTO(EVENT_REASON,      "label.occurrence.event.reason", resonList));
+        response.add(new FieldValueTO(EVENT_REASON, "label.occurrence.event.reason", resonList));
         
         response.add(new FieldValueTO(EVENT_DESCRIPTION, "label.occurrence.event.description", FieldValueTO.FIELD_TYPE_AREA, 255, 5));
         response.add(new FieldValueTO(EVENT_CONCLUSION,  "label.occurrence.event.conclusion", FieldValueTO.FIELD_TYPE_AREA, 255, 5));
+        
+        Vector<FieldValueTO> columns = new Vector<FieldValueTO>();
+        columns.add(new FieldValueTO("PART_EMAIL","label.occurrence.event.team.email", FieldValueTO.FIELD_TYPE_TEXT, 150, 68));
+        Vector<TransferObject> confList = new Vector<TransferObject>();
+        confList.add(new TransferObject("", ""));
+        confList.add(new TransferObject("1", "label.yes"));
+        confList.add(new TransferObject("2", "label.no"));
+        confList.add(new TransferObject("3", "label.occurrence.event.team.maybe"));
+        columns.add(new FieldValueTO("PART_CONF", "label.occurrence.event.team.conf", confList));
+        response.add(new FieldValueTO(EVENT_PARTICIP, "label.occurrence.event.team", columns, null));
         
         return response;
     }
@@ -64,7 +76,7 @@ public class EventOccurrence extends Occurrence implements CalendarSyncInterface
     
     
     public Vector getStatusValues() {
-        Vector response = new Vector(); 
+        Vector<TransferObject> response = new Vector<TransferObject>(); 
         
         response.add(new TransferObject(STATE_START,   "label.occurrence.event.status.open"));
         response.add(new TransferObject("50",          "label.occurrence.event.status.postponed"));
@@ -73,8 +85,8 @@ public class EventOccurrence extends Occurrence implements CalendarSyncInterface
         return response;
     }    
 
-    private Vector getTimeForDay(){
-        Vector response = new Vector();
+    private Vector<TransferObject> getTimeForDay(){
+        Vector<TransferObject> response = new Vector<TransferObject>();
         for (int i= 8; i<=18; i++) {
             String hour = StringUtil.fill(i+"", "0", 2, true);
             response.add(new TransferObject(hour + ":00:00", hour + ":00"));
@@ -109,6 +121,10 @@ public class EventOccurrence extends Occurrence implements CalendarSyncInterface
 		cal.setDateProperties("TZID=America/Sao_Paulo");
 		cal.setName(oto.getName());
 		return cal;
+	}
+
+	public String getDateFieldId() {
+		return EVENT_DATE;
 	}
 	
 }

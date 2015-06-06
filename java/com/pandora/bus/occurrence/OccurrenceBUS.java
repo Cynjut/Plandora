@@ -21,14 +21,14 @@ import com.pandora.helper.DateUtil;
  */
 public class OccurrenceBUS extends GeneralBusiness {
 
-    /** The Data Acess Object related with current business entity */
+    /** The Data Access Object related with current business entity */
     OccurrenceDAO dao = new OccurrenceDAO();
     
     
 	public Occurrence getOccurrenceClass(String className){
 	    Occurrence response = null;
         try {
-            Class klass = Class.forName(className);
+            Class<?> klass = Class.forName(className);
             response = (Occurrence)klass.newInstance();
         } catch (Exception e) {
             response = null;
@@ -36,10 +36,10 @@ public class OccurrenceBUS extends GeneralBusiness {
         return response;
 	}
 
-    public Vector<OccurrenceTO> getOccurrenceListByType(String projectId, String occurrenceClass) throws BusinessException {
+    public Vector<OccurrenceTO> getOccurrenceListByType(String projectId, String occurrenceClass, boolean includeSubProjects) throws BusinessException {
     	Vector<OccurrenceTO> response = new Vector<OccurrenceTO>();
     	
-    	Vector<OccurrenceTO> list = this.getOccurrenceList(projectId, false);
+    	Vector<OccurrenceTO> list = this.getOccurrenceList(projectId, null, false, includeSubProjects);
     	if (list!=null) {
         	Iterator<OccurrenceTO> i = list.iterator();
         	while(i.hasNext()) {
@@ -52,23 +52,29 @@ public class OccurrenceBUS extends GeneralBusiness {
     	return response;
     }
     
-    
     public Vector<OccurrenceTO> getOccurrenceList(String projectId, boolean hideClosed) throws BusinessException {
+    	return this.getOccurrenceList(projectId, null, hideClosed, true);
+    }
+    
+    
+    public Vector<OccurrenceTO> getOccurrenceList(String projectId, String userId, boolean hideClosed, boolean includeSubProjects) throws BusinessException {
         Vector<OccurrenceTO> response = new Vector<OccurrenceTO>();
         ProjectBUS pbus = new ProjectBUS();
 
         try {
         	
             //get occurrences of child projects 
-            Vector<ProjectTO> childs = pbus.getProjectListByParent(new ProjectTO(projectId), true);
-            Iterator<ProjectTO> i = childs.iterator();
-            while(i.hasNext()){
-                ProjectTO childProj = i.next();
-                Vector<OccurrenceTO> rskOfChild = this.getOccurrenceList(childProj.getId(), hideClosed);
-                response.addAll(rskOfChild);
-            }
-                    
-            response.addAll(dao.getListByProjectId(projectId, hideClosed));
+        	if (includeSubProjects) {
+                Vector<ProjectTO> childs = pbus.getProjectListByParent(new ProjectTO(projectId), true);
+                Iterator<ProjectTO> i = childs.iterator();
+                while(i.hasNext()){
+                    ProjectTO childProj = i.next();
+                    Vector<OccurrenceTO> rskOfChild = this.getOccurrenceList(childProj.getId(), userId, hideClosed, includeSubProjects);
+                    response.addAll(rskOfChild);
+                }        		
+        	}
+
+            response.addAll(dao.getListByProjectId(projectId, userId, hideClosed));
             
         } catch (DataAccessException e) {
             throw new BusinessException(e);
@@ -125,8 +131,8 @@ public class OccurrenceBUS extends GeneralBusiness {
     }
 
 
-    public Vector getListUntilID(String initialId, String finalId) throws BusinessException{
-        Vector response = new Vector();
+    public Vector<OccurrenceTO> getListUntilID(String initialId, String finalId) throws BusinessException {
+        Vector<OccurrenceTO> response = new Vector<OccurrenceTO>();
         try {
             response = dao.getListUntilID(initialId, finalId);
         } catch (DataAccessException e) {
@@ -181,7 +187,7 @@ public class OccurrenceBUS extends GeneralBusiness {
         }   		
 	}
 
-	public Vector<OccurrenceTO> getIterationListByProject(String projectId, boolean includechildren)  throws BusinessException {
+	public Vector<OccurrenceTO> getIterationListByProject(String projectId, boolean includechildren) throws BusinessException {
         Vector<OccurrenceTO> response = new Vector<OccurrenceTO>();
         ProjectBUS pbus = new ProjectBUS();
 
@@ -193,7 +199,7 @@ public class OccurrenceBUS extends GeneralBusiness {
                 Iterator<ProjectTO> i = childs.iterator();
                 while(i.hasNext()){
                     ProjectTO childProj = i.next();
-                    Vector occOfChild = this.getOccurrenceList(childProj.getId(), false);
+                    Vector<OccurrenceTO> occOfChild = this.getOccurrenceList(childProj.getId(), false);
                     response.addAll(occOfChild);
                 }        		
         	}
@@ -204,6 +210,17 @@ public class OccurrenceBUS extends GeneralBusiness {
             throw new BusinessException(e);
         }
         return response;
+	}
+
+	public OccurrenceTO getOccurrenceByName(String occName, ProjectTO pto) throws BusinessException {
+        OccurrenceTO response;
+        try {
+            response = dao.getOccurrenceByName(occName, pto) ;
+        } catch (DataAccessException e) {
+            throw new BusinessException(e);
+        }
+        return response;
+
 	} 
         
 }

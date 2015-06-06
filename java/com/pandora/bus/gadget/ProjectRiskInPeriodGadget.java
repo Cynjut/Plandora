@@ -159,7 +159,7 @@ public class ProjectRiskInPeriodGadget extends ChartGadget {
                 	for (RiskTO rto : rList) {
                 		Vector<RiskHistoryTO> histList = rdel.getHistory(rto.getId());
                 		if (histList!=null) {
-                			Vector<RiskHistoryTO>milestones = this.populateHistoryInTime(histList, iniRange, mask, incType, slotNumber);
+                			Vector<RiskHistoryTO>milestones = this.populateHistoryInTime(histList, iniRange, mask, incType, slotNumber, intervType);
                 			for (RiskHistoryTO milestone : milestones) {
                 				
                     			SimpleDateFormat df = new SimpleDateFormat(mask, this.handler.getLocale());			
@@ -185,8 +185,6 @@ public class ProjectRiskInPeriodGadget extends ChartGadget {
     	                        	} catch(ArrayIndexOutOfBoundsException e) {
     	                        		System.out.println("index:" + index + " slot: " + slot + " dt:" + milestone.getCreationDate() + " gran.list:" + this.granularity);
     	                        	}
-                    			} else {
-                    				System.out.println("index is null. dt:" + milestone.getCreationDate() + " gran.list:" + this.granularity);
                     			}								
 							}
                 		}
@@ -261,8 +259,10 @@ public class ProjectRiskInPeriodGadget extends ChartGadget {
 	}	
 	
 	private Vector<RiskHistoryTO> populateHistoryInTime(Vector<RiskHistoryTO> sourceList, Timestamp iniRange, 
-			String mask, int incType, int slotNumber){
+			String mask, int incType, int slotNumber, String intervType){
 		Vector<RiskHistoryTO> response = new Vector<RiskHistoryTO>();
+		HashMap<String, RiskHistoryTO> hm = new HashMap<String, RiskHistoryTO>();
+		Timestamp finishedDate = null;
 		
 		Timestamp cursor = iniRange;
 		Timestamp finalCursor = null;
@@ -285,12 +285,39 @@ public class ProjectRiskInPeriodGadget extends ChartGadget {
 						newMilestone.setCreationDate(DateUtil.getChangedDate(cursor, incType, -1));
 					}				
 				} else {
-					newMilestone = null;
+					if (finishedDate==null) {
+						finishedDate = DateUtil.getDate(rhto.getCreationDate(), true) ;
+					}
 				}
 			}
 			
 			if (newMilestone!=null) {
-				response.add(newMilestone);
+
+				DateFormat df = null;
+		        if (intervType.equals("1")) {
+	            	df = new SimpleDateFormat("dd-MMM-yyyy", this.handler.getLocale());	            	
+		        } else if (intervType.equals("2")) {
+	            	df = new SimpleDateFormat("w-yy", this.handler.getLocale());
+		        } else if (intervType.equals("3")) {
+	            	df = new SimpleDateFormat("MMM-yyyy", this.handler.getLocale());
+		        }				
+		        String slotLabel = df.format(newMilestone.getCreationDate());
+				
+				if (hm.get(slotLabel)==null) {
+					hm.put(slotLabel, newMilestone);
+					response.add(newMilestone);	
+				}
+			}			
+		}
+		
+		if (finishedDate!=null) {
+			for(int i=response.size()-1; i>0 ;i--) {
+				RiskHistoryTO rto = response.get(i);
+				if (!rto.getCreationDate().before(finishedDate)) {
+					response.remove(i);
+				} else {
+					break;
+				}
 			}			
 		}
 		

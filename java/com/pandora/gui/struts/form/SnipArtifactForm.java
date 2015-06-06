@@ -1,14 +1,40 @@
 package com.pandora.gui.struts.form;
 
+
 public class SnipArtifactForm extends GeneralStrutsForm {
 
 	private static final long serialVersionUID = 1L;
 
+	private String projectId;
+	
+	private String planningId;
+	
 	private String snip;
 
 	private String htmlFormBody;
 	
 	private String popupTitle;
+	
+	private String refreshCommand;
+		
+	
+	
+	////////////////////////////////////////	
+	public String getPlanningId() {
+		return planningId;
+	}
+	public void setPlanningId(String newValue) {
+		this.planningId = newValue;
+	}
+	
+	
+	////////////////////////////////////////	
+	public String getProjectId() {
+		return projectId;
+	}
+	public void setProjectId(String newValue) {
+		this.projectId = newValue;
+	}
 	
 	
 	////////////////////////////////////////
@@ -38,5 +64,12 @@ public class SnipArtifactForm extends GeneralStrutsForm {
 	}
 	
 	
+	////////////////////////////////////////	
+	public String getRefreshCommand() {
+		return refreshCommand;
+	}
+	public void setRefreshCommand(String newValue) {
+		this.refreshCommand = newValue;
+	}
 	
 }

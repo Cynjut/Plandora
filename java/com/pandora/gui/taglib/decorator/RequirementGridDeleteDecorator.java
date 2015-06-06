@@ -28,7 +28,7 @@ public class RequirementGridDeleteDecorator extends ColumnDecorator {
     public String decorate(Object columnValue, String tag) {
 		String image = "";
 		
-		UserTO uto = (UserTO)this.getPageContext().getSession().getAttribute(UserDelegate.CURRENT_USER_SESSION);
+		UserTO uto = (UserTO)this.getSession().getAttribute(UserDelegate.CURRENT_USER_SESSION);
 		RequirementTO rto = (RequirementTO)this.getObject();
 		boolean isWaiting = rto.getRequirementStatus().getStateMachineOrder().equals(RequirementStatusTO.STATE_MACHINE_WAITING);
 

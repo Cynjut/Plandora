@@ -1,20 +1,15 @@
 package com.pandora.gui.struts.form;
 
 import java.sql.Timestamp;
-import java.util.Locale;
 import java.util.Vector;
 
-import javax.servlet.ServletRequest;
 import javax.servlet.http.HttpServletRequest;
 
 import org.apache.struts.action.ActionError;
 import org.apache.struts.action.ActionErrors;
 import org.apache.struts.action.ActionMapping;
-import org.apache.struts.util.MessageResources;
 
 import com.pandora.ProjectTO;
-import com.pandora.helper.FormValidationUtil;
-import com.pandora.helper.SessionUtil;
 
 /**
  */

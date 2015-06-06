@@ -2,8 +2,8 @@ package com.pandora.gui.struts.action;
 
 import java.sql.Date;
 import java.sql.Timestamp;
-import java.util.Vector;
 import java.util.Iterator;
+import java.util.Vector;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -13,17 +13,19 @@ import org.apache.struts.action.ActionForward;
 import org.apache.struts.action.ActionMapping;
 import org.apache.struts.upload.FormFile;
 
+import com.pandora.AreaTO;
+import com.pandora.CompanyTO;
+import com.pandora.DepartmentTO;
+import com.pandora.FunctionTO;
+import com.pandora.MetaFormTO;
 import com.pandora.PreferenceTO;
 import com.pandora.RootTO;
 import com.pandora.TransferObject;
-import com.pandora.AreaTO;
-import com.pandora.DepartmentTO;
-import com.pandora.FunctionTO;
 import com.pandora.UserTO;
-import com.pandora.MetaFormTO;
 import com.pandora.bus.auth.Authentication;
 import com.pandora.bus.auth.SystemAuthentication;
 import com.pandora.delegate.AreaDelegate;
+import com.pandora.delegate.CompanyDelegate;
 import com.pandora.delegate.DepartmentDelegate;
 import com.pandora.delegate.FunctionDelegate;
 import com.pandora.delegate.MetaFormDelegate;
@@ -58,6 +60,11 @@ public class UserAction extends GeneralStrutsAction {
 			DepartmentDelegate depdel = new DepartmentDelegate();
 			Vector<DepartmentTO> depList = depdel.getDepartmentList();
 			request.getSession().setAttribute("departmentList", depList);
+
+			CompanyDelegate comdel = new CompanyDelegate();
+			Vector<CompanyTO> comList = comdel.getCompanyList();
+			request.getSession().setAttribute("userCompany", comList);
+			comList.add(0, new CompanyTO());
 			
 			//get all Areas from data base and put into http session (to be displayed by combo)
 			AreaDelegate areaDel = new AreaDelegate();
@@ -77,7 +84,7 @@ public class UserAction extends GeneralStrutsAction {
 			//get all users from data base and put into http session (to be displayed by grid)
 			this.refreshList(request, form);
 			
-		} catch(BusinessException e){
+		} catch(Exception e){
 		    this.setErrorFormSession(request, "error.showUserForm", e);
 		}
 
@@ -95,7 +102,7 @@ public class UserAction extends GeneralStrutsAction {
 			 HttpServletRequest request, HttpServletResponse response){
 	    try {
 			this.refreshList(request, form);
-		} catch(BusinessException e){
+		} catch(Exception e){
 		    this.setErrorFormSession(request, "error.showUserForm", e);
 		}
 		return mapping.findForward("showUser");
@@ -132,7 +139,6 @@ public class UserAction extends GeneralStrutsAction {
 		UserForm usrfrm = (UserForm)form;
 				
 		try {
-			
 			if (request.getParameter("hideDisableUsers")==null) {
 				usrfrm.setHideDisableUsers(false);
 			}
@@ -183,10 +189,8 @@ public class UserAction extends GeneralStrutsAction {
 			    usrfrm.setUpload(true);
 			}
 			
-		} catch(BusinessException e){
+		} catch(Exception e){
 		    this.setErrorFormSession(request, "error.prepareUpdateUserForm", e);
-		} catch(NullPointerException e){
-		    this.setErrorFormSession(request, "error.prepareUpdateUserForm", e);		    
 	    }
 
 		return mapping.findForward(forward);		
@@ -244,11 +248,12 @@ public class UserAction extends GeneralStrutsAction {
 
 			//create an UserTO object based on html fields
 			UserTO uto = this.getTransferObjectFromActionForm(usrfrm, request);
-			
-			//check if username already exists
-			udel.checkUserName(uto);
+							
+			if (usrfrm.getSaveMethod().equals(GeneralStrutsForm.INSERT_METHOD)){
 				
-			if (usrfrm.getSaveMethod().equals(GeneralStrutsForm.INSERT_METHOD)){			    
+				//check if username already exists
+				udel.checkUserName(uto);
+				
 			    errorMsg = "error.insertUserForm";
 			    succeMsg = "message.insertUser";
 			    udel.insertUser(uto);
@@ -258,6 +263,7 @@ public class UserAction extends GeneralStrutsAction {
 				udel.updatePassword(uto);
 			    
 			} else {
+								
 			    errorMsg = "error.updateUserForm";
 			    succeMsg = "message.updateUser";
 			    udel.updateUser(uto);
@@ -273,10 +279,8 @@ public class UserAction extends GeneralStrutsAction {
 		    this.setErrorFormSession(request, "error.usernamePicMaxSize", e);
 		} catch(UserNameAlreadyExistsException e){
 		    this.setErrorFormSession(request, "error.usernameAlreadyExists", e);		
-		} catch(BusinessException e){
+		} catch(Exception e){
 		    this.setErrorFormSession(request, errorMsg, e);
-		} catch(NullPointerException e){
-		    this.setErrorFormSession(request, errorMsg, e);		    
 		}
 		return mapping.findForward(forward);		
 	}
@@ -311,7 +315,7 @@ public class UserAction extends GeneralStrutsAction {
 			//get all users from data base and put into http session (to be displayed by grid)
 			this.refreshList(request, form);
 		
-		} catch(BusinessException e){
+		} catch(Exception e){
 		    this.setErrorFormSession(request, "error.removeUserForm", e);
 		}
 		return mapping.findForward(forward);
@@ -343,7 +347,7 @@ public class UserAction extends GeneralStrutsAction {
 				this.setSuccessFormSession(request, "message.updatePassUser");					        
 		    }
 		
-		} catch(BusinessException e){
+		} catch(Exception e){
 		    this.setErrorFormSession(request, "error.passUpdForm", e);
 		}
 		return mapping.findForward(forward);		
@@ -384,7 +388,16 @@ public class UserAction extends GeneralStrutsAction {
 		} else {
 			uto.setFinalDate(null);
 		}
-		
+
+		if (frm.getCreationDate()!=null && !frm.getCreationDate().trim().equals("")) {
+		    Timestamp ts = DateUtil.getDateTime(frm.getCreationDate(), super.getCalendarMask(request), SessionUtil.getCurrentLocale(request));
+		    if (ts!=null) {
+		    	uto.setCreationDate(new Timestamp(ts.getTime()));	
+		    }
+		} else {
+		    uto.setCreationDate(null);
+		}
+
 		String permissionParsing = "";
 		try {
 			MetaFormDelegate metaFormDel = new MetaFormDelegate();
@@ -407,10 +420,18 @@ public class UserAction extends GeneralStrutsAction {
 		}
 		uto.setPermission(permissionParsing);		
 		
+		if (frm.getUserCompanyId()!=null && !frm.getUserCompanyId().trim().equals("")) {
+			uto.setCompany(new CompanyTO(frm.getUserCompanyId()));
+		} else {
+			uto.setCompany(null);
+		}
+
+		uto.setGenericTag(null);		
 		if (frm.isUpload()){
 			try {
 		        FormFile uploadFile = frm.getTheFile();
-		        uto.setFileInBytes(uploadFile.getFileData());		    
+		        uto.setFileInBytes(uploadFile.getFileData());
+		        uto.setGenericTag("IS_UPLOAD");
 			} catch(Exception e) {
 			    uto.setFileInBytes(null);
 			}
@@ -453,6 +474,12 @@ public class UserAction extends GeneralStrutsAction {
 		}
 		
 		usrfrm.setEnableStatus(uto.getFinalDate()==null?"1":"0");
+		
+		if (uto.getCompany()!=null) {
+			usrfrm.setUserCompanyId(uto.getCompany().getId());
+		} else {
+			usrfrm.setUserCompanyId("");
+		}
 		
 		try {
 			String htmlBody = getPermissionGrid(request, uto.getPermission());

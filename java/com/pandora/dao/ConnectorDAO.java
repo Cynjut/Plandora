@@ -26,17 +26,17 @@ public class ConnectorDAO extends DataAccess {
     /**
      * Process a list of Integration objects
      */
-    public boolean process(ArrayList list) throws DataAccessException {
+    public boolean process(ArrayList<Integration> list) throws DataAccessException {
 		Connection c = null;
 		UserDelegate udel = new UserDelegate();
 		UserTO uto = null;
 		
 		try {
-			c = getConnection(false); //transactioned connection
+			c = getConnection(false);
 			
-	        Iterator i = list.iterator();
+	        Iterator<Integration> i = list.iterator();
 	        while(i.hasNext()){
-	            Integration iobj = (Integration)i.next();
+	            Integration iobj = i.next();
 	            if (iobj.isValid()) {
 		            uto = udel.getObjectByUsername(new UserTO(iobj));
 		            if (uto!=null) {

@@ -1,9 +1,11 @@
 package com.pandora;
 
+import java.sql.Timestamp;
 import java.util.Locale;
 
+import com.pandora.delegate.ResourceTaskDelegate;
 import com.pandora.delegate.TaskDelegate;
-import com.pandora.exception.BusinessException;
+import com.pandora.helper.DateUtil;
 import com.pandora.helper.StringUtil;
 import com.pandora.integration.Integration;
 import com.pandora.integration.ResourceTaskAllocIntegration;
@@ -24,6 +26,9 @@ public class ResourceTaskAllocTO extends TransferObject {
     
     /** The value (in minutes) of a slot */
     private Integer allocTime;
+    
+    
+    private Integer newState;
     
     
     /**
@@ -66,6 +71,7 @@ public class ResourceTaskAllocTO extends TransferObject {
      */
     public void populate(Integration iobj, UserTO handler) {
         TaskDelegate tdel = new TaskDelegate();
+        ResourceTaskDelegate rtdel = new ResourceTaskDelegate();
         ResourceTaskAllocIntegration rtai = (ResourceTaskAllocIntegration)iobj;
         
         this.setSequence(new Integer(rtai.getSequence()));
@@ -77,7 +83,7 @@ public class ResourceTaskAllocTO extends TransferObject {
         TaskTO tto = new TaskTO(rtai.getTaskId());
         try {
             tto = tdel.getTaskObject(tto);
-        } catch (BusinessException e) {
+        } catch (Exception e) {
             tto = null;
         }
         rtto.setTask(tto);
@@ -86,7 +92,12 @@ public class ResourceTaskAllocTO extends TransferObject {
         ResourceTO rto = new ResourceTO(rtai.getResourceId());
         rto.setProject(tto.getProject());
         rtto.setResource(new ResourceTO(rto));
-        
+
+        try {
+        	rtto = rtdel.getResourceTaskObject(rtto);
+        } catch (Exception e) {
+            rtto = null;
+        }
         this.setResourceTask(rtto);
     }
     
@@ -131,6 +142,8 @@ public class ResourceTaskAllocTO extends TransferObject {
         this.resourceTask = newValue;
     }
     
+    
+    
     ///////////////////////////////////    
     public Integer getSequence() {
         return sequence;
@@ -138,21 +151,51 @@ public class ResourceTaskAllocTO extends TransferObject {
     public void setSequence(Integer newValue) {
         this.sequence = newValue;
     }
+    
+    
+    
+    ///////////////////////////////////   
+    public Integer getNewState() {
+		return newState;
+	}
+	public void setNewState(Integer newValue) {
+		this.newState = newValue;
+	}
+	
+	
 
-    /**
-     * Return the resource task alloc object information on Applet PARAM format.
-     * @param i
-     * @param slot
-     * @return
+	/**
+     * Return the resource task alloc key used to hashmap
      */
-    public String getAllocBodyFormat(int i, int slot, int type) {
-        TaskTO tto = resourceTask.getTask();
-        return "<param name=\"AUNIT_" + i + "\" value=\"" + resourceTask.getId() + 
-        							"|" + tto.getId() + "|" + ((float)this.getAllocTime().intValue()/60) + 
-        							"|" + slot + "|" + slot + "|" + type +
-        							"\" />\n";
+    public String getAllocKey() {
+    	String key = "";
+	    if (resourceTask!=null && resourceTask.getActualDate()!=null && resourceTask.getResource()!=null &&	resourceTask.getResource().getProject()!=null ) {
+		    key = DateUtil.getDateTime(resourceTask.getActualDate(), "yyyyMMdd") + "|" + 
+		    		resourceTask.getResource().getId()+ "|" + resourceTask.getResource().getProject().getId();
+	    }
+        return key;
+    }
+
+    public static String getAllocKey(Timestamp cursor, String projectId, String resourceId) {
+    	String key = "";
+    	
+    	ResourceTaskAllocTO dummy = new ResourceTaskAllocTO();
+    	ResourceTaskTO rtto = new ResourceTaskTO();
+    	rtto.setActualDate(cursor);
+    	
+    	ResourceTO rto = new ResourceTO(resourceId);
+    	ProjectTO pto = new ProjectTO(projectId);
+    	rtto.setResource(rto);
+    	rto.setProject(pto);
+    	
+    	dummy.setResourceTask(rtto);
+  	
+	    key = dummy.getAllocKey();
+	    
+        return key;
     }
     
+        
 
     public String toString() {
         return "allocTime:[" + this.getAllocTime().toString() + "] sequence:[" + this.getSequence().toString()+ "]";

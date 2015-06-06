@@ -121,6 +121,7 @@ public class TaskForm extends GeneralStrutsForm {
     
     public void reset(ActionMapping mapping, HttpServletRequest request) {
         localRequestRef = request;
+        isParentTaskCheckbox = false;
     }
     
     /** 
@@ -363,7 +364,8 @@ public class TaskForm extends GeneralStrutsForm {
 			}
 			
 			if (this.isParentTask.equals("")){
-			    Vector resList = (Vector)request.getSession().getAttribute("resourceAllocated");
+			    @SuppressWarnings("rawtypes")
+				Vector resList = (Vector)request.getSession().getAttribute("resourceAllocated");
 			    
 				if (resList==null || resList.size()==0){
 				    errors.add("Alloc", new ActionError("validate.manageTask.blankAllocRes") );
@@ -383,8 +385,10 @@ public class TaskForm extends GeneralStrutsForm {
     public void setShowAllocField(String newValue) {
         this.showAllocField = newValue;
     }
+    
+	@SuppressWarnings("rawtypes")
 	public String getShowAllocField(){
-	    Vector allocList = null;
+		Vector allocList = null;
 	    String response = "off";
 	    
 	    try {

@@ -35,7 +35,7 @@ public class CustomerTO extends UserTO {
     
     private Boolean canOpenOtherOwnerReq = new Boolean(false);
     
-    private Vector roles;
+    private Vector<CustomerFunctionTO> roles;
     
     
     
@@ -65,12 +65,16 @@ public class CustomerTO extends UserTO {
         this.setAuthenticationMode(parent.getAuthenticationMode());
         this.setPermission(parent.getPermission());
         this.setBirth(parent.getBirth());
+        this.setCompany(parent.getCompany());
         this.setFunction(parent.getFunction());
         this.setName(parent.getName());
         this.setPassword(parent.getPassword());
         this.setPhone(parent.getPhone());
         this.setUsername(parent.getUsername());
         this.setFinalDate(parent.getFinalDate());
+        this.setLanguage(parent.getLanguage());
+        this.setCountry(parent.getCountry());
+        this.setBundle(parent.getBundle());
         this.canSeeTechComments = new Boolean(false);
         this.isDisabled = new Boolean(false);
         this.isReqAcceptable = new Boolean(false);
@@ -284,10 +288,10 @@ public class CustomerTO extends UserTO {
 	
 
 	///////////////////////////////////////////
-	public Vector getRoles() {
+	public Vector<CustomerFunctionTO> getRoles() {
 		return roles;
 	}
-	public void setRoles(Vector roles) {
+	public void setRoles(Vector<CustomerFunctionTO> roles) {
 		this.roles = roles;
 	}
     

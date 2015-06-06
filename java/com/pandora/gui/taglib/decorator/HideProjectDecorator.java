@@ -1,8 +1,9 @@
 package com.pandora.gui.taglib.decorator;
 
 import org.apache.taglibs.display.ColumnDecorator;
-import com.pandora.UserTO;
+
 import com.pandora.PreferenceTO;
+import com.pandora.UserTO;
 import com.pandora.delegate.UserDelegate;
 import com.pandora.helper.HtmlUtil;
 
@@ -17,7 +18,7 @@ public class HideProjectDecorator extends ColumnDecorator {
     	String projectId = (String)columnValue;
         String response = HtmlUtil.getChkBox(false, projectId, PROJ_HIDE, false);
         
-        UserTO uto = (UserTO)this.getPageContext().getSession().getAttribute(UserDelegate.CURRENT_USER_SESSION);
+        UserTO uto = (UserTO)this.getSession().getAttribute(UserDelegate.CURRENT_USER_SESSION);
         if (isHideProject(uto, projectId)){
         	response = HtmlUtil.getChkBox(true, projectId, PROJ_HIDE, false);
         } 

@@ -106,7 +106,7 @@
 		<table width="98%" border="0" cellspacing="0" cellpadding="0"><tr>
 		  <td width="120">
 			  <html:button property="save" styleClass="button" onclick="javascript:buttonClick('metaFormForm', 'saveMetaForm');">
-				<bean:write name="metaFormForm" property="saveLabel" />
+				<bean:write name="metaFormForm" property="saveLabel" filter="false"/>
 			  </html:button>    
 		  </td>
 		  <td width="120">
@@ -132,13 +132,13 @@
 	<table width="98%" border="0" cellspacing="0" cellpadding="0">
 	<tr class="formBody">
 		<td>
-			<display:table border="1" width="100%" name="metaFormList" scope="session" pagesize="6">
-				  <display:column width="2%" property="id" align="center" title="grid.title.empty" />			
-				  <display:column property="name" likeSearching="true" title="label.metaform.name" />
-				  <display:column width="15%" align="center" property="gridNumber" title="label.metaform.gridNum" />				  
-				  <display:column width="2%" property="id" title="grid.title.empty" decorator="com.pandora.gui.taglib.decorator.GridEditDecorator" tag="'metaFormForm', 'editMetaForm'" />
-				  <display:column width="2%" property="id" title="grid.title.empty" decorator="com.pandora.gui.taglib.decorator.GridDeleteDecorator" tag="'metaFormForm', 'removeMetaForm'" />
-			</display:table>		
+			<plandora-html:ptable width="100%" name="metaFormList" scope="session" pagesize="6" frm="metaFormForm">
+				  <plandora-html:pcolumn width="2%" property="id" align="center" title="grid.title.empty" />			
+				  <plandora-html:pcolumn property="name" likeSearching="true" title="label.metaform.name" />
+				  <plandora-html:pcolumn width="15%" align="center" property="gridNumber" title="label.metaform.gridNum" />				  
+				  <plandora-html:pcolumn width="2%" property="id" title="grid.title.empty" decorator="com.pandora.gui.taglib.decorator.GridEditDecorator" tag="'metaFormForm', 'editMetaForm'" />
+				  <plandora-html:pcolumn width="2%" property="id" title="grid.title.empty" decorator="com.pandora.gui.taglib.decorator.GridDeleteDecorator" tag="'metaFormForm', 'removeMetaForm'" />
+			</plandora-html:ptable>		
 		</td>
 	</tr> 
 	</table>

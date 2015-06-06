@@ -52,12 +52,12 @@ public class CostDAO extends PlanningDAO {
 	}
 
 	
-	public Vector<CostTO> getListByCategory(CategoryTO catTO, Timestamp iniDate, Timestamp finalDate) throws DataAccessException {
+	public Vector<CostTO> getListByCategory(CategoryTO catTO, ProjectTO pto, Timestamp iniDate, Timestamp finalDate) throws DataAccessException {
         Vector<CostTO> response = null;
         Connection c = null;
 		try {
 			c = getConnection();
-			response = this.getListByCategory(catTO, iniDate, finalDate, c);
+			response = this.getListByCategory(catTO, pto, iniDate, finalDate, c);
 		} catch(Exception e) {
 			throw new DataAccessException(e);
 		} finally {
@@ -67,6 +67,21 @@ public class CostDAO extends PlanningDAO {
 	}
 
 
+	public Vector<CostTO> getListByMetaFieldValue(String metaFieldId, String metaFieldValue, Timestamp iniDate, Timestamp finalDate) throws DataAccessException {
+        Vector<CostTO> response = null;
+        Connection c = null;
+		try {
+			c = getConnection();
+			response = this.getListByMetaFieldValue(metaFieldId, metaFieldValue, iniDate, finalDate, c);
+		} catch(Exception e) {
+			throw new DataAccessException(e);
+		} finally {
+			this.closeConnection(c);
+		}
+        return response;
+	}
+
+	
 	public Vector<CostTO> getListByAccountCode(String accountCode, Timestamp iniDate, Timestamp finalDate) throws DataAccessException {
         Vector<CostTO> response = null;
         Connection c = null;
@@ -81,7 +96,82 @@ public class CostDAO extends PlanningDAO {
         return response;
 	}
 
+	public void insertCostHistory(CostTO cto, CostInstallmentTO cito) throws DataAccessException {
+        Connection c = null;
+		try {
+			c = getConnection();
+			this.insertCostHistory(cto, cito, c);
+		} catch(Exception e) {
+			throw new DataAccessException(e);
+		} finally {
+			this.closeConnection(c);
+		}		
+	}
 	
+	
+	public void liteUpdateCost(CostTO cto) throws DataAccessException {
+        Connection c = null;
+		try {
+			c = getConnection();
+			this.liteUpdateCost(cto, c);
+		} catch(Exception e) {
+			throw new DataAccessException(e);
+		} finally {
+			this.closeConnection(c);
+		}
+	}
+
+	public void liteUpdateInstallment(CostInstallmentTO cito, UserTO handler) throws DataAccessException {
+        Connection c = null;
+		try {
+			c = getConnection();
+			this.liteUpdateInstallment(cito, handler, c);
+		} catch(Exception e) {
+			throw new DataAccessException(e);
+		} finally {
+			this.closeConnection(c);
+		}
+	}
+	
+	
+    private void liteUpdateCost(CostTO cto, Connection c)  throws DataAccessException {
+		PreparedStatement pstmt = null; 
+		try {
+		    pstmt = c.prepareStatement("update cost set category_id=?, account_code=? where id=?");
+			pstmt.setString(1, cto.getCategory().getId());
+			pstmt.setString(2, cto.getAccountCode());
+			pstmt.setString(3, cto.getId());
+			pstmt.executeUpdate();
+		} catch (SQLException e) {
+			throw new DataAccessException(e);
+		}finally{
+			super.closeStatement(null, pstmt);
+		}        
+    }
+
+
+    private void liteUpdateInstallment(CostInstallmentTO cito, UserTO handler, Connection c)  throws DataAccessException {
+		PreparedStatement pstmt = null; 
+		try {
+		    pstmt = c.prepareStatement("update cost_installment set cost_status_id=?, approver=? " +
+		    						   "where cost_id=? and installment_num=?");
+		    pstmt.setString(1, cito.getCostStatus().getId());
+		    if (cito.getCostStatus().getStateMachineOrder().equals(CostStatusTO.STATE_MACHINE_WAITING)) {
+		    	pstmt.setNull(2, Types.VARCHAR);
+		    } else {
+		    	pstmt.setString(2, handler.getId());	
+		    }
+		    pstmt.setString(3, cito.getCost().getId());
+		    pstmt.setInt(4, cito.getInstallmentNum().intValue());
+		    pstmt.executeUpdate();
+		} catch (SQLException e) {
+			throw new DataAccessException(e);
+		}finally{
+			super.closeStatement(null, pstmt);
+		}        
+    }
+
+    
     public void update(TransferObject to, Connection c)  throws DataAccessException {
 		PreparedStatement pstmt = null; 
 		try {
@@ -238,7 +328,7 @@ public class CostDAO extends PlanningDAO {
 									   "where e.user_id = u.id and c.project_id = p.id and a.id = e.id " +
 									      "and c.expense_id = e.id and ci.cost_id = c.id and cs.id = ci.cost_status_id " +
 									      "and cs.state_machine_order = ? " +
-									      "and c.project_id in (select project_id from leader where id=?)");
+									      "and c.project_id in (select project_id from leader where id=?) order by c.project_id, e.user_id");
 			pstmt.setInt(1, (CostStatusTO.STATE_MACHINE_WAITING).intValue());
 			pstmt.setString(2, uto.getId());	
 			rs = pstmt.executeQuery();
@@ -277,7 +367,7 @@ public class CostDAO extends PlanningDAO {
 				pstmt.setInt(2, cito.getInstallmentNum().intValue());
 				pstmt.setTimestamp(3, cito.getDueDate());
 				pstmt.setString(4, cito.getCostStatus().getId());
-				pstmt.setInt(5, cito.getValue().intValue());
+				pstmt.setLong(5, cito.getValue().longValue());
 				
 				if (cito.getCostStatus()!=null && cito.getCostStatus().getStateMachineOrder()!=null) {
 					if (!cito.getCostStatus().getStateMachineOrder().equals(CostStatusTO.STATE_MACHINE_WAITING)) {
@@ -339,7 +429,8 @@ public class CostDAO extends PlanningDAO {
 			}
 			pstmt.setTimestamp(9, cito.getDueDate());
 			pstmt.setString(10, cito.getCostStatus().getId());
-			pstmt.setInt(11, cito.getValue().intValue());
+			pstmt.setLong(11, cito.getValue().longValue());
+			
 			if (cto.getExpense()!=null && cto.getExpense().getRefuserAprroverId()!=null 
 					&& !cto.getExpense().getRefuserAprroverId().trim().equals("")) {
 				pstmt.setString(12, cto.getExpense().getRefuserAprroverId());
@@ -437,15 +528,33 @@ public class CostDAO extends PlanningDAO {
 			pstmt.setString(2, eto.getId());
 			pstmt.executeUpdate();	
 
+			//remove the additional fields from expense
 			pstmt = c.prepareStatement("delete from additional_field " +
 					                   "where planning_id in (select id from cost where expense_id=?)");
 			pstmt.setString(1, eto.getId());
 			pstmt.executeUpdate();	
 
+			
 			pstmt = c.prepareStatement("delete from planning " +
-					                   "where id in (select id from cost where expense_id=?)");
+            						"where id in (select id from cost where expense_id=?)");
 			pstmt.setString(1, eto.getId());			
 			pstmt.executeUpdate();
+			
+			//remove the additional fields from costs (expenses items)...
+			if (eto.getExpensesItems()!=null) {
+				for (CostTO cto : eto.getExpensesItems()) {
+					if (cto.getId()!=null && cto.getId().indexOf("NEW")==-1) {
+						pstmt = c.prepareStatement("delete from additional_field where planning_id=?");
+						pstmt.setString(1, cto.getId());
+						pstmt.executeUpdate();
+						
+						pstmt = c.prepareStatement("delete from planning where id=?");
+						pstmt.setString(1, cto.getId());			
+						pstmt.executeUpdate();
+					}
+				}				
+			}
+
 			
 		} catch (SQLException e) {
 			throw new DataAccessException(e);
@@ -509,12 +618,16 @@ public class CostDAO extends PlanningDAO {
 									          "where c.id = p.id and i.cost_id = c.id and c.account_code = ? " +
 									   "group by c.id, c.name, c.project_id, c.category_id, c.account_code, " +
 									         "p.description, p.creation_date, p.final_date, p.iteration, c.expense_id" +
-									   ") as sub " + (iniDate!=null?"where sub.first >= ? and sub.last <= ?":"") +
+									   ") as sub " + (iniDate!=null?"where ((sub.first >= ? and sub.last <= ?) or (sub.first < ? and sub.last >= ?) or (sub.first < ? and sub.last >= ?))":"") +
 									   " order by sub.expense_id, sub.id");
 			pstmt.setString(1, accountCode);
 			if (iniDate!=null) {
 				pstmt.setTimestamp(2, iniDate);
-				pstmt.setTimestamp(3, finalDate);							
+				pstmt.setTimestamp(3, finalDate);
+				pstmt.setTimestamp(4, iniDate);
+				pstmt.setTimestamp(5, iniDate);
+				pstmt.setTimestamp(6, finalDate);
+				pstmt.setTimestamp(7, finalDate);
 			}
 			rs = pstmt.executeQuery();
 			while (rs.next()) {
@@ -531,13 +644,60 @@ public class CostDAO extends PlanningDAO {
 	}
 	
 	
-	private Vector<CostTO> getListByProject(ProjectTO pto, Timestamp iniDate, Timestamp finalDate, Connection c) throws DataAccessException {
+	private Vector<CostTO> getListByMetaFieldValue(String metaFieldId, String metaFieldValue, Timestamp iniDate, 
+			Timestamp finalDate, Connection c) throws DataAccessException {
 		Vector<CostTO> response = new Vector<CostTO>();
 		ResultSet rs = null;
 		PreparedStatement pstmt = null;
 		try {
 		    pstmt = c.prepareStatement("select sub.id, sub.name, sub.project_id, sub.category_id, sub.account_code, " +
 		    					         "sub.description, sub.creation_date, sub.final_date, sub.iteration, sub.expense_id " + 
+		    					         "from (" +
+		    					             "select c.id, c.name, c.project_id, c.category_id, c.account_code, " +
+		    					                "p.description, p.creation_date, p.final_date, p.iteration, c.expense_id, " +
+		    					                "min(i.due_date) as first, max(i.due_date) as last " +
+		    					             "from planning p, cost_installment i, cost c, additional_field af " +
+		    					             "where c.id = p.id and i.cost_id = c.id " +
+		    					               "and af.planning_id = c.id and af.meta_field_id = ? and af.value=? " +
+		    					             "group by c.id, c.name, c.project_id, c.category_id, c.account_code, " +
+		    					               "p.description, p.creation_date, p.final_date, p.iteration, c.expense_id" + 
+		    						   ") as sub " + (iniDate!=null?"where ((sub.first >= ? and sub.last <= ?) or (sub.first < ? and sub.last >= ?) or (sub.first < ? and sub.last >= ?))":"") +
+		    						   " order by sub.expense_id, sub.id");
+			pstmt.setString(1, metaFieldId);
+			pstmt.setString(2, metaFieldValue);
+			if (iniDate!=null) {
+				pstmt.setTimestamp(3, iniDate);
+				pstmt.setTimestamp(4, finalDate);
+				pstmt.setTimestamp(5, iniDate);
+				pstmt.setTimestamp(6, iniDate);
+				pstmt.setTimestamp(7, finalDate);
+				pstmt.setTimestamp(8, finalDate);
+				
+			}
+			rs = pstmt.executeQuery();
+			while (rs.next()) {
+				CostTO cto = populateObjectByResultSet(rs, c);
+				cto.setInstallments(this.getInstallmentList(cto, c));
+				response.add(cto);
+			}
+		} catch (SQLException e) {
+			throw new DataAccessException(e);
+		} finally {
+			super.closeStatement(rs, pstmt);
+		}
+		return response;
+
+	}	
+
+	
+	private Vector<CostTO> getListByProject(ProjectTO pto, Timestamp iniDate, Timestamp finalDate, Connection c) throws DataAccessException {
+		Vector<CostTO> response = new Vector<CostTO>();
+		ResultSet rs = null;
+		PreparedStatement pstmt = null;
+		try {
+		    pstmt = c.prepareStatement("select sub.id, sub.name, sub.project_id, sub.category_id, sub.account_code, " +
+		    					         "sub.description, sub.creation_date, sub.final_date, sub.iteration, " +
+		    					         "sub.expense_id, cg.name as CATEGORY_NAME, pro.name as PROJECT_NAME " + 
 		    					         "from (select c.id, c.name, c.project_id, c.category_id, c.account_code, " + 
 		    						     "p.description, p.creation_date, p.final_date, p.iteration, c.expense_id," +
 		    						     "min(i.due_date) as first, max(i.due_date) as last " +
@@ -545,17 +705,30 @@ public class CostDAO extends PlanningDAO {
 					                   "where c.id = p.id and i.cost_id = c.id and c.project_id = ? " +
 					                   "group by c.id, c.name, c.project_id, c.category_id, c.account_code, " +
 		    						         "p.description, p.creation_date, p.final_date, p.iteration, c.expense_id" +
-		    						   ") as sub " + (iniDate!=null?"where sub.first >= ? and sub.last <= ?":"") + 
+		    						   ") as sub, category cg, project pro " +
+		    						   "where sub.category_id = cg.id and pro.id = sub.project_id " + 
+		    						   (iniDate!=null?"and ((sub.first >= ? and sub.last <= ?) or (sub.first < ? and sub.last >= ?) or (sub.first < ? and sub.last >= ?))":"") + 
 		    						   " order by sub.expense_id, sub.id");
 			pstmt.setString(1, pto.getId());
 			if (iniDate!=null) {
 				pstmt.setTimestamp(2, iniDate);
-				pstmt.setTimestamp(3, finalDate);							
+				pstmt.setTimestamp(3, finalDate);
+				pstmt.setTimestamp(4, iniDate);
+				pstmt.setTimestamp(5, iniDate);
+				pstmt.setTimestamp(6, finalDate);
+				pstmt.setTimestamp(7, finalDate);
 			}
 			rs = pstmt.executeQuery();
 			while (rs.next()) {
 				CostTO cto = populateObjectByResultSet(rs, c);
 				cto.setInstallments(this.getInstallmentList(cto, c));
+				
+				CategoryTO cat = cto.getCategory();
+				cat.setName(rs.getString("CATEGORY_NAME"));
+
+				ProjectTO pro = cto.getProject();
+				pro.setName(rs.getString("PROJECT_NAME"));
+				
 				response.add(cto);
 			}
 		} catch (SQLException e) {
@@ -567,7 +740,7 @@ public class CostDAO extends PlanningDAO {
 	}
 
 	
-	public Vector<CostTO> getListByCategory(CategoryTO catTO, Timestamp iniDate, Timestamp finalDate, Connection c) throws DataAccessException {
+	private Vector<CostTO> getListByCategory(CategoryTO catTO, ProjectTO pto, Timestamp iniDate, Timestamp finalDate, Connection c) throws DataAccessException {
 		Vector<CostTO> response = new Vector<CostTO>();
 		ResultSet rs = null;
 		PreparedStatement pstmt = null;
@@ -578,15 +751,20 @@ public class CostDAO extends PlanningDAO {
 									     "p.description, p.creation_date, p.final_date, p.iteration, c.expense_id," +
 									     "min(i.due_date) as first, max(i.due_date) as last " +
 					                  "from cost c, planning p, cost_installment i " +
-					                  "where c.id = p.id and i.cost_id = c.id and c.category_id = ? " +
+					                  "where c.id = p.id and i.cost_id = c.id and c.category_id = ? and c.project_id=? " +
 					                  "group by c.id, c.name, c.project_id, c.category_id, c.account_code, " +
 									         "p.description, p.creation_date, p.final_date, p.iteration, c.expense_id" +
-									  ") as sub " + (iniDate!=null?"where sub.first >= ? and sub.last <= ?":"") +
+		    						  ") as sub " + (iniDate!=null?"where ((sub.first >= ? and sub.last <= ?) or (sub.first < ? and sub.last >= ?) or (sub.first < ? and sub.last >= ?))":"") +									  
 									  " order by sub.expense_id, sub.id");
 			pstmt.setString(1, catTO.getId());
+			pstmt.setString(2, pto.getId());
 			if (iniDate!=null) {
-				pstmt.setTimestamp(2, iniDate);
-				pstmt.setTimestamp(3, finalDate);							
+				pstmt.setTimestamp(3, iniDate);
+				pstmt.setTimestamp(4, finalDate);
+				pstmt.setTimestamp(5, iniDate);
+				pstmt.setTimestamp(6, iniDate);
+				pstmt.setTimestamp(7, finalDate);
+				pstmt.setTimestamp(8, finalDate);
 			}
 			rs = pstmt.executeQuery();
 			while (rs.next()) {
@@ -626,46 +804,26 @@ public class CostDAO extends PlanningDAO {
 		return response;
 	}
 	
-/*
-    private CostInstallmentTO getInstallmentObject(CostInstallmentTO cito, Connection c) throws DataAccessException {
-		CostInstallmentTO response = null;
-		ResultSet rs = null;
-		PreparedStatement pstmt = null;
-		try {
-		    pstmt = c.prepareStatement("select i.cost_id, i.installment_num, i.due_date, i.cost_status_id, i.value, " +
-		    							   "cs.name as STATUS_NAME, cs.state_machine_order, i.approver " +
-		    						   "from cost_installment i, cost_status cs " +
-		    						   "where i.cost_status_id = cs.id " +
-		    						   "and i.cost_id = ? and i.installment_num=?");
-			pstmt.setString(1, cito.getCost().getId());
-			pstmt.setInt(2, cito.getInstallmentNum().intValue());	
-			rs = pstmt.executeQuery();
-			while (rs.next()) {
-				response = populateInstallmentByResultSet(rs, c);
-			}
-		} catch (SQLException e) {
-			throw new DataAccessException(e);
-		} finally {
-			super.closeStatement(rs, pstmt);
-		}
-		return response;
-	}
-*/
-    
 	private Vector<CostInstallmentTO> getInstallmentList(CostTO cto, Connection c) throws DataAccessException {
 		Vector<CostInstallmentTO> response = new Vector<CostInstallmentTO>();
 		ResultSet rs = null;
 		PreparedStatement pstmt = null;
 		try {
 		    pstmt = c.prepareStatement("select i.cost_id, i.installment_num, i.due_date, i.cost_status_id, i.value, " +
-		    							   "cs.name as STATUS_NAME, cs.state_machine_order, i.approver " +
-		    						   "from cost_installment i, cost_status cs " +
+		    							   "cs.name as STATUS_NAME, cs.state_machine_order, i.approver, t.username " +
+		    						   "from cost_status cs, cost_installment i left outer join tool_user t on (t.id = i.approver) " +
 		    						   "where i.cost_status_id = cs.id " +
 		    						   "and i.cost_id = ? order by i.due_date");
 			pstmt.setString(1, cto.getId());	
 			rs = pstmt.executeQuery();
 			while (rs.next()) {
 				CostInstallmentTO inst = populateInstallmentByResultSet(rs, c);
+				
+				String approvername = rs.getString("username");
+				if (approvername!=null && inst.getApprover()!=null) {
+					inst.getApprover().setUsername(approvername);	
+				}
+				
 				inst.setCost(cto);
 				response.add(inst);
 			}
@@ -683,7 +841,7 @@ public class CostDAO extends PlanningDAO {
 
         response.setDueDate(getTimestamp(rs, "due_date"));
         response.setInstallmentNum(getInteger(rs, "installment_num"));
-        response.setValue(getInteger(rs, "value"));
+        response.setValue(getLong(rs, "value"));
         
         String approver = getString(rs, "approver");
         if (approver!=null && !approver.trim().equals("")) {
@@ -725,5 +883,6 @@ public class CostDAO extends PlanningDAO {
 
         return response;
     }
+
 
 }

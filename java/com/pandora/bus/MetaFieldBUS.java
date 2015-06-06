@@ -3,6 +3,8 @@ package com.pandora.bus;
 import java.util.Vector;
 
 import com.pandora.MetaFieldTO;
+import com.pandora.TransferObject;
+import com.pandora.dao.AdditionalFieldDAO;
 import com.pandora.dao.MetaFieldDAO;
 import com.pandora.exception.BusinessException;
 import com.pandora.exception.DataAccessException;
@@ -16,12 +18,14 @@ public class MetaFieldBUS extends GeneralBusiness {
     /** The Data Access Object related with current business entity */
     private MetaFieldDAO dao = new MetaFieldDAO();
     
+    private AdditionalFieldDAO afdao = new AdditionalFieldDAO();
+    
     
     /**
      * Get a list of all MetaField TOs from data base.
      */
     public Vector<MetaFieldTO> getMetaFieldList() throws BusinessException {
-        Vector<MetaFieldTO> response = new Vector();
+        Vector<MetaFieldTO> response = new Vector<MetaFieldTO>();
         try {
             response = dao.getList();
         } catch (DataAccessException e) {
@@ -107,5 +111,13 @@ public class MetaFieldBUS extends GeneralBusiness {
             throw new BusinessException(e);
         }
         return response;
+    }
+    
+    public void updateAdditionalField(TransferObject afto) throws BusinessException {
+        try {
+            afdao.update(afto);
+        } catch (DataAccessException e) {
+            throw new BusinessException(e);
+        }
     }
 }

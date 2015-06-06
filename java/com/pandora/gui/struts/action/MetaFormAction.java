@@ -11,8 +11,8 @@ import org.apache.struts.action.ActionMapping;
 
 import com.pandora.MetaFormTO;
 import com.pandora.UserTO;
-import com.pandora.exception.BusinessException;
 import com.pandora.delegate.MetaFormDelegate;
+import com.pandora.exception.BusinessException;
 import com.pandora.gui.struts.form.MetaFormForm;
 import com.pandora.helper.SessionUtil;
 
@@ -86,7 +86,7 @@ public class MetaFormAction extends GeneralStrutsAction {
 	    String forward = "showMetaForm";
 		try {	    		    
 		    MetaFormDelegate del = new MetaFormDelegate();
-		    Vector mfList = del.getMetaFormList();
+		    Vector<MetaFormTO> mfList = del.getMetaFormList();
 		    request.getSession().setAttribute("metaFormList", mfList);		    		    
 		} catch(BusinessException e){
 		   this.setErrorFormSession(request, "error.metaform.showForm", e);

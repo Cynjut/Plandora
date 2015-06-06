@@ -7,45 +7,48 @@ import org.apache.lucene.document.Document;
 
 import com.pandora.ProjectTO;
 
-/**
- */
 public class ProjectKbIndex extends KbIndex {
 
+    @Override
     public String getUniqueName() {
         return "ProjectKbIndex";
     }
 
+    @Override
     public String getContextLabel() {
         return "label.viewKb.Proj";
     }
 
+    @Override
     public Timestamp getCreationDate(Object to){
         ProjectTO pto = (ProjectTO)to;
         return pto.getCreationDate();
     }
     
+    @Override
     public String getProjectId(Object to){
         ProjectTO pto = (ProjectTO)to;
         return pto.getId();
     }
 
-    
-    public Vector call(long initialCursor, long finalCursor) throws Exception {
+    @Override
+    public Vector<?> call(long initialCursor, long finalCursor) throws Exception {
         return null;
     }
         
-    
+    @Override
     public long getMaxId() throws Exception {
         return super.getMaxId();
     }
     
-    
+    @Override
     public Document getObjectToIndex(Object to) throws Exception {
         return super.getObjectToIndex(to);
     }
     
     
-    public Class getBusinessClass() throws Exception {
+    @SuppressWarnings("rawtypes")
+	public Class getBusinessClass() throws Exception {
         return ProjectTO.class;
     }
 

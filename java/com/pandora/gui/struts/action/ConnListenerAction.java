@@ -16,8 +16,15 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
+import com.pandora.ProjectTO;
+import com.pandora.TransferObject;
+import com.pandora.UserTO;
+import com.pandora.bus.SystemSingleton;
 import com.pandora.delegate.ConnectorDelegate;
 import com.pandora.delegate.ProjectDelegate;
+import com.pandora.delegate.RepositoryDelegate;
+import com.pandora.delegate.UserDelegate;
+import com.pandora.exception.BusinessException;
 import com.pandora.helper.LogUtil;
 import com.pandora.helper.XmlDomParse;
 import com.pandora.integration.IntegrationResponse;
@@ -32,7 +39,7 @@ public class ConnListenerAction extends GeneralStrutsAction {
 
     /**
      * Perform the listener of Plandora connector. <br> 
-     * Get the content from http payload, deserialize the incomming object, 
+     * Get the content from http payload, de-serialize the incoming object, 
      * persist data into database (if necessary) and format the response 
      * to the requester.
      */
@@ -43,6 +50,7 @@ public class ConnListenerAction extends GeneralStrutsAction {
 	    String respMessage = "OK";
 	    IntegrationResponse ir = new IntegrationResponse();
 	    ConnectorDelegate cdel = new ConnectorDelegate();
+	    RepositoryDelegate rdel = new RepositoryDelegate();
 	    
 	    try {
 	        //get content sent by client and perform the xml unmarshalling
@@ -65,6 +73,15 @@ public class ConnListenerAction extends GeneralStrutsAction {
 			        		ir.setOptionalMsg(msg);	        			
 		        		} else {
 		        			ir.setOptionalMsg("OK");
+		        			
+		        			ArrayList<TransferObject> parsedFiles = rep.getParsedFiles();
+		        			if (rep.getProjectId()!=null && parsedFiles!=null) {
+		        				for (TransferObject aFile : parsedFiles) {
+				        			rdel.insertHistory(rep.getAuthorUser(), new ProjectTO(rep.getProjectId()), 
+				        					aFile.getGenericTag(), RepositoryDelegate.ACTION_COMMIT, 
+				        					rep.getComment());		        													
+								}
+		        			}
 		        		}
 		        		
 		        	} else {
@@ -88,7 +105,8 @@ public class ConnListenerAction extends GeneralStrutsAction {
 				ir.setStatus(respMessage);
 				String content = ir.toXML();
 				
-				response.setContentType("text/xml; charset=UTF-8");
+				String chartset = SystemSingleton.getInstance().getDefaultEncoding();
+				response.setContentType("text/xml; charset=" + chartset);
 				response.setContentLength(content.length());
 				sos.write(content.getBytes());
 				sos.close();
@@ -184,9 +202,22 @@ public class ConnListenerAction extends GeneralStrutsAction {
 	        }
 	        Node node = nodes4.item(0);	        
 	        response.setAuthor(node.getTextContent());
+	        
+	        if (response.getAuthor()!=null && !response.getAuthor().trim().equals("")){
+	        	this.extractAuthorUser(response);	
+	        }
 	    }
 	    
 	    return response;
+	}
+
+
+	private void extractAuthorUser(RepositoryMessageIntegration response) throws BusinessException {
+		UserDelegate udel = new UserDelegate();
+		UserTO filter = new UserTO();
+		filter.setUsername(response.getAuthor());
+		UserTO uto = udel.getObjectByUsername(filter);
+		response.setAuthorUser(uto);
 	}
 	
 		
@@ -201,7 +232,8 @@ public class ConnListenerAction extends GeneralStrutsAction {
 				
 		if (request.getMethod().equals("GET")) {
 			queryStringBuf = request.getQueryString();
-			queryStringBuf = URLDecoder.decode(queryStringBuf, "UTF-8");
+			String chartset = SystemSingleton.getInstance().getDefaultEncoding();
+			queryStringBuf = URLDecoder.decode(queryStringBuf, chartset);
 			
 			//get only the content from 'data' get-http field
 			queryStringBuf = getFieldFromHttpGet(queryStringBuf, "data");

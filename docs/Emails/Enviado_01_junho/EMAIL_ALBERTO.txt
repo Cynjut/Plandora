@@ -1,69 +1,69 @@
-E aí, beleza? 
-
-Aí vai o relatório do que foi modificado. Me dê um toque quando você fizer as modificações e
-observações a serem alteradas.
-
-Inté+ e novamente, valeu pela força no Churrasco.
-
-
-Ítens a serem verificados:
-
-Telas:
-
-	1) Gerencia de Link´s (manage_links.html).
-		Tela nova, ainda não havíamos feito nada.
-
-	2) Gerencia de Arquivos (manage_files.html).
-		Tela nova, ainda não havíamos feito nada.
-
-	3) Atendimento ao requisito (Attending-task.html).
-		Verificar posicionamento de alocação de tarefas sem a necessidade de aprovação.
-	
-	4) Líder (leader.html).
-		Verificar os ícones que abrirão a tela de Gerência de Arquivos e de Gerência 
-		de Links.
-		OBS: Eu coloquei estes ícones provisoriamente. Foram os mais próximos que eu 
-		tinha aqui no meu computador e que poderia servir...
-
-
-Casos de Uso.
-
-	OBS: Para facilitar, os casos ao qual sofreram alteração, estão em vermelho.
-
-	1) Gerencia Área. (UC36)
-		Novo caso.
-
-	2) Gerencia de Links. (UC37)
-		Novo caso.
-
-	3) Gerencia de Arquivos. (UC38)
-		Novo caso.
-
-	4) Gerencia Usuário. (UC26) 
-		Alteração no Edita cor.
-
-	5) Exibe Meus Fóruns (UC15)
-		Opções no grid com mais dois ícones, Link e UpLoad.
-
-	6) Criar Fórum (UC13)
-		Adicionar ou Remover usuários.
-
-	7) Atender Solicitação (UC17)
-		Habilita ou não recurso a Auto-Alocação
-
-Variáveis.
-
-	Documento com a separação das variáveis.
-	OBS: Tenho um monte de dúvidas com relação às variáveis. Isto é, quando vou
-	relacionar o que eu tinha feito, com o que você escreveu no meu caderno e mais
-	alguns itens que achei, acabo um pouco confuso. Depois discutiremos. Por exemplo quando
-	com relação aos históricos: histórico das tarefas, forum, projeto, etc.
-	Alguns itens eu os deixei em vermelho...
-
-
-Diagrama.
-
-	O Diagrama eu também alterei, mas ele eu imprimo para a próxima McReunião, já 
-	que você disse que não está com o Rose instalado. Mas eu fiz um Gif meio nas 
-	coxas com o Paint. Apesar de que, se ficar muito ruim, eu faço novamente
+E aí, beleza? 
+
+Aí vai o relatório do que foi modificado. Me dê um toque quando você fizer as modificações e
+observações a serem alteradas.
+
+Inté+ e novamente, valeu pela força no Churrasco.
+
+
+Ítens a serem verificados:
+
+Telas:
+
+	1) Gerencia de Link´s (manage_links.html).
+		Tela nova, ainda não havíamos feito nada.
+
+	2) Gerencia de Arquivos (manage_files.html).
+		Tela nova, ainda não havíamos feito nada.
+
+	3) Atendimento ao requisito (Attending-task.html).
+		Verificar posicionamento de alocação de tarefas sem a necessidade de aprovação.
+	
+	4) Líder (leader.html).
+		Verificar os ícones que abrirão a tela de Gerência de Arquivos e de Gerência 
+		de Links.
+		OBS: Eu coloquei estes ícones provisoriamente. Foram os mais próximos que eu 
+		tinha aqui no meu computador e que poderia servir...
+
+
+Casos de Uso.
+
+	OBS: Para facilitar, os casos ao qual sofreram alteração, estão em vermelho.
+
+	1) Gerencia Área. (UC36)
+		Novo caso.
+
+	2) Gerencia de Links. (UC37)
+		Novo caso.
+
+	3) Gerencia de Arquivos. (UC38)
+		Novo caso.
+
+	4) Gerencia Usuário. (UC26) 
+		Alteração no Edita cor.
+
+	5) Exibe Meus Fóruns (UC15)
+		Opções no grid com mais dois ícones, Link e UpLoad.
+
+	6) Criar Fórum (UC13)
+		Adicionar ou Remover usuários.
+
+	7) Atender Solicitação (UC17)
+		Habilita ou não recurso a Auto-Alocação
+
+Variáveis.
+
+	Documento com a separação das variáveis.
+	OBS: Tenho um monte de dúvidas com relação às variáveis. Isto é, quando vou
+	relacionar o que eu tinha feito, com o que você escreveu no meu caderno e mais
+	alguns itens que achei, acabo um pouco confuso. Depois discutiremos. Por exemplo quando
+	com relação aos históricos: histórico das tarefas, forum, projeto, etc.
+	Alguns itens eu os deixei em vermelho...
+
+
+Diagrama.
+
+	O Diagrama eu também alterei, mas ele eu imprimo para a próxima McReunião, já 
+	que você disse que não está com o Rose instalado. Mas eu fiz um Gif meio nas 
+	coxas com o Paint. Apesar de que, se ficar muito ruim, eu faço novamente
 	com o Corel Draw. Dê sua aprovação...

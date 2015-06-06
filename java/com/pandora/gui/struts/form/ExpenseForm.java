@@ -32,8 +32,11 @@ public class ExpenseForm extends GeneralStrutsForm {
 	
 	private String reportURL;
 
+	private boolean hideClosedCosts;
+	
 	
 	public void clear(){
+		this.id = null;
 		this.expenseId = null;
 		this.comment = null;
 		this.totalExpense = null;
@@ -42,9 +45,14 @@ public class ExpenseForm extends GeneralStrutsForm {
 		this.changeProject = "on";
 		this.showAddForm = "off";
 		this.reportURL = null;
+		this.projectId = null;
+		this.setAdditionalFields(null);
 	}
 	
-	
+    public void reset(ActionMapping mapping, HttpServletRequest request) {
+    	this.hideClosedCosts = false;
+	}
+    
 	/////////////////////////////////////	
 	public String getExpenseId() {
 		return expenseId;
@@ -134,6 +142,14 @@ public class ExpenseForm extends GeneralStrutsForm {
 		this.reportURL = newValue;
 	}
 
+	
+    //////////////////////////////////////////  
+	public boolean getHideClosedCosts() {
+		return hideClosedCosts;
+	}
+	public void setHideClosedCosts(boolean newValue) {
+		this.hideClosedCosts = newValue;
+	}	
 	
 	/**
 	 * Validate the form.

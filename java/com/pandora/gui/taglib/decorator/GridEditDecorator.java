@@ -30,7 +30,7 @@ public class GridEditDecorator extends ColumnDecorator {
 		String image = "";
 		String altValue = this.getBundleMessage("label.grid.edit");
 		image ="<a href=\"javascript:edit('" + columnValue + "'," + tag + ");\" border=\"0\"> \n";
-		image += "<img border=\"0\" " + HtmlUtil.getHint(altValue) + " src=\"../images/edit.gif\" >";
+		image += "<img border=\"0\" " + HtmlUtil.getHint(altValue) + " src=\"../images/edit.gif\" />";
 		image += "</a>"; 				
 		return image;
     }

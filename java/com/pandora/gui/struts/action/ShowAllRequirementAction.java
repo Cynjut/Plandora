@@ -13,22 +13,19 @@ import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionForward;
 import org.apache.struts.action.ActionMapping;
 
-import com.pandora.CategoryTO;
 import com.pandora.CustomerTO;
 import com.pandora.NodeTemplateTO;
 import com.pandora.ProjectTO;
 import com.pandora.RequirementStatusTO;
 import com.pandora.RequirementTO;
+import com.pandora.RootTO;
 import com.pandora.TemplateTO;
 import com.pandora.TransferObject;
 import com.pandora.UserTO;
-import com.pandora.delegate.CategoryDelegate;
 import com.pandora.delegate.ProjectDelegate;
 import com.pandora.delegate.RequirementDelegate;
 import com.pandora.delegate.RequirementHistoryDelegate;
-import com.pandora.delegate.RequirementStatusDelegate;
 import com.pandora.delegate.TaskTemplateDelegate;
-import com.pandora.delegate.UserDelegate;
 import com.pandora.exception.BusinessException;
 import com.pandora.exception.DifferentProjectFromParentReqException;
 import com.pandora.exception.ParentReqNotExistsException;
@@ -68,25 +65,16 @@ public class ShowAllRequirementAction extends GeneralStrutsAction {
 			this.refreshList(request, frm);
 			
 			//get all Requirement Status from data base and put into http session (to be displayed by combo)
-			Vector statList = this.getListOfStatusForCombo(request);
+			Vector<TransferObject> statList = this.getListOfStatusForCombo(request);
 			request.getSession().setAttribute("statusList", statList);
 
 			//get all Customers of current project from data base and put into http session (to be displayed by combo)			
-			Vector custList = this.getListOfCustomersForCombo(pto, request);
+			Vector<CustomerTO> custList = this.getListOfCustomersForCombo(pto, request);
 			request.getSession().setAttribute("requesterList", custList);
 
-			//get all Categories of current project from data base and put into http session (to be displayed by combo)
-			Vector categList = this.getListOfCategoriesForCombo(pto, request);
-			request.getSession().setAttribute("categoryList", categList);
-			
-			//assembly a list of priorities to be used by html combo
-			Vector priorList = this.getListOfPrioritiesForCombo(request);
-			request.getSession().setAttribute("priorityList", priorList);
-
 			//assembly a list of view mode to be used by html combo
-			Vector viewmodeList = this.getListOfViewModeForCombo(request, pto);
+			Vector<TransferObject> viewmodeList = this.getListOfViewModeForCombo(request, pto);
 			request.getSession().setAttribute("viewModeList", viewmodeList);
-			
 			
 		} catch(BusinessException e){
 		    this.setErrorFormSession(request, "error.showAllReqForm", e);
@@ -98,20 +86,27 @@ public class ShowAllRequirementAction extends GeneralStrutsAction {
 
 	public ActionForward navigate(ActionMapping mapping, ActionForm form,
 			 HttpServletRequest request, HttpServletResponse response){
+		try {
+			this.refreshList(request, (ShowAllRequirementForm)form);	
+		} catch(Exception e){
+		    this.setErrorFormSession(request, "error.showAllReqForm", e);
+		}
 		return mapping.findForward("showAllRequirement");
 	}	
 	
 
-	private void refreshList(HttpServletRequest request, ShowAllRequirementForm frm)	throws BusinessException {
+	private void refreshList(HttpServletRequest request, ShowAllRequirementForm frm) throws BusinessException {
 		RequirementDelegate rdel = new RequirementDelegate();		
 		ProjectDelegate pdel = new ProjectDelegate();
 		
 		ProjectTO pto = new ProjectTO(frm.getProjectRelated()); 
 		pto = pdel.getProjectObject(pto, false);			
 		
-		Vector<RequirementTO> reqList = rdel.getListByProject(pto, frm.getStatusSelected(), 
-			        frm.getRequesterSelected(), frm.getPrioritySelected(), 
-			        frm.getCategorySelected(), frm.getViewModeSelected() );				
+		//reset cache (from "GridComboBoxDecorator" and "RequirementGridEditDecorator")
+		request.removeAttribute("GRID_COMBOBOX_iteration");
+		request.removeAttribute("REQ_GRID_EDIT_CUSTOMER_LIST_" + pto.getId());
+		
+		Vector<RequirementTO> reqList = rdel.getListByProject(pto, frm.getStatusSelected(), frm.getRequesterSelected(), "-2", "-1", frm.getViewModeSelected() );				
 		request.getSession().setAttribute("allRequirementList", reqList);
 	}
 	
@@ -148,6 +143,7 @@ public class ShowAllRequirementAction extends GeneralStrutsAction {
 	}
 
 
+	@SuppressWarnings("unchecked")
 	public ActionForward updateInBatch(ActionMapping mapping, ActionForm form,
 			 HttpServletRequest request, HttpServletResponse response){
 		String forward = "showAllRequirement";
@@ -254,13 +250,18 @@ public class ShowAllRequirementAction extends GeneralStrutsAction {
 				
 		    	//draw an image representation of nodes
 			    BufferedImage image = tdel.drawWorkFlow(root, currentUser, bgcolor, true);
-			    
+
+			    ShowAllTaskAction satct = new ShowAllTaskAction();
+
 			    ShowAllTaskForm satf = (ShowAllTaskForm)request.getSession().getAttribute("showAllTaskForm");
 			    if (satf==null) {
 			    	satf = new ShowAllTaskForm(); 
 			    }
 			    satf.setHtmlMap(root.getHtmlMapCoords(true));
 			    satf.setWorkFlowDiagram(image);
+			    satf.setRequirementContent(satct.extractRequestDescription(root));
+			    satf.setFollowupContent(satct.extractFollowUp(root, currentUser));
+			    
 			    request.getSession().setAttribute("showAllTaskForm", satf);			    
 
 		    }
@@ -281,33 +282,13 @@ public class ShowAllRequirementAction extends GeneralStrutsAction {
 		fakeCustomer.setName(this.getBundleMessage(request, "label.all"));
 		temp.addElement(fakeCustomer);
 		temp.addAll(custList);
-		return temp;
-	}
-	
-
-	/**
-	 * Get a list of categories from data base and append a -1 to represents All Categories
-	 */
-	private Vector<CategoryTO> getListOfCategoriesForCombo(ProjectTO pto, HttpServletRequest request) throws BusinessException{
-		HashMap<String, CategoryTO> uniqueList = new HashMap<String, CategoryTO>();
 		
-		CategoryDelegate catDel = new CategoryDelegate();
-		Vector<CategoryTO> categList = catDel.getCategoryListByType(new Integer(1), pto, true);
-		Iterator<CategoryTO> i = categList.iterator();
-		while(i.hasNext()) {
-			CategoryTO cto = i.next();
-			if (uniqueList.get(cto.getName())==null) {
-				cto.setId(cto.getName());
-				uniqueList.put(cto.getName(), cto);
+		for (CustomerTO cto : temp) {
+			if (cto!=null && cto.getUsername()!=null && cto.getUsername().equals(RootTO.ROOT_USER)) {
+				temp.remove(cto);
+				break;
 			}
 		}
-		
-		Vector<CategoryTO> temp = new Vector<CategoryTO>();
-		CategoryTO fakeCategory = new CategoryTO("-1");
-		fakeCategory.setName(this.getBundleMessage(request, "label.all"));
-		temp.addElement(fakeCategory);
-
-		temp.addAll(uniqueList.values());
 		
 		return temp;
 	}
@@ -315,8 +296,8 @@ public class ShowAllRequirementAction extends GeneralStrutsAction {
 	/**
 	 * Get a list of viewing mode
 	 */
-	private Vector getListOfViewModeForCombo(HttpServletRequest request, ProjectTO pto) throws BusinessException{
-		Vector temp = new Vector();
+	private Vector<TransferObject> getListOfViewModeForCombo(HttpServletRequest request, ProjectTO pto) throws BusinessException{
+		Vector<TransferObject> temp = new Vector<TransferObject>();
 		TaskTemplateDelegate tdel = new TaskTemplateDelegate();
 		
 		TransferObject listMode = new TransferObject("-1", this.getBundleMessage(request, "label.showAllReqForm.viewMode.1"));
@@ -324,13 +305,12 @@ public class ShowAllRequirementAction extends GeneralStrutsAction {
 		temp.addElement(listMode);
 		temp.addElement(hierarchyMode);
 		
-		Vector templates = tdel.getTemplateListByProject(pto.getId(), true);
+		Vector<TemplateTO> templates = tdel.getTemplateListByProject(pto.getId(), true);
 		if (templates!=null) {
-			HashMap hm = new HashMap();
-			Iterator i = templates.iterator();
+			HashMap<String, TemplateTO> hm = new HashMap<String, TemplateTO>();
+			Iterator<TemplateTO> i = templates.iterator();
 			while(i.hasNext()) {
-				TemplateTO tto = (TemplateTO)i.next();
-				
+				TemplateTO tto = i.next();
 				if (hm.get(tto.getId())==null) {
 					hm.put(tto.getId(), tto);
 					tto.setGenericTag(this.getBundleMessage(request, "label.showAllReqForm.viewMode.template") + "[" +tto.getName() + "]");
@@ -345,10 +325,8 @@ public class ShowAllRequirementAction extends GeneralStrutsAction {
 	/**
 	 * Get a list of requirement Status to be used into combo box.
 	 */
-	private Vector getListOfStatusForCombo(HttpServletRequest request) throws BusinessException{
-		RequirementStatusDelegate rsdel = new RequirementStatusDelegate();
-		Vector statList = rsdel.getRequirementStatusList();
-		Vector temp = new Vector();
+	private Vector<TransferObject> getListOfStatusForCombo(HttpServletRequest request) throws BusinessException{
+		Vector<TransferObject> temp = new Vector<TransferObject>();
 		
 		RequirementStatusTO statusAllFake = new RequirementStatusTO();
 		statusAllFake.setId("-2");
@@ -360,31 +338,6 @@ public class ShowAllRequirementAction extends GeneralStrutsAction {
 		
 		temp.addElement(statusAllFake);
 		temp.addElement(statusAll2Fake);
-		temp.addAll(statList);
-	    
-		return temp;
-	}
-
-	/**
-	 * Get a list of priorities to be used into combo box.
-	 */
-	private Vector getListOfPrioritiesForCombo(HttpServletRequest request) throws BusinessException{
-		CustReqAction cra = new CustReqAction();
-		Vector temp = new Vector();
-		
-		Vector priorList = cra.getPriorityCombo(request);
-	    
-		TransferObject toAllFake = new TransferObject();
-		toAllFake.setId("-2");
-		toAllFake.setGenericTag(super.getBundleMessage(request, "label.all2"));
-
-		TransferObject toAllFake2 = new TransferObject();
-		toAllFake2.setId("-1");
-		toAllFake2.setGenericTag(super.getBundleMessage(request, "label.showAllReqForm.allExceptLowest"));
-				
-		temp.addElement(toAllFake);
-		temp.addElement(toAllFake2);
-		temp.addAll(priorList);
 	    
 		return temp;
 	}

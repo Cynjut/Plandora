@@ -8,6 +8,7 @@ import org.apache.taglibs.display.ColumnDecorator;
 
 import com.pandora.ProjectTO;
 import com.pandora.RepositoryFileTO;
+import com.pandora.bus.SystemSingleton;
 import com.pandora.delegate.RepositoryDelegate;
 import com.pandora.helper.HtmlUtil;
 
@@ -23,10 +24,11 @@ public class RepositoryEntityCheckBoxDecorator extends ColumnDecorator {
 		RepositoryFileTO item = (RepositoryFileTO)getObject();
 		
 		if (!item.getIsDirectory().booleanValue()) {
-			
-			if (getPageContext()!=null && getPageContext().getSession()!=null) {
-				session = getPageContext().getSession(); 
+
+			if (session==null) {
+				session = super.getSession();	
 			}
+			
 			String entityId = (String)session.getAttribute(REPOSITORY_ENTITY_ID);
 			
 			if (entityId!=null && !entityId.trim().equals("")) {
@@ -40,14 +42,15 @@ public class RepositoryEntityCheckBoxDecorator extends ColumnDecorator {
 						path = rdel.getExtractPath(pto, path);
 					}					
 					
+					String encoding = SystemSingleton.getInstance().getDefaultEncoding();					
 					response = HtmlUtil.getChkBox(isRelated, item.getPath(), "RPS", false, 
-							"javascript:clickCheckBoxRepository('" + URLEncoder.encode(path, "UTF-8") + "', '" + entityId + "');");
+							"javascript:clickCheckBoxRepository('" + URLEncoder.encode(path, encoding) + "', '" + entityId + "');");
 				} catch (Exception e) {
 					e.printStackTrace();
 				}
 			} else {
 				response = "&nbsp;";
-			}
+			}				
 		}
 		return response;
 	}

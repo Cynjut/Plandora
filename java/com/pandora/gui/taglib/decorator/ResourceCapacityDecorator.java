@@ -22,12 +22,13 @@ public class ResourceCapacityDecorator extends ColumnDecorator {
 			
 		} else	if (this.getObject() instanceof ProjectTO) {
 			ProjectTO pto = (ProjectTO) this.getObject();
-			if (pto.getRoleIntoProject().equals(LeaderTO.ROLE_LEADER+"") || 
-				    pto.getRoleIntoProject().equals(RootTO.ROLE_ROOT+"")){
-				
+			if (pto!=null && pto.getRoleIntoProject()!=null && (pto.getRoleIntoProject().equals(LeaderTO.ROLE_LEADER+"") || 
+				    pto.getRoleIntoProject().equals(RootTO.ROLE_ROOT+""))){
 				image ="<a href=\"javascript:showResourceCapacity('" + pto.getId() + "');\" border=\"0\"> \n";
 				image += "<img border=\"0\" " + HtmlUtil.getHint(altValue) + " src=\"../images/linechart.gif\" >";
 				image += "</a>"; 				
+			} else {
+				image += "&nbsp;";
 			}
 		}
  

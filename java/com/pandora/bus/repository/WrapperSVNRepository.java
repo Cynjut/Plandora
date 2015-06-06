@@ -40,8 +40,8 @@ public class WrapperSVNRepository extends Repository {
 		return "SVN_REPOSITORY";
 	}
 
-	public Vector getFiles(ProjectTO pto, String url, String path, String rev, String user, String pass) throws Exception {
-		Vector response = new Vector();
+	public Vector<RepositoryFileTO> getFiles(ProjectTO pto, String url, String path, String rev, String user, String pass) throws Exception {
+		Vector<RepositoryFileTO> response = new Vector<RepositoryFileTO>();
 		
 		SVNRepository repository = this.connect(url, user, pass);
 	    long revision = this.formatRevision(rev);
@@ -63,18 +63,18 @@ public class WrapperSVNRepository extends Repository {
 	}
 
 
-	public Vector getLogs(ProjectTO pto, String url, String path, String rev, String user, String pass) throws Exception {
-		Vector response = new Vector();
+	@SuppressWarnings("unchecked")
+	public Vector<RepositoryLogTO> getLogs(ProjectTO pto, String url, String path, String rev, String user, String pass) throws Exception {
+		Vector<RepositoryLogTO> response = new Vector<RepositoryLogTO>();
 		
 		SVNRepository repository = this.connect(url, user, pass);
 	    long revision = this.formatRevision(rev);
 	    
 		try {
-			Collection logEntries = repository.log(
-					new String[]{path}, null, 0, revision, false, false);
-        	Iterator iterator = logEntries.iterator();
+			Collection<SVNLogEntry> logEntries = repository.log(new String[]{path}, null, 0, revision, false, false);
+        	Iterator<SVNLogEntry> iterator = logEntries.iterator();
         	while (iterator.hasNext()) {
-        		SVNLogEntry logEntry = ( SVNLogEntry ) iterator.next( );
+        		SVNLogEntry logEntry = iterator.next( );
         		RepositoryLogTO log = new RepositoryLogTO();
         		log.setAuthor(logEntry.getAuthor());
         		log.setPath(path);
@@ -101,6 +101,11 @@ public class WrapperSVNRepository extends Repository {
 
         ByteArrayOutputStream baos = new ByteArrayOutputStream(); 
         try {
+
+        	if (url!=null && !url.endsWith("/") && !url.endsWith("\\") && pathName!=null && !pathName.startsWith("/") && !pathName.startsWith("\\")) {
+        		url = url + "/";
+        	}
+        	
         	SVNProperties fileProperties = new SVNProperties();
             SVNNodeKind nodeKind = repository.checkPath(pathName, revision);
 
@@ -114,9 +119,18 @@ public class WrapperSVNRepository extends Repository {
             String fileName = getNameFromPath(pathName);
 
             String mimeType = fileProperties.getStringValue(SVNProperty.MIME_TYPE);
+            if (mimeType==null) {
+            	mimeType = "application/octet-stream";
+            }
+            
             response = new RepositoryFileTO();
             response.setContentType(mimeType);
             response.setName(fileName);
+            
+            if (response.getPath()==null) {
+            	response.setPath(pathName);
+            }
+            
             response.setFileInBytes(baos.toByteArray(), baos.toByteArray().length);
             
         } catch (SVNException e) {
@@ -155,7 +169,7 @@ public class WrapperSVNRepository extends Repository {
                 response.setAuthor(fileProperties.getStringValue(SVNProperty.LAST_AUTHOR));
                 response.setRevision(new Long(fileProperties.getStringValue(SVNProperty.COMMITTED_REVISION)));
                 
-                String lastCommit = fileProperties.getStringValue(SVNProperty.COMMITTED_DATE);
+                //String lastCommit = fileProperties.getStringValue(SVNProperty.COMMITTED_DATE);
                 //response.setCreationDate(DateUtil.getDateTime(lastCommit, "yyyy-MM-dd HH:mm:ss", super.handler.getLocale()));
                 
                 response.setIsDirectory(new Boolean(false));
@@ -171,32 +185,45 @@ public class WrapperSVNRepository extends Repository {
 	}
 
 	
-	public void commitFile(ProjectTO pto, String url, String path, String fileName, String rev, String user, String pass, String logMessage, String contentType, byte[] data) throws Exception {
+	public void commitFile(ProjectTO pto, String url, String path, String fileName, String rev, String user, 
+			String pass, String logMessage, String contentType, byte[] data) throws Exception {
 		ISVNEditor editor = null;
 		try {
 			path = path.replaceAll(url + "/", "");
-			
 			SVNRepository repository = this.connect(url, user, pass);
 			long revision = this.formatRevision(rev);
-			
-			editor = repository.getCommitEditor( logMessage , null, true, null);
-			
 			String filePath = path + "/" + fileName;
 			
+			editor = repository.getCommitEditor( logMessage , null, true, null);
 			editor.openRoot(revision);
-			//editor.addDir(path, null, revision);
-			editor.addFile(filePath, null, revision);
-	        editor.applyTextDelta(filePath, null );
-
+			editor.openDir(path, revision);
+			
+			RepositoryFileTO rfto = null;
+			try {
+				rfto = this.getFile(pto, url, filePath, rev, user, pass);	
+			} catch (Exception e) {
+				rfto = null;
+			}
+			
 			SVNDeltaGenerator deltaGenerator = new SVNDeltaGenerator();
-		    String checksum = deltaGenerator.sendDelta(filePath, new ByteArrayInputStream(data), editor, true);
-		    editor.closeFile(filePath , checksum );
-	        //editor.closeDir();
+			String checksum = null;
+			if (rfto==null) {
+				editor.addFile(filePath, null, revision);
+		        editor.applyTextDelta(filePath, null );				
+		        checksum = deltaGenerator.sendDelta(filePath, new ByteArrayInputStream(data), editor, true);
+			} else {
+				editor.openFile(filePath, revision );
+				editor.applyTextDelta(filePath, null );
+		        checksum = deltaGenerator.sendDelta(filePath, new ByteArrayInputStream(rfto.getFileInBytes()), 0, new ByteArrayInputStream(data), editor, true);
+			}
+
+			editor.closeFile(filePath , checksum );
 	        editor.closeDir();
-		    
-		    SVNCommitInfo info = editor.closeEdit();
-		    System.out.println(info); 
-		    
+	        editor.closeDir();
+			
+	        SVNCommitInfo info = editor.closeEdit();
+	        System.out.println(info);
+			
 		} catch (Exception e){
 			if (editor!=null) {
 				editor.abortEdit();	
@@ -206,12 +233,13 @@ public class WrapperSVNRepository extends Repository {
 	}
 	
 	
-	private Vector listEntries(SVNRepository repository, String path, long revision) throws SVNException {
-    	Vector response = new Vector();
-    	Collection entries = repository.getDir(path, revision, null, (Collection)null);
-    	Iterator iterator = entries.iterator();
+	@SuppressWarnings("unchecked")
+	private Vector<RepositoryFileTO> listEntries(SVNRepository repository, String path, long revision) throws SVNException {
+    	Vector<RepositoryFileTO> response = new Vector<RepositoryFileTO>();
+    	Collection<SVNDirEntry> entries = repository.getDir(path, revision, null, (Collection<SVNDirEntry>)null);
+    	Iterator<SVNDirEntry> iterator = entries.iterator();
     	while (iterator.hasNext()) {
-    		SVNDirEntry entry = (SVNDirEntry) iterator.next();
+    		SVNDirEntry entry = iterator.next();
     		RepositoryFileTO item = new RepositoryFileTO();
     		item.setName(entry.getName());
     		item.setCreationDate(new Timestamp(entry.getDate().getTime()));

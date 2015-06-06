@@ -42,7 +42,7 @@ public class Forms extends TagSupport {
     private String styleForms;
 
     
-    private Vector formFields;
+    private Vector<FormField> formFields;
     
     /**
      * This event is performed when the tagLib starts
@@ -83,7 +83,7 @@ public class Forms extends TagSupport {
             
             //draw the fields....
             if (this.getFormFields()!=null) {
-                Iterator i = this.getFormFields().iterator();
+                Iterator<FormField> i = this.getFormFields().iterator();
                 while(i.hasNext()) {
                     buf.append("<tr>\n");                
                     FormField ff = (FormField)i.next();
@@ -178,17 +178,17 @@ public class Forms extends TagSupport {
      */
     private void getFormFields(String table) throws BusinessException {
         DbQueryDelegate query = new DbQueryDelegate();
-        Vector metaFields = query.getMetaData(table);
+        Vector<Vector<Object>> metaFields = query.getMetaData(table);
         
-        Iterator i = metaFields.iterator();
+        Iterator<Vector<Object>> i = metaFields.iterator();
         while(i.hasNext()) {
             
             if (this.formFields==null) {
-                this.formFields = new Vector();
+                this.formFields = new Vector<FormField>();
             }
             
             FormField ff = new FormField();
-            Vector item = (Vector)i.next();
+            Vector<Object> item = i.next();
             ff.setSequence(((Integer)item.get(0)).intValue());
             ff.setLabel((String)item.get(1));
             ff.setType((Integer)item.get(2));
@@ -249,10 +249,10 @@ public class Forms extends TagSupport {
     }
     
     //////////////////////////////////////////////        
-    public Vector getFormFields() {
+    public Vector<FormField> getFormFields() {
         return formFields;
     }
-    public void setFormFields(Vector newValue) {
+    public void setFormFields(Vector<FormField> newValue) {
         this.formFields = newValue;
     }
     

@@ -7,8 +7,8 @@ import java.sql.SQLException;
 import java.util.Vector;
 
 import com.pandora.RequirementStatusTO;
+import com.pandora.TransferObject;
 import com.pandora.exception.DataAccessException;
-import com.pandora.helper.LogUtil;
 
 /**
  * This class contain all methods to handle data related with requirement Status entity into data base.
@@ -17,11 +17,9 @@ public class RequirementStatusDAO extends DataAccess {
 
     /**
      * Get a list of all Requirement Status TOs from data base.
-     * @param c
-     * @throws DataAccessException
      */
     public Vector getList(Connection c) throws DataAccessException {
-		Vector response = new Vector();
+		Vector<RequirementStatusTO> response = new Vector<RequirementStatusTO>();
 		ResultSet rs = null;
 		PreparedStatement pstmt = null; 
 		try {
@@ -56,6 +54,31 @@ public class RequirementStatusDAO extends DataAccess {
 		return response;
 	}    
 
+
+	@Override
+	public TransferObject getObject(TransferObject to, Connection c) throws DataAccessException {
+        RequirementStatusTO response= null;
+		ResultSet rs = null;
+		PreparedStatement pstmt = null; 
+		try {
+			RequirementStatusTO rsto = (RequirementStatusTO)to;
+			pstmt = c.prepareStatement("select id, name, description, state_machine_order " +
+									   "from requirement_status where id=?");
+			pstmt.setString(1, rsto.getId());			
+			rs = pstmt.executeQuery();
+			if (rs.next()){
+				response = this.populateByResultSet(rs);
+			} 
+						
+		} catch (SQLException e) {
+			throw new DataAccessException(e);
+		}finally{
+			super.closeStatement(rs, pstmt);
+		}	 
+		return response;
+	}
+
+	
 	
     /**
      * This method get a RequirementStatus object from BD that has the meaning of State Machine sent into argument.
@@ -76,29 +99,26 @@ public class RequirementStatusDAO extends DataAccess {
 		} catch (SQLException e) {
 			throw new DataAccessException(e);
 		}finally{
-			//Close the current result set and statement
-			try {
-				if(rs != null) rs.close();
-				if(pstmt != null) pstmt.close();
-			} catch (SQLException ec) {
-			    LogUtil.log(this, LogUtil.LOG_ERROR, "DB Closing statement error", ec);
-			} 		
+			super.closeStatement(rs, pstmt);
 		}	 
 		return response;
     }
 
+    
+    
     
     /**
      * Create a new TO object based on data into result set.
      */
     protected RequirementStatusTO populateByResultSet(ResultSet rs) throws DataAccessException{
         RequirementStatusTO response = new RequirementStatusTO();        
-        response.setId(getString(rs, "ID"));
-        response.setName(getString(rs, "NAME"));
-        response.setDescription(getString(rs, "DESCRIPTION"));
-        response.setStateMachineOrder(getInteger(rs, "STATE_MACHINE_ORDER"));
+        response.setId(getString(rs, "id"));
+        response.setName(getString(rs, "name"));
+        response.setDescription(getString(rs, "description"));
+        response.setStateMachineOrder(getInteger(rs, "state_machine_order"));
         return response;
     }
+
 
 
 }

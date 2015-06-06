@@ -26,13 +26,19 @@ public class ShowSurveyForm extends GeneralStrutsForm {
 	
 	private SurveyTO currentSurvey;
 	
+	private String conectedUser;
+	
 	
 	private String questionContent;
 	
 	private String questionSummary;
 	
 	private String htmlList;
+	
+	private String anonymousUri;
 		
+	private String pathContext;
+	
 	
 	public String getProjectId() {
 		return currentSurvey.getProject().getId();
@@ -153,5 +159,41 @@ public class ShowSurveyForm extends GeneralStrutsForm {
 		htmlList = newValue;
 	}
 
+	
+	//////////////////////////////////////////
+	public String getConectedUser() {
+		return conectedUser;
+	}
+	public void setConectedUser(String newValue) {
+		this.conectedUser = newValue;
+	}
+
+
+	//////////////////////////////////////////
+	public String getAnonymousUri() {
+		String uri = "";
+		if (this.allowAnonymous && this.anonymousUri!=null && !this.anonymousUri.trim().equals("")) {
+			uri = this.pathContext + "/do/showSurvey?operation=anonymous&key=" + this.anonymousUri;
+		}
+		return uri;		
+	}
+	public void setAnonymousUri(String newValue) {
+		this.anonymousUri = newValue;
+	}
+
+	
+	public void setPathContext(String fullUrl, String contextApp) {
+		this.pathContext=null;
+		if (fullUrl!=null && contextApp!=null) {
+			int i = fullUrl.indexOf(contextApp);
+			if (i>0) {
+				this.pathContext = fullUrl.substring(0, i + contextApp.length());	
+			}
+		}
+		if (this.pathContext==null) {
+			this.anonymousUri="";
+		}
+	}
+	
 	
 }

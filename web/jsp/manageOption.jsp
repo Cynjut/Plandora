@@ -15,12 +15,19 @@
           
      function check_PROJ_HIDE(id){
      }
+
+     function changePic(){
+		 with(document.forms["optionForm"]){
+		 	displayMessage("../do/manageOptionPicture?operation=prepareForm", 530, 120);
+		 }              
+     }
 </script>
 
 						
-<html:form  action="manageOption">
+<html:form  action="manageOption" enctype="multipart/form-data">
 
 	<html:hidden name="optionForm" property="operation"/>
+	<html:hidden name="optionForm" property="picturePath"/>
 	
 	<table width="100%" border="0" cellspacing="0" cellpadding="0">
 	<tr><td width="10">&nbsp;</td><td>
@@ -65,11 +72,14 @@
 					<table width="100%" border="0" cellspacing="0" cellpadding="0">
 					<tr class="gapFormBody">
 					  <td width="10">&nbsp;</td>
-					  <td width="320">&nbsp; </td>
+					  <td width="250">&nbsp; </td>
 					  <td width="80">&nbsp;</td>
-					  <td width="150">&nbsp; </td>
-					  <td>&nbsp;</td>		  
-					  <td width="10">&nbsp;</td>
+					  <td width="80">&nbsp; </td>
+					  <td>&nbsp;</td>
+					  <td rowspan="6" width="80"><center>
+					  	<bean:write name="optionForm" property="userPictureHtml" filter="false" />
+					  </center></td>
+					  <td width="30">&nbsp;</td>
 					</tr>
 					<tr class="pagingFormBody">
 					  <td>&nbsp;</td>
@@ -77,8 +87,8 @@
 					  <td class="formBody">
 						<html:text name="optionForm" property="requNumLine" styleClass="textBox" size="3" maxlength="3"/>
 					  </td>	      
-					  <td class="formTitle">&nbsp;</td>
-					  <td class="formBody">&nbsp;</td>	      
+					  <td>&nbsp;</td>
+					  <td>&nbsp;</td>
 					  <td>&nbsp;</td>
 					</tr>
 					<tr class="pagingFormBody">
@@ -87,8 +97,8 @@
 					  <td class="formBody">
 						<html:text name="optionForm" property="maxNumOfWords" styleClass="textBox" size="4" maxlength="4"/>
 					  </td>	      
-					  <td class="formTitle">&nbsp;</td>
-					  <td class="formBody">&nbsp;</td>	      
+					  <td>&nbsp;</td>
+					  <td>&nbsp;</td>
 					  <td>&nbsp;</td>
 					</tr>			    
 					<tr class="pagingFormBody">
@@ -98,8 +108,8 @@
 						<html:text name="optionForm" property="myReqMaxDaysAgo" styleClass="textBox" size="3" maxlength="3"/>
 						<bean:message key="label.days"/>
 					  </td>	      
-					  <td class="formTitle">&nbsp;</td>
-					  <td class="formBody">&nbsp;</td>	      
+					  <td>&nbsp;</td>
+					  <td>&nbsp;</td>
 					  <td>&nbsp;</td>
 					</tr>
 					<tr class="pagingFormBody">
@@ -138,20 +148,20 @@
 					<tr class="pagingFormBody">
 					  <td>&nbsp;</td>
 					  <td>&nbsp;</td>
-					  <td class="formTitle" colspan="4">
+					  <td class="formTitle" colspan="3">
 						<logic:notEqual name="optionForm" property="authenticationMode" value="com.pandora.bus.auth.SystemAuthentication">
-							</br><bean:message key="label.manageOption.authMode"/>
-						</logic:notEqual>			      
+							<div align="left"><bean:message key="label.manageOption.authMode"/></div>
+						</logic:notEqual>
 					  </td>
+					  <td class="formTitle">
+						<center>
+							<html:button property="chgPic" styleClass="button" onclick="javascript:changePic();">
+								<bean:message key="label.manageOption.changePic"/>
+							</html:button>
+						</center>
+					  </td>
+					  <td>&nbsp;</td>
 					</tr>			    			    			    
-					<tr class="pagingFormBody">
-					  <td>&nbsp;</td>
-					  <td>&nbsp;</td>
-					  <td>&nbsp;</td>
-					  <td>&nbsp;</td>
-					  <td>&nbsp;</td>
-					  <td>&nbsp;</td>
-					</tr>			    
 					</table>
 				</div>
 				<!-- END OF CUSTOMER'S OPTIONS -->
@@ -201,13 +211,12 @@
 						  </td>
 						  <td>&nbsp;</td>
 						</tr>
+
 						<tr class="pagingFormBody">
 						  <td>&nbsp;</td>
-						  <td class="formTitle"><bean:message key="label.manageOption.inputTaskFormat"/>:&nbsp;</td>
+						  <td class="formTitle"><bean:message key="label.manageOption.InfoListNumLine"/>:&nbsp;</td>
 						  <td class="formBody">
-						  		<html:select name="optionForm" property="taskInputFormat" styleClass="textBox">
-						             <html:options collection="taskInputFormatList" property="id" labelProperty="genericTag"/>
-								</html:select>
+							<html:text name="optionForm" property="infoNumLine" styleClass="textBox" size="3" maxlength="3"/>
 						  </td>			      
 						  <td class="formTitle">&nbsp;</td>
 						  <td class="formBody">
@@ -217,55 +226,402 @@
 						</tr>
 						
 						<tr class="pagingFormBody">
+						  <td>&nbsp;</td>
+						  <td class="formTitle"><bean:message key="label.manageOption.TopiListNumLine"/>:&nbsp;</td>
+						  <td class="formBody">						  
+								<html:text name="optionForm" property="topicNumLine" styleClass="textBox" size="3" maxlength="3"/>
+								<bean:message key="label.days"/>
+						  </td>			      
+						  <td class="formTitle">&nbsp;</td>
+						  <td class="formBody">
+							&nbsp;
+						  </td>
+						  <td>&nbsp;</td>
+						</tr>
+						
+						<tr class="pagingFormBody">
+						  <td>&nbsp;</td>
+						  <td class="formTitle"><bean:message key="label.manageOption.inputTaskFormat"/>:&nbsp;</td>
+						  <td class="formBody">
+						  		<html:select name="optionForm" property="taskInputFormat" styleClass="textBox">
+						             <html:options collection="taskInputFormatList" property="id" labelProperty="genericTag" filter="false"/>
+								</html:select>
+						  </td>			      
+						  <td class="formTitle">&nbsp;</td>
+						  <td class="formBody">
+							&nbsp;
+						  </td>
+						  <td>&nbsp;</td>
+						</tr>
+						<tr class="pagingFormBody">
+						  <td>&nbsp;</td>
+						  <td>&nbsp;</td>
+						  <td colspan="4" class="formBody"><html:checkbox property="showLockedTasks" name="optionForm"/><bean:message key="label.manageOption.showLockedTask"/></td>
+						</tr>				    
+						
+						<tr class="pagingFormBody">
 						  <td colspan="6">&nbsp;</td>
 						</tr>				     																		
 						<tr class="pagingFormBody">
 						  <td>&nbsp;</td>
-						  <td class="formTitle"><bean:message key="label.manageOption.shortcuts"/>:&nbsp;</td>
+						  <td class="formTitle"><bean:message key="title.shortcut"/>:&nbsp;</td>
 						  <td class="formBody" colspan="2">
-						  		<table  class="table" width="100%" border="1" bordercolor="#10389C" cellspacing="1" cellpadding="2">						  		
+						  		<table  class="table" width="260px" border="1" bordercolor="#10389C" cellspacing="1" cellpadding="2">						  		
 						  			<tr class="tableRowHeader">
-						  				<th align="center" width="100" class="tableCellHeader"><bean:message key="label.manageOption.shortcuts.title"/></th>
-										<th align="center" width="100" class="tableCellHeader"><bean:message key="label.manageOption.shortcuts.url"/></th>
-										<th align="center" width="70" class="tableCellHeader"><bean:message key="label.manageOption.shortcuts.icon"/></th>						  		
+						  				<th align="center" width="120" class="tableCellHeader"><bean:message key="label.shortcut.title"/></th>
+						  				<th align="center" width="70" class="tableCellHeader"><bean:message key="label.shortcut.type"/></th>
+										<th align="center" width="70" class="tableCellHeader"><bean:message key="label.shortcut.opening"/></th>
 						  			</tr>
 						  			<tr class="tableRowOdd">
 										<td class="tableCell" align="left" valign="top">
-						  					<html:text name="optionForm" property="shortcutName1" styleClass="textBox" size="35" maxlength="50"/>
+											<logic:notEmpty name="optionForm" property="shortcutURL1">
+												<html:text name="optionForm" property="shortcutName1" styleClass="textBox" size="35" maxlength="50"/>
+											</logic:notEmpty>
+											<logic:empty name="optionForm" property="shortcutURL1">
+												<html:text name="optionForm" property="shortcutName1" styleClass="textBoxDisabled" size="35" maxlength="50" readonly="true"/>
+											</logic:empty>
+						  					<html:hidden name="optionForm" property="shortcutURL1"/>						  					
 						  				</td>
 						  				<td class="tableCell" align="left" valign="top">
-						  					<html:text name="optionForm" property="shortcutURL1" styleClass="textBox" size="35" maxlength="300"/>
+											<logic:notEmpty name="optionForm" property="shortcutURL1">
+												<html:select name="optionForm" property="shortcutIcon1" styleClass="textBox">
+													<html:options collection="shorcutIconList" property="id" labelProperty="genericTag" filter="false"/>
+												</html:select>						  					
+											</logic:notEmpty>
+											<logic:empty name="optionForm" property="shortcutURL1">
+												<html:select name="optionForm" property="shortcutIcon1" styleClass="textBoxDisabled" disabled="true">
+													<html:options collection="shorcutIconList" property="id" labelProperty="genericTag" filter="false"/>
+												</html:select>						  					
+											</logic:empty>
 						  				</td>
 										<td class="tableCell" align="left" valign="top">
-											<html:select name="optionForm" property="shortcutIcon1" styleClass="textBox">
-											    <html:options collection="shorcutIconList" property="id" labelProperty="genericTag"/>
-											</html:select>
+											<logic:notEmpty name="optionForm" property="shortcutURL1">
+												<html:select name="optionForm" property="shortcutOpen1" styleClass="textBox">
+													<html:options collection="shorcutOpenList" property="id" labelProperty="genericTag" filter="false"/>
+												</html:select>
+											</logic:notEmpty>
+											<logic:empty name="optionForm" property="shortcutURL1">
+												<html:select name="optionForm" property="shortcutOpen1" styleClass="textBoxDisabled" disabled="true">
+													<html:options collection="shorcutOpenList" property="id" labelProperty="genericTag" filter="false"/>
+												</html:select>
+											</logic:empty>
 										</td>
 						  			</tr>
 						  			<tr class="tableRowEven">
-						  				<td class="tableCell" align="left" valign="top">
-						  					<html:text name="optionForm" property="shortcutName2" styleClass="textBox" size="35" maxlength="50"/>
+										<td class="tableCell" align="left" valign="top">
+											<logic:notEmpty name="optionForm" property="shortcutURL2">
+												<html:text name="optionForm" property="shortcutName2" styleClass="textBox" size="35" maxlength="50"/>
+											</logic:notEmpty>
+											<logic:empty name="optionForm" property="shortcutURL2">
+												<html:text name="optionForm" property="shortcutName2" styleClass="textBoxDisabled" size="35" maxlength="50" readonly="true"/>
+											</logic:empty>
+						  					<html:hidden name="optionForm" property="shortcutURL2"/>						  					
 						  				</td>
 						  				<td class="tableCell" align="left" valign="top">
-						  					<html:text name="optionForm" property="shortcutURL2" styleClass="textBox" size="35" maxlength="300"/>
+											<logic:notEmpty name="optionForm" property="shortcutURL2">
+												<html:select name="optionForm" property="shortcutIcon2" styleClass="textBox">
+													<html:options collection="shorcutIconList" property="id" labelProperty="genericTag" filter="false"/>
+												</html:select>						  					
+											</logic:notEmpty>
+											<logic:empty name="optionForm" property="shortcutURL2">
+												<html:select name="optionForm" property="shortcutIcon2" styleClass="textBoxDisabled" disabled="true">
+													<html:options collection="shorcutIconList" property="id" labelProperty="genericTag" filter="false"/>
+												</html:select>						  					
+											</logic:empty>
 						  				</td>
 										<td class="tableCell" align="left" valign="top">
-											<html:select name="optionForm" property="shortcutIcon2" styleClass="textBox">
-											    <html:options collection="shorcutIconList" property="id" labelProperty="genericTag"/>
-											</html:select>
+											<logic:notEmpty name="optionForm" property="shortcutURL2">
+												<html:select name="optionForm" property="shortcutOpen2" styleClass="textBox">
+													<html:options collection="shorcutOpenList" property="id" labelProperty="genericTag" filter="false"/>
+												</html:select>
+											</logic:notEmpty>
+											<logic:empty name="optionForm" property="shortcutURL2">
+												<html:select name="optionForm" property="shortcutOpen2" styleClass="textBoxDisabled" disabled="true">
+													<html:options collection="shorcutOpenList" property="id" labelProperty="genericTag" filter="false"/>
+												</html:select>
+											</logic:empty>
+										</td>
+						  			</tr>
+									
+						  			<tr class="tableRowOdd">
+										<td class="tableCell" align="left" valign="top">
+											<logic:notEmpty name="optionForm" property="shortcutURL3">
+												<html:text name="optionForm" property="shortcutName3" styleClass="textBox" size="35" maxlength="50"/>
+											</logic:notEmpty>
+											<logic:empty name="optionForm" property="shortcutURL3">
+												<html:text name="optionForm" property="shortcutName3" styleClass="textBoxDisabled" size="35" maxlength="50" readonly="true"/>
+											</logic:empty>
+						  					<html:hidden name="optionForm" property="shortcutURL3"/>						  					
+						  				</td>
+						  				<td class="tableCell" align="left" valign="top">
+											<logic:notEmpty name="optionForm" property="shortcutURL3">
+												<html:select name="optionForm" property="shortcutIcon3" styleClass="textBox">
+													<html:options collection="shorcutIconList" property="id" labelProperty="genericTag" filter="false"/>
+												</html:select>						  					
+											</logic:notEmpty>
+											<logic:empty name="optionForm" property="shortcutURL3">
+												<html:select name="optionForm" property="shortcutIcon3" styleClass="textBoxDisabled" disabled="true">
+													<html:options collection="shorcutIconList" property="id" labelProperty="genericTag" filter="false"/>
+												</html:select>
+											</logic:empty>
+						  				</td>
+										<td class="tableCell" align="left" valign="top">
+											<logic:notEmpty name="optionForm" property="shortcutURL3">
+												<html:select name="optionForm" property="shortcutOpen3" styleClass="textBox">
+													<html:options collection="shorcutOpenList" property="id" labelProperty="genericTag" filter="false"/>
+												</html:select>
+											</logic:notEmpty>
+											<logic:empty name="optionForm" property="shortcutURL3">
+												<html:select name="optionForm" property="shortcutOpen3" styleClass="textBoxDisabled" disabled="true">
+													<html:options collection="shorcutOpenList" property="id" labelProperty="genericTag" filter="false"/>
+												</html:select>
+											</logic:empty>
+										</td>
+						  			</tr>
+									
+						  			<tr class="tableRowEven">
+										<td class="tableCell" align="left" valign="top">
+											<logic:notEmpty name="optionForm" property="shortcutURL4">
+												<html:text name="optionForm" property="shortcutName4" styleClass="textBox" size="35" maxlength="50"/>
+											</logic:notEmpty>
+											<logic:empty name="optionForm" property="shortcutURL4">
+												<html:text name="optionForm" property="shortcutName4" styleClass="textBoxDisabled" size="35" maxlength="50" readonly="true"/>
+											</logic:empty>
+						  					<html:hidden name="optionForm" property="shortcutURL4"/>						  					
+						  				</td>
+						  				<td class="tableCell" align="left" valign="top">
+											<logic:notEmpty name="optionForm" property="shortcutURL4">
+												<html:select name="optionForm" property="shortcutIcon4" styleClass="textBox">
+													<html:options collection="shorcutIconList" property="id" labelProperty="genericTag" filter="false"/>
+												</html:select>						  					
+											</logic:notEmpty>
+											<logic:empty name="optionForm" property="shortcutURL4">
+												<html:select name="optionForm" property="shortcutIcon4" styleClass="textBoxDisabled" disabled="true">
+													<html:options collection="shorcutIconList" property="id" labelProperty="genericTag" filter="false"/>
+												</html:select>
+											</logic:empty>
+						  				</td>
+										<td class="tableCell" align="left" valign="top">
+											<logic:notEmpty name="optionForm" property="shortcutURL4">
+												<html:select name="optionForm" property="shortcutOpen4" styleClass="textBox">
+													<html:options collection="shorcutOpenList" property="id" labelProperty="genericTag" filter="false"/>
+												</html:select>
+											</logic:notEmpty>
+											<logic:empty name="optionForm" property="shortcutURL4">
+												<html:select name="optionForm" property="shortcutOpen4" styleClass="textBoxDisabled" disabled="true">
+													<html:options collection="shorcutOpenList" property="id" labelProperty="genericTag" filter="false"/>
+												</html:select>
+											</logic:empty>
 										</td>
 						  			</tr>
 						  			<tr class="tableRowOdd">
-						  				<td class="tableCell" align="left" valign="top">
-						  					<html:text name="optionForm" property="shortcutName3" styleClass="textBox" size="35" maxlength="50"/>
+										<td class="tableCell" align="left" valign="top">
+											<logic:notEmpty name="optionForm" property="shortcutURL5">
+												<html:text name="optionForm" property="shortcutName5" styleClass="textBox" size="35" maxlength="50"/>
+											</logic:notEmpty>
+											<logic:empty name="optionForm" property="shortcutURL5">
+												<html:text name="optionForm" property="shortcutName5" styleClass="textBoxDisabled" size="35" maxlength="50" readonly="true"/>
+											</logic:empty>
+						  					<html:hidden name="optionForm" property="shortcutURL5"/>						  					
 						  				</td>
 						  				<td class="tableCell" align="left" valign="top">
-						  					<html:text name="optionForm" property="shortcutURL3" styleClass="textBox" size="35" maxlength="300"/>
+											<logic:notEmpty name="optionForm" property="shortcutURL5">
+												<html:select name="optionForm" property="shortcutIcon5" styleClass="textBox">
+													<html:options collection="shorcutIconList" property="id" labelProperty="genericTag" filter="false"/>
+												</html:select>						  					
+											</logic:notEmpty>
+											<logic:empty name="optionForm" property="shortcutURL5">
+												<html:select name="optionForm" property="shortcutIcon5" styleClass="textBoxDisabled" disabled="true">
+													<html:options collection="shorcutIconList" property="id" labelProperty="genericTag" filter="false"/>
+												</html:select>
+											</logic:empty>
 						  				</td>
 										<td class="tableCell" align="left" valign="top">
-											<html:select name="optionForm" property="shortcutIcon3" styleClass="textBox">
-											    <html:options collection="shorcutIconList" property="id" labelProperty="genericTag"/>
-											</html:select>
+											<logic:notEmpty name="optionForm" property="shortcutURL5">
+												<html:select name="optionForm" property="shortcutOpen5" styleClass="textBox">
+													<html:options collection="shorcutOpenList" property="id" labelProperty="genericTag" filter="false"/>
+												</html:select>
+											</logic:notEmpty>
+											<logic:empty name="optionForm" property="shortcutURL5">
+												<html:select name="optionForm" property="shortcutOpen5" styleClass="textBoxDisabled" disabled="true">
+													<html:options collection="shorcutOpenList" property="id" labelProperty="genericTag" filter="false"/>
+												</html:select>
+											</logic:empty>
+										</td>
+						  			</tr>
+						  			<tr class="tableRowEven">
+										<td class="tableCell" align="left" valign="top">
+											<logic:notEmpty name="optionForm" property="shortcutURL6">
+												<html:text name="optionForm" property="shortcutName6" styleClass="textBox" size="35" maxlength="50"/>
+											</logic:notEmpty>
+											<logic:empty name="optionForm" property="shortcutURL6">
+												<html:text name="optionForm" property="shortcutName6" styleClass="textBoxDisabled" size="35" maxlength="50" readonly="true"/>
+											</logic:empty>
+						  					<html:hidden name="optionForm" property="shortcutURL6"/>						  					
+						  				</td>
+						  				<td class="tableCell" align="left" valign="top">
+											<logic:notEmpty name="optionForm" property="shortcutURL6">
+												<html:select name="optionForm" property="shortcutIcon6" styleClass="textBox">
+													<html:options collection="shorcutIconList" property="id" labelProperty="genericTag" filter="false"/>
+												</html:select>						  					
+											</logic:notEmpty>
+											<logic:empty name="optionForm" property="shortcutURL6">
+												<html:select name="optionForm" property="shortcutIcon6" styleClass="textBoxDisabled" disabled="true">
+													<html:options collection="shorcutIconList" property="id" labelProperty="genericTag" filter="false"/>
+												</html:select>
+											</logic:empty>
+						  				</td>
+										<td class="tableCell" align="left" valign="top">
+											<logic:notEmpty name="optionForm" property="shortcutURL6">
+												<html:select name="optionForm" property="shortcutOpen6" styleClass="textBox">
+													<html:options collection="shorcutOpenList" property="id" labelProperty="genericTag" filter="false"/>
+												</html:select>
+											</logic:notEmpty>
+											<logic:empty name="optionForm" property="shortcutURL6">
+												<html:select name="optionForm" property="shortcutOpen6" styleClass="textBoxDisabled" disabled="true">
+													<html:options collection="shorcutOpenList" property="id" labelProperty="genericTag" filter="false"/>
+												</html:select>
+											</logic:empty>
+										</td>
+						  			</tr>
+						  			<tr class="tableRowOdd">
+										<td class="tableCell" align="left" valign="top">
+											<logic:notEmpty name="optionForm" property="shortcutURL7">
+												<html:text name="optionForm" property="shortcutName7" styleClass="textBox" size="35" maxlength="50"/>
+											</logic:notEmpty>
+											<logic:empty name="optionForm" property="shortcutURL7">
+												<html:text name="optionForm" property="shortcutName7" styleClass="textBoxDisabled" size="35" maxlength="50" readonly="true"/>
+											</logic:empty>
+						  					<html:hidden name="optionForm" property="shortcutURL7"/>						  					
+						  				</td>
+						  				<td class="tableCell" align="left" valign="top">
+											<logic:notEmpty name="optionForm" property="shortcutURL7">
+												<html:select name="optionForm" property="shortcutIcon7" styleClass="textBox">
+													<html:options collection="shorcutIconList" property="id" labelProperty="genericTag" filter="false"/>
+												</html:select>						  					
+											</logic:notEmpty>
+											<logic:empty name="optionForm" property="shortcutURL7">
+												<html:select name="optionForm" property="shortcutIcon7" styleClass="textBoxDisabled" disabled="true">
+													<html:options collection="shorcutIconList" property="id" labelProperty="genericTag" filter="false"/>
+												</html:select>
+											</logic:empty>
+						  				</td>
+										<td class="tableCell" align="left" valign="top">
+											<logic:notEmpty name="optionForm" property="shortcutURL7">
+												<html:select name="optionForm" property="shortcutOpen7" styleClass="textBox">
+													<html:options collection="shorcutOpenList" property="id" labelProperty="genericTag" filter="false"/>
+												</html:select>
+											</logic:notEmpty>
+											<logic:empty name="optionForm" property="shortcutURL7">
+												<html:select name="optionForm" property="shortcutOpen7" styleClass="textBoxDisabled" disabled="true">
+													<html:options collection="shorcutOpenList" property="id" labelProperty="genericTag" filter="false"/>
+												</html:select>
+											</logic:empty>
+										</td>
+						  			</tr>
+						  			<tr class="tableRowEven">
+										<td class="tableCell" align="left" valign="top">
+											<logic:notEmpty name="optionForm" property="shortcutURL8">
+												<html:text name="optionForm" property="shortcutName8" styleClass="textBox" size="35" maxlength="50"/>
+											</logic:notEmpty>
+											<logic:empty name="optionForm" property="shortcutURL8">
+												<html:text name="optionForm" property="shortcutName8" styleClass="textBoxDisabled" size="35" maxlength="50" readonly="true"/>
+											</logic:empty>
+						  					<html:hidden name="optionForm" property="shortcutURL8"/>						  					
+						  				</td>
+						  				<td class="tableCell" align="left" valign="top">
+											<logic:notEmpty name="optionForm" property="shortcutURL8">
+												<html:select name="optionForm" property="shortcutIcon8" styleClass="textBox">
+													<html:options collection="shorcutIconList" property="id" labelProperty="genericTag" filter="false"/>
+												</html:select>						  					
+											</logic:notEmpty>
+											<logic:empty name="optionForm" property="shortcutURL8">
+												<html:select name="optionForm" property="shortcutIcon8" styleClass="textBoxDisabled" disabled="true">
+													<html:options collection="shorcutIconList" property="id" labelProperty="genericTag" filter="false"/>
+												</html:select>
+											</logic:empty>
+						  				</td>
+										<td class="tableCell" align="left" valign="top">
+											<logic:notEmpty name="optionForm" property="shortcutURL8">
+												<html:select name="optionForm" property="shortcutOpen8" styleClass="textBox">
+													<html:options collection="shorcutOpenList" property="id" labelProperty="genericTag" filter="false"/>
+												</html:select>
+											</logic:notEmpty>
+											<logic:empty name="optionForm" property="shortcutURL8">
+												<html:select name="optionForm" property="shortcutOpen8" styleClass="textBoxDisabled" disabled="true">
+													<html:options collection="shorcutOpenList" property="id" labelProperty="genericTag" filter="false"/>
+												</html:select>
+											</logic:empty>
+										</td>
+						  			</tr>
+						  			<tr class="tableRowOdd">
+										<td class="tableCell" align="left" valign="top">
+											<logic:notEmpty name="optionForm" property="shortcutURL9">
+												<html:text name="optionForm" property="shortcutName9" styleClass="textBox" size="35" maxlength="50"/>
+											</logic:notEmpty>
+											<logic:empty name="optionForm" property="shortcutURL9">
+												<html:text name="optionForm" property="shortcutName9" styleClass="textBoxDisabled" size="35" maxlength="50" readonly="true"/>
+											</logic:empty>
+						  					<html:hidden name="optionForm" property="shortcutURL9"/>						  					
+						  				</td>
+						  				<td class="tableCell" align="left" valign="top">
+											<logic:notEmpty name="optionForm" property="shortcutURL9">
+												<html:select name="optionForm" property="shortcutIcon9" styleClass="textBox">
+													<html:options collection="shorcutIconList" property="id" labelProperty="genericTag" filter="false"/>
+												</html:select>						  					
+											</logic:notEmpty>
+											<logic:empty name="optionForm" property="shortcutURL9">
+												<html:select name="optionForm" property="shortcutIcon9" styleClass="textBoxDisabled" disabled="true">
+													<html:options collection="shorcutIconList" property="id" labelProperty="genericTag" filter="false"/>
+												</html:select>
+											</logic:empty>
+						  				</td>
+										<td class="tableCell" align="left" valign="top">
+											<logic:notEmpty name="optionForm" property="shortcutURL9">
+												<html:select name="optionForm" property="shortcutOpen9" styleClass="textBox">
+													<html:options collection="shorcutOpenList" property="id" labelProperty="genericTag" filter="false"/>
+												</html:select>
+											</logic:notEmpty>
+											<logic:empty name="optionForm" property="shortcutURL9">
+												<html:select name="optionForm" property="shortcutOpen9" styleClass="textBoxDisabled" disabled="true">
+													<html:options collection="shorcutOpenList" property="id" labelProperty="genericTag" filter="false"/>
+												</html:select>
+											</logic:empty>
+										</td>
+						  			</tr>
+						  			<tr class="tableRowEven">
+										<td class="tableCell" align="left" valign="top">
+											<logic:notEmpty name="optionForm" property="shortcutURL10">
+												<html:text name="optionForm" property="shortcutName10" styleClass="textBox" size="35" maxlength="50"/>
+											</logic:notEmpty>
+											<logic:empty name="optionForm" property="shortcutURL10">
+												<html:text name="optionForm" property="shortcutName10" styleClass="textBoxDisabled" size="35" maxlength="50" readonly="true"/>
+											</logic:empty>
+						  					<html:hidden name="optionForm" property="shortcutURL10"/>						  					
+						  				</td>
+						  				<td class="tableCell" align="left" valign="top">
+											<logic:notEmpty name="optionForm" property="shortcutURL10">
+												<html:select name="optionForm" property="shortcutIcon10" styleClass="textBox">
+													<html:options collection="shorcutIconList" property="id" labelProperty="genericTag" filter="false"/>
+												</html:select>						  					
+											</logic:notEmpty>
+											<logic:empty name="optionForm" property="shortcutURL10">
+												<html:select name="optionForm" property="shortcutIcon10" styleClass="textBoxDisabled" disabled="true">
+													<html:options collection="shorcutIconList" property="id" labelProperty="genericTag" filter="false"/>
+												</html:select>
+											</logic:empty>
+						  				</td>
+										<td class="tableCell" align="left" valign="top">
+											<logic:notEmpty name="optionForm" property="shortcutURL10">
+												<html:select name="optionForm" property="shortcutOpen10" styleClass="textBox">
+													<html:options collection="shorcutOpenList" property="id" labelProperty="genericTag" filter="false"/>
+												</html:select>
+											</logic:notEmpty>
+											<logic:empty name="optionForm" property="shortcutURL10">
+												<html:select name="optionForm" property="shortcutOpen10" styleClass="textBoxDisabled" disabled="true">
+													<html:options collection="shorcutOpenList" property="id" labelProperty="genericTag" filter="false"/>
+												</html:select>
+											</logic:empty>
 										</td>
 						  			</tr>
 						  		</table>
@@ -474,6 +830,22 @@
 						</tr>
 						<tr class="pagingFormBody">
 						  <td>&nbsp;</td>
+						  <td class="formTitle"><bean:message key="label.manageOption.defCapacity"/>:&nbsp;</td>
+						  <td class="formBody">
+							<html:text name="optionForm" property="defaultCapacity" styleClass="textBox" size="8" maxlength="6"/> <bean:message key="label.manageOption.defCapacity.unit"/>
+						  </td>	      			      
+						  <td>&nbsp;</td>
+						</tr>
+						<tr class="pagingFormBody">
+						  <td>&nbsp;</td>
+						  <td class="formTitle"><bean:message key="label.manageOption.metfieldTimeout"/>:&nbsp;</td>
+						  <td class="formBody">
+							<html:text name="optionForm" property="maxMetaFieldTimeout" styleClass="textBox" size="8" maxlength="6"/> <bean:message key="label.manageOption.metfieldTimeout.unit"/>
+						  </td>	      			      
+						  <td>&nbsp;</td>
+						</tr>						
+						<tr class="pagingFormBody">
+						  <td>&nbsp;</td>
 						  <td class="formTitle"><bean:message key="label.manageOption.newVersionUrl"/>:&nbsp;</td>
 						  <td class="formBody">
 							<html:text name="optionForm" property="newVersionUrl" styleClass="textBox" size="40" maxlength="200"/> <bean:message key="label.manageOption.newVersionUrl.note"/>
@@ -601,6 +973,14 @@
 						  </td>	      			      
 						  <td>&nbsp;</td>
 						</tr>				    
+						<tr class="pagingFormBody">
+						  <td>&nbsp;</td>
+						  <td class="formTitle"><bean:message key="label.manageOption.projPanelClass"/>:&nbsp;</td>
+						  <td class="formBody">
+							<html:textarea name="optionForm" property="overviewProjectClasses" styleClass="textBox" cols="85" rows="3" />				        
+						  </td>	      			      
+						  <td>&nbsp;</td>
+						</tr>						
 						<tr class="gapFormBody">
 						  <td>&nbsp;</td>
 						  <td>&nbsp;</td>
@@ -693,7 +1073,7 @@
 			<table width="98%" border="0" cellspacing="0" cellpadding="0"><tr>
 			  <td width="120">
 				  <html:button property="save" styleClass="button" onclick="javascript:buttonClick('optionForm', 'saveOption');">
-					<bean:write name="optionForm" property="saveLabel" />
+					<bean:write name="optionForm" property="saveLabel" filter="false"/>
 				  </html:button>    
 			  </td>
 			  <td>&nbsp;</td>

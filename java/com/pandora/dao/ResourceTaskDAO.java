@@ -6,6 +6,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.Calendar;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Vector;
 
@@ -20,6 +21,7 @@ import com.pandora.RequirementTO;
 import com.pandora.ResourceTO;
 import com.pandora.ResourceTaskAllocTO;
 import com.pandora.ResourceTaskTO;
+import com.pandora.StepNodeTemplateTO;
 import com.pandora.TaskHistoryTO;
 import com.pandora.TaskStatusTO;
 import com.pandora.TaskTO;
@@ -29,12 +31,12 @@ import com.pandora.bus.ResourceTaskBUS;
 import com.pandora.bus.kb.IndexEngineBUS;
 import com.pandora.delegate.ProjectDelegate;
 import com.pandora.delegate.ResourceTaskDelegate;
+import com.pandora.delegate.TaskDelegate;
 import com.pandora.delegate.UserDelegate;
 import com.pandora.exception.AcceptTaskInsertionException;
 import com.pandora.exception.BusinessException;
 import com.pandora.exception.DataAccessException;
-import com.pandora.exception.ZeroCapacityDBException;
-import com.pandora.exception.ZeroCapacityException;
+import com.pandora.exception.MandatoryMetaFieldDataException;
 import com.pandora.helper.DateUtil;
 import com.pandora.helper.LogUtil;
 
@@ -43,16 +45,32 @@ import com.pandora.helper.LogUtil;
  */
 public class ResourceTaskDAO extends DataAccess {
 
-    
-    /**
+
+	public HashMap<String, ResourceTaskAllocTO> getHashAlloc(String projectFilter, String resourceFilter, Timestamp iniDate, Timestamp finalDate) throws DataAccessException {
+		HashMap<String, ResourceTaskAllocTO> response = new HashMap<String, ResourceTaskAllocTO>();
+        Connection c = null;
+        ResourceTaskAllocDAO rtadao = new ResourceTaskAllocDAO();
+		try {
+			c = getConnection();
+			response = rtadao.getHashAlloc(c, projectFilter, resourceFilter, iniDate, finalDate);
+		} catch(Exception e){
+			throw new DataAccessException(e);
+		} finally{
+			this.closeConnection(c);
+		}
+        return response;
+	}
+
+	
+	/**
      * Get a list of Resource Task objects based on Task object
      */
-    public Vector getListByTask(TaskTO tto, boolean exceptCancelItem) throws DataAccessException {
-        Vector response = null;
+    public Vector<ResourceTaskTO> getListByTask(TaskTO tto, boolean exceptCancelItem) throws DataAccessException {
+        Vector<ResourceTaskTO> response = null;
         Connection c = null;
 		try {
 			c = getConnection();
-			response = this.getListByTask(tto, c, exceptCancelItem);
+			response = this.getListByTask(tto, c, exceptCancelItem, false);
 		} catch(Exception e){
 			throw new DataAccessException(e);
 		} finally{
@@ -85,8 +103,8 @@ public class ResourceTaskDAO extends DataAccess {
     /**
      * Get a list of Resource Task objects based on Task object
      */
-    public Vector getListByTask(TaskTO tto, Connection c, boolean exceptCancelItem) throws DataAccessException {
-        Vector response = new Vector();
+    public Vector<ResourceTaskTO> getListByTask(TaskTO tto, Connection c, boolean exceptCancelItem, boolean isLazyLoad) throws DataAccessException {
+        Vector<ResourceTaskTO> response = new Vector<ResourceTaskTO>();
 		ResultSet rs = null;
 		PreparedStatement pstmt = null; 
 		try {
@@ -110,26 +128,28 @@ public class ResourceTaskDAO extends DataAccess {
 			while (rs.next()){
 			    ResourceTaskTO rtto = this.populateBeanByResultSet(rs);
 
-			    //get remaining fields...
-			    ResourceTO rto = rtto.getResource();
-			    rto.setName(getString(rs, "USER_NAME"));
-			    rto.setUsername(getString(rs, "username"));
-			    rto.setColor(getString(rs, "USER_COLOR"));
-			    
 			    TaskStatusTO tsto = rtto.getTaskStatus();
 			    tsto.setStateMachineOrder(getInteger(rs, "state_machine_order"));
 			    tsto.setName(getString(rs, "STATUS_NAME"));
-
-			    //get allocations for current Resource task
-			    ResourceTaskAllocDAO rtadao = new ResourceTaskAllocDAO();
-			    rtto.setAllocList(rtadao.getListByResourceTask(rtto, c));
 			    
-			    rtto.setHandler(tto.getHandler());
-			    if (tto.getComment()!=null) {
-			        rtto.setThirdPartComment(tto.getComment());    
+			    if (!isLazyLoad) {
+				    //get remaining fields...
+				    ResourceTO rto = rtto.getResource();
+				    rto.setName(getString(rs, "USER_NAME"));
+				    rto.setUsername(getString(rs, "username"));
+				    rto.setColor(getString(rs, "USER_COLOR"));
+				    
+				    //get allocations for current Resource task
+				    ResourceTaskAllocDAO rtadao = new ResourceTaskAllocDAO();
+				    rtto.setAllocList(rtadao.getListByResourceTask(rtto, c));
+				    
+				    rtto.setHandler(tto.getHandler());
+				    if (tto.getComment()!=null) {
+				        rtto.setThirdPartComment(tto.getComment());    
+				    }			    	
 			    }
-			    rtto.setTask(tto);
 			    
+			    rtto.setTask(tto);
 				response.addElement(rtto); 
 			} 
 						
@@ -145,15 +165,16 @@ public class ResourceTaskDAO extends DataAccess {
      * Get a list of resource Task objects related with a requirement.<br>
      * Consider only active tasks.
      */
-    public Vector getListByRequirement(RequirementTO rqto, Connection c) throws DataAccessException {
-        Vector response = new Vector();
+    public Vector<ResourceTaskTO> getListByRequirement(RequirementTO rqto, Connection c) throws DataAccessException {
+        Vector<ResourceTaskTO> response = new Vector<ResourceTaskTO>();
 		ResultSet rs = null;
 		PreparedStatement pstmt = null; 
 		try {
 			String sql = "select distinct rt.task_id, rt.resource_id, rt.project_id, rt.billable, " +
 						 "rt.start_date, rt.estimated_time, rt.actual_date, rt.actual_Time, " +
-						 "rt.task_status_id, u.username, ts.state_machine_order " +
-					     "from requirement rq, task t, resource_task rt, tool_user u, task_status ts " +
+						 "rt.task_status_id, u.username, ts.state_machine_order, cnt.instance_id " +
+					     "from requirement rq, resource_task rt, tool_user u, task_status ts, " +
+					           "task t LEFT OUTER JOIN (select instance_id, related_task_id from custom_node_template) as cnt on cnt.related_task_id = t.id " +
 					     "where t.requirement_id = rq.id " +
 					     "and rt.project_id = rq.project_id " +
 					     "and rt.project_id = t.project_id " +
@@ -173,6 +194,12 @@ public class ResourceTaskDAO extends DataAccess {
 			    TaskStatusTO tsto = rtto.getTaskStatus();
 			    tsto.setStateMachineOrder(getInteger(rs, "state_machine_order"));
 			    
+			    Integer instanceId = getInteger(rs, "instance_id");
+			    if (instanceId!=null) {
+				    TaskTO tto = rtto.getTask();
+				    tto.setTemplateInstanceId(instanceId);
+			    	
+			    }
 				response.addElement(rtto); 
 			} 
 						
@@ -204,8 +231,8 @@ public class ResourceTaskDAO extends DataAccess {
     /**
      * Get a list of resource tasks based on resource object and project object.
      */
-    public Vector getTaskListByResourceProject(ResourceTO rto, ProjectTO pto) throws DataAccessException {
-        Vector response = null;
+    public Vector<ResourceTaskTO> getTaskListByResourceProject(ResourceTO rto, ProjectTO pto) throws DataAccessException {
+        Vector<ResourceTaskTO> response = null;
         Connection c = null;
 		try {
 			c = getConnection();
@@ -217,7 +244,7 @@ public class ResourceTaskDAO extends DataAccess {
 		}
         return response;        
     }   
-    
+
     
     private Vector<ResourceTaskTO> getUnsignedTasks(Connection c, ResourceTO rto, Timestamp ts) throws Exception {
     	Vector<ResourceTaskTO> response = new Vector<ResourceTaskTO>();
@@ -227,7 +254,7 @@ public class ResourceTaskDAO extends DataAccess {
 		ProjectDelegate pdel = new ProjectDelegate();
 		
 		//get a list of project related to the current user..
-		Vector<ProjectTO> projectList = pdel.getProjectListForWork(new UserTO(rto.getId()), true);
+		Vector<ProjectTO> projectList = pdel.getProjectListForWork(new UserTO(rto.getId()), true, true);
 		
 		UserTO uto = udel.getRoot();
 
@@ -239,6 +266,7 @@ public class ResourceTaskDAO extends DataAccess {
 		rs = pstmt.executeQuery();
 		while (rs.next()){
 		    ResourceTaskTO rrto = this.populateBeanByResultSet(rs);
+		    rrto.getTask().setDescription(getString(rs, "description"));		    
 
 		    for (int i=0; i<projectList.size(); i++) {
 		    	ProjectTO pto = (ProjectTO)projectList.elementAt(i);
@@ -275,6 +303,7 @@ public class ResourceTaskDAO extends DataAccess {
 		    pstmt.setString(3, rtto.getResource().getId());
 		    pstmt.setString(4, rtto.getTask().getProject().getId());		
 		    pstmt.executeUpdate();
+		    		    
 		} catch (Exception e) {
 			throw new DataAccessException(e);
 		}finally{
@@ -291,17 +320,22 @@ public class ResourceTaskDAO extends DataAccess {
 		ResultSet rs = null;
 		PreparedStatement pstmt = null;
 		int daysAgo = -7;
+		TaskDelegate tdel = new TaskDelegate();
 		try {
 		    
 			PreferenceTO prto = rto.getPreference();
+	    	if (prto==null) {
+	    		PreferenceDAO pdao = new PreferenceDAO();
+	    		prto = pdao.getObjectByUser(rto, c);
+	    	}		    
+			
 		    if (!hideClosed) {
-		    	if (prto==null) {
-		    		PreferenceDAO pdao = new PreferenceDAO();
-		    		prto = pdao.getObjectByUser(rto, c);
-		    	}		    
 		        String value = prto.getPreference(PreferenceTO.MY_TASK_DAYS_AGO);
 		        daysAgo = Integer.parseInt(value) * (-1);
 		    }
+	        String showLock = prto.getPreference(PreferenceTO.MY_TASK_SHOW_LOCK);
+
+	        
 		    boolean showUnsignedTasks = true;
 		    
 			pstmt = c.prepareStatement(this.getTaskListByResourceQuery());  
@@ -320,12 +354,18 @@ public class ResourceTaskDAO extends DataAccess {
 			rs = pstmt.executeQuery();
 			while (rs.next()){
 			    ResourceTaskTO rrto = this.populateBeanByResultSet(rs);
-			    rrto.setHandler(rto);
-		
-				//get remaining field...
-			    getRemainingFields(rs, rrto);
+			    rrto.getTask().setDescription(getString(rs, "description"));
 			    
-				response.addElement(rrto); 
+			    boolean putIntoList = true; 
+			    if (showLock.equalsIgnoreCase("OFF") && tdel.isBlocked(rrto.getTask()) ) {
+			    	putIntoList = false;
+			    }
+			    
+			    if (putIntoList) {
+				    rrto.setHandler(rto);
+				    getRemainingFields(rs, rrto);
+					response.addElement(rrto); 			    	
+			    }
 			} 
 						
 		} catch (Exception e) {
@@ -395,7 +435,7 @@ public class ResourceTaskDAO extends DataAccess {
 					    "c.name as CATEGORY_NAME, ts.name as TASK_STATUS_NAME, ts.state_machine_order, c.billable as BILLABLE_CATEGORY, " +
 					    "po.value, pr.name as PROJECT_NAME, u.username, t.requirement_id, t.created_by, t.category_id," +
 					    "t.task_id as PARENT_TASK_ID, t.name as TASK_NAME, req.iteration, tpl.instance_id, p.iteration as TASK_ITERATION," +
-					    "req.REQ_DESC " +
+					    "req.REQ_DESC, p.description " +
 					"from resource_task rt, tool_user u, " +
 						 "task t LEFT OUTER JOIN (select id, iteration, description as REQ_DESC from planning) as req on req.id = t.requirement_id, " +
 					     "planning p LEFT OUTER JOIN (select instance_id, related_task_id from custom_node_template) as tpl on p.id = tpl.related_task_id, " +
@@ -419,8 +459,8 @@ public class ResourceTaskDAO extends DataAccess {
     /**
      * Get a list of resource tasks based on resource object and project object.
      */
-    private Vector getTaskListByResourceProject(ResourceTO rto, ProjectTO pto, Connection c) throws DataAccessException {
-        Vector response = new Vector();
+    private Vector<ResourceTaskTO> getTaskListByResourceProject(ResourceTO rto, ProjectTO pto, Connection c) throws DataAccessException {
+        Vector<ResourceTaskTO> response = new Vector<ResourceTaskTO>();
 		ResultSet rs = null;
 		PreparedStatement pstmt = null;
 		try {
@@ -457,12 +497,12 @@ public class ResourceTaskDAO extends DataAccess {
     /**
      * Get all taskResources related with a project object and some search criteria.
      */
-    public Vector<ResourceTaskTO> getListByProject(ProjectTO pto, String statusSel, String resourceSel) throws DataAccessException {
+    public Vector<ResourceTaskTO> getListByProject(ProjectTO pto, String statusSel, String resourceSel, String dateRangeSel) throws DataAccessException {
         Vector<ResourceTaskTO> response = null;
         Connection c = null;
 		try {
 			c = getConnection();
-			response = this.getListByProject(pto, statusSel, resourceSel, c);
+			response = this.getListByProject(pto, statusSel, resourceSel, dateRangeSel, c);
 		} catch(Exception e){
 			throw new DataAccessException(e);
 		} finally{
@@ -475,28 +515,36 @@ public class ResourceTaskDAO extends DataAccess {
     /**
      * Get all taskResources related with a project object and some search criteria.
      */
-    private Vector<ResourceTaskTO> getListByProject(ProjectTO pto, String statusSel, String resourceSel, Connection c) throws DataAccessException {
+    private Vector<ResourceTaskTO> getListByProject(ProjectTO pto, String statusSel, String resourceSel, String dateRangeSel, Connection c) throws DataAccessException {
         Vector<ResourceTaskTO> response = new Vector<ResourceTaskTO>();
         AdditionalFieldDAO afdao = new AdditionalFieldDAO();
 
 		ResultSet rs = null;
 		PreparedStatement pstmt = null; 
 		try {
-			String sql = "select rt.task_id, rt.resource_id, rt.project_id, rt.billable, " +
+			
+			String dateWhere = "";
+			if (dateRangeSel!=null && !dateRangeSel.equals("-1")) {
+				dateWhere = "where (sub.last_update is null or sub.last_update > ?) ";	
+			}
+			
+			String sql = "select * from (" +
+					   "select rt.task_id, rt.resource_id, rt.project_id, rt.billable, " +
 					   "rt.start_date, rt.estimated_time, rt.actual_date, rt.actual_Time, rt.task_status_id, " +
 					   "u.username as USER_NAME, ts.state_machine_order, ts.name as TASK_STATS_NAME, p.iteration as TASK_ITERATION, " +
 					   "t.name as task_name, t.category_id, c.name as CATEGORY_NAME, c.billable as CATEGORY_BILLABLE, t.requirement_id, " +
-					   "cnt.instance_id, rp.iteration, t.task_id as PARENT_TASK_ID, rp.REQ_DESC " +
-					   "from resource_task rt, tool_user u, task_status ts, planning p, category c, task t LEFT OUTER JOIN " +
+					   "cnt.instance_id, rp.iteration, t.task_id as PARENT_TASK_ID, rp.REQ_DESC, max(th.creation_date) as last_update " +
+					   "from resource_task rt LEFT OUTER JOIN task_history th " +
+					         "on (th.task_id = rt.task_id and th.project_id = rt.project_id and th.resource_id = rt.resource_id and th.task_status_id = rt.task_status_id)" +
+					         ",tool_user u, task_status ts, planning p, category c, task t LEFT OUTER JOIN " +
 					   "(select instance_id, related_task_id  from custom_node_template) as cnt on cnt.related_task_id = t.id " +
 					   "LEFT OUTER JOIN (select id, iteration, description as REQ_DESC from planning ) as rp on rp.id = t.requirement_id " +
 					   "where u.id = rt.resource_id " +
 					   "and t.id = rt.task_id and t.id = p.id " +
 					   "and t.project_id = rt.project_id " +
 					   "and rt.task_status_id = ts.id and c.id = t.category_id " +
-					   "and rt.project_id=?";
+					   "and rt.project_id=? ";
 						
-			
 		    if (statusSel.equals("-1")){
 		        sql+=" and ts.state_machine_order<>" + TaskStatusTO.STATE_MACHINE_CANCEL;
 		        sql+=" and ts.state_machine_order<>" + TaskStatusTO.STATE_MACHINE_CLOSE;
@@ -510,8 +558,22 @@ public class ResourceTaskDAO extends DataAccess {
 		        sql+=" and rt.resource_id='" + resourceSel + "' ";
 		    }
 			
+		    sql+=" group by rt.task_id, rt.resource_id, rt.project_id, rt.billable, rt.start_date, rt.estimated_time, rt.actual_date, rt.actual_Time, rt.task_status_id, " +
+		    	 "u.username, ts.state_machine_order, ts.name, p.iteration, t.name, t.category_id, c.name, c.billable, t.requirement_id, cnt.instance_id, " +
+		    	 "rp.iteration, t.task_id, rp.REQ_DESC) as sub " + dateWhere;
+		    
 			pstmt = c.prepareStatement(sql);
 			pstmt.setString(1, pto.getId());
+			if (!dateWhere.trim().equals("")) {
+				Timestamp ref = DateUtil.getChangedDate(DateUtil.getNow(), Calendar.MONTH, -1); 
+				if (dateRangeSel!=null && dateRangeSel.equals("7")) {
+					ref = DateUtil.getChangedDate(DateUtil.getNow(), Calendar.DATE, -7);
+				} else if (dateRangeSel!=null && dateRangeSel.equals("90")) {
+					ref = DateUtil.getChangedDate(DateUtil.getNow(), Calendar.MONTH, -3);
+				}
+				pstmt.setTimestamp(2, ref);
+			}
+			
 			rs = pstmt.executeQuery();
 			
 			while (rs.next()){
@@ -614,7 +676,7 @@ public class ResourceTaskDAO extends DataAccess {
     /**
      * Insert a list of Resource Task object into data base.
      */
-    public void insert(Vector v, TaskTO tto, Connection c) throws Exception {
+    public void insert(Vector<ResourceTaskTO> v, TaskTO tto, Connection c) throws Exception {
         ResourceTaskBUS rtbus = new ResourceTaskBUS();
       
         if (v!=null && v.size()>0){
@@ -622,9 +684,9 @@ public class ResourceTaskDAO extends DataAccess {
             //create list of allocated slots
             v = rtbus.generateAllocation(v);
        
-    		Iterator i = v.iterator();
+    		Iterator<ResourceTaskTO> i = v.iterator();
     		while (i.hasNext()){
-    		    ResourceTaskTO rtto = (ResourceTaskTO)i.next();
+    		    ResourceTaskTO rtto = i.next();
     		    if (tto!=null) {
     		        rtto.setTask(tto);    
     		    }
@@ -638,6 +700,10 @@ public class ResourceTaskDAO extends DataAccess {
      * Insert a new Resource Task object into data base.
      */
     public void insert(TransferObject to, Connection c) throws DataAccessException {
+    	this.insert(to, c, true, true);
+    }
+    
+    public void insert(TransferObject to, Connection c, boolean insertTaskHistory, boolean insertResourceTaskAlloc) throws DataAccessException {
 		PreparedStatement pstmt = null; 
 		try {
 		    ResourceTaskTO rtto = (ResourceTaskTO)to;
@@ -679,14 +745,18 @@ public class ResourceTaskDAO extends DataAccess {
 			}	
 			pstmt.executeUpdate();
 			
-		    //create and insert into data base a new Resource Task History object
-		    TaskHistoryDAO thdao = new TaskHistoryDAO();
-		    TaskHistoryTO thto = thdao.populateBeanByResourceTask(rtto, tsto, null);
-		    thdao.insert(thto, c);
+			if(insertTaskHistory){
+			    //create and insert into data base a new Resource Task History object
+			    TaskHistoryDAO thdao = new TaskHistoryDAO();
+			    TaskHistoryTO thto = thdao.populateBeanByResourceTask(rtto, tsto, null);
+			    thdao.insert(thto, c);
+			}
 		    
-		    //insert a list of Resource Task Alloc objects related
-		    ResourceTaskAllocDAO rtadao = new ResourceTaskAllocDAO();
-		    rtadao.insert(rtto.getAllocList(), rtto, c);
+			if(insertResourceTaskAlloc){
+			    //insert a list of Resource Task Alloc objects related
+			    ResourceTaskAllocDAO rtadao = new ResourceTaskAllocDAO();
+			    rtadao.insert(rtto.getAllocList(), rtto, null, c);
+			}
 
 		} catch (SQLException e) {
 			throw new DataAccessException(e);
@@ -699,11 +769,11 @@ public class ResourceTaskDAO extends DataAccess {
     /**
      * Remove a list of Resource Task objects from data base.
      */
-    public void remove(Vector v, Connection c) throws DataAccessException {
+    public void remove(Vector<ResourceTaskTO> v, Connection c) throws DataAccessException {
         if (v!=null){
-    		Iterator i = v.iterator();
+    		Iterator<ResourceTaskTO> i = v.iterator();
     		while (i.hasNext()){
-    		    ResourceTaskTO rtto = (ResourceTaskTO)i.next();
+    		    ResourceTaskTO rtto = i.next();
     		    this.remove(rtto, c);
     		}            
         }
@@ -714,6 +784,10 @@ public class ResourceTaskDAO extends DataAccess {
      * Remove a Resource Task object from data base.
      */
     public void remove(TransferObject to, Connection c) throws DataAccessException {
+    	this.remove(to, c, true);
+    }
+    
+    public void remove(TransferObject to, Connection c, boolean checkTaskStatus) throws DataAccessException {
 		PreparedStatement pstmt = null;
 		try {
 		    ResourceTaskTO rtto = (ResourceTaskTO)to;
@@ -724,11 +798,10 @@ public class ResourceTaskDAO extends DataAccess {
 		    				|| tsto.getStateMachineOrder().equals(TaskStatusTO.STATE_MACHINE_OPEN)));
 		    boolean isLeaderHandler = (rtto.getHandler()!=null && (rtto.getHandler() instanceof LeaderTO) );
 
-		    if (rtto.getTaskStatus()==null || stateToRemove || isLeaderHandler) {
-		        
-			    //remove all resource task alloc objects related
+		    if ( rtto.getTaskStatus()==null || stateToRemove || isLeaderHandler || !checkTaskStatus) {
+		    	//remove all resource task alloc objects related
 			    ResourceTaskAllocDAO rtadao = new ResourceTaskAllocDAO();
-			    rtadao.removeByResourceTask(rtto, c);		        
+			    rtadao.removeByResourceTask(rtto, null, c);		        
 
 			    //remove all history related 
 			    TaskHistoryDAO thdao = new TaskHistoryDAO();
@@ -740,9 +813,8 @@ public class ResourceTaskDAO extends DataAccess {
 			    pstmt.setString(2, rtto.getResource().getId());
 			    pstmt.setString(3, rtto.getTask().getProject().getId());		
 			    pstmt.executeUpdate();
-
 		    } else {
-		        throw new DataAccessException("A task already started cannot be removed."); 
+		    	 throw new DataAccessException("A task already started cannot be removed."); 
 		    }
 
 		} catch (SQLException e) {
@@ -757,7 +829,7 @@ public class ResourceTaskDAO extends DataAccess {
     /**
      * Update a list of Resource Task objects from data base.
      */
-    public void update(Vector v, Connection c) throws Exception {
+    public void update(Vector<ResourceTaskTO> v, Connection c) throws Exception {
         ResourceTaskBUS rtbus = new ResourceTaskBUS();
         
         if (v!=null){
@@ -765,9 +837,9 @@ public class ResourceTaskDAO extends DataAccess {
             //create list of allocated slots
             v = rtbus.generateAllocation(v);
             
-    		Iterator i = v.iterator();
+    		Iterator<ResourceTaskTO> i = v.iterator();
     		while (i.hasNext()){
-    		    ResourceTaskTO rtto = (ResourceTaskTO)i.next();
+    		    ResourceTaskTO rtto = i.next();
     		    this.update(rtto, c);
     		}            
         }
@@ -818,8 +890,8 @@ public class ResourceTaskDAO extends DataAccess {
 		    //insert a list of Resource Task Alloc objects related
 		    if (rtto.getAllocList()!=null) {
 			    ResourceTaskAllocDAO rtadao = new ResourceTaskAllocDAO();
-			    rtadao.removeByResourceTask(rtto, c);		    
-			    rtadao.insert(rtto.getAllocList(), rtto, c);		        
+			    rtadao.removeByResourceTask(rtto, null, c);		    
+			    rtadao.insert(rtto.getAllocList(), rtto, null, c);		        
 		    }
 		    
 			//update the content of object into Knowledge Base
@@ -839,7 +911,8 @@ public class ResourceTaskDAO extends DataAccess {
     /**
      * Update, remove or insert lists of Resource Task objects into data base.
      */
-    public void updateLists(TaskTO tto, Vector removeList, Vector insertList, Vector updateList) throws DataAccessException {     
+    public void updateLists(TaskTO tto, Vector<ResourceTaskTO> removeList, 
+    		Vector<ResourceTaskTO> insertList, Vector<ResourceTaskTO> updateList) throws DataAccessException {     
         Connection c = null;
 		try {
 			c = getConnection(false);
@@ -856,11 +929,11 @@ public class ResourceTaskDAO extends DataAccess {
 	        //verify if there are remaining open resource task...otherwise, close the task 	        
 	        if (tto.getFinalDate()==null) {
 	        	boolean openExists = false;
-		        Vector resTaskList = this.getListByTask(tto, c, true);
+		        Vector<ResourceTaskTO> resTaskList = this.getListByTask(tto, c, true, true);
 		        if (resTaskList!=null) {
-		    		Iterator i = resTaskList.iterator();
+		    		Iterator<ResourceTaskTO> i = resTaskList.iterator();
 		    		while (i.hasNext()){
-		    		    ResourceTaskTO rtto = (ResourceTaskTO)i.next();
+		    		    ResourceTaskTO rtto = i.next();
 		    		    if (!rtto.getTaskStatus().isFinish()) {
 		    		    	openExists = true; 
 		    		    	break;
@@ -981,12 +1054,21 @@ public class ResourceTaskDAO extends DataAccess {
 						nextOfNext.setPlanningId(relatedNode.getPlanningId());
 						nextOfNext.setInstanceId(relatedNode.getInstanceId());
 						
-						
 						CustomNodeTemplateTO customNextNode = ntdao.getCustomNodeTemplate(nextOfNext, reqId, c);
+			    		if (customNextNode==null) {
+			    			nextOfNext = (NodeTemplateTO) ntdao.getObject(nextOfNext, c);
+			    			nextOfNext.setInstanceId(relatedNode.getInstanceId());
+			    			customNextNode = ntdao.createNewCustomNodeTemplate(nextOfNext, reqId, c);
+			    		}
 						if (customNextNode.getRelatedTaskId()!=null) {				
 							ntdao.reopenTask(customNextNode.getRelatedTaskId(), rtto.getHandler(), comment, c);
-							changeReq = false;
+						} else {
+							StepNodeTemplateTO step = new StepNodeTemplateTO(nextOfNext.getId());
+							step.copyFromClone(ntdao.getNodeTemplate(nextOfNext.getId(), c));
+							TaskTO nextTask = ntdao.createNewTaskFromWorkflow(step, reqId, rtto.getHandler(), comment, c);
+							ntdao.createWorkflowLink(c, tto, nextTask);							
 						}
+						changeReq = false;						
 					}
 				}
 			}
@@ -1010,9 +1092,9 @@ public class ResourceTaskDAO extends DataAccess {
 			}
 			if (e instanceof AcceptTaskInsertionException) {
 			    throw (AcceptTaskInsertionException)e;
-			}
-			if (e instanceof ZeroCapacityException) {
-				throw new ZeroCapacityDBException(e);
+			}			
+			if (e instanceof MandatoryMetaFieldDataException) {
+				throw (MandatoryMetaFieldDataException)e;
 			}
 			throw new DataAccessException(e);
 		} finally{
@@ -1058,7 +1140,7 @@ public class ResourceTaskDAO extends DataAccess {
 
 		    //update status of Resource Task to new status
 			pstmt = c.prepareStatement("update resource_task set task_status_id=?, actual_date=?, " +
-									   "actual_Time=?, start_date=?, estimated_time=?, billable=? " +
+									   "actual_time=?, start_date=?, estimated_time=?, billable=? " +
 									   "where task_id=? and resource_id=? and project_id=?");
 			pstmt.setString(1, tsto.getId());
 			if (rtto.getActualDate()!=null && containAlloc){
@@ -1093,15 +1175,14 @@ public class ResourceTaskDAO extends DataAccess {
 				rtto = rtbus.generateAllocation(rtto);
 			    
 			    //insert a list of Resource Task Alloc objects related				
-			    rtadao.removeByResourceTask(rtto, c);		    
-			    rtadao.insert(rtto.getAllocList(), rtto, c);			    
+			    rtadao.removeByResourceTask(rtto, newState, c);		    
+			    rtadao.insert(rtto.getAllocList(), rtto, newState, c);			    
 			} else {
-			    rtadao.removeByResourceTask(rtto, c);				
+			    rtadao.removeByResourceTask(rtto, newState, c);				
 			}
 		
-		} catch (ZeroCapacityException ze) {
-			throw new ZeroCapacityDBException(ze);
-			
+		} catch (MandatoryMetaFieldDataException e) {
+			throw e;
 		} catch (Exception e) {
 			throw new DataAccessException(e);
         }finally{
@@ -1116,11 +1197,11 @@ public class ResourceTaskDAO extends DataAccess {
 	    TaskTO tto = rtto.getTask();
 
 		//check if the task must be also finished ...
-		Vector allResourceTaskList = this.getListByTask(tto, true);
+		Vector<ResourceTaskTO> allResourceTaskList = this.getListByTask(tto, c, true, true);
 		int numberOfOpenedResTask = 0;
-		Iterator i = allResourceTaskList.iterator();
+		Iterator<ResourceTaskTO> i = allResourceTaskList.iterator();
 		while(i.hasNext()) {
-		    ResourceTaskTO dummy = (ResourceTaskTO)i.next();
+		    ResourceTaskTO dummy = i.next();
 		    if (!dummy.getTaskStatus().isFinish() && !rtto.getId().equals(dummy.getId())) {
 		        numberOfOpenedResTask++;
 		    }
@@ -1135,7 +1216,7 @@ public class ResourceTaskDAO extends DataAccess {
 		    if (isMTClosingAllowed && parenttask!=null) {
 		    	
 		    	//get a list of non-closed tasks under the macro task...
-		    	Vector list;
+		    	Vector<TaskTO> list;
 				try {
 					list = rtdel.getNotClosedTasksUnderMacroTask(tto);
 				} catch (BusinessException e) {
@@ -1154,8 +1235,8 @@ public class ResourceTaskDAO extends DataAccess {
 		}    	
     }
     
-    public Vector getListUntilID(String initialId, String finalId) throws DataAccessException {
-        Vector response = null;
+    public Vector<ResourceTaskTO> getListUntilID(String initialId, String finalId) throws DataAccessException {
+        Vector<ResourceTaskTO> response = null;
         Connection c = null;
 		try {
 			c = getConnection();
@@ -1179,7 +1260,7 @@ public class ResourceTaskDAO extends DataAccess {
 			c = getConnection(false);
 			
 			//get all history records related to resource_task
-			Vector historyList = thdao.getListByResourceTask(rtto.getTask().getId(), rtto.getResource().getId());
+			Vector<TaskHistoryTO> historyList = thdao.getListByResourceTask(rtto.getTask().getId(), rtto.getResource().getId());
 			
 			//fetch the allocation of resource_task from data base 
 			rtto.setAllocList(rtdao.getListByResourceTask(rtto));
@@ -1187,7 +1268,7 @@ public class ResourceTaskDAO extends DataAccess {
 			//remove task history records...
 			if (historyList!=null) {
 				TaskStatusTO lastStatus = null;
-				Iterator i = historyList.iterator();
+				Iterator<TaskHistoryTO> i = historyList.iterator();
 				while(i.hasNext()) {
 					TaskHistoryTO thto = (TaskHistoryTO)i.next();
 					thdao.remove(thto, c);
@@ -1199,9 +1280,9 @@ public class ResourceTaskDAO extends DataAccess {
 			}
 
 			//remove allocation records...
-			rtdao.removeByResourceTask(rtto, c);
+			rtdao.removeByResourceTask(rtto, null, c);
 
-			//perform the assingment updating (new resource id)... 
+			//perform the assignment updating (new resource id)... 
 			pstmt = c.prepareStatement("update resource_task set resource_id=? " +
 									   "where resource_id=? and task_id=? and project_id=?");
 			pstmt.setString(1, uto.getId());
@@ -1214,7 +1295,7 @@ public class ResourceTaskDAO extends DataAccess {
 			newRes.setProject(rtto.getResource().getProject());
 			
 			if (historyList!=null) {
-				Iterator i = historyList.iterator();
+				Iterator<TaskHistoryTO> i = historyList.iterator();
 				while(i.hasNext()) {
 					TaskHistoryTO thto = (TaskHistoryTO)i.next();
 					thto.getResourceTask().setResource(newRes);
@@ -1223,9 +1304,9 @@ public class ResourceTaskDAO extends DataAccess {
 			}
 			
 			if (rtto.getAllocList()!=null) {
-				Iterator i = rtto.getAllocList().iterator();
+				Iterator<ResourceTaskAllocTO> i = rtto.getAllocList().iterator();
 				while(i.hasNext()) {
-					ResourceTaskAllocTO rtato = (ResourceTaskAllocTO)i.next();
+					ResourceTaskAllocTO rtato = i.next();
 					rtato.getResourceTask().setResource(newRes);
 					rtdao.insert(rtato, c);
 				}				
@@ -1241,19 +1322,15 @@ public class ResourceTaskDAO extends DataAccess {
 			}
 			throw new DataAccessException(e);
 		} finally{
-			try {
-				if(pstmt != null) pstmt.close();	
-			} catch (SQLException er) {
-			    LogUtil.log(this, LogUtil.LOG_ERROR, "", er);
-			}			
+			super.closeStatement(null, pstmt);
 			this.closeConnection(c);			
 		}
 		
 	}
 
 
-    private Vector getListUntilID(String initialId, String finalId, Connection c) throws DataAccessException {
-        Vector response = new Vector();
+    private Vector<ResourceTaskTO> getListUntilID(String initialId, String finalId, Connection c) throws DataAccessException {
+        Vector<ResourceTaskTO> response = new Vector<ResourceTaskTO>();
 		ResultSet rs = null;
 		PreparedStatement pstmt = null; 
 		try {
@@ -1337,6 +1414,83 @@ public class ResourceTaskDAO extends DataAccess {
         rtto.setResource(rto);        
         return rtto;
     }
+    
+    public void changeProject(String projectId, ResourceTaskTO rtto, CategoryTO cto) throws DataAccessException{
+    	Connection c = null;
+		try {
+	    	TaskHistoryDAO thdao = new TaskHistoryDAO();
+	    	Vector<TaskHistoryTO> thlist = thdao.getListByTask(rtto.getTask().getId());
+	    	
+	    	ResourceTaskAllocDAO rtadao = new ResourceTaskAllocDAO();
+	    	Vector<ResourceTaskAllocTO> rtalist = rtadao.getListByResourceTask(rtto);
 
+	    	ResourceTaskAllocPlannedDAO rtapdao = new ResourceTaskAllocPlannedDAO();
+	    	Vector<ResourceTaskAllocTO> rtaplist = rtapdao.getListByResourceTask(rtto);
+	    	
+	    	ResourceTaskTO rttoremove = new ResourceTaskTO();
+	    	TaskTO ttoremove = new TaskTO(rtto.getTask().getId());
+	    	ProjectTO ptoremove = new ProjectTO(rtto.getTask().getProject().getId());
+	    	ttoremove.setProject(ptoremove);
+	    	ResourceTO rtoremove = new ResourceTO(rtto.getResource().getId());
+	    	rtoremove.setProject(ptoremove);
+	    	rttoremove.setResource(rtoremove);
+	    	rttoremove.setTask(ttoremove);
+	    	
+	    	TaskTO tto = rtto.getTask();
+	    	ProjectTO pto = new ProjectTO(projectId);
+	    	tto.setProject(pto);
+
+	    	ResourceTO rto = rtto.getResource();
+	    	rto.setProject(pto);
+	    	rtto.setResource(rto);
+	    	rtto.setTask(tto);
+	    	
+	    	tto.setCategory(cto);
+
+			c = getConnection(false);
+	    	TaskDAO tdao = new TaskDAO();
+	    	//change project_id from TaskTO object
+	    	tdao.update(tto, c);
+	    	
+	    	this.insert(rtto, c, false, false);
+	    	
+	    	thdao.removeByResourceTask(rttoremove, c);
+	    	Iterator<TaskHistoryTO> itth = thlist.iterator();
+	    	while(itth.hasNext()){
+	    		TaskHistoryTO thto = (TaskHistoryTO)itth.next();
+	    		thto.setResourceTask(rtto);
+	    		thdao.insert(thto, c);
+	    	}
+	    	
+	    	rtadao.removeByResourceTask(rttoremove, TaskStatusTO.STATE_MACHINE_OPEN, c); //the status must be Open to force remove the ResourceTaskAllocPlan 
+	    	Iterator<ResourceTaskAllocTO> itrta = rtalist.iterator();
+	    	while(itrta.hasNext()){
+	    		ResourceTaskAllocTO rta = itrta.next();
+	    		rta.setResourceTask(rtto);
+	    		rtadao.insert(rta, c);
+	    	}
+
+	    	Iterator<ResourceTaskAllocTO> itrtap = rtaplist.iterator();
+	    	while(itrtap.hasNext()){
+	    		ResourceTaskAllocTO rta = itrtap.next();
+	    		rta.setResourceTask(rtto);
+	    		rtapdao.insert(rta, c);
+	    	}
+	    	
+	    	this.remove(rttoremove, c, false);
+	    	c.commit();
+		} catch(Exception e){
+			try {
+				c.rollback();
+			} catch (Exception er) {
+				throw new DataAccessException(e);
+			}
+			throw new DataAccessException(e);
+			
+		} finally{
+			this.closeConnection(c);
+		}		    	    	
+    	
+    }
 	
 }

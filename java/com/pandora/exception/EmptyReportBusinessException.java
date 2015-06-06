@@ -1,7 +1,7 @@
 package com.pandora.exception;
 
 /**
- * This exception is thown when an report contain no data to be displayed 
+ * This exception is thrown when an report contain no data to be displayed 
  */
 public class EmptyReportBusinessException extends BusinessException {
 

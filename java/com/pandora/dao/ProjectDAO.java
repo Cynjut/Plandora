@@ -6,9 +6,10 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Vector;
 
+import com.pandora.AdditionalFieldTO;
 import com.pandora.CustomerTO;
 import com.pandora.LeaderTO;
-import com.pandora.OccurrenceTO;
+import com.pandora.MetaFieldTO;
 import com.pandora.ProjectHistoryTO;
 import com.pandora.ProjectStatusTO;
 import com.pandora.ProjectTO;
@@ -104,12 +105,12 @@ public class ProjectDAO extends PlanningDAO {
     }
 
     
-    public Vector<ProjectTO> getProjectListForWork(UserTO uto, boolean isAlloc) throws DataAccessException{
+    public Vector<ProjectTO> getProjectListForWork(UserTO uto, boolean isAlloc, boolean nonClosed) throws DataAccessException{
         Vector<ProjectTO> response = null;
         Connection c = null;
 		try {
 			c = getConnection();
-			response = this.getProjectListForWork(uto, isAlloc, c);
+			response = this.getProjectListForWork(uto, isAlloc, nonClosed, c);
 		} catch(Exception e){
 			throw new DataAccessException(e);
 		} finally{
@@ -120,21 +121,20 @@ public class ProjectDAO extends PlanningDAO {
     
     
     public Vector getList(Connection c) throws DataAccessException {
-		Vector response= new Vector();
+		Vector<ProjectTO> response= new Vector<ProjectTO>();
 		ResultSet rs = null;
 		PreparedStatement pstmt = null; 
 		try {
 			
 			pstmt = c.prepareStatement("select p.id, p.name, a.description, a.creation_date, p.allow_billable, " +
 	   				   				 "p.project_status_id, p.parent_id, p.can_alloc, p.estimated_closure_date, " +
-	   				   				 "p.repository_url, p.repository_class, p.repository_user, p.repository_pass " +
+	   				   				 "p.repository_url, p.repository_class, p.repository_user, p.repository_pass, p.budget " +
 	   				   				 "from project p, planning a " +
 	   				   				 "WHERE p.id = a.id and a.final_date is null " + 
 									 "AND p.id <> '" + ProjectTO.PROJECT_ROOT_ID + "'");
 			rs = pstmt.executeQuery();
 			while (rs.next()) {
 			    ProjectTO pto = this.populateObjectByResultSet(rs, false, c);
-			    pto.setOccurrenceList(this.getOccurrences(pto.getId(), c));
 			    response.addElement(pto);
 			}
 						
@@ -158,14 +158,15 @@ public class ProjectDAO extends PlanningDAO {
 		    }
 		    
 		    //select a user from database
-			pstmt = c.prepareStatement("select p.id, p.name, a.description, a.creation_date, p.estimated_closure_date, " +
-									   "p.project_status_id, p.parent_id, ps.name as PROJECT_STATUS_NAME, p.can_alloc, " +
+			pstmt = c.prepareStatement("select p.id, p.name, a.description, a.creation_date, p.estimated_closure_date, p.budget, " +
+									   "p.project_status_id, p.parent_id, pp.name as PARENT_PROJECT_NAME, ps.name as PROJECT_STATUS_NAME, p.can_alloc, " +
 									   "p.repository_url, p.repository_class, p.repository_user, p.repository_pass, " +
 									   "r.can_self_alloc, r.can_see_repository, r.can_see_invoice, p.allow_billable, ps.state_machine_order, " +
 									   "(select distinct id from customer where id=c.id and project_id = c.project_id) as IS_CUSTOMER, " +
 									   "(select distinct id from resource  where id=c.id and project_id = c.project_id) as IS_RESOURCE, " +
 									   "(select distinct id from leader where id=c.id and project_id = c.project_id) as IS_LEADER " +
-									   "from project p, planning a, project_status ps, customer c LEFT OUTER JOIN resource r on r.id = c.id and r.project_id = c.project_id " +
+									   "from planning a, project_status ps, project p LEFT OUTER JOIN project pp on pp.id = p.parent_id, " +
+									   "customer c LEFT OUTER JOIN resource r on r.id = c.id and r.project_id = c.project_id " +
 									   "WHERE p.id = a.id " +
 									     "and p.id = c.project_id " +
 									     "and ps.id = p.project_status_id " +
@@ -174,8 +175,6 @@ public class ProjectDAO extends PlanningDAO {
 									     "and p.id <> '" + ProjectTO.PROJECT_ROOT_ID + "' order by p.name");
 			pstmt.setString(1, uto.getId());
 			rs = pstmt.executeQuery();
-
-			//Prepare data to return
 			while (rs.next()){
 			    ProjectTO to = this.populateObjectByResultSet(rs, true, c);
 			    
@@ -183,6 +182,11 @@ public class ProjectDAO extends PlanningDAO {
 			    String isCustomer = getString(rs, "IS_CUSTOMER");
 			    String isResource = getString(rs, "IS_RESOURCE");
 			    String isLeader = getString(rs, "IS_LEADER");
+			    
+			    ProjectTO parent = to.getParentProject();
+			    if (parent!=null) {
+			    	parent.setName(getString(rs, "PARENT_PROJECT_NAME"));
+			    }
 			    
 			    Integer canSelfAlloc = getInteger(rs, "can_self_alloc");
 			    to.setCanSelfAlloc(canSelfAlloc!=null && canSelfAlloc.intValue()==1);
@@ -221,7 +225,7 @@ public class ProjectDAO extends PlanningDAO {
 		ResultSet rs = null;
 		PreparedStatement pstmt = null; 
 		try {
-			pstmt = c.prepareStatement("select p.id, p.name, a.description, a.creation_date, p.estimated_closure_date, " +
+			pstmt = c.prepareStatement("select p.id, p.name, a.description, a.creation_date, p.estimated_closure_date, p.budget, " +
 									     "p.project_status_id, p.parent_id, ps.name as PROJECT_STATUS_NAME, " +
 									     "p.can_alloc, pp.name as PARENT_PROJECT_NAME, p.allow_billable, ps.state_machine_order, " +
 									     "p.repository_url, p.repository_class, p.repository_user, p.repository_pass " +
@@ -231,9 +235,6 @@ public class ProjectDAO extends PlanningDAO {
 			rs = pstmt.executeQuery();
 			while (rs.next()){
 			    ProjectTO to = this.populateObjectByResultSet(rs, true, c);
-			    if (!leanSelect) {
-			    	to.setOccurrenceList(this.getOccurrences(to.getId(), c));	
-			    }
 			    to.setRoleIntoProject(RootTO.ROLE_ROOT+"");
 			    
 			    ProjectTO parent = to.getParentProject();
@@ -265,16 +266,16 @@ public class ProjectDAO extends PlanningDAO {
 				finishWhere = " and a.final_date is null";
 			}
 			
-			pstmt = c.prepareStatement("select p.id, p.name, a.description, a.creation_date, p.estimated_closure_date, " +
+			pstmt = c.prepareStatement("select p.id, p.name, a.description, a.creation_date, p.estimated_closure_date, p.budget, " +
 									   "p.project_status_id, p.parent_id, p.can_alloc, p.allow_billable, " +
-									   "p.repository_url, p.repository_class, p.repository_user, p.repository_pass " +
+									   "p.repository_url, p.repository_class, p.repository_user, p.repository_pass, a.final_date " +
 									   "from project p, planning a " + 
 									   "where p.id = a.id and p.parent_id=?" + finishWhere);
 			pstmt.setString(1, pto.getId());
 			rs = pstmt.executeQuery();
 			while (rs.next()){
 			    ProjectTO to = this.populateObjectByResultSet(rs, false, c);
-			    to.setOccurrenceList(this.getOccurrences(to.getId(), c));
+			    to.setFinalDate(getTimestamp(rs, "final_date"));
 			    response.addElement(to);
 			} 
 						
@@ -292,29 +293,32 @@ public class ProjectDAO extends PlanningDAO {
 		ResultSet rs = null;
 		PreparedStatement pstmt = null; 
 		try {
+			String userWhere = "";
+			if (!uto.getUsername().equals(RootTO.ROOT_USER)){
+				userWhere = "and e.id = ? ";
+			}
 			
 			String hideClosedWhere = "";
 			if (hideClosed) {
 				hideClosedWhere = "and a.final_date is null "; 
 			}
 			
-			pstmt = c.prepareStatement("select distinct p.id, p.name, a.description, a.creation_date, p.estimated_closure_date, " +
+			pstmt = c.prepareStatement("select distinct p.id, p.name, a.description, a.creation_date, p.estimated_closure_date, p.budget, " +
 			        				   "p.project_status_id, p.parent_id, ps.name as PROJECT_STATUS_NAME, p.can_alloc, " +
 			        				   "p.repository_url, p.repository_class, p.repository_user, p.repository_pass, " +
 			        				   "p.allow_billable, ps.state_machine_order " +
 			        				   "from project p, planning a, project_status ps, leader e " +
-					   				   "where p.id = a.id " +
-								   		 "and ps.id = p.project_status_id " +
-					   				     "and e.id = ? " + hideClosedWhere +
-					   				     "and (p.can_alloc is null or p.can_alloc='1') " +
-					   				     "and p.id = e.project_id " +
+					   				   "where p.id = a.id and ps.id = p.project_status_id " + userWhere + hideClosedWhere +
+					   				     "and (p.can_alloc is null or p.can_alloc='1') and p.id = e.project_id " +
 					   				     "and p.id <> '" + ProjectTO.PROJECT_ROOT_ID + "' " +
 					   				   "order by p.name");
-			pstmt.setString(1, uto.getId());
+			
+			if (userWhere!=null && !userWhere.equals("")){
+				pstmt.setString(1, uto.getId());	
+			}
 			rs = pstmt.executeQuery();
 			while (rs.next()){
 			    ProjectTO to = this.populateObjectByResultSet(rs, true, c);
-			    to.setOccurrenceList(this.getOccurrences(to.getId(), c));
 			    response.addElement(to);
 			} 
 						
@@ -327,7 +331,7 @@ public class ProjectDAO extends PlanningDAO {
     }
 
     
-    private Vector<ProjectTO> getProjectListForWork(UserTO uto, boolean isAlloc, Connection c) throws DataAccessException{
+    private Vector<ProjectTO> getProjectListForWork(UserTO uto, boolean isAlloc, boolean nonClosed, Connection c) throws DataAccessException{
 		Vector<ProjectTO> response= new Vector<ProjectTO>();
 		ResultSet rs = null;
 		PreparedStatement pstmt = null; 
@@ -336,22 +340,28 @@ public class ProjectDAO extends PlanningDAO {
 		    if (isAlloc) {
 		    	allocWhere = "and (p.can_alloc is null or p.can_alloc='1') ";
 		    }
+		    String nonCloseWhere = "";
+		    if (nonClosed) {
+		    	nonCloseWhere = "and a.final_date is null ";
+		    }
 
-			pstmt = c.prepareStatement("select distinct p.id, p.name, a.description, a.creation_date, p.estimated_closure_date, " +
+			pstmt = c.prepareStatement("select distinct p.id, p.name, a.description, a.creation_date, p.estimated_closure_date, p.budget, " +
 			        				   "p.project_status_id, p.parent_id, ps.name as PROJECT_STATUS_NAME, p.can_alloc, " +
 			        				   "p.repository_url, p.repository_class, p.repository_user, p.repository_pass, " +
-			        				   "p.allow_billable, ps.state_machine_order " +
-			        				   "from project p, planning a, project_status ps, resource r " +
+			        				   "p.allow_billable, ps.state_machine_order, a.final_date " +
+			        				   "from project p, planning a, project_status ps, resource r, customer cu " +
 					   				   "where p.id = a.id " +
 								   		 "and ps.id = p.project_status_id " +
-					   				     "and r.id = ? " +
-					   				     "and p.id = r.project_id and a.final_date is null " + allocWhere +
+					   				     "and r.id = ? and p.id = r.project_id and cu.id = r.id " +
+					   				     "and (cu.is_disable is null or cu.is_disable=0) " +
+					   				     "and p.id = cu.project_id " + nonCloseWhere + allocWhere +
 					   				     "and p.id <> '" + ProjectTO.PROJECT_ROOT_ID + "' " +
 					   				     "order by p.name");
 			pstmt.setString(1, uto.getId());
 			rs = pstmt.executeQuery();
 			while (rs.next()){
 			    ProjectTO to = this.populateObjectByResultSet(rs, true, c);
+			    to.setFinalDate(getTimestamp(rs, "final_date"));
 			    response.addElement(to);
 			} 
 						
@@ -372,7 +382,7 @@ public class ProjectDAO extends PlanningDAO {
         UserDelegate udel = new UserDelegate();
         Vector leaderList;
 		try {
-			leaderList = udel.getLeaderByProject(pto);
+			leaderList = udel.getLeaderByProject("'" + pto.getId() + "'");
 		} catch (BusinessException e) {
 			throw new DataAccessException(e);
 		}
@@ -400,7 +410,7 @@ public class ProjectDAO extends PlanningDAO {
 		ResultSet rs = null;
 		PreparedStatement pstmt = null; 
 		try {
-			pstmt = c.prepareStatement("select p.id, p.name, a.description, a.creation_date, p.estimated_closure_date, " +
+			pstmt = c.prepareStatement("select p.id, p.name, a.description, a.creation_date, p.estimated_closure_date, p.budget, " +
 					   				   "p.PROJECT_STATUS_ID, p.PARENT_ID, ps.NAME as PROJECT_STATUS_NAME, p.can_alloc, " +
 					   				   "p.repository_url, p.repository_class, p.repository_user, p.repository_pass, " +
 					   				   "p.allow_billable, ps.state_machine_order " +
@@ -412,8 +422,7 @@ public class ProjectDAO extends PlanningDAO {
 			rs = pstmt.executeQuery();
 			while (rs.next()){
 			    response = this.populateObjectByResultSet(rs, true, c);
-			    if (!isLazyLoad) {
-				    response.setOccurrenceList(this.getOccurrences(response.getId(), c));			    	
+			    if (!isLazyLoad) {		    	
 			    	this.getProjectUsers(response, c);	
 			    }
 			} 
@@ -432,6 +441,7 @@ public class ProjectDAO extends PlanningDAO {
     	ProjectTO response = new ProjectTO();
         ProjectStatusTO psto = new ProjectStatusTO();
         ProjectTO ppto = new ProjectTO();
+        MetaFieldDAO mfdao = new MetaFieldDAO();
         
         response.setId(getString(rs, "id"));
         response.setName(getString(rs, "name"));
@@ -440,6 +450,7 @@ public class ProjectDAO extends PlanningDAO {
         response.setCreationDate(getTimestamp(rs, "creation_date"));
         response.setEstimatedClosureDate(getTimestamp(rs, "estimated_closure_date"));
         response.setCanAlloc(getString(rs, "can_alloc"));
+        response.setBudget(getLong(rs, "budget"));
         
         response.setRepositoryURL(getString(rs, "repository_url"));
         response.setRepositoryClass(getString(rs, "repository_class"));
@@ -466,7 +477,11 @@ public class ProjectDAO extends PlanningDAO {
 
         //ref with parent project (NOT NULL collumn)
         String pprid = getString(rs, "parent_id");
-        ppto.setId(pprid);
+        if (pprid!=null && !pprid.equals(response.getId())) {
+            ppto.setId(pprid);        	
+        } else {
+        	ppto.setId("0");
+        }
         response.setParentProject(ppto);
                 
 	    //get the additional fields
@@ -474,6 +489,9 @@ public class ProjectDAO extends PlanningDAO {
         
 	    //get the related repository policies
 	    response.setRepositoryPolicies(ppdao.getListByProject(response, c));
+
+	    Vector<MetaFieldTO> qualif = mfdao.getQualifierByProjectId(response.getId(), c);
+	    response.setQualifications(qualif);
 	    
         return response;
     }
@@ -496,8 +514,8 @@ public class ProjectDAO extends PlanningDAO {
 		    //insert data of project
 			pstmt = c.prepareStatement("insert into project (id, name, parent_id, project_status_id, can_alloc, " +
 									   "repository_url, repository_class, repository_user, repository_pass, " +
-									   "estimated_closure_date, allow_billable) " +
-									   "values (?,?,?,?,?,?,?,?,?,?,?)");
+									   "estimated_closure_date, allow_billable, budget) " +
+									   "values (?,?,?,?,?,?,?,?,?,?,?,?)");
 			pstmt.setString(1, newId);
 			pstmt.setString(2, pto.getName());
 			pstmt.setString(3, pto.getParentProject().getId());
@@ -521,6 +539,11 @@ public class ProjectDAO extends PlanningDAO {
 			} else {
 				pstmt.setInt(11, 0);	
 			}
+			if (pto.getBudget()!=null) {
+				pstmt.setLong(12, pto.getBudget());	
+			} else {
+				pstmt.setNull(12, java.sql.Types.BIGINT);	
+			}
 			
 			pstmt.executeUpdate();
 			
@@ -541,6 +564,7 @@ public class ProjectDAO extends PlanningDAO {
 
 			rcdao.saveCapacity(pto.getInsertResources(), c);
 			rpdao.saveByProject(pto, c);
+			this.saveQualifications(pto, c);
 			
 		} catch (SQLException e) {
 			throw new DataAccessException(e);
@@ -558,6 +582,7 @@ public class ProjectDAO extends PlanningDAO {
 		ResourceCapacityDAO rcdao = new ResourceCapacityDAO();
 		CustomerFunctionDAO cfdao = new CustomerFunctionDAO();
 		RepositoryPolicyDAO rpdao = new RepositoryPolicyDAO();
+
 		try {
 
 		    ProjectTO pto = (ProjectTO)to;
@@ -567,7 +592,7 @@ public class ProjectDAO extends PlanningDAO {
 
 			pstmt = c.prepareStatement("update project set name=?, parent_id=?, project_status_id=?, can_alloc=?, " +
 									   "repository_url=?, repository_class=?, repository_user=?, repository_pass=?, " +
-									   "estimated_closure_date=?, allow_billable=? " +
+									   "estimated_closure_date=?, allow_billable=?, budget=? " +
 									   "where id=?");
 			pstmt.setString(1, pto.getName());
 			pstmt.setString(2, pto.getParentProject().getId());
@@ -591,7 +616,12 @@ public class ProjectDAO extends PlanningDAO {
 			} else {
 				pstmt.setInt(10, 0);	
 			}			
-			pstmt.setString(11, pto.getId());
+			if (pto.getBudget()!=null) {
+				pstmt.setLong(11, pto.getBudget());	
+			} else {
+				pstmt.setNull(11, java.sql.Types.BIGINT);	
+			}			
+			pstmt.setString(12, pto.getId());
 			pstmt.executeUpdate();
 			
 			rcdao.removeByResourceList(pto.getRemoveResources(), c);
@@ -622,6 +652,8 @@ public class ProjectDAO extends PlanningDAO {
 			rcdao.saveCapacity(pto.getUpdateResources(), c);
 			rpdao.saveByProject(pto, c);
 			
+			this.saveQualifications(pto, c);
+
 		} catch (SQLException e) {
 			throw new DataAccessException(e);
 		}finally{
@@ -630,6 +662,24 @@ public class ProjectDAO extends PlanningDAO {
     }
 
     
+	private void saveQualifications(ProjectTO pto, Connection c) throws DataAccessException {
+		AdditionalFieldDAO afdao = new AdditionalFieldDAO();
+		
+		if (pto.getQualifications()!=null) {
+			
+			afdao.removeByPlanning(pto, true, c);
+			
+			for (MetaFieldTO mfto : pto.getQualifications()) {
+				AdditionalFieldTO afto = new AdditionalFieldTO();
+				afto.setMetaField(mfto);
+				afto.setPlanning(pto);
+				afto.setValue(mfto.getGenericTag());
+				afdao.insert(afto, c);
+			}				
+		}		
+	}
+
+
 	public ProjectTO getProjectByName(String projectName) throws DataAccessException {
 		ProjectTO response = null;
         Connection c = null;
@@ -653,7 +703,7 @@ public class ProjectDAO extends PlanningDAO {
 			pstmt = c.prepareStatement("select p.id, p.name, a.description, a.creation_date, p.estimated_closure_date, " +
 					   				      "p.project_status_id, p.parent_id, ps.name as PROJECT_STATUS_NAME, p.can_alloc, " +
 					   				      "p.repository_url, p.repository_class, p.repository_user, p.repository_pass, " +
-					   				      "p.allow_billable, ps.state_machine_order " +
+					   				      "p.allow_billable, ps.state_machine_order, p.budget " +
 					   				   "from project p, project_status ps, planning a " +
 					   				   "where p.id = a.id " +
 					   					  "and ps.id = p.project_status_id " +
@@ -672,9 +722,4 @@ public class ProjectDAO extends PlanningDAO {
 		return response;
 	}
 
-    
-    private Vector<OccurrenceTO> getOccurrences(String projectId, Connection c) throws DataAccessException{
-        OccurrenceDAO oDao = new OccurrenceDAO(); 
-        return oDao.getListByProjectId(projectId, false, c);
-    }    
 }

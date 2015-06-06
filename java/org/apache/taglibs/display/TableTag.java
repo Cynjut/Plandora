@@ -8,6 +8,7 @@
  **/
 package org.apache.taglibs.display;
 
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -26,6 +27,8 @@ import com.pandora.TransferObject;
 import com.pandora.UserTO;
 import com.pandora.delegate.PreferenceDelegate;
 import com.pandora.delegate.UserDelegate;
+import com.pandora.helper.DateUtil;
+import com.pandora.helper.HtmlUtil;
 
 /**
  * This tag takes a list of objects and creates a table to display those
@@ -326,19 +329,20 @@ public class TableTag extends TemplateTag {
      * to be showing them, then we draw them.
      */
     public int doEndTag() throws JspException {
+    	Timestamp ini = DateUtil.getNow();
 
     	HttpServletRequest req = (HttpServletRequest) this.pageContext.getRequest();
         if (req.getParameter(this.getShowHideParam()) != null) {
         	this.saveColumnStatus(req);
         }
-
+        
         HashMap<String,ColumnDecorator> decoratorList = new HashMap<String,ColumnDecorator>();
         for (int c = 0; c < this.getRealColumnsNumber(); c++) {
             String decoratorName = ((ColumnTag) columns.get(c)).getDecorator();
             ColumnDecorator dec = DecoratorUtil.loadColumnDecorator(decoratorName);
             if (dec != null) {
                 decoratorList.put(decoratorName, dec);
-                dec.init(this.pageContext, this.list);
+                dec.init(req.getSession(), this.list);
             }
         }
         
@@ -354,6 +358,8 @@ public class TableTag extends TemplateTag {
         StringBuffer buf = new StringBuffer(8000);        
         buf.append(this.getHTMLData(viewableData, decoratorList, req));
         write(buf);
+
+   		System.out.println("table [" + this.name + "] time: " + (DateUtil.getNow().getTime() - ini.getTime()));
         
         return EVAL_PAGE;
     }
@@ -445,7 +451,7 @@ public class TableTag extends TemplateTag {
         // Load our table decorator if it is requested
         this.dec = DecoratorUtil.loadDecorator(this.getDecorator());
         if (this.dec != null) {
-            this.dec.init(this.pageContext, collection);
+            this.dec.init(this.pageContext.getSession(), collection);
         }
         if (!prop.getProperty("sort.behavior").equals(this.getPageParam())) {
             // Sort the total list...
@@ -677,7 +683,7 @@ public class TableTag extends TemplateTag {
     private StringBuffer getHTMLData(List viewableData, HashMap decoratorList, HttpServletRequest req) throws JspException {
         StringBuffer bufRaw = new StringBuffer(8000);
         StringBuffer exportContent = new StringBuffer("");
-        
+                
         req.getSession().removeAttribute("EXPORT_CSV_" + this.getName());
         
         int rowcnt = 0;
@@ -696,7 +702,8 @@ public class TableTag extends TemplateTag {
             exportContent.append("\"" + csvTitle + "\";");
         }
 		exportContent.append("\n");
-        
+
+		
         while (iterator.hasNext()) {
             StringBuffer bufLine = new StringBuffer(2048);
             StringBuffer exportLine = new StringBuffer("");
@@ -738,7 +745,7 @@ public class TableTag extends TemplateTag {
             for (int i = 0; i < this.getRealColumnsNumber(); i++) {
                 ColumnTag tag = (ColumnTag)this.columns.get(i);
 
-                //check if maxWord attibute was set with a key that must to be find into user preferences. Alberto (27/09/2005)
+                //check if maxWord attribute was set with a key that must to be find into user preferences. Alberto (27/09/2005)
                 if (tag.getMaxWordsKey()!=null){
                     tag.setMaxWords(StringUtil.getUserPref(pageContext, tag.getMaxWordsKey()));    
                 }
@@ -747,19 +754,15 @@ public class TableTag extends TemplateTag {
                 ColumnDecorator dec = (ColumnDecorator)decoratorList.get(tag.getDecorator());
                 StringBuffer body = null;
                 String exportBody = null;
+            	
                 try {
                 	if (tag instanceof MetaFieldColumnTag) {
-                		body = tag.getBody(dec,  ((TransferObject)obj).getGridRowNumber(), 
-                				this.getPageParam(), this.dec, this.prop);
-                		exportBody = "\"" + tag.getSearchValue(dec,  ((TransferObject)obj).getGridRowNumber(), 
-                				this.getPageParam(), this.prop, obj) + "\"";					
+                		body = tag.getBody(dec,  ((TransferObject)obj).getGridRowNumber(), this.getPageParam(), this.dec, this.prop);
+                		exportBody = tag.getSearchValue(dec,  ((TransferObject)obj).getGridRowNumber(), this.getPageParam(), this.prop, obj);					
 					} else {
-						body = tag.getBody(dec,  rowcnt + (this.getPagesizeValue() * (this.pageNumber - 1)), 
-								this.getPageParam(), this.dec, this.prop);
-						exportBody = "\"" + tag.getSearchValue(dec,  rowcnt + (this.getPagesizeValue() * (this.pageNumber - 1)), 
-								this.getPageParam(), this.prop, obj) + "\"";	
+						body = tag.getBody(dec,  rowcnt + (this.getPagesizeValue() * (this.pageNumber - 1)), this.getPageParam(), this.dec, this.prop);
+						exportBody = tag.getSearchValue(dec,  rowcnt + (this.getPagesizeValue() * (this.pageNumber - 1)), this.getPageParam(), this.prop, obj) ;	
 					}
-                	
                 } catch(Exception e) {
                 	e.printStackTrace();
                 	body = null;
@@ -767,7 +770,7 @@ public class TableTag extends TemplateTag {
 
                 if (body!=null) {
                     bufLine.append(body);
-                	exportLine.append(exportBody + ";");
+                	exportLine.append("\"" + com.pandora.helper.StringUtil.formatWordForParam(exportBody) + "\";");
                 } else {
                     //this line should be `
                     bufLine = new StringBuffer("");
@@ -775,7 +778,7 @@ public class TableTag extends TemplateTag {
                     break;
                 }
             }
-
+        	
 
             // Special case, if they didn't provide any columns, then just spit
             // out the object's string representation to the table.
@@ -828,7 +831,7 @@ public class TableTag extends TemplateTag {
             ColumnDecorator cd = (ColumnDecorator)e.next();
             cd.finish();
         }
-        
+
         return bufRaw;
     }
 
@@ -922,15 +925,13 @@ public class TableTag extends TemplateTag {
         	
             ArrayList<TransferObject> filterCrit = this.getFilterCriteria();
             if (filterCrit!=null){
-                buf.append(helper.getSearchOptions(url +
-                        this.getPageParam() + "=1&" + this.getAnchorParam(), this.getFilterParam(), 
-                        filterCrit, this.pageContext));    
+                buf.append(helper.getSearchOptions(url, this.getPageParam(), 
+                         this.getAnchorParam(), this.getFilterParam(), filterCrit, this.pageContext));    
             }
 
             if (this.getFilterListSize()>0 && this.showComboFilter()){
             	List list = this.getFilterListOrdered();
-                buf.append(helper.getSearchCombo(url + 
-                        this.getPageParam() + "=1&" + this.getAnchorParam(), list, 
+                buf.append(helper.getSearchCombo(url, this.getPageParam(), this.getAnchorParam(), list, 
                         this.getFilterComboParam(), this.filterComboSelected));    
             }
             
@@ -1154,6 +1155,7 @@ public class TableTag extends TemplateTag {
         }
         return num;
     }
+    
 
     private boolean showComboFilter() {
     	boolean response = false;

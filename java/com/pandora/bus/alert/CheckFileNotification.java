@@ -10,6 +10,7 @@ import java.net.URLConnection;
 import java.util.Vector;
 
 import com.pandora.FieldValueTO;
+import com.pandora.NotificationFieldTO;
 import com.pandora.RootTO;
 import com.pandora.TransferObject;
 import com.pandora.bus.EventBUS;
@@ -18,6 +19,8 @@ import com.pandora.helper.LogUtil;
 
 public class CheckFileNotification extends Notification {
 
+    private static final String LOG_SUMMARY  = "LOG_SUMMARY";
+    
     private static final String CHECK_PATH  = "CHECK_PATH";
     private static final String CHECK_RULE  = "CHECK_RULE";
     private static final String CHECK_VALUE = "CHECK_VALUE";
@@ -29,17 +32,21 @@ public class CheckFileNotification extends Notification {
     private static final String RULE_SIZE_SMALLER_THAN = "SIZE_SMALLER_THAN";
     private static final String RULE_SIZE_EQUAL        = "SIZE_EQUAL";
     
+    private int payloadSize = 0;
+    
     /* (non-Javadoc)
      * @see com.pandora.bus.alert.Notification#sendNotification(java.util.Vector, java.util.Vector)
      */
-    public boolean sendNotification(Vector fields, Vector sqlData) throws Exception {
+    public boolean sendNotification(Vector<NotificationFieldTO> fields, Vector<Vector<Object>> sqlData) throws Exception {
         EventBUS bus = new EventBUS();
         String[] rules = {RULE_FIND_CONTENT, RULE_NOT_FIND_CONTENT, RULE_SIZE_GREATER_THAN, 
         				  RULE_SIZE_SMALLER_THAN, RULE_SIZE_EQUAL};
         boolean response = true;
         BufferedReader in = null;
         
+        
         try {
+            String summary = this.getParamByKey(LOG_SUMMARY, fields);       	
             String path  = this.getParamByKey(CHECK_PATH,  fields);
             String rule  = this.getParamByKey(CHECK_RULE,  fields);
             String value = this.getParamByKey(CHECK_VALUE, fields);
@@ -57,9 +64,6 @@ public class CheckFileNotification extends Notification {
             
             if (ruleIsValid) {
             	
-            	//replace current value using the key words..
-            	value = this.replaceValue(value);
-            	
             	//process the rule logic...
             	String content = null;
                 if (type.equalsIgnoreCase("HTTP")) {
@@ -67,6 +71,9 @@ public class CheckFileNotification extends Notification {
                 } else {
                 	in = this.openFile(path);                	
                 }
+
+            	//replace current value using the key words..
+            	value = this.replaceValue(value);
                 
                 if (in != null) {
                 	if (rule.trim().equalsIgnoreCase(RULE_FIND_CONTENT)) {
@@ -82,11 +89,17 @@ public class CheckFileNotification extends Notification {
                 
                 //if the rule pass...
                 if (content!=null) {
-                	bus.insertEvent(LogUtil.LOG_INFO, LogUtil.SUMMARY_CHECK_FILE, 
-                			content, RootTO.ROOT_USER, null);	
+                	if (summary!=null && !summary.trim().equals("")) {
+                		content = content + " " + summary;
+                	}
+                	content = content + " [SIZE=" + payloadSize + "] checking: [" + value + "]";  	
+                	bus.insertEvent(LogUtil.LOG_INFO, LogUtil.SUMMARY_CHECK_FILE, content, RootTO.ROOT_USER, null);	
                 } else {
-                	bus.insertEvent(LogUtil.LOG_INFO, LogUtil.SUMMARY_CHECK_FILE, 
-                			"NULL rule: [" + rule + "]", RootTO.ROOT_USER, null);
+                	content = "NULL rule: [" + rule + "] [SIZE=" + payloadSize + "] checking: [" + value + "]";
+                	if (summary!=null && !summary.trim().equals("")) {
+                		content = content + " " + summary;
+                	}                	
+                	bus.insertEvent(LogUtil.LOG_INFO, LogUtil.SUMMARY_CHECK_FILE, content, RootTO.ROOT_USER, null);
                 }
             }        	
             
@@ -106,17 +119,17 @@ public class CheckFileNotification extends Notification {
     /* (non-Javadoc)
      * @see com.pandora.bus.alert.Notification#getFields()
      */        
-    public Vector getFields(){
-        Vector response = new Vector();
+    public Vector<FieldValueTO> getFields(){
+        Vector<FieldValueTO> response = new Vector<FieldValueTO>();
         
-        Vector typeList = new Vector();
+        Vector<TransferObject> typeList = new Vector<TransferObject>();
         typeList.add(new TransferObject("HTTP", "HTTP"));
         typeList.add(new TransferObject("FILE", "FILE"));
         response.add(new FieldValueTO(CHECK_TYPE, "notification.checkFile.type", typeList));
         
         response.add(new FieldValueTO(CHECK_PATH, "notification.checkFile.path", FieldValueTO.FIELD_TYPE_TEXT, 100, 50));
 
-        Vector ruleList = new Vector();
+        Vector<TransferObject> ruleList = new Vector<TransferObject>();
         ruleList.add(new TransferObject(RULE_FIND_CONTENT, RULE_FIND_CONTENT));
         ruleList.add(new TransferObject(RULE_NOT_FIND_CONTENT, RULE_NOT_FIND_CONTENT));
         ruleList.add(new TransferObject(RULE_SIZE_GREATER_THAN, RULE_SIZE_GREATER_THAN));
@@ -124,7 +137,10 @@ public class CheckFileNotification extends Notification {
         ruleList.add(new TransferObject(RULE_SIZE_EQUAL, RULE_SIZE_EQUAL));
         response.add(new FieldValueTO(CHECK_RULE, "notification.checkFile.rule", ruleList));
         
-        response.add(new FieldValueTO(CHECK_VALUE, "notification.checkFile.value", FieldValueTO.FIELD_TYPE_TEXT, 100, 30));
+        response.add(new FieldValueTO(CHECK_VALUE, "notification.checkFile.value", FieldValueTO.FIELD_TYPE_TEXT, 100, 60));
+
+        response.add(new FieldValueTO(LOG_SUMMARY, "notification.dblog.summary", FieldValueTO.FIELD_TYPE_TEXT, 100, 40));
+        
         
         return response;
     }
@@ -157,14 +173,12 @@ public class CheckFileNotification extends Notification {
     			token = value.substring(tokenIni+1, tokenEnd);
     			String[] parts = token.split("\\|");
     			if (parts!=null && parts.length==2) {
-    				
     				if (parts[0].equalsIgnoreCase("DATE")) {
     					String dateStr = DateUtil.getDateTime(DateUtil.getNow(), parts[1].trim());
     					response = value.substring(0, tokenIni);
     					response = response + dateStr;
     					response = response + value.substring(tokenEnd+1);
     				}
-
     			}
     		}
     	}
@@ -212,8 +226,9 @@ public class CheckFileNotification extends Notification {
     	try {
     		String contentFound = null;
             String str;
-            while ((str = in.readLine()) != null) {
-                if (str.indexOf(value)>-1) {
+            while ((str = in.readLine()) != null && value!=null) {
+            	payloadSize+=str.length();
+                if (str.toUpperCase().indexOf(value.toUpperCase())>-1) { //case-INsensitive
                 	contentFound = str;
                 	break;
                 }
@@ -241,22 +256,22 @@ public class CheckFileNotification extends Notification {
             while ((str = in.readLine()) != null) {
                 fileContent = fileContent.concat(str);
             }
-    		long size = fileContent.length();
+    		payloadSize = fileContent.length();
     		int baseline = Integer.parseInt(value);
     		
     		if (rule.equals(RULE_SIZE_GREATER_THAN)) {
-    			if (size > baseline) {
-    				response = "SIZE_GREATER_THAN: file size [" + size + "] > value [" + baseline + "] path: [" + path + "]";
+    			if (payloadSize > baseline) {
+    				response = "SIZE_GREATER_THAN: file size [" + payloadSize + "] > value [" + baseline + "] path: [" + path + "]";
     			}
             	
     		} else if (rule.equals(RULE_SIZE_SMALLER_THAN)) {
-    			if (size < baseline) {
-    				response = "SIZE_SMALLER_THAN: file size [" + size + "] < value [" + baseline + "] path: [" + path + "]";
+    			if (payloadSize < baseline) {
+    				response = "SIZE_SMALLER_THAN: file size [" + payloadSize + "] < value [" + baseline + "] path: [" + path + "]";
     			}
     			    			
     		} else if (rule.equals(RULE_SIZE_EQUAL)) {
-    			if (size == baseline) {
-    				response = "SIZE_EQUAL: file size [" + size + "] = value [" + baseline + "] path: [" + path + "]";
+    			if (payloadSize == baseline) {
+    				response = "SIZE_EQUAL: file size [" + payloadSize + "] = value [" + baseline + "] path: [" + path + "]";
     			}
     		}
     		
@@ -274,7 +289,7 @@ public class CheckFileNotification extends Notification {
     /* (non-Javadoc)
      * @see com.pandora.bus.alert.Notification#getFieldTypes()
      */    
-    public Vector getFieldTypes() {
+    public Vector<String> getFieldTypes() {
         return null;
     }
 
@@ -282,7 +297,7 @@ public class CheckFileNotification extends Notification {
     /* (non-Javadoc)
      * @see com.pandora.bus.alert.Notification#getFieldKeys()
      */    
-    public Vector getFieldKeys() {
+    public Vector<String> getFieldKeys() {
         return null;
     }
 
@@ -290,7 +305,7 @@ public class CheckFileNotification extends Notification {
     /* (non-Javadoc)
      * @see com.pandora.bus.alert.Notification#getFieldLabels()
      */
-    public Vector getFieldLabels() {
+    public Vector<String> getFieldLabels() {
         return null;
     }
     

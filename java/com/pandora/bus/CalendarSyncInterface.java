@@ -9,4 +9,5 @@ public interface CalendarSyncInterface {
 
 	public CalendarSyncTO populateCalendarFields(OccurrenceTO oto, String mask, Locale loc);
 	
+	public String getDateFieldId();
 }

@@ -21,17 +21,17 @@ public class TaskGridDeleteDecorator extends ColumnDecorator {
     public String decorate(Object columnValue) {
         String image = "";
 		TaskDelegate tdel = new TaskDelegate();
-		UserTO uto = (UserTO)this.getPageContext().getSession().getAttribute(UserDelegate.CURRENT_USER_SESSION);        
+		UserTO uto = (UserTO)this.getSession().getAttribute(UserDelegate.CURRENT_USER_SESSION);        
 		ResourceTaskTO rtto = (ResourceTaskTO)this.getObject();
 		TaskTO tto = (TaskTO)rtto.getTask();
 		
 		if (tto.getTemplateInstanceId()==null) {
 			
 			boolean isUnsignedTask = false;
-			Vector alloc = tto.getAllocResources();
-			Iterator i = alloc.iterator();
+			Vector<ResourceTaskTO> alloc = tto.getAllocResources();
+			Iterator<ResourceTaskTO> i = alloc.iterator();
 			while(i.hasNext()) {
-				ResourceTaskTO rt = (ResourceTaskTO)i.next();
+				ResourceTaskTO rt = i.next();
 				if (rt.getResource()!=null && rt.getResource().getUsername().equals(RootTO.ROOT_USER)){
 					isUnsignedTask = true;
 					break;

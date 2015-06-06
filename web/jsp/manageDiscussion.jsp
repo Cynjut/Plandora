@@ -48,13 +48,13 @@
 			<td class="formTitle"><bean:message key="label.formForum.project"/>:&nbsp;</td>		
 			<td>
 				<html:select name="discussionForm" property="projectId" styleClass="textBox" onkeypress="javascript:changeProject();" onchange="javascript:changeProject();">
-					 <html:options collection="projectList" property="id" labelProperty="name"/>
+					 <html:options collection="projectList" property="id" labelProperty="name" filter="false"/>
 				</html:select>		
 			</td>		
 	        <td class="formTitle"><bean:message key="label.formForum.grid.category"/>:&nbsp;</td>
 			<td>
 		  		<html:select name="discussionForm" property="categoryId" styleClass="textBox" onkeypress="javascript:changeProject();" onchange="javascript:changeProject();">
-		             <html:options collection="categoryList" property="id" labelProperty="name"/>
+		             <html:options collection="categoryList" property="id" labelProperty="name" filter="false"/>
 				</html:select>
 			</td>
 			<td>&nbsp;</td>			
@@ -85,14 +85,14 @@
 		<table width="98%" border="0" cellspacing="0" cellpadding="0">
 		<tr class="formBody">
 			<td>
-			<display:table border="1" width="100%" name="discussionList" scope="session" pagesize="6">
-				<display:column width="2%" property="id" align="center" title="label.formForum.grid.id" decorator="com.pandora.gui.taglib.decorator.GridMindMapLinkDecorator" />			
-				<display:column property="name" likeSearching="true" title="label.formForum.grid.discussion.name" />
-				<display:column width="15%" align="center" property="owner.username" likeSearching="true" title="label.formForum.grid.owner" />
-				<display:column width="15%" align="center" property="category.name" likeSearching="true" title="label.formForum.grid.category" />
-				<display:column width="2%" property="id" title="grid.title.empty" decorator="com.pandora.gui.taglib.decorator.GridEditDecorator" tag="'discussionForm', 'editDiscussion'" />
-				<display:column width="2%" property="id" title="grid.title.empty" decorator="com.pandora.gui.taglib.decorator.GridDeleteDecorator" tag="'discussionForm', 'removeDiscussion'" />
-			</display:table>		
+			<plandora-html:ptable width="100%" name="discussionList" frm="discussionForm" pagesize="6">
+				<plandora-html:pcolumn width="2%" property="id" align="center" title="label.formForum.grid.id" decorator="com.pandora.gui.taglib.decorator.GridMindMapLinkDecorator" />			
+				<plandora-html:pcolumn property="name" likeSearching="true" title="label.formForum.grid.discussion.name" />
+				<plandora-html:pcolumn width="15%" align="center" property="owner.username" likeSearching="true" title="label.formForum.grid.owner" />
+				<plandora-html:pcolumn width="15%" align="center" property="category.name" likeSearching="true" title="label.formForum.grid.category" />
+				<plandora-html:pcolumn width="2%" property="id" title="grid.title.empty" decorator="com.pandora.gui.taglib.decorator.GridEditDecorator" tag="'discussionForm', 'editDiscussion'" />
+				<plandora-html:pcolumn width="2%" property="id" title="grid.title.empty" decorator="com.pandora.gui.taglib.decorator.GridDeleteDecorator" tag="'discussionForm', 'removeDiscussion'" />
+			</plandora-html:ptable>		
 			</td>
 		</tr> 
 		</table>

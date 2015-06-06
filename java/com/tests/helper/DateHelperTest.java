@@ -1,13 +1,12 @@
 package com.tests.helper;
 
 import java.sql.Timestamp;
-import java.text.DateFormat;
 import java.util.Calendar;
 import java.util.Locale;
 
-import com.pandora.helper.DateUtil;
-
 import junit.framework.TestCase;
+
+import com.pandora.helper.DateUtil;
 
 /**
  * 

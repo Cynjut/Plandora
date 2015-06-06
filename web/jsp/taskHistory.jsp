@@ -1,10 +1,12 @@
 <jsp:include page="encoding.jsp" />
 <%@ taglib uri="/WEB-INF/lib/struts-html" prefix="html" %>
 <%@ taglib uri="/WEB-INF/lib/struts-bean" prefix="bean" %>
-<%@ taglib uri="/WEB-INF/lib/display" prefix="display" %>
+<%@ taglib uri="/WEB-INF/lib/plandora-html" prefix="plandora-html" %>
+<%@ taglib uri="/WEB-INF/lib/struts-logic" prefix="logic" %>
+
 
 <html>
-	<title><bean:message key="title.taskHistoryWindow"/><bean:write name="histTaskForm" property="taskId" /></title>
+	<title><bean:message key="title.taskHistoryWindow"/><bean:write name="histTaskForm" property="taskId" filter="false"/></title>
 	<head>
 		<link href="../css/styleDefault.css" id="style" TYPE="text/css" rel="STYLESHEET">
 		<link rel="shortcut icon" type="image/x-icon" href="../images/favicon.ico" />
@@ -20,9 +22,10 @@
 	<body bgColor="#ffffff" leftMargin="0" topMargin="0" marginheight="0" marginwidth="0" >
 
 	<jsp:include page="validator.jsp" />
+
+    <script language="JavaScript" src="../jscript/ajaxsync.js" type="text/JavaScript"></script>	
     <script language="JavaScript" src="../jscript/default.js" type="text/JavaScript"></script>
-	
-	<script language="JavaScript">
+    <script>
 		function viewComment(index){
 			with(document.forms["histTaskForm"]){
 		    	selectedIndex.value = index;
@@ -34,7 +37,8 @@
      	function showFUP(){
 			buttonClick("histTaskForm", "showFollowUp");
      	}	    
-	</script>
+		
+    </script>	
 
 	<html:form  action="manageHistTask">
 		<html:hidden name="histTaskForm" property="operation"/>
@@ -52,18 +56,18 @@
 		<table width="100%" border="0" cellspacing="0" cellpadding="0">
 		<tr class="formBody">
 			<td>
-				<display:table border="1" width="100%" name="taskHistoryList" scope="session" pagesize="7" completeempty="true">
-					  <display:column width="40" align="center" property="resourceTask.task.id" title="grid.title.empty" />			
-					  <display:column property="handler.username" align="center" title="label.taskHistoryResource" />
-					  <display:column width="70" property="status.name" align="center" title="label.manageTask.taskStatus" />
-					  <display:column width="120" property="date" align="center" title="label.taskHistoryDate" decorator="com.pandora.gui.taglib.decorator.GridDateDecorator" tag="2;2" />
-					  <display:column width="70" property="actualDate" align="center" title="label.manageTask.grid.acualDate" decorator="com.pandora.gui.taglib.decorator.GridDateDecorator" tag="2;0" />
-	  				  <display:column width="60" property="actualTimeInHours" align="center" title="label.manageTask.grid.actualTime" decorator="com.pandora.gui.taglib.decorator.GridFloatDecorator" tag="h"/>
-	  				  <display:column width="70" property="startDate" align="center" title="label.manageTask.grid.initDate" decorator="com.pandora.gui.taglib.decorator.GridDateDecorator" tag="2;0" />
-	  				  <display:column width="60" property="estimatedTimeInHours" align="center" title="label.manageTask.grid.estTime" decorator="com.pandora.gui.taglib.decorator.GridFloatDecorator" tag="h"/>
-	  				  <display:column width="80" property="iteration.name" align="center" title="label.manageTask.grid.iteration"/>
-					  <display:column width="13" property="id" title="grid.title.empty" decorator="com.pandora.gui.taglib.decorator.TaskHistoryGridCommentDecorator" />
-				</display:table>		
+			    <plandora-html:ptable width="100%" ajax="true" name="taskHistoryList" pagesize="10" scope="session" frm="histTaskForm">
+					  <plandora-html:pcolumn width="40" align="center" property="resourceTask.task.id" title="grid.title.empty" />			
+					  <plandora-html:pcolumn property="handler.username" align="center" title="label.taskHistoryResource" />
+					  <plandora-html:pcolumn width="70" property="status.name" align="center" title="label.manageTask.taskStatus" />
+					  <plandora-html:pcolumn width="120" property="date" align="center" title="label.taskHistoryDate" decorator="com.pandora.gui.taglib.decorator.GridDateDecorator" tag="2;2" />
+					  <plandora-html:pcolumn width="70" property="actualDate" align="center" title="label.manageTask.grid.acualDate" decorator="com.pandora.gui.taglib.decorator.GridDateDecorator" tag="2;0" />
+	  				  <plandora-html:pcolumn width="60" property="actualTimeInHours" align="center" title="label.manageTask.grid.actualTime" decorator="com.pandora.gui.taglib.decorator.GridFloatDecorator" tag="h"/>
+	  				  <plandora-html:pcolumn width="70" property="startDate" align="center" title="label.manageTask.grid.initDate" decorator="com.pandora.gui.taglib.decorator.GridDateDecorator" tag="2;0" />
+	  				  <plandora-html:pcolumn width="60" property="estimatedTimeInHours" align="center" title="label.manageTask.grid.estTime" decorator="com.pandora.gui.taglib.decorator.GridFloatDecorator" tag="h"/>
+	  				  <plandora-html:pcolumn width="80" property="iteration.name" align="center" title="label.manageTask.grid.iteration"/>
+					  <plandora-html:pcolumn width="13" property="id" title="grid.title.empty" decorator="com.pandora.gui.taglib.decorator.TaskHistoryGridCommentDecorator" />
+				</plandora-html:ptable>		
 			</td>
 		</tr> 
 		</table>

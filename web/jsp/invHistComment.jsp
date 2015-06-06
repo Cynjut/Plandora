@@ -22,10 +22,10 @@
 	</tr>
 	</table>
 	
-	<table class="table" width="100%" border="1" bordercolor="#10389C" cellspacing="1" cellpadding="2">
+	<table class="table" width="100%" height="95%" border="1" bordercolor="#10389C" cellspacing="1" cellpadding="2">
 		<tr class="tableRowEven">
-		   <td colspan="2">
-				<html:textarea name="histInvoiceForm" property="historyContent" styleClass="textBox" cols="160" rows="16" readonly="true" />
+		   <td>
+				<html:textarea name="histInvoiceForm" property="historyContent" styleClass="fullTextArea" readonly="true" />
 		   </td>
 		</tr>	
 	</table>

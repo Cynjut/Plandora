@@ -13,17 +13,19 @@ public class AttachmentGridTypeDecorator extends ColumnDecorator {
      * @see org.apache.taglibs.display.ColumnDecorator#decorate(java.lang.Object)
      */
     public String decorate(Object columnValue) {
-		String image = "&nbsp;";
-
 		AttachmentTO ato = (AttachmentTO)this.getObject();
+		return this.getTypeImg(ato);
+    }
+
+	public String getTypeImg(AttachmentTO ato) {
+		String image = "&nbsp;";
 		if (ato.getType()!=null){
 		    String file = ato.getType();
 		    file = file.replaceAll("\\/", "-");
 			image = "<img border=\"0\" src=\"../images/" + file + ".png\" >";
 		}
-		
-		return image;        
-    }
+		return image;
+	}
 
     /* (non-Javadoc)
      * @see org.apache.taglibs.display.ColumnDecorator#decorate(java.lang.Object, java.lang.String)

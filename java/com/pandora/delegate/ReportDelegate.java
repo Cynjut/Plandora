@@ -3,9 +3,11 @@ package com.pandora.delegate;
 import java.sql.Timestamp;
 import java.util.Vector;
 
+import com.pandora.BSCReportTO;
 import com.pandora.CategoryTO;
 import com.pandora.ProjectTO;
 import com.pandora.ReportFieldTO;
+import com.pandora.ReportResultTO;
 import com.pandora.ReportTO;
 import com.pandora.UserTO;
 import com.pandora.bus.ReportBUS;
@@ -23,20 +25,20 @@ public class ReportDelegate extends GeneralDelegate {
     /* (non-Javadoc)
      * @see com.pandora.bus.ReportBUS.getListBySource(boolean, java.lang.String, com.pandora.ProjectTO)
      */    
-    public Vector getListBySource(boolean isKpi, String categoryId, ProjectTO pto, boolean includeClosed) throws BusinessException{
+    public Vector<ReportTO> getListBySource(boolean isKpi, String categoryId, ProjectTO pto, boolean includeClosed) throws BusinessException{
         return bus.getListBySource(isKpi, categoryId, pto, includeClosed);
     }    
     
     /* (non-Javadoc)
      * @see com.pandora.bus.ReportBUS.getReportListBySearch(java.util.Timestamp, java.util.Timestamp, java.lang.String, java.lang.String, java.lang.String)
      */    
-    public Vector getReportListBySearch(Timestamp initialDate, Timestamp finalDate, String  reportPerspectiveId, String projectId, String categoryId) throws BusinessException{
+    public Vector<ReportTO> getReportListBySearch(Timestamp initialDate, Timestamp finalDate, String  reportPerspectiveId, String projectId, String categoryId) throws BusinessException{
         return bus.getReportListBySearch(initialDate, finalDate, reportPerspectiveId, projectId, categoryId);
     }
 
     
-    public void getKpiValues(Timestamp initialDate, Timestamp finalDate, ReportTO kpiObj) throws BusinessException {
-        bus.getKpiValues(initialDate, finalDate, kpiObj);
+    public void getKpiValues(Timestamp initialDate, Timestamp finalDate, ReportTO kpiObj, String projectId) throws BusinessException {
+        bus.getKpiValues(initialDate, finalDate, kpiObj, projectId);
     }
     
     
@@ -91,7 +93,7 @@ public class ReportDelegate extends GeneralDelegate {
     /* (non-Javadoc)
      * @see com.pandora.bus.ReportBUS.performSQLByReportField(com.pandora.ReportFieldTO)
      */        
-    public Vector performSQLByReportField(ReportFieldTO field, UserTO uto) throws BusinessException {
+    public Vector<ReportResultTO> performSQLByReportField(ReportFieldTO field, UserTO uto) throws BusinessException {
         return bus.performSQLByReportField(field, uto);
     }
     
@@ -99,7 +101,7 @@ public class ReportDelegate extends GeneralDelegate {
     /* (non-Javadoc)
      * @see com.pandora.bus.ReportBUS.getReportFields(java.lang.String)
      */    
-    public Vector getReportFields(String content) throws BusinessException {
+    public Vector<ReportFieldTO> getReportFields(String content) throws BusinessException {
         return bus.getReportFields(content);        
     }
 
@@ -107,12 +109,12 @@ public class ReportDelegate extends GeneralDelegate {
     /* (non-Javadoc)
      * @see com.pandora.bus.ReportBUS.getKpiByOccurrence(java.lang.String)
      */        
-	public Vector getKpiByOccurrence(String occurrenceId) throws BusinessException {
+	public Vector<ReportTO> getKpiByOccurrence(String occurrenceId) throws BusinessException {
 		return bus.getKpiByOccurrence(occurrenceId);
 	}
 
 	
-	public Vector getBSC(Timestamp refDate, ProjectTO pto, CategoryTO cto, boolean onCascade) throws BusinessException {
+	public Vector<BSCReportTO> getBSC(Timestamp refDate, ProjectTO pto, CategoryTO cto, boolean onCascade) throws BusinessException {
 		return bus.getBSC(refDate, pto, cto, onCascade);
 	}
 	

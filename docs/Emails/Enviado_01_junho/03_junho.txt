@@ -1,27 +1,27 @@
-Vamos às minhas dúvidas, já que eu não me conectei durante o dia:
-
-Quanto às telas de link´s e Arquivos (Up Loads).
-
-Você disse que não ficou legal aqueles ícones (aliás, "aquele", do "link" que é
-uma lupa...). Acho que eu acabei esquecendo de colocar ou você esqueceu de ler que
-eu os coloquei apenas provisoriamente pois eu não consegui achar um legal para colocar 
-ali. Então, coloquei-os provisoriamente.
-
-Quanto aos ícones no Grid de links:
-
-O que eu imaginei foi o seguinte, no caso dos links.
-
-	O cara pode acessar o link que colocaram, através do ícone ou através do próprio link.
-	E quanto a editar, eu coloquei no caso do cara querer alterar ou arrumar algum link que 
-	ele colocou errado. Você diz que todos deveriam ter editar e apagar, mas imagina se eu insiro
-	um link lá e vai um outro usuário e deleta-o? Imaginei eu, que seria interessante somente o cara
-	que o inseriu alterá-lo ou deletá-lo.
-
-Quanto à tela do Up Load, imaginei o mesmo. Um ícone para que ele possa acessar o arquivo ao qual
-colocaram no sistema e também somente quem o inseriu teria o direito de alterá-lo ou excluí-lo.
-
-
-Me diga o quê acha e quando a próxima McReunião.
-
-
+Vamos às minhas dúvidas, já que eu não me conectei durante o dia:
+
+Quanto às telas de link´s e Arquivos (Up Loads).
+
+Você disse que não ficou legal aqueles ícones (aliás, "aquele", do "link" que é
+uma lupa...). Acho que eu acabei esquecendo de colocar ou você esqueceu de ler que
+eu os coloquei apenas provisoriamente pois eu não consegui achar um legal para colocar 
+ali. Então, coloquei-os provisoriamente.
+
+Quanto aos ícones no Grid de links:
+
+O que eu imaginei foi o seguinte, no caso dos links.
+
+	O cara pode acessar o link que colocaram, através do ícone ou através do próprio link.
+	E quanto a editar, eu coloquei no caso do cara querer alterar ou arrumar algum link que 
+	ele colocou errado. Você diz que todos deveriam ter editar e apagar, mas imagina se eu insiro
+	um link lá e vai um outro usuário e deleta-o? Imaginei eu, que seria interessante somente o cara
+	que o inseriu alterá-lo ou deletá-lo.
+
+Quanto à tela do Up Load, imaginei o mesmo. Um ícone para que ele possa acessar o arquivo ao qual
+colocaram no sistema e também somente quem o inseriu teria o direito de alterá-lo ou excluí-lo.
+
+
+Me diga o quê acha e quando a próxima McReunião.
+
+
 Inté+

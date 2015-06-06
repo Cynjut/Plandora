@@ -18,6 +18,7 @@ import com.pandora.PreferenceTO;
 import com.pandora.ProjectTO;
 import com.pandora.TransferObject;
 import com.pandora.UserTO;
+import com.pandora.bus.SystemSingleton;
 import com.pandora.delegate.ImportExportDelegate;
 import com.pandora.delegate.ProjectDelegate;
 import com.pandora.delegate.UserDelegate;
@@ -30,7 +31,7 @@ import com.pandora.imp.ImportBUS;
 import com.pandora.imp.ImportExportBUS;
 
 /**
- * This class handles all the requests comming from JSPs that
+ * This class handles all the requests from JSPs that
  * concern Export process.
  */
 public class ProjectImportExportAction extends GeneralStrutsAction {
@@ -57,12 +58,18 @@ public class ProjectImportExportAction extends GeneralStrutsAction {
 	}
 	
 	
+	public ActionForward navigate(ActionMapping mapping, ActionForm form,
+			HttpServletRequest request, HttpServletResponse response) {
+		return mapping.findForward("showForm");
+	}
+	
+	
 	public ActionForward refresh(ActionMapping mapping, ActionForm form,
 			HttpServletRequest request, HttpServletResponse response){
 		String forward = "showForm";
 		
 		try {		
-			Vector optionList = new Vector();
+			Vector<TransferObject> optionList = new Vector<TransferObject>();
 			
 	        String[] list = this.getClassList();	        
 	        if (list!=null && list.length>0) {
@@ -93,7 +100,7 @@ public class ProjectImportExportAction extends GeneralStrutsAction {
 	    StringBuffer buffer = new StringBuffer();
 		String fileName = "";
 		String contentType = "";
-		String encoding = "UTF-8";
+		String encoding = SystemSingleton.getInstance().getDefaultEncoding();
 		
 		try {
 			ProjectDelegate pdel = new ProjectDelegate();		    
@@ -101,7 +108,7 @@ public class ProjectImportExportAction extends GeneralStrutsAction {
 		    ProjectImportExportForm gfrm = (ProjectImportExportForm)form;
 		    
 		    //update the fields selected value (if necessary)
-		    Vector fillinFields = this.getFieldsWithValues(gfrm, request);
+		    Vector<FieldValueTO> fillinFields = this.getFieldsWithValues(gfrm, request);
 		    if (fillinFields!=null) {
 			    ProjectTO pto = pdel.getProjectObject(new ProjectTO(gfrm.getProjectId()), false);
 			    String option = gfrm.getImportExportOption();
@@ -119,6 +126,7 @@ public class ProjectImportExportAction extends GeneralStrutsAction {
 			    			impExpDeleg.validateImportFile(klass, gfrm.getImportExternalFile().getInputStream(), pto, fillinFields);
 			    			validationPass = true;
 			    		} catch(Exception e) {
+			    			LogUtil.log(this, LogUtil.LOG_ERROR, "A error occurs on file import process", e);
 			    			this.setErrorFormSession(request, "validate.importExport.invalidFile", e);	
 			    		}
 			    		
@@ -127,6 +135,7 @@ public class ProjectImportExportAction extends GeneralStrutsAction {
 				    			impExpDeleg.importFile(klass, gfrm.getImportExternalFile().getInputStream(), pto, fillinFields);
 				    			processPass = true;
 				    		} catch(Exception e) {
+				    			LogUtil.log(this, LogUtil.LOG_ERROR, "A error occurs on file import process", e);
 				    			this.setErrorFormSession(request, "validate.importExport.failed", e);	
 				    		}
 				    		
@@ -146,20 +155,26 @@ public class ProjectImportExportAction extends GeneralStrutsAction {
 				    encoding = impExpDeleg.getEncoding(klass);
 				    
 				    //perform export procedures...
-				    buffer.append(impExpDeleg.getExportHeader(klass, pto, fillinFields));
-				    buffer.append(impExpDeleg.getExportBody(klass, pto, SessionUtil.getCurrentUser(request), fillinFields));
-				    buffer.append(impExpDeleg.getExportFooter(klass, pto, fillinFields));
-				    
-				    forward = null;
+				    try {
+					    buffer.append(impExpDeleg.getExportHeader(klass, pto, fillinFields));
+					    buffer.append(impExpDeleg.getExportBody(klass, pto, SessionUtil.getCurrentUser(request), fillinFields));
+					    buffer.append(impExpDeleg.getExportFooter(klass, pto, fillinFields));
+					    forward = null;
+				    } catch(Exception e) {
+				    	LogUtil.log(this, LogUtil.LOG_ERROR, "A error occurs on file export process", e);
+				    	this.setErrorFormSession(request, "validate.importExport.exp.failed", e);
+				    	buffer = null;
+				    }
 			    }
 		    }
 		    
 		    
 		}catch(Exception e){
-			LogUtil.log(this, LogUtil.LOG_ERROR, "A error occurs on file export process", e);
+			LogUtil.log(this, LogUtil.LOG_ERROR, "A error occurs on file import/export process", e);
+		
 		} finally{
 			//put response content into Standard output
-			if (!buffer.toString().equals("")) {
+			if (buffer!=null && !buffer.toString().equals("")) {
 				ServletOutputStream sos;
 				try {		    
 					sos = response.getOutputStream();
@@ -180,8 +195,9 @@ public class ProjectImportExportAction extends GeneralStrutsAction {
 		return forward;
 	}
 	
-	private Vector getFieldsWithValues(ProjectImportExportForm gfrm, HttpServletRequest request) throws Exception{
-		Vector fieldList = new Vector();
+	
+	private Vector<FieldValueTO> getFieldsWithValues(ProjectImportExportForm gfrm, HttpServletRequest request) throws Exception{
+		Vector<FieldValueTO> fieldList = new Vector<FieldValueTO>();
 		
 		String option = gfrm.getImportExportOption();
         String[] list = this.getClassList();	        
@@ -192,7 +208,7 @@ public class ProjectImportExportAction extends GeneralStrutsAction {
                 if (bus!=null && option.equals(klass)) {
                 	bus.setHandler(SessionUtil.getCurrentUser(request));
                     if (bus.getFields()!=null) {
-                    	Vector fields = bus.getFields();
+                    	Vector<FieldValueTO> fields = bus.getFields();
                     	for (int j=0; j<fields.size(); j++) {
                     		FieldValueTO field = (FieldValueTO)bus.getFields().elementAt(j);
                     		String value = request.getParameter(field.getId());
@@ -260,7 +276,7 @@ public class ProjectImportExportAction extends GeneralStrutsAction {
 	        			        FieldValueTO field = (FieldValueTO)bus.getFields().elementAt(j);
 	        			        html.append("<tr class=\"pagingFormBody\"><td width=\"10\">&nbsp;</td>");
 	        			        html.append("<td width=\"150\" class=\"formTitle\">" + super.getBundleMessage(request, field.getLabel(), true) + ":&nbsp;</td>");
-	        			        html.append("<td class=\"formBody\">" + HtmlUtil.getHtmlField(field, "", "projectImportExportForm", labelsForBoolean, labelsForCalendar));
+	        			        html.append("<td class=\"formBody\">" + HtmlUtil.getHtmlField(field, "", "projectImportExportForm", labelsForBoolean, labelsForCalendar, null));
 	        			        html.append("</td><td width=\"10\">&nbsp;</td></tr>\n");
 	        		        }	                		
 	                	}

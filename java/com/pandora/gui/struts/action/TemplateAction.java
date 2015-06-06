@@ -47,25 +47,25 @@ public class TemplateAction extends GeneralStrutsAction {
 			this.clearForm(form, request);		
 
 		    this.clearMessages(request);
-		    Vector enableList = new Vector();
+		    Vector<TransferObject> enableList = new Vector<TransferObject>();
 		    enableList.addElement(new TransferObject("1", this.getBundleMessage(request, "label.yes")));
 		    enableList.addElement(new TransferObject("0", this.getBundleMessage(request, "label.no")));
 		    request.getSession().setAttribute("enableList", enableList);
 		    
-		    Vector catList = cdel.getCategoryListByType(CategoryTO.TYPE_WORKFLOW, new ProjectTO(ProjectTO.PROJECT_ROOT_ID), false);
+		    Vector<CategoryTO> catList = cdel.getCategoryListByType(CategoryTO.TYPE_WORKFLOW, new ProjectTO(ProjectTO.PROJECT_ROOT_ID), false);
 		    request.getSession().setAttribute("categoryList", catList);
 
-			Vector list = ttdel.getTemplateListByProject(null, true);
+			Vector<TemplateTO> list = ttdel.getTemplateListByProject(null, true);
 		    request.getSession().setAttribute("templateList", list);	
 		    
-			Vector prjList = pdel.getProjectList();
+			Vector<ProjectTO> prjList = pdel.getProjectList();
 			ProjectTO dummy = new ProjectTO("-1");
 			dummy.setName(this.getBundleMessage(request, "label.category.anyProject"));			
 			prjList.insertElementAt(dummy, 0);
 			request.getSession().setAttribute("projectList", prjList);
 		
-			request.getSession().setAttribute("taskCategoryList", new Vector());
-			request.getSession().setAttribute("templateNodeList", new Vector());
+			request.getSession().setAttribute("taskCategoryList", new Vector<CategoryTO>());
+			request.getSession().setAttribute("templateNodeList", new Vector<TemplateTO>());
 			
 		} catch (BusinessException e) {
 			this.setErrorFormSession(request, "error.generic.showFormError", e);
@@ -314,20 +314,20 @@ public class TemplateAction extends GeneralStrutsAction {
 		frm.setEnable(to.getFinalDate()==null?"1":"0");
 	}
 	
-	private TemplateTO getTransferObjectFromActionForm(TemplateForm frm, HttpServletRequest request){
-		TemplateTO to = new TemplateTO();
-		return to;
-	}
+	//private TemplateTO getTransferObjectFromActionForm(TemplateForm frm, HttpServletRequest request){
+	//	TemplateTO to = new TemplateTO();
+	//	return to;
+	//}
 
 	private void refreshTaskCategory(String projectId, HttpServletRequest request) throws BusinessException{
 		CategoryDelegate cdel = new CategoryDelegate();
-	    Vector taskCatList = cdel.getCategoryListByType(CategoryTO.TYPE_TASK, new ProjectTO(projectId), false);
+	    Vector<CategoryTO> taskCatList = cdel.getCategoryListByType(CategoryTO.TYPE_TASK, new ProjectTO(projectId), false);
 	    request.getSession().setAttribute("taskCategoryList", taskCatList);		
 	}
 
 	private void refreshNodeList(HttpServletRequest request) throws BusinessException{
-		HashMap hmList = new HashMap();
-		Vector nodeList = new Vector();
+		HashMap<String,NodeTemplateTO> hmList = new HashMap<String,NodeTemplateTO>();
+		Vector<NodeTemplateTO> nodeList = new Vector<NodeTemplateTO>();
 		
 		NodeTemplateTO emptyNode = new NodeTemplateTO("");
 		emptyNode.setGenericTag(super.getBundleMessage(request, "title.formApplyTaskTemplate.type.end"));
@@ -336,7 +336,7 @@ public class TemplateAction extends GeneralStrutsAction {
 		NodeTemplateTO root = (NodeTemplateTO)request.getSession().getAttribute(DIAGRAM_NODE);
 		if (root!=null) {
 			this.refreshNodeList(hmList, root, request);
-			Iterator i = hmList.values().iterator();
+			Iterator<NodeTemplateTO> i = hmList.values().iterator();
 			while(i.hasNext()) {
 				NodeTemplateTO node = (NodeTemplateTO)i.next();
 				nodeList.add(node);
@@ -345,7 +345,7 @@ public class TemplateAction extends GeneralStrutsAction {
 		request.getSession().setAttribute("templateNodeList", nodeList);		
 	}
 
-	private void refreshNodeList(HashMap hmList, NodeTemplateTO currentNode, HttpServletRequest request) throws BusinessException{
+	private void refreshNodeList(HashMap<String,NodeTemplateTO> hmList, NodeTemplateTO currentNode, HttpServletRequest request) throws BusinessException{
 		if (currentNode!=null && hmList.get(currentNode.getId())==null) {
 			
 			if (currentNode.getNodeType().equals(NodeTemplateTO.NODE_TEMPLATE_STEP)) {

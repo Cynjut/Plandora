@@ -1,18 +1,24 @@
 package com.pandora.gui.taglib.metafield;
 
+import java.text.DecimalFormat;
+import java.text.NumberFormat;
 import java.util.Iterator;
 import java.util.Vector;
 
+import javax.servlet.http.HttpSession;
 import javax.servlet.jsp.JspWriter;
 import javax.servlet.jsp.tagext.TagSupport;
 
 import com.pandora.AdditionalFieldTO;
+import com.pandora.AdditionalTableTO;
 import com.pandora.MetaFieldTO;
 import com.pandora.UserTO;
 import com.pandora.delegate.UserDelegate;
 import com.pandora.gui.struts.form.GeneralStrutsForm;
 import com.pandora.helper.DateUtil;
+import com.pandora.helper.HtmlUtil;
 import com.pandora.helper.LogUtil;
+import com.pandora.helper.SessionUtil;
 
 /**
  * This tag lib is used to show the specific GUI fields (meta fields)
@@ -57,14 +63,14 @@ public class MetaField extends TagSupport {
             //format each meta field in html output
             if (list!=null) {
                 buff = new StringBuffer();
-                buff.append("<table width=\"100%\" border=\"0\" cellspacing=\"0\" cellpadding=\"0\">");
+                buff.append("<table width=\"98%\" border=\"0\" cellspacing=\"0\" cellpadding=\"0\">");
 
                 Iterator i = list.iterator();
                 while(i.hasNext()) {
                     MetaFieldTO token = (MetaFieldTO)i.next();
                     if (token.isEnable()) {
                         buff.append("<tr>");
-                        buff.append(this.getFormatedField(token, uto));
+                        buff.append(this.getFormatedField(token, uto, pageContext.getSession()));
                         buff.append("</tr>");                        
                     }
                 }
@@ -82,7 +88,7 @@ public class MetaField extends TagSupport {
     }
     
     
-    private StringBuffer getFormatedField(MetaFieldTO mfto, UserTO uto) throws Exception{
+    private StringBuffer getFormatedField(MetaFieldTO mfto, UserTO uto, HttpSession session) throws Exception{
         StringBuffer buff = new StringBuffer();
         
         //format the field's title 
@@ -97,8 +103,8 @@ public class MetaField extends TagSupport {
 
         	buff.append("&nbsp;</td><td>");
     		
-            Vector tableValues = this.getMetaFieldCurrentTableValues(mfto);
-            buff.append(mfto.getFormatedTable(this.getStyleForms(), tableValues, mfto, uto, name));            	
+        	Vector<AdditionalTableTO> tableValues = this.getMetaFieldCurrentTableValues(mfto);
+            buff.append(mfto.getFormatedTable(this.getStyleForms(), tableValues, mfto, uto, name, false));            	
             
             //end of field's body
             buff.append("</td>");
@@ -106,7 +112,8 @@ public class MetaField extends TagSupport {
         } else {
         	
             //format the field's title 
-            buff.append(mfto.getName() + ":&nbsp;</td>");
+        	String title = HtmlUtil.getBundleString(mfto.getName(), session);
+            buff.append(title + ":&nbsp;</td>");
 
             //format the field's body
             buff.append("<td ");
@@ -114,9 +121,9 @@ public class MetaField extends TagSupport {
                 buff.append("class=\"" + this.getStyleBody() + "\"");    
             }
             buff.append(">");
-        	
+
             String currValue = this.getMetaFieldCurrentValue(mfto, uto);        	
-            buff.append(mfto.getFormatedField(this.getStyleForms(), currValue, uto));
+            buff.append(mfto.getFormatedField(this.getStyleForms(), currValue, uto, session));
             
             //end of field's body
             buff.append("</td>");
@@ -139,6 +146,14 @@ public class MetaField extends TagSupport {
         			&& mfto.getType().intValue()==MetaFieldTO.TYPE_CALENDAR) {
         		
         		value = DateUtil.getDate(afto.getDateValue(), uto.getCalendarMask(), uto.getLocale());
+        		
+        	} else if (mfto.getType()!=null && afto.getNumericValue()!=null 
+        			&& mfto.getType().intValue()==MetaFieldTO.TYPE_TEXT_BOX_NUMERIC) {
+        		
+        		DecimalFormat df = (DecimalFormat)NumberFormat.getInstance(uto.getLocale());
+        		String[] options = mfto.getDomain().split("\\|");	
+        		df.applyPattern(options[3]);
+        		value =  (afto.getNumericValue() != null ? df.format(afto.getNumericValue()) : "" );
         	} else {
         		value = afto.getValue();	
         	}
@@ -162,13 +177,12 @@ public class MetaField extends TagSupport {
     /**
      * Return the value of meta field for a specific form.
      */
-    private Vector getMetaFieldCurrentTableValues(MetaFieldTO mfto){
-    	Vector value = null;
+    private Vector<AdditionalTableTO> getMetaFieldCurrentTableValues(MetaFieldTO mfto){
+    	Vector<AdditionalTableTO> value = null;
         AdditionalFieldTO afto = getRelatedAdditionalField(mfto);
         if (afto!=null && mfto.getType().intValue()==MetaFieldTO.TYPE_TABLE){
             value = afto.getTableValues();
         }
-        
         return value;
     }
     

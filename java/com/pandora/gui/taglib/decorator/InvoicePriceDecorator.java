@@ -22,7 +22,7 @@ public class InvoicePriceDecorator extends ColumnDecorator {
             	InvoiceItemTO ito = (InvoiceItemTO)getObject();
             	Locale loc = udel.getCurrencyLocale();
 				
-	            Integer val = (Integer)columnValue; 
+            	Long val = (Long)columnValue; 
 	            float f = val.floatValue();
 	            f = (f / 100) * ito.getTypeIndex().intValue();
 	            

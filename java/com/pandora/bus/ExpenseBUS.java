@@ -19,10 +19,10 @@ public class ExpenseBUS extends GeneralBusiness {
     ExpenseDAO dao = new ExpenseDAO();
 
     
-	public Vector<ExpenseTO> getExpenseList(String userId) throws BusinessException {
+	public Vector<ExpenseTO> getExpenseList(String userId, boolean hideClosed) throws BusinessException {
         Vector<ExpenseTO> response = new Vector<ExpenseTO>();
         try {
-            response = dao.getListByUserId(userId);
+            response = dao.getListByUserId(userId, hideClosed);
         } catch (DataAccessException e) {
             throw new BusinessException(e);
         }
@@ -37,7 +37,7 @@ public class ExpenseBUS extends GeneralBusiness {
         	LeaderTO led = new LeaderTO(eto.getUser());
         	led.setProject(eto.getProject());
         	led = udel.getLeader(led);
-        	
+        	        	
         	if (eto.getExpensesItems()!=null) {
         		for (CostTO item : eto.getExpensesItems()) {
         			if (item.getInstallments()!=null) {
@@ -58,7 +58,12 @@ public class ExpenseBUS extends GeneralBusiness {
         		throw new BusinessException("The expense must contain a list of items.");	
         	}
         	
+        	if (led!=null) {
+        		eto.setApprover(led);
+        	}
+        	
             dao.insert(eto);
+            
         } catch (DataAccessException e) {
             throw new BusinessException(e);
         }

@@ -62,9 +62,9 @@ public class InvoiceDAO extends PlanningDAO {
 			pstmt.setString(10, ito.getContact());
 			pstmt.executeUpdate();
 			
-			Iterator i = ito.getItemsList().iterator();
+			Iterator<InvoiceItemTO> i = ito.getItemsList().iterator();
 			while(i.hasNext()) {
-				InvoiceItemTO iito = (InvoiceItemTO)i.next();
+				InvoiceItemTO iito = i.next();
 				iito.setInvoice(ito);				
 				this.insertInvoiceItem(iito, c);
 			}
@@ -112,9 +112,9 @@ public class InvoiceDAO extends PlanningDAO {
 			if (ito.getItemsToBeUpdated()!=null && ito.getItemsList()!=null) {
 				Object[] list = ito.getItemsToBeUpdated().toArray();
 				for (int i=0 ; i<list.length; i++) {
-					Iterator j = ito.getItemsList().iterator();
+					Iterator<InvoiceItemTO> j = ito.getItemsList().iterator();
 					while(j.hasNext()) {
-						InvoiceItemTO it = (InvoiceItemTO)j.next();
+						InvoiceItemTO it = j.next();
 						if (list[i].equals(it.getId())) {
 							this.updateInvoiceItem(it, c);
 						}						
@@ -131,9 +131,9 @@ public class InvoiceDAO extends PlanningDAO {
 			}
 
 			//insert new items if necessary
-			Iterator i = ito.getItemsList().iterator();
+			Iterator<InvoiceItemTO> i = ito.getItemsList().iterator();
 			while(i.hasNext()) {
-				InvoiceItemTO it = (InvoiceItemTO)i.next();
+				InvoiceItemTO it = i.next();
 				if (it.getId().startsWith("NEW_")) {
 					it.setInvoice(ito);				
 					this.insertInvoiceItem(it, c);					
@@ -213,7 +213,7 @@ public class InvoiceDAO extends PlanningDAO {
 			pstmt.setString(1, iito.getInvoice().getId());
 			pstmt.setString(2, iito.getId());
 			pstmt.setInt(3, iito.getType().intValue());
-			pstmt.setInt(4, iito.getPrice().intValue());
+			pstmt.setLong(4, iito.getPrice().longValue());
 			pstmt.setInt(5, iito.getAmount().intValue());
 			pstmt.setInt(6, iito.getTypeIndex().intValue());
 			pstmt.setString(7, iito.getItemName());
@@ -232,7 +232,7 @@ public class InvoiceDAO extends PlanningDAO {
 			pstmt = c.prepareStatement("update invoice_item set type=?, price=?, amount=?, " +
 									   "type_index=?, name=? where invoice_id=? and invoice_item_id=?");
 			pstmt.setInt(1, iito.getType().intValue());
-			pstmt.setInt(2, iito.getPrice().intValue());
+			pstmt.setLong(2, iito.getPrice().longValue());
 			pstmt.setInt(3, iito.getAmount().intValue());
 			pstmt.setInt(4, iito.getTypeIndex().intValue());
 			pstmt.setString(5, iito.getItemName());
@@ -261,8 +261,8 @@ public class InvoiceDAO extends PlanningDAO {
     }
     
     
-    private Vector getItemList(InvoiceTO ito, Connection c) throws DataAccessException {
-    	Vector response = new Vector();
+    private Vector<InvoiceItemTO> getItemList(InvoiceTO ito, Connection c) throws DataAccessException {
+    	Vector<InvoiceItemTO> response = new Vector<InvoiceItemTO>();
 		ResultSet rs = null;
 		PreparedStatement pstmt = null; 		
 		try {
@@ -302,7 +302,7 @@ public class InvoiceDAO extends PlanningDAO {
 				ito.setItemsList(this.getItemList(ito, c));
 				
 				InvoiceStatusTO isto = ito.getInvoiceStatus();
-				isto.setStateMachineOrder(getInteger(rs, "isn.state_machine_order"));
+				isto.setStateMachineOrder(getInteger(rs, "state_machine_order"));
 				
 				response.add(ito);
 			} 
@@ -321,7 +321,7 @@ public class InvoiceDAO extends PlanningDAO {
         response.setInvoice(ito);
         response.setId(getString(rs, "invoice_item_id"));        
         response.setAmount(getInteger(rs, "amount"));
-        response.setPrice(getInteger(rs, "price"));
+        response.setPrice(getLong(rs, "price"));
         response.setType(getInteger(rs, "type"));
         response.setTypeIndex(getInteger(rs, "type_index"));
         response.setItemName(getString(rs, "name"));

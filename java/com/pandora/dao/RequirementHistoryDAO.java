@@ -49,8 +49,8 @@ public class RequirementHistoryDAO extends DataAccess {
     /**
      * Get a list of Requirement History objects from data base, base on requirement id.
      */    
-    public Vector getListByRequirement(String reqId) throws DataAccessException{
-        Vector response = null;
+    public Vector<RequirementHistoryTO> getListByRequirement(String reqId) throws DataAccessException{
+        Vector<RequirementHistoryTO> response = null;
         Connection c = null;
 		try {
 			c = getConnection();
@@ -104,8 +104,8 @@ public class RequirementHistoryDAO extends DataAccess {
     }
 
     
-    private Vector getListByRequirement(String reqId, Connection c) throws DataAccessException{
-        Vector response= new Vector();
+    private Vector<RequirementHistoryTO> getListByRequirement(String reqId, Connection c) throws DataAccessException{
+        Vector<RequirementHistoryTO> response= new Vector<RequirementHistoryTO>();
 		ResultSet rs = null;
 		PreparedStatement pstmt = null;
 		

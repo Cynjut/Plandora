@@ -15,11 +15,13 @@ import com.pandora.ResourceTO;
 import com.pandora.RootTO;
 import com.pandora.TaskStatusTO;
 import com.pandora.UserTO;
+import com.pandora.helper.DateUtil;
 
 /**
  * This class handle the data of Option Form
  */
 public class OptionForm extends GeneralStrutsForm {
+
 
 	private static final long serialVersionUID = 1L;
 	
@@ -38,6 +40,10 @@ public class OptionForm extends GeneralStrutsForm {
     /** Line Number of Project List */
     private String projNumLine;
 
+    private String infoNumLine;
+    
+    private String topicNumLine;
+    
     private boolean showPriorityColor;
     
     /** Maximum Number of words used by grids */
@@ -46,6 +52,9 @@ public class OptionForm extends GeneralStrutsForm {
     /** Show/hide ShowRequirement List in 'paging mode' */
     private boolean pagingTOListAll;
 
+    /** Show/hide ShowRequirement List in 'paging mode' */
+    private boolean showLockedTasks;
+    
     /** The list of task Status objects with the value selected on form*/
     private Vector<TaskStatusTO> taskStatusOrderingList;
     
@@ -99,6 +108,8 @@ public class OptionForm extends GeneralStrutsForm {
     /** List of Attachment Converter classes */
     private String converterClasses;
     
+    private String overviewProjectClasses;
+    
     private String gadgetWidth;
     
     private String ldapHost;
@@ -131,24 +142,59 @@ public class OptionForm extends GeneralStrutsForm {
     
     
     private String shortcutName1;
-    
     private String shortcutURL1;
-    
     private String shortcutIcon1;
+    private String shortcutOpen1;
 
     private String shortcutName2;
-    
     private String shortcutURL2;
-    
     private String shortcutIcon2;
+    private String shortcutOpen2;
     
     private String shortcutName3;
-    
     private String shortcutURL3;
-    
     private String shortcutIcon3;
+    private String shortcutOpen3;
+    
+    private String shortcutIcon4;
+    private String shortcutName4;
+    private String shortcutURL4;
+    private String shortcutOpen4;
+    
+    private String shortcutIcon5;
+    private String shortcutName5;
+    private String shortcutURL5;
+    private String shortcutOpen5;
+    
+    private String shortcutIcon6;
+    private String shortcutName6;
+    private String shortcutURL6;
+    private String shortcutOpen6;
+    
+    private String shortcutIcon7;
+    private String shortcutName7;
+    private String shortcutURL7;
+    private String shortcutOpen7;
+    
+    private String shortcutIcon8;
+    private String shortcutName8;
+    private String shortcutURL8;
+    private String shortcutOpen8;
+    
+    private String shortcutIcon9;
+    private String shortcutName9;
+    private String shortcutURL9;
+    private String shortcutOpen9;
+    
+    private String shortcutIcon10;
+    private String shortcutName10;
+    private String shortcutURL10;
+    private String shortcutOpen10;
+    
     
     private String currencyLocale;
+    
+    private String defaultCapacity;
     
     private String artifactMaxFile;
     
@@ -156,6 +202,9 @@ public class OptionForm extends GeneralStrutsForm {
     
     private String snipArtifactClasses;
     
+    private String picturePath;
+    
+    private String maxMetaFieldTimeout;
     
     /**
      * Verify if current user is able to view the options of resource role
@@ -210,6 +259,16 @@ public class OptionForm extends GeneralStrutsForm {
         this.projNumLine = newValue;
     }
     
+    
+    /////////////////////////////////////// 
+	public String getTopicNumLine() {
+		return topicNumLine;
+	}
+	public void setTopicNumLine(String newValue) {
+		this.topicNumLine = newValue;
+	}
+    
+    
     ///////////////////////////////////////    
     public String getRequNumLine() {
         return requNumLine;
@@ -226,6 +285,16 @@ public class OptionForm extends GeneralStrutsForm {
         this.taskNumLine = newValue;
     }
 
+    
+    ///////////////////////////////////////    
+	public String getInfoNumLine() {
+		return infoNumLine;
+	}
+	public void setInfoNumLine(String newValue) {
+		this.infoNumLine = newValue;
+	}
+
+    
     ///////////////////////////////////////    
     public String getMaxNumOfWords() {
         return maxNumOfWords;
@@ -242,7 +311,17 @@ public class OptionForm extends GeneralStrutsForm {
         this.pagingTOListAll = newValue;
     }
     
+    
     ///////////////////////////////////////        
+    public boolean getShowLockedTasks() {
+		return showLockedTasks;
+	}
+	public void setShowLockedTasks(boolean newValue) {
+		this.showLockedTasks = newValue;
+	}
+
+	
+	///////////////////////////////////////        
     public boolean getShowPriorityColor() {
 		return showPriorityColor;
 	}
@@ -263,6 +342,14 @@ public class OptionForm extends GeneralStrutsForm {
         this.user = newValue;
     }
 
+	public String getUserPictureHtml(){
+		if (this.user!=null) {
+			return "<img width=\"80\" height=\"115\" border=\"0\" src=\"../do/login?operation=getUserPic&id=" +  this.user.getId() + "&ts=" +DateUtil.getNow().toString() + "\" />";	
+		} else {
+			return "";
+		}	  	    
+	}    
+    
     ///////////////////////////////////////      
     public String getMyReqMaxDaysAgo() {
         return myReqMaxDaysAgo;
@@ -353,6 +440,15 @@ public class OptionForm extends GeneralStrutsForm {
 	}
 	public void setConverterClasses(String newValue) {
 		this.converterClasses = newValue;
+	}
+	
+	
+	///////////////////////////////////////        
+	public String getOverviewProjectClasses() {
+		return overviewProjectClasses;
+	}
+	public void setOverviewProjectClasses(String newValue) {
+		this.overviewProjectClasses = newValue;
 	}
 
 	
@@ -574,6 +670,14 @@ public class OptionForm extends GeneralStrutsForm {
 
 	
 	///////////////////////////////////////	
+	public String getShortcutOpen1() {
+		return shortcutOpen1;
+	}
+	public void setShortcutOpen1(String newValue) {
+		this.shortcutOpen1 = newValue;
+	}
+	
+	///////////////////////////////////////	
 	public String getShortcutName2() {
 		return shortcutName2;
 	}
@@ -599,6 +703,14 @@ public class OptionForm extends GeneralStrutsForm {
 		this.shortcutIcon2 = newValue;
 	}
 
+	///////////////////////////////////////	
+	public String getShortcutOpen2() {
+		return shortcutOpen2;
+	}
+	public void setShortcutOpen2(String newValue) {
+		this.shortcutOpen2 = newValue;
+	}	
+	
 	
 	///////////////////////////////////////	
 	public String getShortcutName3() {
@@ -628,6 +740,265 @@ public class OptionForm extends GeneralStrutsForm {
 
 	
 	///////////////////////////////////////	
+	public String getShortcutOpen3() {
+		return shortcutOpen3;
+	}
+	public void setShortcutOpen3(String newValue) {
+		this.shortcutOpen3 = newValue;
+	}
+	
+
+	///////////////////////////////////////	
+	public String getShortcutName4() {
+		return shortcutName4;
+	}
+	public void setShortcutName4(String newValue) {
+		this.shortcutName4 = newValue;
+	}
+
+	
+	///////////////////////////////////////	
+	public String getShortcutURL4() {
+		return shortcutURL4;
+	}
+	public void setShortcutURL4(String newValue) {
+		this.shortcutURL4 = newValue;
+	}
+
+	
+	///////////////////////////////////////
+	public String getShortcutIcon4() {
+		return shortcutIcon4;
+	}
+	public void setShortcutIcon4(String newValue) {
+		this.shortcutIcon4 = newValue;
+	}	
+	
+	
+	///////////////////////////////////////	
+	public String getShortcutOpen4() {
+		return shortcutOpen4;
+	}
+	public void setShortcutOpen4(String newValue) {
+		this.shortcutOpen4 = newValue;
+	}
+	
+	
+	///////////////////////////////////////	
+	public String getShortcutName5() {
+		return shortcutName5;
+	}
+	public void setShortcutName5(String newValue) {
+		this.shortcutName5 = newValue;
+	}
+
+	
+	///////////////////////////////////////	
+	public String getShortcutURL5() {
+		return shortcutURL5;
+	}
+	public void setShortcutURL5(String newValue) {
+		this.shortcutURL5 = newValue;
+	}
+
+	
+	///////////////////////////////////////
+	public String getShortcutIcon5() {
+		return shortcutIcon5;
+	}
+	public void setShortcutIcon5(String newValue) {
+		this.shortcutIcon5 = newValue;
+	}		
+
+	
+	///////////////////////////////////////	
+	public String getShortcutOpen5() {
+		return shortcutOpen5;
+	}
+	public void setShortcutOpen5(String newValue) {
+		this.shortcutOpen5 = newValue;
+	}	
+	
+	
+	///////////////////////////////////////	
+	public String getShortcutName6() {
+		return shortcutName6;
+	}
+	public void setShortcutName6(String newValue) {
+		this.shortcutName6 = newValue;
+	}
+
+	
+	///////////////////////////////////////	
+	public String getShortcutURL6() {
+		return shortcutURL6;
+	}
+	public void setShortcutURL6(String newValue) {
+		this.shortcutURL6 = newValue;
+	}
+
+	
+	///////////////////////////////////////
+	public String getShortcutIcon6() {
+		return shortcutIcon6;
+	}
+	public void setShortcutIcon6(String newValue) {
+		this.shortcutIcon6 = newValue;
+	}			
+
+	///////////////////////////////////////	
+	public String getShortcutOpen6() {
+		return shortcutOpen6;
+	}
+	public void setShortcutOpen6(String newValue) {
+		this.shortcutOpen6 = newValue;
+	}	
+	
+
+	///////////////////////////////////////	
+	public String getShortcutName7() {
+		return shortcutName7;
+	}
+	public void setShortcutName7(String newValue) {
+		this.shortcutName7 = newValue;
+	}
+
+	
+	///////////////////////////////////////	
+	public String getShortcutURL7() {
+		return shortcutURL7;
+	}
+	public void setShortcutURL7(String newValue) {
+		this.shortcutURL7 = newValue;
+	}
+
+	
+	///////////////////////////////////////
+	public String getShortcutIcon7() {
+		return shortcutIcon7;
+	}
+	public void setShortcutIcon7(String newValue) {
+		this.shortcutIcon7 = newValue;
+	}		
+	
+	
+	///////////////////////////////////////	
+	public String getShortcutOpen7() {
+		return shortcutOpen7;
+	}
+	public void setShortcutOpen7(String newValue) {
+		this.shortcutOpen7 = newValue;
+	}	
+	
+	
+	///////////////////////////////////////	
+	public String getShortcutName8() {
+		return shortcutName8;
+	}
+	public void setShortcutName8(String newValue) {
+		this.shortcutName8 = newValue;
+	}
+
+	
+	///////////////////////////////////////	
+	public String getShortcutURL8() {
+		return shortcutURL8;
+	}
+	public void setShortcutURL8(String newValue) {
+		this.shortcutURL8 = newValue;
+	}
+
+	
+	///////////////////////////////////////
+	public String getShortcutIcon8() {
+		return shortcutIcon8;
+	}
+	public void setShortcutIcon8(String newValue) {
+		this.shortcutIcon8 = newValue;
+	}			
+	
+	
+	///////////////////////////////////////	
+	public String getShortcutOpen8() {
+		return shortcutOpen8;
+	}
+	public void setShortcutOpen8(String newValue) {
+		this.shortcutOpen8 = newValue;
+	}
+	
+	///////////////////////////////////////	
+	public String getShortcutName9() {
+		return shortcutName9;
+	}
+	public void setShortcutName9(String newValue) {
+		this.shortcutName9 = newValue;
+	}
+
+	
+	///////////////////////////////////////	
+	public String getShortcutURL9() {
+		return shortcutURL9;
+	}
+	public void setShortcutURL9(String newValue) {
+		this.shortcutURL9 = newValue;
+	}
+
+	
+	///////////////////////////////////////
+	public String getShortcutIcon9() {
+		return shortcutIcon9;
+	}
+	public void setShortcutIcon9(String newValue) {
+		this.shortcutIcon9 = newValue;
+	}		
+	
+	
+	///////////////////////////////////////	
+	public String getShortcutOpen9() {
+		return shortcutOpen9;
+	}
+	public void setShortcutOpen9(String newValue) {
+		this.shortcutOpen9 = newValue;
+	}	
+	
+	
+	///////////////////////////////////////	
+	public String getShortcutName10() {
+		return shortcutName10;
+	}
+	public void setShortcutName10(String newValue) {
+		this.shortcutName10 = newValue;
+	}
+
+	
+	///////////////////////////////////////	
+	public String getShortcutURL10() {
+		return shortcutURL10;
+	}
+	public void setShortcutURL10(String newValue) {
+		this.shortcutURL10 = newValue;
+	}
+
+	
+	///////////////////////////////////////
+	public String getShortcutIcon10() {
+		return shortcutIcon10;
+	}
+	public void setShortcutIcon10(String newValue) {
+		this.shortcutIcon10 = newValue;
+	}		
+	
+	
+	///////////////////////////////////////	
+	public String getShortcutOpen10() {
+		return shortcutOpen10;
+	}
+	public void setShortcutOpen10(String newValue) {
+		this.shortcutOpen10 = newValue;
+	}
+	
+	
+	///////////////////////////////////////	
 	public String getCurrencyLocale() {
 		return currencyLocale;
 	}
@@ -635,6 +1006,15 @@ public class OptionForm extends GeneralStrutsForm {
 		this.currencyLocale = newValue;
 	}
 
+	
+	///////////////////////////////////////	
+	public String getDefaultCapacity() {
+		return defaultCapacity;
+	}
+	public void setDefaultCapacity(String newValue) {
+		this.defaultCapacity = newValue;
+	}
+	
 	
 	///////////////////////////////////////		
 	public String getArtifactMaxFile() {
@@ -653,6 +1033,25 @@ public class OptionForm extends GeneralStrutsForm {
 		this.artifactExpClasses = newValue;
 	}
 
+	
+	/////////////////////////////////////////        
+	public String getPicturePath() {
+		return picturePath;
+	}
+	public void setPicturePath(String newValue) {
+		this.picturePath = newValue;
+	}
+    
+	
+	/////////////////////////////////////////     
+	public String getMaxMetaFieldTimeout() {
+		return maxMetaFieldTimeout;
+	}
+	public void setMaxMetaFieldTimeout(String newValue) {
+		this.maxMetaFieldTimeout = newValue;
+	}
+
+	
 	
 	/**
 	 * Validate the form.
@@ -684,6 +1083,10 @@ public class OptionForm extends GeneralStrutsForm {
 	            errors.add("taskNumLine", new ActionError("validate.manageOption.invalidTaskNulLine") );
 	        }
 
+	        if (this.maxMetaFieldTimeout!=null && !Pattern.matches("[0-9]+", this.maxMetaFieldTimeout)) {
+	            errors.add("maxMetaFieldTimeout", new ActionError("validate.manageOption.invalidMaxExecMetaField") );
+	        }
+	        
 	        if (!Pattern.matches("[0-9]+", this.gadgetWidth)) {
 	            errors.add("gadgetWidth", new ActionError("validate.manageOption.invalidgadgetWidth") );
 	        } else {
@@ -703,6 +1106,14 @@ public class OptionForm extends GeneralStrutsForm {
 	
 	        if (!Pattern.matches("[0-9]+", this.projNumLine)) {
 	            errors.add("projNumLine", new ActionError("validate.manageOption.invalidProjNulLine") );
+	        }
+
+	        if (!Pattern.matches("[0-9]+", this.topicNumLine)) {
+	            errors.add("topicNumLine", new ActionError("validate.manageOption.invalidTeamNulLine") );
+	        }
+
+	        if (!Pattern.matches("[0-9]+", this.infoNumLine)) {
+	            errors.add("infoNumLine", new ActionError("validate.manageOption.invalidInfoNulLine") );
 	        }
 	        
 	        if (!Pattern.matches("[0-9]+", this.myReqMaxDaysAgo)) {
@@ -739,5 +1150,5 @@ public class OptionForm extends GeneralStrutsForm {
 		return errors;
 	}
 
-    
+	
 }

@@ -5,9 +5,6 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Vector;
 
-import com.pandora.delegate.UserDelegate;
-import com.pandora.exception.BusinessException;
-
 /**
  * This object it is a bean that represents the Project entity.
  */
@@ -31,11 +28,8 @@ public class ProjectTO extends PlanningTO{
     private String canAlloc;
     
     /** List of allocated users into project. */
-    private Vector allocUsers;
+    private Vector<UserTO> allocUsers;
 
-    /** List of occurrences related to the project. */
-    private Vector occurrenceList;
-   
     private String repositoryUser;
     
     private String repositoryPass;
@@ -48,15 +42,18 @@ public class ProjectTO extends PlanningTO{
 
     private Boolean allowBillable;
     
-    private HashMap repositoryPolicies;
+    private HashMap<String,RepositoryPolicyTO> repositoryPolicies;
     
+    private Long budget;
     
     /** List of LeaderTO objects related with project. This attribute is not persistent.*/
-    private Vector projectLeaders;
+    //private Vector<LeaderTO> projectLeaders;
     
     /** List of customers that must be used by DAO into insertion process. This attribute is not persistent. */
-    private Vector insertCustomers;
+    private Vector<CustomerTO> insertCustomers;
 
+    private Vector<MetaFieldTO> qualifications;
+    
     /** List of resources that must be used by DAO into insertion process. This attribute is not persistent.  */
     private Vector insertResources;
 
@@ -76,7 +73,7 @@ public class ProjectTO extends PlanningTO{
     private Vector updateResources;
 
     /** List of resources that must be used by DAO into updating process. This attribute is not persistent.  */
-    private Vector updateCustomers;
+    private Vector<CustomerTO> updateCustomers;
        
     /** This attribute is not persistent. */
     private int gridLevel;
@@ -130,7 +127,7 @@ public class ProjectTO extends PlanningTO{
      */
     private void linkProjectWithAlloc(){
         if (this.allocUsers!=null){
-            Iterator i = this.allocUsers.iterator();
+            Iterator<UserTO> i = this.allocUsers.iterator();
             while(i.hasNext()){
                 CustomerTO cto = (CustomerTO)i.next();
                 cto.setProject(this);
@@ -138,9 +135,9 @@ public class ProjectTO extends PlanningTO{
         }
         
         if (this.insertCustomers!=null){
-            Iterator i = this.insertCustomers.iterator();
+            Iterator<CustomerTO> i = this.insertCustomers.iterator();
             while(i.hasNext()){
-                CustomerTO cto = (CustomerTO)i.next();
+                CustomerTO cto = i.next();
                 cto.setProject(this);
             }            
         }
@@ -166,9 +163,9 @@ public class ProjectTO extends PlanningTO{
 	public boolean isLeader(String id) {
 		boolean response = false;
         if (this.allocUsers!=null){
-            Iterator i = this.allocUsers.iterator();
+            Iterator<UserTO> i = this.allocUsers.iterator();
             while(i.hasNext()){
-                UserTO to = (UserTO)i.next();
+                UserTO to = i.next();
                 if (to instanceof LeaderTO && id.equals(to.getId())) {
 					response = true;
 					break;
@@ -178,6 +175,7 @@ public class ProjectTO extends PlanningTO{
 		return response;
 	}
 
+	
 	public RepositoryPolicyTO getRepositoryPolicy(String policyType) {
 		RepositoryPolicyTO response = null;
 		if (this.repositoryPolicies!=null) {
@@ -189,17 +187,17 @@ public class ProjectTO extends PlanningTO{
 	
 	public void addRepositoryPolicy(RepositoryPolicyTO policy) {
 		if (this.repositoryPolicies==null) {
-			this.repositoryPolicies = new HashMap();
+			this.repositoryPolicies = new HashMap<String, RepositoryPolicyTO>();
 		}
 		this.repositoryPolicies.put(policy.getPolicyType(), policy);
 	}
 	
 	
     ///////////////////////////////////////////    
-	public void setRepositoryPolicies(HashMap policies) {
+	public void setRepositoryPolicies(HashMap<String, RepositoryPolicyTO> policies) {
 		this.repositoryPolicies = policies;
 	}
-	public HashMap getRepositoryPolicies() {
+	public HashMap<String, RepositoryPolicyTO> getRepositoryPolicies() {
 		return this.repositoryPolicies;
 	}
 	
@@ -241,18 +239,18 @@ public class ProjectTO extends PlanningTO{
 	}
 
 	///////////////////////////////////////////    
-    public Vector getAllocUsers() {
+    public Vector<UserTO> getAllocUsers() {
         return allocUsers;
     }
-    public void setAllocUsers(Vector newValue) {
+    public void setAllocUsers(Vector<UserTO> newValue) {
         this.allocUsers = newValue;
     }
         
     ///////////////////////////////////////////    
-    public Vector getInsertCustomers() {
+    public Vector<CustomerTO> getInsertCustomers() {
         return insertCustomers;
     }
-    public void setInsertCustomers(Vector newValue) {
+    public void setInsertCustomers(Vector<CustomerTO> newValue) {
         this.insertCustomers = newValue;
     }
     
@@ -305,7 +303,7 @@ public class ProjectTO extends PlanningTO{
     }
 
     ///////////////////////////////////////////        
-    public Vector getUpdateCustomers() {
+    public Vector<CustomerTO> getUpdateCustomers() {
         return updateCustomers;
     }
     public void setUpdateCustomers(Vector newValue) {
@@ -347,34 +345,34 @@ public class ProjectTO extends PlanningTO{
 		this.canSeeInvoice = newValue;
 	}
 
-
+	
+	///////////////////////////////////////////
+	public Vector<MetaFieldTO> getQualifications(){
+		return qualifications;
+	}
+	public void setQualifications(Vector<MetaFieldTO> newValue){
+		qualifications = newValue;
+	}
+	
 	
 	///////////////////////////////////////////    
-    public Vector getProjectLeaders() {
-    	
-    	if (projectLeaders==null || projectLeaders.size()==0) {
-        	//lazzy initialization
-        	UserDelegate udel = new UserDelegate();
-        	try {
-				projectLeaders = udel.getLeaderByProject(this);
-			} catch (BusinessException e) {
-				projectLeaders = null;
-			}
-    	}
-    	
-        return projectLeaders;
-    }
-    public void setProjectLeaders(Vector newValue) {
-        this.projectLeaders = newValue;
-    }
+    //public Vector<LeaderTO> getProjectLeaders() {
+    //	
+    //	if (projectLeaders==null || projectLeaders.size()==0) {
+    //    	//lazzy initialization
+    //   	UserDelegate udel = new UserDelegate();
+    //   	try {
+	//			projectLeaders = udel.getLeaderByProject("'" + getId() + "'");
+	//		} catch (BusinessException e) {
+	//			projectLeaders = null;
+	//		}
+    //	}
+    //    return projectLeaders;
+    //}
+    //public void setProjectLeaders(Vector<LeaderTO> newValue) {
+    //    this.projectLeaders = newValue;
+    //}
     
-    //////////////////////////////////////////////   
-    public Vector getOccurrenceList() {
-        return occurrenceList;
-    }
-    public void setOccurrenceList(Vector newValue) {
-        this.occurrenceList = newValue;
-    }
     
     //////////////////////////////////////////////    
     public int getGridLevel() {
@@ -433,22 +431,31 @@ public class ProjectTO extends PlanningTO{
 		this.estimatedClosureDate = newValue;
 	}	
 
+	//////////////////////////////////	
+	public Long getBudget() {
+		return budget;
+	}
+	public void setBudget(Long newValue) {
+		this.budget = newValue;
+	}	
+	
 	/**
      * Generate a ordered list based on ruled of parent project. 
      * This recursive logic must be used by grid in order to 
      * display a tree structure of projects.
      */
-    public int order(Vector unorderedList, Vector orderedList, int level){
+    public int order(Vector<ProjectTO> unorderedList, Vector<ProjectTO> orderedList, int level){
         int newLevel = level+1;
         
         this.setGridLevel(newLevel);
         orderedList.addElement(this);
         
         //get a list of child projects...
-        Iterator i = unorderedList.iterator();
+        Iterator<ProjectTO> i = unorderedList.iterator();
         while(i.hasNext()){
             //...for each child task...            
-            ProjectTO childPrj = (ProjectTO)i.next();
+            ProjectTO childPrj = i.next();
+                        
             if (childPrj.getParentProject()!=null && childPrj.getParentProject().getId()!=null && 
                     childPrj.getParentProject().getId().equals(this.getId())){
                 newLevel = childPrj.order(unorderedList, orderedList, newLevel);

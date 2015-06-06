@@ -36,6 +36,7 @@ public class MetaFormForm extends GeneralStrutsForm {
         this.jsBeforeSave = null;
         this.jsAfterSave = null;
         this.jsAfterLoad = null;
+        this.setAdditionalFields(null);
     }      
     
     

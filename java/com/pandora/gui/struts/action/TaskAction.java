@@ -30,7 +30,6 @@ import com.pandora.exception.BusinessException;
 import com.pandora.exception.InvalidRequirementException;
 import com.pandora.exception.ProjectTasksDiffRequirementException;
 import com.pandora.exception.TasksDiffRequirementException;
-import com.pandora.exception.ZeroCapacityException;
 import com.pandora.gui.struts.exception.InputGuiException;
 import com.pandora.gui.struts.form.GeneralStrutsForm;
 import com.pandora.gui.struts.form.TaskForm;
@@ -88,14 +87,20 @@ public class TaskAction extends GeneralStrutsAction {
 	    
 	    //get all resources from data base (filter by project) and put into http session (to be displayed by combo)
 	    UserDelegate udel = new UserDelegate();
-	    Vector<ResourceTO>  reslist = udel.getResourceByProject(tfrm.getProjectId(), false, true);
-	    
+	    Vector<ResourceTO> reslist = udel.getResourceByProject(tfrm.getProjectId(), false, true);
+
+	    Vector<UserTO> resourcesAvailable = new Vector<UserTO>();
 	    UserTO root = udel.getRoot();
 	    ResourceTO rtoRoot = new ResourceTO(root.getId());
 	    rtoRoot.setName(super.getBundleMessage(request, "label.manageTask.anyRes"));
-	    reslist.add(0, rtoRoot);
-	    
-	    request.getSession().setAttribute("resourceAvailable", reslist);
+	    resourcesAvailable.add(rtoRoot);
+
+	    for (ResourceTO rto : reslist) {
+			if (rto!=null && rto.getUsername()!=null && !rto.getUsername().equals(RootTO.ROOT_USER)) {
+				resourcesAvailable.add(rto);
+			}
+		}
+	    request.getSession().setAttribute("resourceAvailable", resourcesAvailable);
 
 	    //get all categories from data base and put into http session (to be displayed by combo)
 	    ProjectTO pto = new ProjectTO(tfrm.getProjectId());	    
@@ -138,7 +143,7 @@ public class TaskAction extends GeneralStrutsAction {
 	    } catch(BusinessException e){
 	        this.setErrorFormSession(request, "error.showTaskForm", e);
 	    }
-
+    
 		return mapping.findForward(forward);	   
 	}
 	
@@ -257,8 +262,6 @@ public class TaskAction extends GeneralStrutsAction {
 			request.getSession().removeAttribute("manageTaskList");			
 			this.refreshList(request, form);
 
-		} catch(ZeroCapacityException e){
-			this.setErrorFormSession(request, "error.manageTask.zeroCapacity", e);
 		} catch(InputGuiException e){
 		    this.setErrorFormSession(request, "error.manageTask.invalidAllocResData", e);
 		} catch(ProjectTasksDiffRequirementException e){
@@ -334,6 +337,7 @@ public class TaskAction extends GeneralStrutsAction {
 	}
 
 	
+	@SuppressWarnings({ "rawtypes", "unchecked" })
 	public ActionForward addResource(ActionMapping mapping, ActionForm form,
 			 HttpServletRequest request, HttpServletResponse response){
 	    String forward = "showTask";
@@ -346,12 +350,12 @@ public class TaskAction extends GeneralStrutsAction {
 
 		    //include a new resource task into the list
 		    ResourceTaskTO rtto = getResTaskFromVector(request, frm, loc);
-	        Vector resList = (Vector)request.getSession().getAttribute("resourceAllocated");
+			Vector<ResourceTaskTO> resList = (Vector)request.getSession().getAttribute("resourceAllocated");
 	        
 	        boolean notExists = true;
-		    Iterator i = resList.iterator();
+		    Iterator<ResourceTaskTO> i = resList.iterator();
 		    while(i.hasNext()){
-		        ResourceTaskTO buff = (ResourceTaskTO)i.next();
+		        ResourceTaskTO buff = i.next();
 		        if (buff.getResource().getId().equals(rtto.getResource().getId())) {
 		            this.setErrorFormSession(request, "message.resourceIntoListExists", null);
 		            notExists = false;
@@ -377,42 +381,16 @@ public class TaskAction extends GeneralStrutsAction {
 	}
 	
 	
+	@SuppressWarnings({ "unchecked", "rawtypes" })
 	public ActionForward removeResource(ActionMapping mapping, ActionForm form,
 			 HttpServletRequest request, HttpServletResponse response){
 	    String forward = "showTask";
 	    try {
 		    TaskForm frm = (TaskForm)form;
 	        frm.setShowCloseReqConfirmation("off");	
-		    Vector resList = (Vector)request.getSession().getAttribute("resourceAllocated");
-		    
-		    boolean alreadyExists = false;
-		    Iterator i = resList.iterator();
-		    while(i.hasNext()){
-		        ResourceTaskTO rtto = (ResourceTaskTO)i.next();
-		        if (rtto.getResource().getId().equals(frm.getResourceId())) {
-			        Integer state = null;
-			        if (rtto.getTaskStatus()!=null) {
-			            state = rtto.getTaskStatus().getStateMachineOrder();    
-			        }
-			        if (state!=null && (state.equals(TaskStatusTO.STATE_MACHINE_PROGRESS) || 
-			                state.equals(TaskStatusTO.STATE_MACHINE_CLOSE) ||
-			                state.equals(TaskStatusTO.STATE_MACHINE_CANCEL) ||
-			                state.equals(TaskStatusTO.STATE_MACHINE_HOLD))) {
-			            this.setErrorFormSession(request, "message.resourceCannotBeRemoved", null);
-			            alreadyExists = true;
-			        }
-		        }		            
-		    }
-		    
-        	if (!alreadyExists) {
-    		    i = resList.iterator();
-    		    while(i.hasNext()){
-    		        ResourceTaskTO rtto = (ResourceTaskTO)i.next();
-    		        if (rtto.getResource().getId().equals(frm.getResourceId())) {
-    	        	    resList.remove(rtto);
-    	        	    break;
-    		        }
-    		    }
+		    Vector<ResourceTaskTO> resList = (Vector)request.getSession().getAttribute("resourceAllocated");
+		    resList = this.removeResourceAllocFromList(resList, frm.getResourceId(), request);
+        	if (resList!=null) {
     		    request.getSession().setAttribute("resourceAllocated", resList);    		    
         	}
 		    
@@ -422,6 +400,43 @@ public class TaskAction extends GeneralStrutsAction {
 	    return mapping.findForward(forward);	
 	}
 
+	public Vector<ResourceTaskTO> removeResourceAllocFromList(Vector<ResourceTaskTO> resList, String resourceId, HttpServletRequest request) {
+		Vector<ResourceTaskTO> response = null;
+	    boolean alreadyExists = false;
+	    
+	    Iterator<ResourceTaskTO> i = resList.iterator();
+	    while(i.hasNext()){
+	        ResourceTaskTO rtto = (ResourceTaskTO)i.next();
+	        if (rtto.getResource().getId().equals(resourceId)) {
+		        Integer state = null;
+		        if (rtto.getTaskStatus()!=null) {
+		            state = rtto.getTaskStatus().getStateMachineOrder();    
+		        }
+		        if (state!=null && (state.equals(TaskStatusTO.STATE_MACHINE_PROGRESS) || 
+		                state.equals(TaskStatusTO.STATE_MACHINE_CLOSE) ||
+		                state.equals(TaskStatusTO.STATE_MACHINE_CANCEL) ||
+		                state.equals(TaskStatusTO.STATE_MACHINE_HOLD))) {
+		            this.setErrorFormSession(request, "message.resourceCannotBeRemoved", null);
+		            alreadyExists = true;
+		        }
+	        }		            
+	    }
+	    
+    	if (!alreadyExists) {
+		    i = resList.iterator();
+		    while(i.hasNext()){
+		        ResourceTaskTO rtto = (ResourceTaskTO)i.next();
+		        rtto.setHandler(SessionUtil.getCurrentUser(request));
+		        if (rtto.getResource().getId().equals(resourceId)) {
+	        	    resList.remove(rtto);
+	        	    break;
+		        }
+		    }  
+		    response = resList;
+    	}
+    	
+		return response;
+	}
 	
 	
 	public ActionForward showCloseReqConfirmation(ActionMapping mapping, ActionForm form,
@@ -447,7 +462,7 @@ public class TaskAction extends GeneralStrutsAction {
 	    tfrm.setSaveMethod(TaskForm.INSERT_METHOD, SessionUtil.getCurrentUser(request));
 	    
 		//set empty to lists 
-	    request.getSession().setAttribute("resourceAllocated", new Vector());
+	    request.getSession().setAttribute("resourceAllocated", new Vector<ResourceTaskTO>());
 	}
 
 	
@@ -462,14 +477,15 @@ public class TaskAction extends GeneralStrutsAction {
 		rto = this.getRelatedRequirement(tfrm, request);
 		
 		//get all task based on current requirement
-	    Vector taskList = (Vector)request.getSession().getAttribute("manageTaskList");
+	    @SuppressWarnings("rawtypes")
+		Vector taskList = (Vector)request.getSession().getAttribute("manageTaskList");
 	    if (taskList==null || taskList.size()==0) {
 		    taskList = tdel.getTaskListByRequirement(rto, new ProjectTO(tfrm.getProjectId()), !tfrm.getBoolCloseTasks());
 			request.getSession().setAttribute("manageTaskList", taskList);		        
 	    }
 		
 		//get all tasks from data base (filter by requirement) and put into http session (to be displayed by combo) 
-	    Vector parentList = tdel.getAvailableParentTaskList(rto, tfrm.getProjectId());
+	    Vector<TaskTO> parentList = tdel.getAvailableParentTaskList(rto, tfrm.getProjectId());
 	    request.getSession().setAttribute("taskAvailable", parentList);
 	}
 	
@@ -484,19 +500,27 @@ public class TaskAction extends GeneralStrutsAction {
 		    rto = new RequirementTO(tfrm.getRequirementId());
 		    rto = rdel.getRequirement(rto);
 		    
-			//get current locale of connected user 
-			Locale loc = SessionUtil.getCurrentLocale(request);
-			
-		    //set requirement information into html fields
-			tfrm.setRequestNum(rto.getId());
-			tfrm.setRequirementId(rto.getId());
-			tfrm.setRequestDesc(rto.getDescription());
-			tfrm.setRequestCustomer(rto.getRequester().getName());
-			if (rto.getSuggestedDate()!=null){
-			    tfrm.setRequestSuggDate(DateUtil.getDate(rto.getSuggestedDate(), super.getCalendarMask(request), loc));    
-			} else {
-			    tfrm.setRequestSuggDate("");
-			}
+		    if (rto!=null) {
+				//get current locale of connected user 
+				Locale loc = SessionUtil.getCurrentLocale(request);
+				
+			    //set requirement information into html fields
+				tfrm.setRequestNum(rto.getId());
+				tfrm.setRequirementId(rto.getId());
+				tfrm.setRequestDesc(rto.getDescription());
+				tfrm.setRequestCustomer(rto.getRequester().getName());
+				if (rto.getSuggestedDate()!=null){
+				    tfrm.setRequestSuggDate(DateUtil.getDate(rto.getSuggestedDate(), super.getCalendarMask(request), loc));    
+				} else {
+				    tfrm.setRequestSuggDate("");
+				}		    	
+		    } else {
+		    	tfrm.setRequirementId("");
+		    	tfrm.setRequestCustomer("");
+		    	tfrm.setRequestDesc("");
+		    	tfrm.setRequestSuggDate("");
+		    	tfrm.setRequestNum("");
+		    }
 		}
 		
 		return rto;
@@ -661,16 +685,18 @@ public class TaskAction extends GeneralStrutsAction {
 	/**
 	 * Get list of resource allocated from http form and create a vector of resource task objects.
 	 */
+	@SuppressWarnings("unchecked")
 	private Vector<ResourceTaskTO> getAllocatedResources(TaskForm frm, TaskTO tto, Locale loc, HttpServletRequest request) throws InputGuiException{
 	    Vector<ResourceTaskTO> response = new Vector<ResourceTaskTO>();
 	    ResourceTaskDelegate rtdel = new ResourceTaskDelegate();
 	    
 	    try {
-	        Vector resList = (Vector)request.getSession().getAttribute("resourceAllocated");		    
+	        @SuppressWarnings("rawtypes")
+	        Vector<ResourceTaskTO> resList = (Vector)request.getSession().getAttribute("resourceAllocated");		    
 		    if (resList!=null && resList.size()>0) {
-			    Iterator i = resList.iterator();
+		    	Iterator<ResourceTaskTO> i = resList.iterator();
 			    while(i.hasNext()) {
-			        ResourceTaskTO buff = (ResourceTaskTO)i.next();
+			        ResourceTaskTO buff = i.next();
 			        ResourceTaskTO rtto = new ResourceTaskTO();
 			        
 			        //refresh attributes...
@@ -753,6 +779,7 @@ public class TaskAction extends GeneralStrutsAction {
 	/**
 	 * Check if all tasks of the same requirement will be closed after saving...
 	 */
+	@SuppressWarnings({ "unchecked", "rawtypes" })
 	private boolean checkRemainingTasks(TaskForm frm, HttpServletRequest request){
 		boolean showConfirmation = false;
 		TaskDelegate tdel = new TaskDelegate();
@@ -778,7 +805,7 @@ public class TaskAction extends GeneralStrutsAction {
 						}
 						
 						if (showConfirmation) {
-							Vector resList = (Vector)request.getSession().getAttribute("resourceAllocated");
+							Vector<ResourceTaskTO> resList = (Vector)request.getSession().getAttribute("resourceAllocated");
 							Iterator<ResourceTaskTO> j = resList.iterator();
 							while(j.hasNext()) {
 								ResourceTaskTO rt = j.next();

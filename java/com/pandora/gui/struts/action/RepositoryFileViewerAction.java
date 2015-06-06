@@ -42,10 +42,10 @@ public class RepositoryFileViewerAction extends GeneralStrutsAction {
 		    uri = uri.substring(0, uri.indexOf("/do") + 3);
 			
 			if (output.equals(Converter.OUTPUT_MIND_MAP_VIEWER+"")) {
-			    frm.setServerURI("http://" + SessionUtil.getUri(request) + uri + "/showRepositoryViewerCustomer?operation=showViewerOutput&projectId=" + 
+			    frm.setServerURI(SessionUtil.getUri(request) + uri + "/showRepositoryViewerCustomer?operation=showViewerOutput&projectId=" + 
 		    			prjId + "&outputType=" + output + "&newpath=" + newpath);				
 			} else {
-			    frm.setServerURI("http://" + SessionUtil.getUri(request) + uri + "/showRepositoryViewerCustomer?projectId=" + 
+			    frm.setServerURI(SessionUtil.getUri(request) + uri + "/showRepositoryViewerCustomer?projectId=" + 
 		    			prjId + "&operation=showViewerOutput&outputType=" + output + "&newpath=" + newpath);
 			}
 			

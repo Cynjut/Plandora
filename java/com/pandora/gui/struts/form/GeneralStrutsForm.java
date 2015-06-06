@@ -6,6 +6,7 @@ import java.util.Vector;
 
 import javax.servlet.http.HttpServletRequest;
 
+import org.apache.commons.lang.StringEscapeUtils;
 import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionMapping;
 import org.apache.struts.util.MessageResources;
@@ -55,7 +56,7 @@ public class GeneralStrutsForm extends ActionForm {
     /** List of additional fields to be displayed on Requirement, Task and Project Forms 
      * This list is populated by struts action of each form and should contain the additional fields
      * for a specific planning id.*/
-    private Vector additionalFields;
+    private Vector<AdditionalFieldTO> additionalFields;
     
     /** A generic tag that can be used for multiples purposes */
     private String genericTag;
@@ -69,9 +70,9 @@ public class GeneralStrutsForm extends ActionForm {
     public AdditionalFieldTO getAdditionalField(String metaFieldId) {
         AdditionalFieldTO response = null;
         if (additionalFields!=null) {
-            Iterator i = additionalFields.iterator();
+            Iterator<AdditionalFieldTO> i = additionalFields.iterator();
             while(i.hasNext()){
-                AdditionalFieldTO afto = (AdditionalFieldTO)i.next();
+                AdditionalFieldTO afto = i.next();
                 if (afto.getMetaFieldId().equals(metaFieldId)) {
                     response = afto;
                     break;
@@ -92,6 +93,7 @@ public class GeneralStrutsForm extends ActionForm {
             } else if (saveMethod.equals(UPDATE_METHOD)){
                 response = mr.getMessage(uto.getLocale(), "button.update");
             }
+            response = StringEscapeUtils.unescapeHtml(response);
         }
         
         return response;
@@ -127,7 +129,7 @@ public class GeneralStrutsForm extends ActionForm {
     }
 
     ///////////////////////////////////////        
-    public void setAdditionalFields(Vector newValue) {
+    public void setAdditionalFields(Vector<AdditionalFieldTO> newValue) {
         this.additionalFields = newValue;
     }
     
@@ -143,6 +145,5 @@ public class GeneralStrutsForm extends ActionForm {
     ////////////////////////////////////////    
 	public String getUid() {
 		return uid;
-	}    
-    
+	}
 }

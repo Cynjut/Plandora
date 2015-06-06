@@ -2,12 +2,12 @@ package com.pandora.delegate;
 
 import java.util.Vector;
 
+import com.pandora.QuestionAnswerTO;
 import com.pandora.SurveyQuestionTO;
 import com.pandora.SurveyTO;
 import com.pandora.UserTO;
 import com.pandora.bus.SurveyBUS;
 import com.pandora.exception.BusinessException;
-import com.pandora.exception.DataAccessException;
 
 public class SurveyDelegate extends GeneralDelegate {
 
@@ -33,15 +33,15 @@ public class SurveyDelegate extends GeneralDelegate {
     /* (non-Javadoc)
      * @see com.pandora.bus.SurveyBUS.getSurveyList(java.lang.String)
      */	
-	public Vector getSurveyList(String projectId) throws BusinessException {
-        return bus.getSurveyList(projectId);
+	public Vector<SurveyTO> getSurveyList(String projectId, boolean ignoreClosed) throws BusinessException {
+        return bus.getSurveyList(projectId, ignoreClosed);
 	}
 
 
     /* (non-Javadoc)
      * @see com.pandora.bus.SurveyBUS.saveAnswer(java.util.Vector)
      */	
-	public void saveAnswer(Vector answerList) throws BusinessException {
+	public void saveAnswer(Vector<QuestionAnswerTO> answerList) throws BusinessException {
 		bus.saveAnswer(answerList);
 	}
 
@@ -78,7 +78,7 @@ public class SurveyDelegate extends GeneralDelegate {
     /* (non-Javadoc)
      * @see com.pandora.bus.SurveyBUS.getSurveyListByUser(com.pandora.UserTO, boolean)
      */	
-	public Vector getSurveyListByUser(UserTO uto, boolean ignoreClosed) throws BusinessException {
+	public Vector<SurveyTO> getSurveyListByUser(UserTO uto, boolean ignoreClosed) throws BusinessException {
 		return bus.getSurveyListByUser(uto, ignoreClosed);
 	}
 

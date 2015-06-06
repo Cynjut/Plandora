@@ -18,11 +18,23 @@
    			operation.value = "grant";
    			id.value = idx;
    		}
-		ajaxProcess(document.forms["repositoryViewerForm"], callBackGrantClick, idx);		
+	    var ajaxRequestObj = ajaxSyncInit();         
+		ajaxSyncProcess(document.forms["repositoryViewerForm"], callBackGrantClick, idx, true, ajaxRequestObj);		
 	}
+
 	
-	function callBackGrantClick(idx) {  
-	    if(isAjax()){  
+	function removeRepItem(prj, pth){
+    	if ( confirm("<bean:message key="label.formRepository.del.confirm"/>")) {
+			with(document.forms["repositoryViewerForm"]){
+				path.value = pth;
+	   			buttonClick('repositoryViewerForm', 'removeItem');
+	   		}
+        }
+	}	
+
+
+	function callBackGrantClick(idx, dummy, objRequest) {
+		if(isSyncAjax(objRequest)){
 	       	document.getElementById("ajaxResponse").innerHTML = ""; //hide ajax icon  
 			var content = objRequest.responseText;
 			if (content != '') {
@@ -75,7 +87,7 @@
 	<html:hidden name="repositoryViewerForm" property="genericTag"/>
 	<html:hidden name="repositoryViewerForm" property="path"/>
 
-	<br>
+	<plandora-html:shortcut name="repositoryViewerForm" property="goToRepository" fieldList="projectId"/>
 	
 	<table width="100%" border="0" cellspacing="0" cellpadding="0">
 	<tr><td width="10">&nbsp;</td><td>
@@ -91,32 +103,34 @@
 			<tr class="formBody">
 				<td>
 					<logic:equal name="repositoryViewerForm" property="emulateCustomerViewer" value="off">
-						<display:table border="1" width="100%" name="repositoryFileList" scope="session" pagesize="0" requestURI="../do/showRepositoryViewer?operation=refresh">
-						  <display:column width="10" property="isDirectory" align="center" title="grid.title.empty" decorator="com.pandora.gui.taglib.decorator.RepositoryEntryTypeDecorator" />
-						  <display:column property="name" sort="true" align="left" title="label.formRepository.name" decorator="com.pandora.gui.taglib.decorator.RepositoryEntryNameDecorator" />					  
-						  <display:column width="100" sort="true" property="author" align="center" title="label.formRepository.author" description="label.formRepository.author.desc" visibleProperty="<%=PreferenceTO.REPOSITORY_GRID_AUTHOR%>" decorator="com.pandora.gui.taglib.decorator.UserInfoDecorator" tag="repositoryViewerForm" />					  
-						  <display:column property="name" sort="true" align="left" title="label.formRepository.fullPath" description="label.formRepository.fullPath.desc" visibleProperty="<%=PreferenceTO.REPOSITORY_GRID_FULLPATH%>" decorator="com.pandora.gui.taglib.decorator.RepositoryEntryNameDecorator" tag="navigate"/>
-						  <display:column width="10" property="id" align="center" title="grid.title.empty" description="label.formRepository.locked.desc" visibleProperty="<%=PreferenceTO.REPOSITORY_GRID_LOCK%>" decorator="com.pandora.gui.taglib.decorator.RepositoryEntryLockDecorator" />
-						  <display:column width="80" sort="true" property="fileSize" title="label.formRepository.size" description="label.formRepository.size.desc" visibleProperty="<%=PreferenceTO.REPOSITORY_GRID_SIZE%>" />				  
-						  <display:column width="50" sort="true" property="revision" title="label.formRepository.revision" description="label.formRepository.revision.desc" visibleProperty="<%=PreferenceTO.REPOSITORY_GRID_REVISION%>" />
-						  <display:column width="130" align="center" property="creationDate" title="label.formRepository.date" description="label.formRepository.date.desc" visibleProperty="<%=PreferenceTO.REPOSITORY_GRID_DATE%>" decorator="com.pandora.gui.taglib.decorator.GridDateDecorator" tag="2;2" />					  
-						  <display:column width="20" align="center" property="id" title="grid.title.empty" description="label.formRepository.log.desc" visibleProperty="<%=PreferenceTO.REPOSITORY_GRID_LOG%>" decorator="com.pandora.gui.taglib.decorator.RepositoryEntryLogDecorator" />
-						  <display:column width="20" align="center" property="id" title="grid.title.empty" description="label.formRepository.perm.desc" visibleProperty="<%=PreferenceTO.REPOSITORY_GRID_GRANT%>" decorator="com.pandora.gui.taglib.decorator.RepositoryPermissionDecorator" />
-						  <display:column width="20" align="center" property="id" title="grid.title.empty" decorator="com.pandora.gui.taglib.decorator.ArtifactEditDecorator" />
-						  <display:column width="20" property="id" align="center" title="grid.title.empty" description="label.formRepository.viewer.desc" decorator="com.pandora.gui.taglib.decorator.RepositoryOnlineViewerDecorator" visibleProperty="<%=PreferenceTO.REPOSITORY_GRID_VIEWER%>" />
-						</display:table>
+						<plandora-html:ptable width="100%" name="repositoryFileList" frm="repositoryViewerForm" pagesize="0">
+						  <plandora-html:pcolumn width="10" property="isDirectory" align="center" title="grid.title.empty" decorator="com.pandora.gui.taglib.decorator.RepositoryEntryTypeDecorator" />
+						  <plandora-html:pcolumn property="name" sort="true" align="left" title="label.formRepository.name" decorator="com.pandora.gui.taglib.decorator.RepositoryEntryNameDecorator" />					  
+						  <plandora-html:pcolumn width="100" sort="true" property="author" align="center" title="label.formRepository.author" description="label.formRepository.author.desc" visibleProperty="<%=PreferenceTO.REPOSITORY_GRID_AUTHOR%>" decorator="com.pandora.gui.taglib.decorator.UserInfoDecorator" tag="repositoryViewerForm" />					  
+						  <plandora-html:pcolumn property="name" sort="true" align="left" title="label.formRepository.fullPath" description="label.formRepository.fullPath.desc" visibleProperty="<%=PreferenceTO.REPOSITORY_GRID_FULLPATH%>" decorator="com.pandora.gui.taglib.decorator.RepositoryEntryNameDecorator" tag="navigate"/>
+						  <plandora-html:pcolumn width="10" property="id" align="center" title="grid.title.empty" description="label.formRepository.locked.desc" visibleProperty="<%=PreferenceTO.REPOSITORY_GRID_LOCK%>" decorator="com.pandora.gui.taglib.decorator.RepositoryEntryLockDecorator" />
+						  <plandora-html:pcolumn width="80" sort="true" property="fileSize" title="label.formRepository.size" description="label.formRepository.size.desc" visibleProperty="<%=PreferenceTO.REPOSITORY_GRID_SIZE%>" />				  
+						  <plandora-html:pcolumn width="50" sort="true" property="revision" title="label.formRepository.revision" description="label.formRepository.revision.desc" visibleProperty="<%=PreferenceTO.REPOSITORY_GRID_REVISION%>" />
+						  <plandora-html:pcolumn width="130" align="center" property="creationDate" title="label.formRepository.date" description="label.formRepository.date.desc" visibleProperty="<%=PreferenceTO.REPOSITORY_GRID_DATE%>" decorator="com.pandora.gui.taglib.decorator.GridDateDecorator" tag="2;2" />					  
+						  <plandora-html:pcolumn width="20" align="center" property="id" title="grid.title.empty" description="label.formRepository.log.desc" visibleProperty="<%=PreferenceTO.REPOSITORY_GRID_LOG%>" decorator="com.pandora.gui.taglib.decorator.RepositoryEntryLogDecorator" />
+						  <plandora-html:pcolumn width="20" align="center" property="id" title="grid.title.empty" description="label.formRepository.perm.desc" visibleProperty="<%=PreferenceTO.REPOSITORY_GRID_GRANT%>" decorator="com.pandora.gui.taglib.decorator.RepositoryPermissionDecorator" />
+						  <plandora-html:pcolumn width="20" align="center" property="id" title="grid.title.empty" decorator="com.pandora.gui.taglib.decorator.ArtifactEditDecorator" />
+						  <plandora-html:pcolumn width="20" property="id" align="center" title="grid.title.empty" description="label.formRepository.download.desc" decorator="com.pandora.gui.taglib.decorator.RepositoryDownloadDecorator" visibleProperty="<%=PreferenceTO.REPOSITORY_GRID_DOWNLOAD%>" />					  
+						  <plandora-html:pcolumn width="20" property="id" align="center" title="grid.title.empty" description="label.formRepository.viewer.desc" decorator="com.pandora.gui.taglib.decorator.RepositoryOnlineViewerDecorator" visibleProperty="<%=PreferenceTO.REPOSITORY_GRID_VIEWER%>" />
+						  <plandora-html:pcolumn width="20" property="id" align="center" title="grid.title.empty" description="label.formRepository.del.desc" visibleProperty="<%=PreferenceTO.REPOSITORY_GRID_DEL%>" decorator="com.pandora.gui.taglib.decorator.RepositoryDeleteItemDecorator" />						  
+						</plandora-html:ptable>
 					</logic:equal>
 
 					<logic:equal name="repositoryViewerForm" property="emulateCustomerViewer" value="on">
-						<display:table border="1" width="100%" name="custRepositFileList" scope="session" pagesize="0" requestURI="../do/showRepositoryViewer?operation=refresh">
-						  <display:column width="10" property="isDirectory" align="center" title="grid.title.empty" decorator="com.pandora.gui.taglib.decorator.RepositoryEntryTypeDecorator" />
-						  <display:column property="name" sort="true" align="left" title="label.formRepository.name" decorator="com.pandora.gui.taglib.decorator.RepositoryEntryNameDecorator" />
-						  <display:column width="100" sort="true" property="author" align="center" title="label.formRepository.author" description="label.formRepository.author.desc" visibleProperty="<%=PreferenceTO.REPOSITORY_GRID_AUTHOR%>" decorator="com.pandora.gui.taglib.decorator.UserInfoDecorator" tag="repositoryViewerCustomerForm" />					  
-						  <display:column property="name" sort="true" align="left" title="label.formRepository.fullPath" description="label.formRepository.fullPath.desc" visibleProperty="<%=PreferenceTO.REPOSITORY_GRID_FULLPATH%>" decorator="com.pandora.gui.taglib.decorator.RepositoryEntryNameDecorator" tag="navigate"/>
-						  <display:column width="80" sort="true" property="fileSize" title="label.formRepository.size" description="label.formRepository.size.desc" visibleProperty="<%=PreferenceTO.REPOSITORY_GRID_SIZE%>" />
-						  <display:column width="50" sort="true" property="revision" title="label.formRepository.revision" description="label.formRepository.revision.desc" visibleProperty="<%=PreferenceTO.REPOSITORY_GRID_REVISION%>" />
-						  <display:column width="10" property="id" align="center" title="grid.title.empty" description="label.formRepository.viewer.desc" decorator="com.pandora.gui.taglib.decorator.RepositoryOnlineViewerDecorator" visibleProperty="<%=PreferenceTO.REPOSITORY_GRID_VIEWER%>" />					  
-						</display:table>
+						<plandora-html:ptable width="100%" name="custRepositFileList" frm="repositoryViewerForm" pagesize="0">
+						  <plandora-html:pcolumn width="10" property="isDirectory" align="center" title="grid.title.empty" decorator="com.pandora.gui.taglib.decorator.RepositoryEntryTypeDecorator" />
+						  <plandora-html:pcolumn property="name" sort="true" align="left" title="label.formRepository.name" decorator="com.pandora.gui.taglib.decorator.RepositoryEntryNameDecorator" />
+						  <plandora-html:pcolumn width="100" sort="true" property="author" align="center" title="label.formRepository.author" description="label.formRepository.author.desc" visibleProperty="<%=PreferenceTO.REPOSITORY_GRID_AUTHOR%>" decorator="com.pandora.gui.taglib.decorator.UserInfoDecorator" tag="repositoryViewerCustomerForm" />					  
+						  <plandora-html:pcolumn property="name" sort="true" align="left" title="label.formRepository.fullPath" description="label.formRepository.fullPath.desc" visibleProperty="<%=PreferenceTO.REPOSITORY_GRID_FULLPATH%>" decorator="com.pandora.gui.taglib.decorator.RepositoryEntryNameDecorator" tag="navigate"/>
+						  <plandora-html:pcolumn width="80" sort="true" property="fileSize" title="label.formRepository.size" description="label.formRepository.size.desc" visibleProperty="<%=PreferenceTO.REPOSITORY_GRID_SIZE%>" />
+						  <plandora-html:pcolumn width="50" sort="true" property="revision" title="label.formRepository.revision" description="label.formRepository.revision.desc" visibleProperty="<%=PreferenceTO.REPOSITORY_GRID_REVISION%>" />
+						  <plandora-html:pcolumn width="10" property="id" align="center" title="grid.title.empty" description="label.formRepository.viewer.desc" decorator="com.pandora.gui.taglib.decorator.RepositoryOnlineViewerDecorator" visibleProperty="<%=PreferenceTO.REPOSITORY_GRID_VIEWER%>" />					  
+						</plandora-html:ptable>
 					</logic:equal>		
 				</td>
 			</tr>

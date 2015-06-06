@@ -1,0 +1,678 @@
+<!--
+	TODO: 
+		no-working days bars
+		expand/collapse jobs based on macro-task title click
+		
+		implement predescesor arrows
+		different bucket sizes (height) considering each slot capacity 
+-->
+<html>
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+		<script LANGUAGE="JavaScript">
+			
+			// global variables used while dragging and event handlers
+			var offsetXReference = 0;
+			var selectedObj;
+			var selectedTask;
+			var SEPARATOR_WIDTH = 7;
+			var SLOT_WIDTH = 20;
+			
+			var cavs;
+			var ctx;
+			
+			document.onmousedown = function(event) {
+				evt = event || window.event;
+				return grabObject(evt);
+			};			
+
+
+			document.onmouseup = function(event) {
+				evt = event || window.event;
+				return releaseObject(evt);
+			};			
+			
+			
+			function scrollBar(isBarReference) {
+				var refBar = document.getElementById('ganttBarBox');
+				var refLabel = document.getElementById('ganttlabelBox');
+				var refTitleLabel = document.getElementById('gantttitlelabelBox');
+				var barsTitle = document.getElementById('ganttBarTitleBox');
+				
+				if (isBarReference) {
+					refLabel.scrollTop = refBar.scrollTop
+				} else {
+					refBar.scrollTop = refLabel.scrollTop;					
+				}
+				refTitleLabel.scrollLeft = refLabel.scrollLeft;
+				barsTitle.scrollLeft = refBar.scrollLeft;
+				
+				//var boxSep = document.getElementById('ganttBoxSeparator');
+				//cavs.style.top = 32 - refLabel.scrollTop;
+				//cavs.style.left = (boxSep.offsetLeft + SEPARATOR_WIDTH - refBar.scrollLeft) + "px";
+			}
+
+			// positioning an object at a specific 'x' coordinate
+			function shiftTo(toChangeObj, x) {
+
+				var redimBox = document.getElementById('boxBarRedim');
+				var ref = document.getElementById('ganttlabelBox');
+				var bars = document.getElementById('ganttBarBox');
+				var jobsArea = document.getElementById('jobsAreaTable');
+
+				if (toChangeObj.id == "ganttBoxSeparator") {
+					selectedObj.style.cursor="w-resize";
+					redimBox.style.display = "none";
+					var labelTbl = document.getElementById('ganttlabelBoxTable');
+					if (x > labelTbl.offsetWidth) {
+						x = labelTbl.offsetWidth;
+					}
+				} else if (toChangeObj.id.substring(0, 9) == "ganttJob_") {
+					selectedObj.style.cursor="move";
+					redimBox.style.display = "none";
+					x = x - ref.offsetWidth + bars.scrollLeft;
+					if (x < 0) {
+						x = 0;
+					}
+					if ((x + toChangeObj.offsetWidth) > (bars.offsetWidth + bars.scrollLeft) ) {
+						x = (bars.offsetWidth + bars.scrollLeft) - toChangeObj.offsetWidth;
+					}
+					//right limit to job move action...
+					if ((selectedTask.offsetLeft + selectedTask.offsetWidth) > jobsArea.offsetWidth) {
+						x = jobsArea.offsetWidth - selectedTask.offsetWidth;
+					}
+				
+				} else if (toChangeObj.id == "boxBarRedim" && selectedTask) {
+					redimBox.style.cursor="w-resize";
+					
+					//right limit to job redim action...					
+					if ((x + bars.scrollLeft - ref.offsetWidth) > jobsArea.offsetWidth) {
+						var diff = 0;
+						if ((bars.scrollLeft-ref.offsetWidth)>0) {
+							diff = (bars.scrollLeft-ref.offsetWidth);
+						}					
+						x = jobsArea.offsetWidth - diff;
+					}
+					
+				} else {
+					redimBox.style.display = "none";
+				}
+				
+				toChangeObj.style.left = x;
+			}
+
+
+			// set selectedObj with the reference to dragged element
+			function setSelectedObj(evt) {
+				var redimBox = document.getElementById('boxBarRedim');
+				
+				var objectToBeChanged = evt.srcElement? evt.srcElement : evt.target; 
+				if (objectToBeChanged) {
+					if (objectToBeChanged.id != "boxBarRedim") {
+						redimBox.style.display = "none";
+					}
+				
+					if (objectToBeChanged.id == "ganttBoxSeparator" || objectToBeChanged.id.substring(0, 9) == "ganttJob_" || objectToBeChanged.id == "boxBarRedim") {
+						selectedObj = objectToBeChanged;
+
+						//show the icon to redim a block						
+						shiftRedimBox(objectToBeChanged);
+						
+						return;
+					}				
+				}
+				selectedObj = null;	
+				createCanvasOverlay();
+				return;
+			}
+			
+			
+			function dragIt(evt) {
+				if (selectedObj) {
+					selectedObj.style.cursor="w-resize";
+					shiftTo(selectedObj, (evt.clientX - offsetXReference));
+					return false;
+				}
+			}
+			
+			
+			function grabObject(evt) {
+				setSelectedObj(evt);
+				if (selectedObj) {
+
+					var offX = (!evt.offsetX)? evt.layerX : evt.offsetX; 
+					offsetXReference = offX;
+					
+					document.onmousemove = function(e) {
+						evt = e || window.event;
+						return dragIt(evt);
+					};
+				}
+			}
+			
+			
+			// perform boxes repositioning
+			function releaseObject(evt) {
+				if (selectedObj) {					
+					if (selectedObj.id == "ganttBoxSeparator") {	
+						changePanelPosition(evt, selectedObj.offsetLeft);
+						
+					} else if (selectedObj.id.substring(0, 9) == "ganttJob_") {	
+						var currentPos = selectedObj.offsetLeft;
+						var slot = Math.floor( currentPos / SLOT_WIDTH );
+						selectedObj.style.left = Math.floor(slot * SLOT_WIDTH);
+						shiftRedimBox(selectedObj);
+						
+					} else if (selectedObj.id == "boxBarRedim" && selectedTask) {	
+						var panel = document.getElementById('ganttlabelBox');
+						var bars = document.getElementById('ganttBarBox');
+						var currentPos = selectedObj.offsetLeft - panel.offsetWidth;
+						var slot = Math.floor( currentPos / SLOT_WIDTH );
+						selectedTask.style.width = Math.floor(slot * SLOT_WIDTH) - selectedTask.offsetLeft + bars.scrollLeft;
+						if (selectedTask.offsetWidth<SLOT_WIDTH) {
+							selectedTask.style.width = SLOT_WIDTH + "px";
+						}
+						selectedObj.style.display = "none";
+						redimMacroTask(selectedTask);
+					}
+					selectedObj = null;
+					document.onmousemove = null;					
+					
+				}
+			}
+			
+			
+			function changePanelPosition(evt, xpos){
+			
+				var panel = document.getElementById('ganttlabelBox');
+				panel.style.width = xpos + "px";
+				
+				var boxTitlePanel = document.getElementById('gantttitlelabelBox');
+				boxTitlePanel.style.width = xpos + "px";
+				
+				var bars = document.getElementById('ganttBarBox');
+				var oldPos = bars.offsetLeft;
+				bars.style.left = (xpos + SEPARATOR_WIDTH) + "px";  
+				var diff = oldPos - bars.offsetLeft;
+
+				bars.style.width = bars.offsetWidth + diff + "px";
+				
+				var barsTitle = document.getElementById('ganttBarTitleBox');
+				barsTitle.style.left = bars.style.left;
+				barsTitle.style.width = bars.style.width;
+				
+				//var jobsArea = document.getElementById('jobsAreaTable');
+				//cavs.style.left = xpos +"px";
+				//cavs.style.width =  jobsArea.offsetWidth + "px";
+			}			
+			
+			
+			function shiftRedimBox(objectToBeChanged) {
+				if (objectToBeChanged.id.substring(0, 9) == "ganttJob_") {
+					selectedTask = objectToBeChanged;
+					var redimBox = document.getElementById('boxBarRedim');
+					var boxPanel = document.getElementById('ganttlabelBox');
+					var boxTimeLine = document.getElementById('ganttBarTable');
+					var boxBar = document.getElementById('ganttBarBox');
+					var barsTitle = document.getElementById('ganttBarTitleBox');
+					redimBox.style.display = "block";
+					
+					var adjust = 3;
+					if (navigator.appVersion.indexOf("MSIE") != -1) {
+						adjust = 8;
+					}
+					
+					redimBox.style.left = objectToBeChanged.offsetLeft + boxPanel.offsetWidth + objectToBeChanged.offsetWidth + SEPARATOR_WIDTH - boxBar.scrollLeft;
+					redimBox.style.top = objectToBeChanged.offsetTop + (objectToBeChanged.offsetHeight/2) + barsTitle.offsetHeight - adjust - boxBar.scrollTop;
+					redimBox.style.Height = 7;
+					redimMacroTask(objectToBeChanged);
+				}			
+			}
+
+			function redimMacroTask(objectToBeChanged) {
+				var mtask = objectToBeChanged.getAttribute("macroTask");
+				if (mtask) {
+					var macroTaskList = mtask.split(';');
+					for (i=0; i< macroTaskList.length; i++) {
+						var macroTaskObj = document.getElementById("macroTask_" + macroTaskList[i]);
+						if (macroTaskObj) {
+							
+							var childTaskObj = macroTaskObj.getAttribute("childTask");
+							if (childTaskObj) {
+								var childTaskList = childTaskObj.split(';');
+								var minLeft = Number.MAX_VALUE;
+								var maxWidth = 0;
+								
+								for (j=0; j< childTaskList.length; j++) {
+									var childTaskObj = document.getElementById("ganttJob_" + childTaskList[j]);
+									if (childTaskObj) {
+										if (childTaskObj.offsetLeft < minLeft) {
+											minLeft = childTaskObj.offsetLeft;
+										}
+										if ((childTaskObj.offsetLeft + childTaskObj.offsetWidth) > maxWidth ) {
+											maxWidth = (childTaskObj.offsetLeft + childTaskObj.offsetWidth);
+										}									
+									}
+								}
+								
+								var adjust = 0;
+								if (navigator.appVersion.indexOf("MSIE") == -1) {
+									adjust = 10;
+								}
+								macroTaskObj.style.left = minLeft + "px";
+								macroTaskObj.style.width = (maxWidth - minLeft - adjust)+ "px";
+							}
+						}
+					}
+				}			
+			}
+			
+			function createCanvasOverlay() {
+				var boxSep = document.getElementById('ganttBoxSeparator');
+				var jobsArea = document.getElementById('jobsAreaTable');
+				var bars = document.getElementById('ganttBarBox');
+				var panel = document.getElementById('ganttlabelBox');
+				
+				/*
+				if (!cavs) {
+					var redimBox = document.getElementById('boxBarRedim');
+					
+					boxSep.style.zIndex="1";
+					redimBox.style.zIndex="1";
+					bars.style.zIndex="1";
+					panel.style.zIndex="1";
+					
+					cavs = document.createElement('canvas');
+					document.body.appendChild(cavs);
+					cavs.width = jobsArea.offsetWidth;
+					cavs.height = (jobsArea.offsetHeight+30);
+					
+					cavs.style.position = 'absolute';
+					cavs.style.top= "32px";
+					cavs.style.zIndex="0";
+					cavs.style.left = (boxSep.offsetLeft + SEPARATOR_WIDTH - bars.scrollLeft) + "px";
+					cavs.style.width =  jobsArea.offsetWidth + "px";
+					cavs.style.height= (jobsArea.offsetHeight+30) + "px";
+
+					ctx = cavs.getContext('2d');
+				}
+
+				drawCanvas();
+				*/
+			}			
+				
+			function drawCanvas() {
+				var bars = document.getElementById('ganttBarBox');
+				var boxPanel = document.getElementById('ganttlabelBox');
+				
+				var renderWindowX = bars.scrollLeft;
+				var renderWindowY = bars.scrollTop;
+				var renderWindowWidth = bars.offsetWidth;
+				var renderWindowHeight = boxPanel.offsetHeight - 30;
+				
+				//console.debug("X:" + renderWindowX + " Y:" + renderWindowY + " W:" + renderWindowWidth + " H:" + renderWindowHeight);
+				//ctx.clearRect (renderWindowX, renderWindowY, renderWindowWidth, renderWindowHeight);				
+				//ctx.lineWidth=1;				
+				
+				//ctx.beginPath();
+				//ctx.moveTo(renderWindowX, renderWindowY);
+				//ctx.lineTo(renderWindowX + renderWindowWidth, renderWindowY+ renderWindowHeight);
+				//ctx.stroke();
+				//ctx.closePath();				
+				
+			}
+			
+			function showHideJobs(){
+				//<img alt="" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAkAAAAJCAIAAABv85FHAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAAlSURBVBhXY2DAD/5jA1AtcCkgH5kNkiYgh2YpUDXlZmK6lIDfANlSd4ln9ns9AAAAAElFTkSuQmCC" />
+				//<img alt="" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAkAAAAJCAYAAADgkQYQAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsIAAA7CARUoSoAAAAAySURBVChTY2RgYPgPxHgBI0gREOBUxMjIyMBEyBSQPFGK4NaBjEUHIGeAxAfCTYR8CADTiREJzWzLZAAAAABJRU5ErkJggg==" />
+			}
+			
+		</script>
+		
+		<style type="text/css">
+			body{
+				margin:0;
+				padding:0;
+			}
+
+<!--
+			::-moz-selection {
+				background-image: url(data:image/png;base64,0);
+			}
+			::selection {
+				background-image: url(data:image/png;base64,0);
+			}
+-->			
+			
+			#ganttlabelBox{ 
+				position:absolute;
+				top:32 !important;
+				overflow: auto;
+				overflow-y: hidden;
+			}
+
+			#gantttitlelabelBox{ 
+				position:absolute;
+				top:0 !important;
+				overflow: hidden;
+			}
+			
+			.gantttitle{
+				background-color: #003366;
+				color: #FFFFFF;
+				line-height: 30px;
+				border: 1px solid #ffffff;
+				font-family: "Verdana";
+				font-size: 9px;
+				text-align: center;
+				vertical-align: middle;
+				text-decoration:none;
+			}
+			
+			.ganttlabel{
+				color: #003366;
+				line-height: 22px;
+				border: 1px solid #ffffff;
+				font-family: "Verdana";
+				font-size: 9px;
+				text-align: center;
+				vertical-align: middle;
+				white-space: nowrap; 
+				background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAB4AAAAZCAYAAAAmNZ4aAAAABGdBTUEAALGPC/xhBQAAAIZJREFUSEvt0EEKggAARNHp/meSMEmSJMMwDMMwAzEMwxDcTbfobxp464G/WpbFIjbPswn6TJMJeo+jCXoNgwl69r0J6rrOBD3a1gTdm8YE3eraBF2rygRdytIEnYvCBJ3y3AQds8wEHdLUBO2TxATt4tgEbaPIBG3C0AStg8CE//HPsmOpv05A1pSbgwOUAAAAAElFTkSuQmCC);
+			}
+
+			#ganttBoxSeparator{ 
+				position:absolute;
+				top:1px;
+				width:7px;
+				left:399px;
+				cursor: w-resize;
+				background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAcAAAAUCAIAAADOcrCxAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAAmSURBVChTY/j////379/fvXv37Nmze/fuXb169ezZswyjooM8HAAA63loWD+TJwAAAABJRU5ErkJggg==);
+			}
+
+			#boxBarRedim{ 
+				position:absolute;
+				width:7px;
+				height:7px !important;
+				cursor: w-resize;
+				display: none;
+				background: #000;
+			}
+			
+			#ganttBarBox{ 
+				position: absolute;
+				overflow-x: scroll;
+				overflow-y: scroll;
+				top:32 !important;
+				left:407px;
+				width:600px;
+			}
+
+			#ganttBarTitleBox{ 
+				position: absolute;
+				overflow: hidden;
+				top:0 !important;
+				left:407px;
+				width:600px;
+			}
+			
+			.ganttBarRow {
+				vertical-align: middle;
+				text-align: center;
+			}
+			
+			.gantttimelineUp{
+				border: 1px solid #ffffff;
+				font-family: "Verdana";
+				font-size: 9px;
+				line-height: 14px;
+				background-color: #003366;
+				color: #FFFFFF;
+			}
+
+			#ganttBarOverlay {
+				position: absolute;			
+				background-color: #FF0000;
+			}
+			
+			.gantttimelineDown{
+				border: 1px solid #ffffff;
+				font-family: "Verdana";
+				font-size: 9px;				
+				line-height: 14px;
+				color: #FFFFFF;
+				width:15px;
+				background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAB4AAAAZCAYAAAAmNZ4aAAAABGdBTUEAALGPC/xhBQAAAIZJREFUSEvt0EEKggAARNHp/meSMEmSJMMwDMMwAzEMwxDcTbfobxp464G/WpbFIjbPswn6TJMJeo+jCXoNgwl69r0J6rrOBD3a1gTdm8YE3eraBF2rygRdytIEnYvCBJ3y3AQds8wEHdLUBO2TxATt4tgEbaPIBG3C0AStg8CE//HPsmOpv05A1pSbgwOUAAAAAElFTkSuQmCC);				
+			}
+			
+			.ganttBar{
+				border-style:solid;
+				border-width:1px;
+				font-family: "Verdana";
+				font-size: 8px;
+				height:10px !important;
+				line-height: 23px;
+				position:relative;
+				color: #FFFFFF;
+				cursor: move;
+				box-shadow: 3px 2px 4px #c0c0c0;
+				text-decoration:none;
+			}
+			
+			.ganttMacroBar{
+				border-right: 6px solid #000;   
+				border-top: 2px solid #000;
+				border-left: 6px solid #000;
+				font-family: "Verdana";
+				font-size: 6px;
+				height:6px !important;
+				top:4px !important;
+				position:relative;
+				box-shadow: 3px -2px 4px 0px #c0c0c0;
+				text-decoration:none;
+			}
+			
+			.ganttRowBar{
+				height: 24px;
+			}
+
+			.ganttCellBar{
+				border-bottom: 1px dotted #c0c0c0
+			}
+			
+		</style>
+	</head>
+	
+	<body>
+	
+		<div id="gantttitlelabelBox" style="width:400px; height:32px">
+			<table border="0" width="800px" cellspacing="0" cellpadding="0">
+				<tr>
+					<th class="gantttitle" width="50px">ID</th>
+					<th class="gantttitle">Task</th>
+					<th class="gantttitle" width="100px">Assigne</th>
+					<th class="gantttitle" width="70px">Start</th>
+					<th class="gantttitle" width="70px">End</th>
+					<th class="gantttitle" width="50px">Pred.</th>
+				</tr>
+			</table>
+		</div>
+		
+		<div id="ganttlabelBox" style="width:400px; height:241px; top:32px" onscroll="javascript:scrollBar(false);">
+			<table id="ganttlabelBoxTable" width="800px" border="0" cellspacing="0" cellpadding="0">
+				<tr><th width="50px" class="ganttlabel">10021</th><th class="ganttlabel" style="text-align: left">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Implementação</th><th width="100px" class="ganttlabel">Fulano</th><th width="70px" class="ganttlabel">12/02/2012</th><th width="70px" class="ganttlabel">12/02/2012</th><th width="50px" class="ganttlabel">&nbsp;</th> </tr>
+				<tr><th width="50px" class="ganttlabel">10121</th><th class="ganttlabel" style="text-align: left">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Revisão do documento de integração</th><th class="ganttlabel">Fulano</th><th class="ganttlabel">12/02/2012</th><th class="ganttlabel">12/02/2012</th><th class="ganttlabel">&nbsp;</th> </tr>
+				<tr><th width="50px" class="ganttlabel">0324</th><th class="ganttlabel" style="text-align: left">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Reunião de levantamento</th><th class="ganttlabel">Fulano</th><th class="ganttlabel">12/02/2012</th><th class="ganttlabel">12/02/2012</th><th class="ganttlabel">&nbsp;</th> </tr>
+				<tr><th width="50px" class="ganttlabel">1141</th><th class="ganttlabel" style="text-align: left">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;visita ao cliente</th><th class="ganttlabel">Fulano</th><th class="ganttlabel">12/02/2012</th><th class="ganttlabel">12/02/2012</th><th class="ganttlabel">&nbsp;</th> </tr>
+				<tr><th width="50px" class="ganttlabel">4121</th><th class="ganttlabel" style="text-align: left">&nbsp;<img alt="" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAkAAAAJCAYAAADgkQYQAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsIAAA7CARUoSoAAAAAySURBVChTY2RgYPgPxHgBI0gREOBUxMjIyMBEyBSQPFGK4NaBjEUHIGeAxAfCTYR8CADTiREJzWzLZAAAAABJRU5ErkJggg==" />&nbsp;testes unitários</th><th class="ganttlabel">Fulano</th><th class="ganttlabel">12/02/2012</th><th class="ganttlabel">12/02/2012</th><th class="ganttlabel">&nbsp;</th> </tr>
+				<tr><th width="50px" class="ganttlabel">4221</th><th class="ganttlabel" style="text-align: left">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;testes de integração com suporte </th><th class="ganttlabel">Fulano</th><th class="ganttlabel">12/02/2012</th><th class="ganttlabel">12/02/2012</th><th class="ganttlabel">&nbsp;</th> </tr>
+				<tr><th width="50px" class="ganttlabel">11522</th><th class="ganttlabel" style="text-align: left">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Atualização do ambiente de produção</th><th class="ganttlabel">Fulano</th><th class="ganttlabel">12/02/2012</th><th class="ganttlabel">12/02/2012</th><th class="ganttlabel">&nbsp;</th> </tr>
+				<tr><th width="50px" class="ganttlabel">9999999</th><th class="ganttlabel" style="text-align: left">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Atualização do ambiente de produção Atualização do ambiente de produção Atualiza</th><th class="ganttlabel">Sicrano Beltrano</th><th class="ganttlabel">12/02/2012</th><th class="ganttlabel">12/02/2012</th><th class="ganttlabel">9999999</th> </tr>
+				<tr><th width="50px" class="ganttlabel">10021</th><th class="ganttlabel" style="text-align: left">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Implementação</th><th class="ganttlabel">Fulano</th><th class="ganttlabel">12/02/2012</th><th class="ganttlabel">12/02/2012</th><th class="ganttlabel">&nbsp;</th> </tr>
+				<tr><th width="50px" class="ganttlabel">10121</th><th class="ganttlabel" style="text-align: left">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Revisão do documento de integração</th><th class="ganttlabel">Fulano</th><th class="ganttlabel">12/02/2012</th><th class="ganttlabel">12/02/2012</th><th class="ganttlabel">&nbsp;</th> </tr>
+				<tr><th width="50px" class="ganttlabel">0324</th><th class="ganttlabel" style="text-align: left">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Reunião de levantamento</th><th class="ganttlabel">Fulano</th><th class="ganttlabel">12/02/2012</th><th class="ganttlabel">12/02/2012</th><th class="ganttlabel">&nbsp;</th> </tr>
+				<tr><th width="50px" class="ganttlabel">1141</th><th class="ganttlabel" style="text-align: left">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;visita ao cliente</th><th class="ganttlabel">Fulano</th><th class="ganttlabel">12/02/2012</th><th class="ganttlabel">12/02/2012</th><th class="ganttlabel">&nbsp;</th> </tr>
+				<tr><th width="50px" class="ganttlabel">4121</th><th class="ganttlabel" style="text-align: left">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;testes unitários</th><th class="ganttlabel">Fulano</th><th class="ganttlabel">12/02/2012</th><th class="ganttlabel">12/02/2012</th><th class="ganttlabel">&nbsp;</th> </tr>
+				<tr><th width="50px" class="ganttlabel">4221</th><th class="ganttlabel" style="text-align: left">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;testes de integração com suporte </th><th class="ganttlabel">Fulano</th><th class="ganttlabel">12/02/2012</th><th class="ganttlabel">12/02/2012</th><th class="ganttlabel">&nbsp;</th> </tr>
+				<tr><th width="50px" class="ganttlabel">11522</th><th class="ganttlabel" style="text-align: left">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Atualização do ambiente de produção</th><th class="ganttlabel">Fulano</th><th class="ganttlabel">12/02/2012</th><th class="ganttlabel">12/02/2012</th><th class="ganttlabel">&nbsp;</th> </tr>
+				<tr><th width="50px" class="ganttlabel">9999999</th><th class="ganttlabel" style="text-align: left">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Atualização do ambiente de produção Atualização do ambiente de produção Atualiza</th><th class="ganttlabel">Sicrano Beltrano</th><th class="ganttlabel">12/02/2012</th><th class="ganttlabel">12/02/2012</th><th class="ganttlabel">9999999</th> </tr>
+				<tr><th width="50px" class="ganttlabel">888888</th><th class="ganttlabel" style="text-align: left">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Implementação</th><th class="ganttlabel">Fulano</th><th class="ganttlabel">12/02/2012</th><th class="ganttlabel">12/02/2012</th><th class="ganttlabel">&nbsp;</th> </tr>
+			</table>
+		</div>
+
+		<div id="ganttBarTitleBox" style="height:32px">
+			<table id="ganttBarTable" border="0" height="28px" width="1260px" cellspacing="0" cellpadding="0">
+				<tr class="ganttBarRow">
+					<th class="gantttimelineUp" colspan="7">semana 1</th>
+					<th class="gantttimelineUp" colspan="7">semana 2</th>
+					<th class="gantttimelineUp" colspan="7">semana 3</th>
+					<th class="gantttimelineUp" colspan="7">semana 4</th>
+					<th class="gantttimelineUp" colspan="7">semana 5</th>
+					<th class="gantttimelineUp" colspan="7">semana 6</th>
+					<th class="gantttimelineUp" colspan="7">semana 7</th>
+					<th class="gantttimelineUp" colspan="7">semana 8</th>
+					<th class="gantttimelineUp" colspan="7">semana 9</th>
+				</tr>
+				<tr class="ganttBarRow">
+					<th class="gantttimelineDown">D</th>
+					<th class="gantttimelineDown">S</th>
+					<th class="gantttimelineDown">T</th>
+					<th class="gantttimelineDown">Q</th>
+					<th class="gantttimelineDown">Q</th>
+					<th class="gantttimelineDown">S</th>
+					<th class="gantttimelineDown">S</th>
+					
+					<th class="gantttimelineDown">D</th>
+					<th class="gantttimelineDown">S</th>
+					<th class="gantttimelineDown">T</th>
+					<th class="gantttimelineDown">Q</th>
+					<th class="gantttimelineDown">Q</th>
+					<th class="gantttimelineDown">S</th>
+					<th class="gantttimelineDown">S</th>
+
+					<th class="gantttimelineDown">D</th>
+					<th class="gantttimelineDown">S</th>
+					<th class="gantttimelineDown">T</th>
+					<th class="gantttimelineDown">Q</th>
+					<th class="gantttimelineDown">Q</th>
+					<th class="gantttimelineDown">S</th>
+					<th class="gantttimelineDown">S</th>
+					
+					<th class="gantttimelineDown">D</th>
+					<th class="gantttimelineDown">S</th>
+					<th class="gantttimelineDown">T</th>
+					<th class="gantttimelineDown">Q</th>
+					<th class="gantttimelineDown">Q</th>
+					<th class="gantttimelineDown">S</th>
+					<th class="gantttimelineDown">S</th>
+
+					<th class="gantttimelineDown">D</th>
+					<th class="gantttimelineDown">S</th>
+					<th class="gantttimelineDown">T</th>
+					<th class="gantttimelineDown">Q</th>
+					<th class="gantttimelineDown">Q</th>
+					<th class="gantttimelineDown">S</th>
+					<th class="gantttimelineDown">S</th>
+
+					<th class="gantttimelineDown">D</th>
+					<th class="gantttimelineDown">S</th>
+					<th class="gantttimelineDown">T</th>
+					<th class="gantttimelineDown">Q</th>
+					<th class="gantttimelineDown">Q</th>
+					<th class="gantttimelineDown">S</th>
+					<th class="gantttimelineDown">S</th>
+
+					<th class="gantttimelineDown">D</th>
+					<th class="gantttimelineDown">S</th>
+					<th class="gantttimelineDown">T</th>
+					<th class="gantttimelineDown">Q</th>
+					<th class="gantttimelineDown">Q</th>
+					<th class="gantttimelineDown">S</th>
+					<th class="gantttimelineDown">S</th>
+					
+					<th class="gantttimelineDown">D</th>
+					<th class="gantttimelineDown">S</th>
+					<th class="gantttimelineDown">T</th>
+					<th class="gantttimelineDown">Q</th>
+					<th class="gantttimelineDown">Q</th>
+					<th class="gantttimelineDown">S</th>
+					<th class="gantttimelineDown">S</th>
+					
+					<th class="gantttimelineDown">D</th>
+					<th class="gantttimelineDown">S</th>
+					<th class="gantttimelineDown">T</th>
+					<th class="gantttimelineDown">Q</th>
+					<th class="gantttimelineDown">Q</th>
+					<th class="gantttimelineDown">S</th>
+					<th class="gantttimelineDown">S</th>						
+				</tr>	
+			</table>
+		</div>
+		
+		<div id="ganttBarBox" style="height:241px" onscroll="javascript:scrollBar(true);">
+			<table border="0" width="1260px" id="jobsAreaTable" cellspacing="0" cellpadding="0">
+				<tr class="ganttRowBar"><td class="ganttCellBar">
+					<div class="ganttBar" id="ganttJob_1" title="blakalklksdas" style="width:100px; left:0px; border-color:#000000; background-color: #6C6Cff;" />
+					<div id="ganttBarOverlay" style="top:0px; height:10px; width:20px; left:0px">&nbsp;</div>
+					<div id="ganttBarOverlay" style="top:5px; height:5px; width:20px; left:20px">&nbsp;</div>
+					<div id="ganttBarOverlay" style="top:8px; height:2px; width:20px; left:40px">&nbsp;</div>
+				</td></tr>
+				<tr class="ganttRowBar"><td class="ganttCellBar">
+					<div class="ganttBar" id="ganttJob_2" title="blakalklksdasz amsdk asd kasdk jasd kjaskd " style="width:43px; left:0px; border-color:#000000; background-color: #6C6Cff;" />
+				</td></tr>
+				<tr class="ganttRowBar"><td class="ganttCellBar">
+					<div class="ganttBar" id="ganttJob_3" title="blakalklksdas dssad" style="width:105px; left:0px; border-color:#000000; background-color: #6C6Cff;" />
+				</td></tr>
+				<tr class="ganttRowBar"><td class="ganttCellBar">
+					<div class="ganttBar" id="ganttJob_4" title="blakalklksdas dssad" style="width:105px; left:40px; border-color:#000000; background-color: #6C6Cff;" />
+				</td></tr>
+				<tr class="ganttRowBar"><td class="ganttCellBar">
+					<div class="ganttMacroBar" id="macroTask_2000" childTask="5;6" title="this is macro task" style="width:189px; left:60px" />
+				</td></tr>				
+				<tr class="ganttRowBar"><td class="ganttCellBar">
+					<div class="ganttBar" id="ganttJob_5" macroTask="2000" title="blakalklksdas sd sd" style="width:189px; left:60px; border-color:#000000; background-color: #6C6Cff;" />
+				</td></tr>
+				<tr class="ganttRowBar"><td class="ganttCellBar">
+					<div class="ganttBar" id="ganttJob_6" macroTask="2000" title="blakalklksdas sd sd" style="width:189px; left:200px; border-color:#000000; background-color: #6C6Cff;" />
+				</td></tr>
+				<tr class="ganttRowBar"><td class="ganttCellBar">
+					<div class="ganttBar" id="ganttJob_7" title="blakalklksdas sd sd" style="width:189px; left:60px; border-color:#000000; background-color: #6C6Cff;" />
+				</td></tr>
+				<tr class="ganttRowBar"><td class="ganttCellBar">
+					<div class="ganttBar" id="ganttJob_8" title="blakalklksdas sd sd" style="width:189px; left:20px; border-color:#000000; background-color: #6C6Cff;" />
+				</td></tr>
+				<tr class="ganttRowBar"><td class="ganttCellBar">
+					<div class="ganttBar" id="ganttJob_9" title="blakalklksdas sd sd" style="width:189px; left:80px; border-color:#000000; background-color: #6C6Cff;" />
+				</td></tr>
+				<tr class="ganttRowBar"><td class="ganttCellBar">
+					<div class="ganttBar" id="ganttJob_10" title="blakalklksdas sd sd" style="width:189px; left:120px; border-color:#000000; background-color: #6C6Cff;" />
+				</td></tr>
+				<tr class="ganttRowBar"><td class="ganttCellBar">
+					<div class="ganttBar" id="ganttJob_11" title="blakalklksdas sd sd" style="width:189px; left:200px; border-color:#000000; background-color: #6C6Cff;" />
+				</td></tr>
+				<tr class="ganttRowBar"><td class="ganttCellBar">
+					<div class="ganttBar" id="ganttJob_12" title="blakalklksdas sd sd" style="width:189px; left:60px; border-color:#000000; background-color: #6C6Cff;" />
+				</td></tr>
+				<tr class="ganttRowBar"><td class="ganttCellBar">
+					<div class="ganttBar" id="ganttJob_13" title="blakalklksdas sd sd" style="width:189px; left:140px; border-color:#000000; background-color: #6C6Cff;" />
+				</td></tr>
+				<tr class="ganttRowBar"><td class="ganttCellBar">
+					<div class="ganttBar" id="ganttJob_14" title="blakalklksdas sd sd" style="width:189px; left:900px; border-color:#000000; background-color: #6C6Cff;" />
+				</td></tr>
+				<tr class="ganttRowBar"><td class="ganttCellBar">
+					<div class="ganttBar" id="ganttJob_15" title="blakalklksdas sd sd" style="width:189px; left:80px; border-color:#000000; background-color: #6C6Cff;" />
+				</td></tr>
+				<tr class="ganttRowBar"><td class="ganttCellBar">
+					<div class="ganttBar" id="ganttJob_16" title="blakalklksdas sd sd" style="width:189px; left:0px; border-color:#000000; background-color: #6C6Cff;" />
+				</td></tr>
+				</table>
+		</div>
+
+		<div id="boxBarRedim"><!-- IE bug: this comment must be here because, empty div seems to make IE ignore height property and define a arbitrary value--></div>
+		<div id="ganttBoxSeparator" style="height:272px;"></div>
+		
+		
+	</body>
+</html>
+

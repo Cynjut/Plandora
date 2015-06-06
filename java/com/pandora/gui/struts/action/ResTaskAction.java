@@ -15,8 +15,10 @@ import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionForward;
 import org.apache.struts.action.ActionMapping;
 
+import com.pandora.AttachmentTO;
 import com.pandora.CategoryTO;
 import com.pandora.CustomerTO;
+import com.pandora.DiscussionTopicTO;
 import com.pandora.MetaFieldTO;
 import com.pandora.OccurrenceTO;
 import com.pandora.PreferenceTO;
@@ -24,6 +26,7 @@ import com.pandora.ProjectTO;
 import com.pandora.ReportTO;
 import com.pandora.RepositoryFilePlanningTO;
 import com.pandora.RequirementTO;
+import com.pandora.ResourceDateAllocTO;
 import com.pandora.ResourceTO;
 import com.pandora.ResourceTaskAllocTO;
 import com.pandora.ResourceTaskTO;
@@ -33,6 +36,7 @@ import com.pandora.TaskTO;
 import com.pandora.TransferObject;
 import com.pandora.UserTO;
 import com.pandora.delegate.CategoryDelegate;
+import com.pandora.delegate.DiscussionTopicDelegate;
 import com.pandora.delegate.MetaFieldDelegate;
 import com.pandora.delegate.OccurrenceDelegate;
 import com.pandora.delegate.ProjectDelegate;
@@ -45,13 +49,17 @@ import com.pandora.delegate.UserDelegate;
 import com.pandora.exception.BusinessException;
 import com.pandora.exception.InvalidTaskStateTransitionException;
 import com.pandora.exception.InvalidTaskTimeException;
+import com.pandora.exception.MandatoryMetaFieldBusinessException;
+import com.pandora.exception.MetaFieldNumericTypeException;
 import com.pandora.exception.ProjectTasksDiffRequirementException;
 import com.pandora.exception.TasksDiffRequirementException;
-import com.pandora.exception.ZeroCapacityException;
+import com.pandora.exception.WaitPredecessorUpdateException;
+import com.pandora.gui.struts.form.GeneralStrutsForm;
 import com.pandora.gui.struts.form.ResTaskForm;
 import com.pandora.gui.taglib.decorator.HideProjectDecorator;
 import com.pandora.gui.taglib.decorator.RepositoryEntityCheckBoxDecorator;
 import com.pandora.helper.DateUtil;
+import com.pandora.helper.HtmlUtil;
 import com.pandora.helper.LogUtil;
 import com.pandora.helper.SessionUtil;
 import com.pandora.helper.StringUtil;
@@ -73,6 +81,11 @@ public class ResTaskAction extends GeneralStrutsAction {
 		    //clear current form
 		    ResTaskForm trfrm = (ResTaskForm)form;
 		    trfrm.clear();
+		    		    
+		    //clear the attachments of the task and update the session attribute taskAttachmentList
+		    request.getSession().removeAttribute("taskAttachmentList");
+		    request.getSession().setAttribute("taskAttachmentList", new Vector<AttachmentTO>());
+		    
 		    trfrm.setSaveMethod(ResTaskForm.UPDATE_METHOD, SessionUtil.getCurrentUser(request));
 		    trfrm.setTitleDateMask(this.getBundleMessage(request, "label.resTaskForm.mask"));
 		    
@@ -93,6 +106,8 @@ public class ResTaskAction extends GeneralStrutsAction {
 			//refresh resource task
 		    this.refresh(mapping, form, request, response);
 		    
+		    this.updateDateAllocTimeList(trfrm, null);
+		    
 		} catch(BusinessException e){
 		    this.setErrorFormSession(request, "error.showResTaskForm", e);
 		}
@@ -100,6 +115,20 @@ public class ResTaskAction extends GeneralStrutsAction {
 		return mapping.findForward(forward);
 	}
 
+	
+	public ActionForward refreshAfterTopicDiscussion(ActionMapping mapping, ActionForm form,
+			 HttpServletRequest request, HttpServletResponse response){
+		String forward = "showResTask";
+	    try {
+	    	ResTaskForm trfrm = (ResTaskForm)form;
+		    this.getDiscussionData(request, trfrm);
+		    
+		} catch(Exception e){
+		    this.setErrorFormSession(request, "error.showReqForm", e);
+		}
+		return mapping.findForward(forward);		
+	}
+	
 	
 	public ActionForward showMTConfirmation(ActionMapping mapping, ActionForm form,
 			HttpServletRequest request, HttpServletResponse response){
@@ -174,22 +203,21 @@ public class ResTaskAction extends GeneralStrutsAction {
 	    String forward = "showResTask";
 	    TaskDelegate tdel = new TaskDelegate();
 	    OccurrenceDelegate odel = new OccurrenceDelegate();
+	    UserDelegate udel = new UserDelegate();
 	    
 		try {
 		    ResTaskForm trfrm = (ResTaskForm)form;			
 			this.resetForm(form);
 		    this.loadBillableStatus(trfrm);
-		    		
-			if (trfrm.getIsCurrentTaskCreator().equals("on")) {
+			ProjectTO pto = new ProjectTO(trfrm.getProjectId());
 
-				//get all categories from data base and put into http session (to be displayed by combo)
-				ProjectTO pto = new ProjectTO(trfrm.getProjectId());
-			    CategoryDelegate cdel = new CategoryDelegate();
-			    Vector<CategoryTO> catlist = cdel.getCategoryListByType(CategoryTO.TYPE_TASK, pto, false);
-			    request.getSession().setAttribute("categoryList", catlist);
-			}
+			//get all categories from data base and put into http session (to be displayed by combo)
+		    CategoryDelegate cdel = new CategoryDelegate();
+		    Vector<CategoryTO> catlist = cdel.getCategoryListByType(CategoryTO.TYPE_TASK, pto, false);
+		    request.getSession().setAttribute("categoryList", catlist);			
 			
 		    this.refreshMetaFieldList(request, trfrm);
+		    this.getDiscussionData(request, trfrm);
 		    
 			//get macro-tasks from data base (filter by requirement) and put into http session (to be displayed by combo)
 		    RequirementTO rto = null;
@@ -210,6 +238,9 @@ public class ResTaskAction extends GeneralStrutsAction {
 		    billableStatusList.add(new TransferObject("1", super.getBundleMessage(request, "label.yes")));
 		    billableStatusList.add(new TransferObject("0", super.getBundleMessage(request, "label.no")));
 		    request.getSession().setAttribute("billableStatusList", billableStatusList);
+		    		    
+		    UserTO uto = SessionUtil.getCurrentUser(request);
+		    trfrm.setCanSeeDiscussion(udel.checkCustomerViewDiscussion(uto, pto));
 		    
 		} catch(BusinessException e){
 		    this.setErrorFormSession(request, "error.showResTaskForm", e);
@@ -333,7 +364,7 @@ public class ResTaskAction extends GeneralStrutsAction {
 				request.getSession().setAttribute("taskList", taskList);
 		    }
 			
-			request.getSession().setAttribute("reqAttachList", new Vector());			
+			request.getSession().setAttribute("reqAttachList", new Vector<AttachmentTO>());			
 		    if (trfrm.getTaskId()!=null && !trfrm.getTaskId().equals("")) {
 			    TaskTO tto = new TaskTO(trfrm.getTaskId());
 			    tto = tdel.getTaskObject(tto);
@@ -346,37 +377,43 @@ public class ResTaskAction extends GeneralStrutsAction {
 			    }
 		    }
 
-			if (trfrm.getIsAdHocTask().equals("on")) {
-				
-			    //get all projects (of current resource) from data base and put into http session
-				ProjectDelegate pdel = new ProjectDelegate();
-			    UserTO uto = SessionUtil.getCurrentUser(request);
-			    Vector<ProjectTO> projtemp = pdel.getProjectListForWork(uto, true);
-			    
-			    Vector<ProjectTO> projList = new Vector<ProjectTO>();
-			    trfrm.setProjectId("");
+			ProjectDelegate pdel = new ProjectDelegate();
+		    UserTO uto = SessionUtil.getCurrentUser(request);
+		    Vector<ProjectTO> projtemp = pdel.getProjectListForWork(uto, true, true);
+		    
+		    Vector<ProjectTO> projList = new Vector<ProjectTO>();
 
-			    //insert a dummy project into top of the list
-			    ProjectTO dummy = new ProjectTO("-1");
-			    dummy.setName(this.getBundleMessage(request, "validate.manageTask.selectProject"));
-			    projList.add(dummy);
-    			trfrm.setProjectId("-1");		
-			    
-			    //check if there are projects that must be hidden			    
-			    if (projtemp!=null && projtemp.size()>0) {
-				    Iterator<ProjectTO> i = projtemp.iterator();
-				    while(i.hasNext()) {
-				    	ProjectTO pto = i.next();
-				    	if (!HideProjectDecorator.isHideProject(uto, pto.getId())) {
-				    		projList.add(pto);
-				    	}
-				    }
+		    if (projtemp!=null && projtemp.size()>0) {
+			    Iterator<ProjectTO> i = projtemp.iterator();
+			    while(i.hasNext()) {
+			    	ProjectTO pto = i.next();
+			    	if (!HideProjectDecorator.isHideProject(uto, pto.getId())) {
+			    		projList.add(pto);
+			    	}
 			    }
-			    request.getSession().setAttribute("projectList", projList);
-			    			    
-			    //get all TasksStatus from data base and put into http session (to be displayed by combo)			
-				request.getSession().setAttribute("taskStatusList", getTaskStatusList(null));
+		    }
+
+		    String content = this.getHtmlCombo(request, projList);
+			trfrm.setProjectHtmlList(content);
+
+	    	projtemp = new Vector<ProjectTO>();
+	    	 //insert a dummy project into top of the list
+		    ProjectTO dummy = new ProjectTO("-1");
+		    dummy.setName(this.getBundleMessage(request, "validate.manageTask.selectProject"));
+		    projtemp.add(dummy);
+		    projtemp.addAll(projList);
+		    
+		    
+			//get all projects (of current resource) from data base and put into http session
+			request.getSession().setAttribute("projectList", projtemp);
+			
+			
+		    if (trfrm.getIsAdHocTask().equals("on")) {
+				trfrm.setProjectId("-1");
 				
+				//get all TasksStatus from data base and put into http session (to be displayed by combo)			
+				request.getSession().setAttribute("taskStatusList", getTaskStatusList(null));
+
 			} else {
 				//get all TasksStatus from data base and put into http session (to be displayed by combo)			
 				request.getSession().setAttribute("taskStatusList", getTaskStatusList(trfrm.getTaskStatus()));			    
@@ -431,55 +468,23 @@ public class ResTaskAction extends GeneralStrutsAction {
 	    try {
 	    	this.preProcessForm(form, request);
 	        forward = saveResTask(mapping, form, request, response, true);
-	    } catch(Exception e) {
+	    } catch(MetaFieldNumericTypeException e){
+	    	this.setErrorFormSession(request, e.getMessage(), e.getMetaFieldName(), null, null, null, null, e);
+		} catch(Exception e) {
 	    	this.setErrorFormSession(request, "error.invalidTaskTransState", e);
 	    }
-	    /*	
-	    ResourceTaskDelegate rtdel = new ResourceTaskDelegate();
-	    TaskStatusDelegate tsdel = new TaskStatusDelegate();
-	    try {
-		    ResTaskForm trfrm = (ResTaskForm)form;
-		    String mtConfirmAnswer = request.getParameter("MTConfirmAnswer");
-		    
-		    boolean showConfirmation = false;
-		    if (mtConfirmAnswer==null || mtConfirmAnswer.trim().equals("")) {
-		    	
-			    ResourceTaskTO rtto = this.preProcessForm(form, request);
-			    
-			    //get data of Task Status selected from data base
-			    TaskStatusTO tsto = rtto.getTaskStatus(); 
-			    tsto = tsdel.getTaskStatusObject(tsto);
-			    
-			    //check if the last task will be closed and if the macro task must be closed, too		    
-			    if (tsto.isFinish()) {
-				    TaskTO tto = rtto.getTask();
-				    if (tto.getParentTask()!=null) {
-				    	Vector list = rtdel.getNotClosedTasksUnderMacroTask(rtto.getTask());
-				    	if (list.size()==0) {
-				    		showConfirmation = true;
-				    	}
-				    }		    	
-			    }		    	
-		    }
-		    
-		    if (showConfirmation) {
-		    	trfrm.setShowCloseMacroTaskConfirm("on");
-		    } else {
-		    	if (mtConfirmAnswer!=null && mtConfirmAnswer.equals("CLOSE")) {
-		    		//this method must be called only if the macro task must be close together
-		    		forward = saveResTask(mapping, form, request, response, true);	
-		    	} else {
-		    		forward = saveResTask(mapping, form, request, response, false);
-		    	}
-		    }
-	        
-	    } catch(Exception e) {
-	    	this.setErrorFormSession(request, "error.saveResTaskForm", e);
-	    }
-    */
 	    return forward;
 	}
 	
+	private String getHtmlCombo(HttpServletRequest request, Vector<ProjectTO> v) {
+		String list = "<select id=\"selectedProjectId\" name=\"selectedProjectId\" class=\"textBox\">";
+		list = list + "<option value=\"-1\">" + super.getBundleMessage(request, "label.combo.select") + "</option>";
+		if (v!=null) {
+			list = list + HtmlUtil.getComboOptions("selectedProjectId", v, "textBox", null);
+		}
+		list = list + "</select>";
+		return list;
+	}
 	
 	/**
 	 * Save a resource task into data base. 
@@ -505,24 +510,28 @@ public class ResTaskAction extends GeneralStrutsAction {
 		    //get data of Task Status selected from data base
 		    TaskStatusTO tsto = rtto.getTaskStatus(); 
 		    tsto = tsdel.getTaskStatusObject(tsto);
-		    		    
+
 		    //save new status and additional information into database
 		    rtto.setHandler(uto);
 		    rtdel.changeTaskStatus(rtto, tsto.getStateMachineOrder(), trfrm.getComment(), 
 		    		rtto.getTask().getAdditionalFields(), isMTClosingAllowed);
-		    		    
+
 			//set success message into http session
 			this.setSuccessFormSession(request, "message.saveResTask");
 		    trfrm.clear(); //clear current alloc hash
 		    this.getActionFormFromTransferObject(trfrm, request);
 		    this.defineCursor(trfrm, request);
-		    
+
 			//get all resourceStatys from data base 
 			this.refresh(mapping, form, request, response);
-			this.resetAdHocTask(trfrm, request);			
+			this.resetAdHocTask(trfrm, request);	
+			
+			this.updateDateAllocTimeList(trfrm, null);
 
-		} catch(ZeroCapacityException e){
-			this.setErrorFormSession(request, "error.manageTask.zeroCapacity", e);
+		} catch(WaitPredecessorUpdateException e){
+			this.setErrorFormSession(request, "error.manageTask.waitPredes", e);
+		} catch(MetaFieldNumericTypeException e){
+			this.setErrorFormSession(request, e.getMessage(), e.getMetaFieldName(), null, null, null, null, e);
 		} catch(ProjectTasksDiffRequirementException e){
 		    this.setErrorFormSession(request, "error.manageTask.diffPrjReq", e);			
 		} catch(TasksDiffRequirementException e){
@@ -531,6 +540,8 @@ public class ResTaskAction extends GeneralStrutsAction {
 			this.setErrorFormSession(request, "validate.resTaskForm.nonOpenZeroTime", e);
 		} catch(InvalidTaskStateTransitionException e){
 		    this.setErrorFormSession(request, "error.invalidTaskTransState", e);
+		} catch(MandatoryMetaFieldBusinessException e) {
+			this.setErrorFormSession(request, "errors.required", e.getAfto().getMetaField().getName(), null, null, null, null, e);
 		} catch(BusinessException e){
 		    this.setErrorFormSession(request, "error.saveResTaskForm", e);
 		}
@@ -570,6 +581,8 @@ public class ResTaskAction extends GeneralStrutsAction {
 		    //increment the cursor (day) of allocation grid 	        
 	        this.refreshBeforeSlotJump(request, trfrm, 1);
             
+        } catch(MetaFieldNumericTypeException e){
+        	this.setErrorFormSession(request, e.getMessage(), e.getMetaFieldName(), null, null, null, null, e);
         } catch (Exception e) {
             this.setErrorFormSession(request, "error.showResTaskForm", e);
         }
@@ -590,6 +603,8 @@ public class ResTaskAction extends GeneralStrutsAction {
 		    //increment the cursor (week) of allocation grid 	        
 	        this.refreshBeforeSlotJump(request, trfrm, trfrm.getStepCursor());
             
+        } catch(MetaFieldNumericTypeException e){
+        	this.setErrorFormSession(request, e.getMessage(), e.getMetaFieldName(), null, null, null, null, e);
         } catch (Exception e) {
             this.setErrorFormSession(request, "error.showResTaskForm", e);
         }
@@ -638,6 +653,8 @@ public class ResTaskAction extends GeneralStrutsAction {
 	    
 	    trfrm.setAllocCursor(cursor);
 		
+	    updateDateAllocTimeList(trfrm, DateUtil.getChangedDate(actualDate, Calendar.DATE, cursor-1));
+	    
 		return actualDate;
 	}
 
@@ -652,6 +669,8 @@ public class ResTaskAction extends GeneralStrutsAction {
 		    //decrement the cursor (day) of allocation grid 	        
 	        this.refreshBeforeSlotJump(request, trfrm, -1);
 	        
+	    } catch(MetaFieldNumericTypeException e){
+	    	this.setErrorFormSession(request, e.getMessage(), e.getMetaFieldName(), null, null, null, null, e);
 	    } catch (Exception e) {
 	        this.setErrorFormSession(request, "error.showResTaskForm", e);
 	    }
@@ -673,6 +692,8 @@ public class ResTaskAction extends GeneralStrutsAction {
 		    //increment the cursor (week) of allocation grid 	        
 	        this.refreshBeforeSlotJump(request, trfrm, -trfrm.getStepCursor());
             
+        } catch(MetaFieldNumericTypeException e){
+        	this.setErrorFormSession(request, e.getMessage(), e.getMetaFieldName(), null, null, null, null, e);
         } catch (Exception e) {
             this.setErrorFormSession(request, "error.showResTaskForm", e);
         }
@@ -733,7 +754,9 @@ public class ResTaskAction extends GeneralStrutsAction {
 	
 	/**
 	 * Put data of html fields into TransferObject 
+	 * @throws BusinessException 
 	 */
+	@SuppressWarnings("unchecked")
 	private ResourceTaskTO getTransferObjectFromActionForm(ResTaskForm frm, Locale loc, HttpServletRequest request) throws BusinessException{
 	    UserDelegate udel = new UserDelegate();
 	    ResourceTaskTO resTask = new ResourceTaskTO();
@@ -817,7 +840,11 @@ public class ResTaskAction extends GeneralStrutsAction {
 	    
 	    resTask.setQuestionAnswer(frm.getQuestionAnswer());
 	    
-		Vector metaFieldList = (Vector)request.getSession().getAttribute("metaFieldList");
+		@SuppressWarnings("rawtypes")
+		Vector<DiscussionTopicTO> discussionTopicList = (Vector)request.getSession().getAttribute("discussionTopicList");
+		tto.setDiscussionTopics(discussionTopicList);
+	    
+		Vector<MetaFieldTO> metaFieldList = (Vector<MetaFieldTO>)request.getSession().getAttribute("metaFieldList");
 		super.setMetaFieldValuesFromForm(metaFieldList, request, tto);
 		if (metaFieldList!=null) {
 		    frm.setAdditionalFields(tto.getAdditionalFields());
@@ -868,12 +895,18 @@ public class ResTaskAction extends GeneralStrutsAction {
 
 		    //set the relationship of task
 		    request.getSession().setAttribute("relationshipList", tto.getRelationList());
+		    request.getSession().setAttribute("discussionTopicList", new Vector<DiscussionTopicTO>());
+		    if (tto.getAttachments()!=null) {
+		    	request.getSession().setAttribute("taskAttachmentList", tto.getAttachments());
+		    }
 		    
 		    ResourceTaskTO rtto = new ResourceTaskTO();
 		    rtto.setTask(tto);	    
 		    rtto.setResource(rto);
 		    rtto = rtdel.getResourceTaskObject(rtto);
-		    trfrm.setEstimDate(DateUtil.getDate(rtto.getStartDate(), mask, loc));
+		    if (rtto.getStartDate()!=null) {
+		    	trfrm.setEstimDate(DateUtil.getDate(rtto.getStartDate(), mask, loc));	
+		    }
 		    if (trfrm.isDecimalInput()) {
 		    	trfrm.setEstimTime(StringUtil.getFloatToString(rtto.getEstimatedTimeInHours(), loc));	
 		    } else {
@@ -1022,7 +1055,27 @@ public class ResTaskAction extends GeneralStrutsAction {
             ResourceTaskAllocTO rtato = this.getEmptyResTaskAlloc(rtto, 1);
             trfrm.addAllocationList(null, rtato, 1, true);
         }
+        
     }
+    
+    private void updateDateAllocTimeList(ResTaskForm trfrm, Timestamp actualDate) throws BusinessException{
+    	if(actualDate == null){
+    		Locale loc =  trfrm.getCurrentUser().getLocale();
+		    
+		    if (trfrm.getActualDate()!=null) {
+		    	actualDate = trfrm.getDate(false, loc);    
+		    } else {
+		    	actualDate = trfrm.getDate(true, loc);
+		    }
+		    
+		    actualDate = DateUtil.getChangedDate(actualDate, Calendar.DATE,  (trfrm.getAllocCursor()-1));
+    	}
+    	ResourceTaskAllocDelegate rtadel = new ResourceTaskAllocDelegate();
+		ResourceTO rto = new ResourceTO(trfrm.getResourceId());
+		Vector<ResourceDateAllocTO> dateAllocTimeList = rtadel.getResourceDateAllocList(rto, actualDate, DateUtil.getChangedDate(actualDate, Calendar.DATE, 7));
+		trfrm.setDateAllocTimeList(dateAllocTimeList);
+    }
+    
     
     private ResourceTaskAllocTO getEmptyResTaskAlloc(ResourceTaskTO rtto, int seq){
         ResourceTaskAllocTO response = new ResourceTaskAllocTO();
@@ -1084,7 +1137,7 @@ public class ResTaskAction extends GeneralStrutsAction {
             
             //if the process has cropped the alloc list, then rebuild the sequence...
             if (seq>0) {
-                Iterator i = rtto.getAllocList().iterator();
+                Iterator<ResourceTaskAllocTO> i = rtto.getAllocList().iterator();
                 while(i.hasNext()) {
                     ResourceTaskAllocTO rtato = (ResourceTaskAllocTO)i.next();
                     Integer sequence = rtato.getSequence();
@@ -1115,7 +1168,7 @@ public class ResTaskAction extends GeneralStrutsAction {
     private ResourceTaskAllocTO getAllocBySequence(ResTaskForm trfrm, int seq, boolean forceAddIntoActual){
         ResourceTaskAllocTO response = null;
         
-        HashMap list = null;
+        HashMap<String,ResourceTaskAllocTO> list = null;
         if (trfrm.getTaskStatus()!=null && trfrm.getTaskStatus().equals(TaskStatusTO.STATE_MACHINE_OPEN) && !forceAddIntoActual) {
         	list = trfrm.getEstimAllocList();
         } else {
@@ -1123,7 +1176,7 @@ public class ResTaskAction extends GeneralStrutsAction {
         }
         
         if (list!=null) {
-            Iterator i = list.values().iterator();
+            Iterator<ResourceTaskAllocTO> i = list.values().iterator();
             while(i.hasNext()){
                 ResourceTaskAllocTO token = (ResourceTaskAllocTO)i.next();
                 if (token.getSequence().intValue()==seq) {
@@ -1163,8 +1216,9 @@ public class ResTaskAction extends GeneralStrutsAction {
 	private void resetForm(ActionForm form){
 	    ResTaskForm trfrm = (ResTaskForm)form;
     	trfrm.setReportTaskURL("");
-    	trfrm.setShowWorkflowDiagram("off");    	
+    	trfrm.setShowWorkflowDiagram("off");
 	}
+	
 	
 	public ActionForward clickNodeTemplate(ActionMapping mapping, ActionForm form,
 			 HttpServletRequest request, HttpServletResponse response){
@@ -1185,6 +1239,65 @@ public class ResTaskAction extends GeneralStrutsAction {
 		}
 
 		return null;
+	}	
+	
+	private void getDiscussionData(HttpServletRequest request, ResTaskForm rtfrm) throws BusinessException{
+	    DiscussionTopicDelegate dtdel = new DiscussionTopicDelegate();		
+		if (rtfrm.getTaskId()!=null) {
+			Vector<DiscussionTopicTO> listDt = dtdel.getListByPlanning(rtfrm.getTaskId());
+			request.getSession().setAttribute("discussionTopicList", listDt);			
+		}		
+	}	
+	
+	public ActionForward showProjectPopup(ActionMapping mapping, ActionForm form,
+			 HttpServletRequest request, HttpServletResponse response){
+		return mapping.findForward("showChangeProjResTask");
+	}
+	
+	public ActionForward changeProject(ActionMapping mapping, ActionForm form,
+			 HttpServletRequest request, HttpServletResponse response){
+		ResourceTaskDelegate rtdel = new ResourceTaskDelegate();
+		try{
+			ResTaskForm trfrm = (ResTaskForm)form;
+			String projectId = request.getParameter("id");
+			ResourceTaskTO rtto = this.preProcessForm(trfrm, request);
+			
+			rtto = rtdel.changeProject(projectId, rtto);
+			
+			trfrm.setProjectId(projectId);
+			trfrm.setCategoryId(rtto.getTask().getCategory().getId());
+			
+			this.refresh(mapping, form, request, response);
+			
+			//set success message into http session
+			this.setSuccessFormSession(request, "message.saveResTask");
+		} catch(MetaFieldNumericTypeException e){
+			this.setErrorFormSession(request, e.getMessage(), e.getMetaFieldName(), null, null, null, null, e);
+		} catch(Exception e){
+			this.setErrorFormSession(request, "error.showAllTaskForm", e);
+		}
+		return mapping.findForward("showResTask");
+	}
+	
+	public ActionForward refreshAfterAttach(ActionMapping mapping, ActionForm form,
+			 HttpServletRequest request, HttpServletResponse response){
+		
+		String forward = "showResTask";	
+		try {
+			ResTaskForm trfrm = (ResTaskForm)form;
+		    
+		    if (trfrm.getTaskId()!=null && !trfrm.getTaskId().equals("")) {
+		    	trfrm.setSaveMethod(GeneralStrutsForm.UPDATE_METHOD, SessionUtil.getCurrentUser(request));
+				this.getActionFormFromTransferObject(trfrm, request);		    	
+		    } else {
+		    	request.getSession().setAttribute("attachmentList", new Vector<AttachmentTO>());
+		    }
+								
+		} catch(BusinessException e){
+			this.setErrorFormSession(request, "error.showReportForm", e);
+		}
+
+		return mapping.findForward(forward);
 	}	
 	
 }

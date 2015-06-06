@@ -2,6 +2,8 @@ package com.pandora.gui.struts.action;
 
 import java.awt.image.BufferedImage;
 import java.io.PrintWriter;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Vector;
 
@@ -13,23 +15,30 @@ import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionForward;
 import org.apache.struts.action.ActionMapping;
 
+import com.pandora.CustomerTO;
+import com.pandora.DecisionNodeTemplateTO;
 import com.pandora.NodeTemplateTO;
+import com.pandora.OccurrenceTO;
 import com.pandora.ProjectTO;
-import com.pandora.RequirementStatusTO;
-import com.pandora.ResourceTO;
+import com.pandora.RequirementTO;
 import com.pandora.ResourceTaskTO;
+import com.pandora.TaskHistoryTO;
+import com.pandora.TaskStatusTO;
 import com.pandora.TaskTO;
 import com.pandora.TemplateTO;
+import com.pandora.TransferObject;
 import com.pandora.UserTO;
 import com.pandora.bus.occurrence.IterationOccurrence;
 import com.pandora.delegate.OccurrenceDelegate;
 import com.pandora.delegate.ProjectDelegate;
+import com.pandora.delegate.RequirementDelegate;
 import com.pandora.delegate.ResourceTaskDelegate;
 import com.pandora.delegate.TaskDelegate;
 import com.pandora.delegate.TaskHistoryDelegate;
-import com.pandora.delegate.TaskStatusDelegate;
 import com.pandora.delegate.TaskTemplateDelegate;
 import com.pandora.exception.BusinessException;
+import com.pandora.exception.InvalidRequirementException;
+import com.pandora.exception.ProjectTasksDiffRequirementException;
 import com.pandora.gui.struts.form.ShowAllTaskForm;
 import com.pandora.helper.SessionUtil;
 
@@ -46,7 +55,6 @@ public class ShowAllTaskAction extends GeneralStrutsAction {
 								 HttpServletRequest request, HttpServletResponse response){
 		ProjectDelegate pdel = new ProjectDelegate();
 		String forward = "showAllTask";
-		
 		try {
 		    
 		    //clear current form
@@ -80,22 +88,21 @@ public class ShowAllTaskAction extends GeneralStrutsAction {
 	private void refreshAuxiliarList(ProjectTO pto, HttpServletRequest request) throws BusinessException{
 		if (pto!=null) {
 			//get all Task Status from data base and put into http session (to be displayed by combo)
-			Vector statList = this.getListOfStatusForCombo(request);
+			Vector<TaskStatusTO> statList = this.getListOfStatusForCombo(request);
 			request.getSession().setAttribute("statusList", statList);
 
-			//get all Resources of current project from data base and put into http session (to be displayed by combo)			
-			Vector custList = this.getListOfResourcesForCombo(pto, request);
-			request.getSession().setAttribute("resourceList", custList);
-					
+			Vector<TransferObject> rangeList = this.getListOfDateRangeForCombo(request);
+			request.getSession().setAttribute("dateRangeList", rangeList);
+			
 			OccurrenceDelegate odel = new OccurrenceDelegate();
-			Vector iterations = odel.getOccurenceListByType(pto.getId(), IterationOccurrence.class.getName());
+			Vector<OccurrenceTO> iterations = odel.getOccurenceListByType(pto.getId(), IterationOccurrence.class.getName());
 			request.getSession().setAttribute("iterationList", iterations);			
 		}
 	}
 		
 	private void refreshList(ProjectTO pto, ShowAllTaskForm frm, HttpServletRequest request) throws BusinessException{
 		ResourceTaskDelegate rtdel = new ResourceTaskDelegate();
-		Vector<ResourceTaskTO> rtList = rtdel.getListByProject(pto, frm.getStatusSelected(), frm.getResourceSelected(), true);
+		Vector<ResourceTaskTO> rtList = rtdel.getListByProject(pto, frm.getStatusSelected(), "-1", frm.getDateRangeSelected(), true);
 		request.getSession().setAttribute("allResTaskList", rtList);		
 	}
 
@@ -103,6 +110,7 @@ public class ShowAllTaskAction extends GeneralStrutsAction {
 			 HttpServletRequest request, HttpServletResponse response){
 		String fwd = "showAllTask";
 		TaskTemplateDelegate tdel = new TaskTemplateDelegate();
+		
 		try {
 		    ShowAllTaskForm frm = (ShowAllTaskForm)form;	
 		    UserTO currentUser = SessionUtil.getCurrentUser(request);
@@ -134,13 +142,70 @@ public class ShowAllTaskAction extends GeneralStrutsAction {
 			    frm.setWorkFlowDiagram(image);
 			    
 			    this.refreshAuxiliarList(filter.getProject(), request);
+			    
+			    frm.setRequirementContent(extractRequestDescription(root));
+			    frm.setFollowupContent(extractFollowUp(root, currentUser));
 		    }
 		} catch(Exception e) {
 		    e.printStackTrace();
 		}	
 		return mapping.findForward(fwd);
 	}
-
+	
+	
+	public String extractFollowUp(NodeTemplateTO root, UserTO currentUser) throws BusinessException{
+		TaskDelegate tskDel = new TaskDelegate();
+		
+    	ArrayList<TaskTO> taskList = new ArrayList<TaskTO>();
+    	this.extractTaskList(root, taskList, new HashMap<String, String>());
+    	Vector<TaskHistoryTO> allHistory = new Vector<TaskHistoryTO>();
+    	if (taskList!=null) {
+    		for (TaskTO taskto : taskList) {
+    			allHistory.addAll(tskDel.getHistory(taskto.getId()));
+			}
+    	}
+    	
+    	CustomerTO cto = new CustomerTO(currentUser);
+    	return tskDel.getTechCommentsFromTask(allHistory, cto);
+	}
+	
+	
+	public String extractRequestDescription(NodeTemplateTO root) throws BusinessException{
+		TaskDelegate tskDel = new TaskDelegate();
+		String response = "";
+		if (root!=null && root.getPlanningId()!=null) {
+	    	TaskTO relatedTask = tskDel.getTaskObject(new TaskTO(root.getRelationPlanningId()));
+	    	if (relatedTask!=null && relatedTask.getRequirement()!=null) {
+	    		response = relatedTask.getRequirement().getDescription();
+	    	}			
+		}
+    	return response;
+	}
+	
+	private void extractTaskList(NodeTemplateTO node, ArrayList<TaskTO> taskList, HashMap<String, String> nodeIds){
+		if (node!=null) {
+			if (nodeIds.get(node.getId())==null) {
+				nodeIds.put(node.getId(), node.getId());
+				
+				if (node.getRelationPlanningId()!=null) {
+					taskList.add(new TaskTO(node.getRelationPlanningId()));	
+				}
+				
+				if (node instanceof DecisionNodeTemplateTO) {
+					NodeTemplateTO trueNode = ((DecisionNodeTemplateTO)node).getNextNode();
+					extractTaskList(trueNode, taskList, nodeIds);
+					
+					NodeTemplateTO falseNode = ((DecisionNodeTemplateTO)node).getNextNodeIfFalse();
+					extractTaskList(falseNode, taskList, nodeIds);
+					
+				} else if (node!=null) {
+					NodeTemplateTO nextNode = node.getNextNode();
+					extractTaskList(nextNode, taskList, nodeIds);
+				}				
+			}
+		}
+	}
+	
 	
 	public ActionForward clickNodeTemplate(ActionMapping mapping, ActionForm form,
 			 HttpServletRequest request, HttpServletResponse response){
@@ -186,12 +251,12 @@ public class ShowAllTaskAction extends GeneralStrutsAction {
 			}
 
 			if (tto.isParentTask()) {
-				Vector children = tdel.getSubTasksList(tto);
+				Vector<TaskTO> children = tdel.getSubTasksList(tto);
 				if (children!=null) {
 					String envLbl = null;
-					Iterator i = children.iterator();
+					Iterator<TaskTO> i = children.iterator();
 					while(i.hasNext()) {
-						TaskTO child = (TaskTO)i.next();
+						TaskTO child = i.next();
 						child.setHandler(tto.getHandler());
 						String childEnvolved = child.getInvolvedResources(true);
 						if (childEnvolved!=null && !childEnvolved.trim().equals("")) {
@@ -232,14 +297,17 @@ public class ShowAllTaskAction extends GeneralStrutsAction {
 		TaskDelegate tdel = new TaskDelegate();
 		TaskHistoryDelegate thdel = new TaskHistoryDelegate();
 		ResourceTaskDelegate rtdel = new ResourceTaskDelegate();
+		RequirementDelegate rqdel = new RequirementDelegate();
+		String newReq = "";
 		
 		try {
 		    ShowAllTaskForm frm = (ShowAllTaskForm)form;			
 			frm.setShowWorkflowDiagram("off");
 			boolean saveProcessed = false;
 
-			Vector tskList = (Vector)request.getSession().getAttribute("allResTaskList");
-	        Iterator i = tskList.iterator();
+			@SuppressWarnings({ "unchecked", "rawtypes" })
+			Vector<ResourceTaskTO> tskList = (Vector)request.getSession().getAttribute("allResTaskList");
+	        Iterator<ResourceTaskTO> i = tskList.iterator();
 	        while(i.hasNext()) {
 	        	ResourceTaskTO rtto = (ResourceTaskTO)i.next();
 	        	TaskTO tto = rtto.getTask();
@@ -248,10 +316,11 @@ public class ShowAllTaskAction extends GeneralStrutsAction {
 	        	boolean updateResTask = false;
 	        	String newIteration = request.getParameter("cb_" + tto.getId() + "_iteration");
 	        	String newBillable = request.getParameter("cb_" + rtto.getId() + "_billable");
+	        	newReq = request.getParameter("tx_" + rtto.getId() + "_value");
 	        	
 	        	if (newIteration!=null && !newIteration.trim().equals("") &&
 	        			!newIteration.equals(tto.getIteration())) {
-	        		tto = tdel.getTaskObject(tto);	
+	        		tto = tdel.getTaskObject(tto);
 	        		if (newIteration.trim().equals("-1") && tto.getIteration()!=null) {
 	        			tto.setIteration(null);
 	        		} else {
@@ -264,6 +333,23 @@ public class ShowAllTaskAction extends GeneralStrutsAction {
 	        			!newBillable.equals(rtto.getBillableStatus().booleanValue()?"1":"0"))) {
 	        		rtto.setBillableStatus(new Boolean(newBillable.equals("1")));
 	        		updateResTask = true;
+	        	}
+
+	        	if (newReq!=null && !newReq.trim().equals("")) {
+        			tto = tdel.getTaskObject(tto);	
+	        		if (tto.getRequirement()==null || (tto.getRequirement().getId()!=null && !tto.getRequirement().getId().equals(newReq))) {
+	        			RequirementTO rto = rqdel.getRequirement(new RequirementTO(newReq));
+	        			if (rto!=null) {
+	        				if (rto.getProject()!=null && rto.getProject().getId().equals(tto.getProject().getId())) {
+	        					tto.setRequirement(rto);	
+	        				} else {
+	        					throw new ProjectTasksDiffRequirementException();	
+	        				}
+	        			} else {
+	        				throw new InvalidRequirementException();
+	        			}
+	        		}
+	        		updateTask = true;
 	        	}
 	        	
 	        	if (updateTask) {
@@ -292,6 +378,11 @@ public class ShowAllTaskAction extends GeneralStrutsAction {
 				this.setSuccessFormSession(request, "message.showAllTaskForm.notsaved");
 			}
 			
+			
+		} catch(ProjectTasksDiffRequirementException e) {
+			this.setErrorFormSession(request, "error.showAllTaskForm.ProjDiffRq", newReq, "", "", "", "", e);
+		} catch(InvalidRequirementException e) {
+			this.setErrorFormSession(request, "error.showAllTaskForm.ReqNotFound", newReq, "", "", "", "", e);
 		} catch(Exception e){
 			this.setErrorFormSession(request, "error.showAllTaskForm", e);
 		}
@@ -330,41 +421,31 @@ public class ShowAllTaskAction extends GeneralStrutsAction {
 	/**
 	 * Get a list of task Status to be used into combo box.
 	 */
-	private Vector getListOfStatusForCombo(HttpServletRequest request) throws BusinessException{
-		TaskStatusDelegate tsdel = new TaskStatusDelegate();
-		Vector statList = tsdel.getTaskStatusList();
-		Vector temp = new Vector();
+	private Vector<TaskStatusTO> getListOfStatusForCombo(HttpServletRequest request) throws BusinessException{
+		Vector<TaskStatusTO> temp = new Vector<TaskStatusTO>();
 		
-		RequirementStatusTO statusAllFake = new RequirementStatusTO();
+		TaskStatusTO statusAllFake = new TaskStatusTO();
 		statusAllFake.setId("-2");
 		statusAllFake.setName(super.getBundleMessage(request, "label.all"));
 		
-		RequirementStatusTO statusAll2Fake = new RequirementStatusTO();
+		TaskStatusTO statusAll2Fake = new TaskStatusTO();
 		statusAll2Fake.setId("-1");
 		statusAll2Fake.setName(super.getBundleMessage(request, "label.showAllTaskForm.allExceptFinishing"));
 		
 		temp.addElement(statusAllFake);
 		temp.addElement(statusAll2Fake);
-		temp.addAll(statList);
 	    
 		return temp;
 	}
 
 	
-	/**
-	 * Get a list of resources of current project to be used into combo box.
-	 */
-	private Vector<ResourceTO> getListOfResourcesForCombo(ProjectTO pto, HttpServletRequest request) throws BusinessException{
-		Vector<ResourceTO> temp = new Vector<ResourceTO>();
-	    if (pto!=null) {
-			Vector<ResourceTO> resList = pto.getInsertResources();
-			ResourceTO allResources = new ResourceTO("-1");
-			allResources.setName(super.getBundleMessage(request, "label.all"));
-			temp.addElement(allResources);
-			temp.addAll(resList);	    	
-	    }
-	    
-		return temp;
-	}
-	
+	private Vector<TransferObject> getListOfDateRangeForCombo(HttpServletRequest request) throws BusinessException{
+		Vector<TransferObject> response = new Vector<TransferObject>();
+		response.add(new TransferObject("7", super.getBundleMessage(request, "label.manageTask.dateRange.weekly")));
+		response.add(new TransferObject("30", super.getBundleMessage(request, "label.manageTask.dateRange.monthly")));
+		response.add(new TransferObject("90", super.getBundleMessage(request, "label.manageTask.dateRange.quarterly")));
+		response.add(new TransferObject("-1", super.getBundleMessage(request, "label.manageTask.dateRange.all")));
+		return response;
+	}	
+		
 }

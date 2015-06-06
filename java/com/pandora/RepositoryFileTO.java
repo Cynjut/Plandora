@@ -29,10 +29,18 @@ public class RepositoryFileTO extends AttachmentTO {
 	private String lockComment;
 	
 	
-	private Vector entities;
+	private Vector<RepositoryFilePlanningTO> entities;
 	
-	private String artifactTemplateType;
+	private ArtifactTO artifact;
 	
+	
+	public RepositoryFileTO() {
+	}
+
+	public RepositoryFileTO(String newValue) {
+		this.setId(newValue);
+	}
+
 	//////////////////////////////////////////////
 	public String getPath() {
 		return path;
@@ -122,21 +130,22 @@ public class RepositoryFileTO extends AttachmentTO {
 	
 	
 	//////////////////////////////////////////////
-	public Vector getEntities() {
+	public Vector<RepositoryFilePlanningTO> getEntities() {
 		return entities;
 	}
-	public void setEntities(Vector newValue) {
+	public void setEntities(Vector<RepositoryFilePlanningTO> newValue) {
 		this.entities = newValue;
 	}
 
 	
-	//////////////////////////////////////////////	
-	public String getArtifactTemplateType() {
-		return artifactTemplateType;
+	//////////////////////////////////////////////		
+	public ArtifactTO getArtifact() {
+		return artifact;
 	}
-	public void setArtifactTemplateType(String newValue) {
-		this.artifactTemplateType = newValue;
+	public void setArtifact(ArtifactTO newValue) {
+		this.artifact = newValue;
 	}
+	
 	
 	
 	public boolean checkEntity(String entityId) {
@@ -151,6 +160,40 @@ public class RepositoryFileTO extends AttachmentTO {
 			}
 		}
 		return response;
+	}
+
+	
+	public String getArtifactTemplateType() {
+		String response = null;
+		if (this.artifact!=null) {
+			response = this.artifact.getExportType();
+		}
+		return response;
+	}
+	
+	public void setArtifactTemplateType(String artifactTemplateType) {
+		if (this.artifact==null) {
+			this.artifact = new ArtifactTO();
+			this.artifact.setId(this.getId());
+		}
+		this.artifact.setExportType(artifactTemplateType);
+	}
+	
+	
+	public String getFileName(){
+		String name = this.path;
+		
+		if (this.path!= null && (this.path.lastIndexOf("/")>-1 || this.path.lastIndexOf("\\")>-1)) {
+			int pos = this.path.lastIndexOf("/");
+			if (pos==-1) {
+				pos = this.path.lastIndexOf("\\");
+			}		
+			if (pos>-1) {
+				name = this.path.substring(pos+1);
+			}
+		}
+		
+		return name;
 	}
 	
 }

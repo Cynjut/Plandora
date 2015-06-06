@@ -10,11 +10,13 @@ import org.apache.struts.action.ActionForward;
 import org.apache.struts.action.ActionMapping;
 
 import com.pandora.CategoryTO;
+import com.pandora.PreferenceTO;
 import com.pandora.ProjectTO;
 import com.pandora.TransferObject;
+import com.pandora.UserTO;
 import com.pandora.delegate.CategoryDelegate;
+import com.pandora.delegate.PreferenceDelegate;
 import com.pandora.delegate.ProjectDelegate;
-import com.pandora.exception.BusinessException;
 import com.pandora.gui.struts.form.CategoryForm;
 import com.pandora.gui.struts.form.GeneralStrutsForm;
 import com.pandora.helper.SessionUtil;
@@ -33,7 +35,13 @@ public class CategoryAction extends GeneralStrutsAction{
 	public ActionForward prepareForm(ActionMapping mapping, ActionForm form,
 								 HttpServletRequest request, HttpServletResponse response){
 		String forward = "showCategory";
-	    this.clearForm(form, request);	  
+	    CategoryForm frm = (CategoryForm)form;
+	    this.clearForm(form, request);
+	    
+	    UserTO uto = SessionUtil.getCurrentUser(request);
+	    String hideClosed = uto.getPreference().getPreference(PreferenceTO.CATEGORY_HIDE_CLOSED);
+	    frm.setHideClosedCategory(hideClosed!=null && hideClosed.equals("on"));
+	    
 	    this.refresh(mapping, form, request, response);
 		return mapping.findForward(forward);
 	}
@@ -71,15 +79,13 @@ public class CategoryAction extends GeneralStrutsAction{
 			CategoryTO filter = new CategoryTO();
 			filter.setId(cfrm.getId());
 			
-			//get a specific report from data base
+			//get a specific category from data base
 			CategoryTO cto = cdel.getCategory(filter);
 			
 			//put the data (from DB) into html fields
 			this.getActionFormFromTransferObject(cto, cfrm, request);
 			
-		} catch(BusinessException e){
-		    this.setErrorFormSession(request, "error.prepareEditCategoryForm", e);
-		} catch(NullPointerException e){
+		} catch(Exception e){
 		    this.setErrorFormSession(request, "error.prepareEditCategoryForm", e);		    
 	    }
 
@@ -119,9 +125,7 @@ public class CategoryAction extends GeneralStrutsAction{
 			//refresh lists on form...
 			this.refresh(mapping, form, request, response);
 			
-		} catch(BusinessException e){
-		    this.setErrorFormSession(request, errorMsg, e);
-		} catch(NullPointerException e){
+		} catch(Exception e){
 		    this.setErrorFormSession(request, errorMsg, e);		    
 		}
 		return mapping.findForward(forward);		
@@ -136,25 +140,25 @@ public class CategoryAction extends GeneralStrutsAction{
 	    String forward = "showCategory";
 		try {
 			CategoryForm cfrm = (CategoryForm)form;
-			
-			//clear form and messages
-			this.clearMessages(request);
-			this.clearForm(cfrm, request);
-			
+						
 			//create an CategoryTO object based on html fields
 			CategoryTO cto = new CategoryTO();
 			cto.setId(cfrm.getId());
 			
 			//remove the category!
-			cdel.removeReport(cto);
-			
+			cdel.removeCategory(cto);
+
+			//clear form and messages
+			this.clearMessages(request);
+			this.clearForm(cfrm, request);
+
 			//set success message into http session
 			this.setSuccessFormSession(request, "message.category.remove");
 			
 			//refresh lists on form...
 			this.refresh(mapping, form, request, response);
 		
-		} catch(BusinessException e){
+		} catch(Exception e){
 		    this.setErrorFormSession(request, "error.removeCategoryForm", e);
 		}
 		return mapping.findForward(forward);		
@@ -181,7 +185,11 @@ public class CategoryAction extends GeneralStrutsAction{
 	        	HttpServletRequest request, HttpServletResponse response){
 	    String forward = "showCategory";
 	    CategoryDelegate catDel = new CategoryDelegate();
+	    PreferenceDelegate pfdel = new PreferenceDelegate();
+	    
 	    try {
+			CategoryForm frm = (CategoryForm)form;
+	    	
 			//get all Projects from data base and put into http session (to be displayed by combo)
 			ProjectTO dummy = new ProjectTO("-1");
 			dummy.setName(this.getBundleMessage(request, "label.category.anyProject"));
@@ -190,22 +198,29 @@ public class CategoryAction extends GeneralStrutsAction{
 			Vector<ProjectTO> prjList = pdel.getProjectList();
 			prjList.insertElementAt(dummy, 0);
 			request.getSession().setAttribute("projectList", prjList);
+		
+		    //save the new preference
+		    UserTO uto = SessionUtil.getCurrentUser(request);
+		    PreferenceTO pto = new PreferenceTO(PreferenceTO.CATEGORY_HIDE_CLOSED, frm.getHideClosedCategory()?"on":"off", uto);
+			uto.getPreference().addPreferences(pto);
+			pto.addPreferences(pto);
+			pfdel.insertOrUpdate(pto);
 			
 		    //create a list of categories
-	        Vector<CategoryTO> catList = catDel.getCategoryList();
+	        Vector<CategoryTO> catList = catDel.getCategoryList(frm.getHideClosedCategory());
 		    request.getSession().setAttribute("categoryList", catList);
 		    
 		    //create a list of types
 		    Vector<TransferObject> typeList = new Vector<TransferObject>();
-		    for (int i = 0; i<=9; i++) {
+		    for (int i = 0; i<=10; i++) {
 		        TransferObject to = new TransferObject();
 		        to.setId(i+"");
 		        to.setGenericTag(this.getBundleMessage(request, "label.category.type." + i));
 		        typeList.addElement(to);
 		    }	    
 			request.getSession().setAttribute("typeList", typeList);
-		
-		} catch(BusinessException e){
+					
+		} catch(Exception e){
 		    this.setErrorFormSession(request, "message.category.showForm", e);
 		}
 		

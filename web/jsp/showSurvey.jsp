@@ -16,7 +16,7 @@
 	
 	function saveSurvey(){
     	with(document.forms["showSurveyForm"]){
-    		if (allowAnonymous.value == "true") {
+    		if (allowAnonymous.value == "true" && conectedUser.value != "") {
 				if (confirm("<bean:message key="message.formSurvey.confirmSave"/>")) {
 		        	javascript:buttonClick('showSurveyForm', 'answer');
 	        	}    	    		
@@ -32,6 +32,7 @@
 	<html:hidden name="showSurveyForm" property="id"/>
 	<html:hidden name="showSurveyForm" property="operation"/>
 	<html:hidden name="showSurveyForm" property="anonymous"/>
+	<html:hidden name="showSurveyForm" property="conectedUser"/>
 	<html:hidden name="showSurveyForm" property="allowAnonymous"/>
 	<html:hidden name="showSurveyForm" property="key"/>
 	<html:hidden name="showSurveyForm" property="show"/>
@@ -43,7 +44,7 @@
 	<tr><td width="10">&nbsp;</td><td>
 	  	
 	<display:headerfootergrid width="100%" type="HEADER">
-		<bean:write name="showSurveyForm" property="surveyTitle" /> &nbsp;
+		<bean:write name="showSurveyForm" property="surveyTitle" filter="false"/> &nbsp;
 	</display:headerfootergrid>
 		
 	<table width="98%" border="0" cellspacing="0" cellpadding="0">
@@ -52,7 +53,7 @@
     </tr>
     <tr class="pagingFormBody">
       <td width="10">&nbsp;</td>
-      <td class="formBody"><bean:write name="showSurveyForm" property="surveyDescription" /></td>
+      <td class="formBody"><bean:write name="showSurveyForm" property="surveyDescription" filter="false"/></td>
       <td width="10">&nbsp;</td>
     </tr>
 	</table>
@@ -85,6 +86,36 @@
       <td colspan="3">&nbsp;</td>
     </tr>
 	</table>
+	
+	<!-- 
+	<logic:notEqual name="showSurveyForm" property="anonymousUri" value="">
+	    <table width="98%" border="0" cellspacing="0" cellpadding="0">
+		<tr class="pagingFormBody">
+			<td colspan="4">&nbsp;</td>
+		</tr>
+		<tr class="pagingFormBody">
+			<td colspan="4">&nbsp;</td>
+		</tr>		
+	    <tr class="pagingFormBody">
+			<td width="10">&nbsp;</td>	
+			<td width="400" class="formBody"><bean:message key="label.formSurvey.useanonUrl"/></td>
+			<td>&nbsp;</td>
+			<td width="20">&nbsp;</td>
+	    </tr>
+	    <tr class="tableRowOdd">
+			<td width="10">&nbsp;</td>	
+			<td class="code" colspan="2">
+				<bean:write name="showSurveyForm" property="anonymousUri" filter="false"/>
+			</td>
+			<td>&nbsp;</td>
+	    </tr>
+		<tr class="pagingFormBody">
+			<td colspan="4">&nbsp;</td>
+		</tr>
+		</table>	    
+	</logic:notEqual>
+	-->
+	
 
 	<display:headerfootergrid type="FOOTER">
 		<table width="98%" border="0" cellspacing="0" cellpadding="0"><tr>

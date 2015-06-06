@@ -1,8 +1,9 @@
 package com.pandora.gui.struts.action;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.sql.Timestamp;
 import java.util.Calendar;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Locale;
@@ -19,22 +20,26 @@ import com.pandora.LeaderTO;
 import com.pandora.PreferenceTO;
 import com.pandora.ProjectTO;
 import com.pandora.ResourceCapacityTO;
+import com.pandora.ResourceTO;
+import com.pandora.ResourceTaskAllocTO;
 import com.pandora.RootTO;
 import com.pandora.TransferObject;
 import com.pandora.UserTO;
 import com.pandora.bus.PreferenceBUS;
-import com.pandora.delegate.GadgetDelegate;
 import com.pandora.delegate.ProjectDelegate;
 import com.pandora.delegate.ResourceCapacityDelegate;
+import com.pandora.delegate.ResourceTaskDelegate;
 import com.pandora.delegate.UserDelegate;
 import com.pandora.exception.BusinessException;
 import com.pandora.gui.struts.form.ResCapacityPanelForm;
 import com.pandora.helper.DateUtil;
+import com.pandora.helper.HtmlUtil;
 import com.pandora.helper.SessionUtil;
 import com.pandora.helper.StringUtil;
 
 public class ResCapacityPanelAction extends GeneralStrutsAction {
 	
+	private HashMap<String, Integer> hmMaxLimit = new HashMap<String, Integer>();
 	
 	public ActionForward prepareForm(ActionMapping mapping, ActionForm form,
 			HttpServletRequest request, HttpServletResponse response){
@@ -44,13 +49,14 @@ public class ResCapacityPanelAction extends GeneralStrutsAction {
 			
 			UserTO uto = SessionUtil.getCurrentUser(request);
 			if (uto instanceof LeaderTO) {
-				frm.setInitialDate(DateUtil.getDate(DateUtil.getChangedDate(DateUtil.getNow(), Calendar.DATE, -30), uto.getCalendarMask(), uto.getLocale()));
-				frm.setFinalDate(DateUtil.getDate(DateUtil.getChangedDate(DateUtil.getNow(), Calendar.DATE, 90), uto.getCalendarMask(), uto.getLocale()));
+				frm.setInitialDate(DateUtil.getDate(DateUtil.getChangedDate(DateUtil.getNow(), Calendar.DATE, -15), uto.getCalendarMask(), uto.getLocale()));
+				frm.setFinalDate(DateUtil.getDate(DateUtil.getChangedDate(DateUtil.getNow(), Calendar.DATE, 60), uto.getCalendarMask(), uto.getLocale()));
 
 				this.loadProjectAndResouces(frm, request);
 				this.refresh(mapping, form, request, response);				
 			} else {
 				this.setErrorFormSession(request, "validate.project.userNotLeader", null);	
+				
 			}
 			
 		} catch (Exception e){
@@ -58,6 +64,7 @@ public class ResCapacityPanelAction extends GeneralStrutsAction {
 		}
 		return mapping.findForward(forward);
 	}
+	
 
 
 	public ActionForward refresh(ActionMapping mapping, ActionForm form,
@@ -65,7 +72,7 @@ public class ResCapacityPanelAction extends GeneralStrutsAction {
 		String forward = "showResCapacityPanel";
 		
 		try {			
-			Collection<TransferObject> list = null;
+			Vector<TransferObject> list = new Vector<TransferObject>();
 			ResCapacityPanelForm frm = (ResCapacityPanelForm)form;
 			UserTO uto = SessionUtil.getCurrentUser(request);
 			
@@ -75,43 +82,44 @@ public class ResCapacityPanelAction extends GeneralStrutsAction {
 			
 			if (uto instanceof LeaderTO) {
 				if (frm.getType()==null || frm.getType().equals("PRJ")) {
-					list = frm.getHmProjectlist().values();
+					list.addAll(frm.getHmProjectlist().values());
 					frm.setType("PRJ");
 				} else {
-					list = frm.getHmUserlist().values();	
+					list.addAll(frm.getHmUserlist().values());
 				}
 				
 				request.getSession().setAttribute("resCapacityList", list);
 				
-				Iterator<TransferObject> i = list.iterator();
-				TransferObject first = i.next();
-				if (frm.getType().equals("PRJ") && (frm.getProjectId()==null || frm.getProjectId().equals(""))) {
-					frm.setProjectId(first.getId());
-				} else if (frm.getType().equals("RES") && (frm.getResourceId()==null || frm.getResourceId().equals(""))) {
-					frm.setResourceId(first.getId());	
-				}
-				
-				this.refreshBody(frm, request);
-				this.savePreferences(frm, request);
+				if (list!=null && list.size()>0) {
+					Iterator<TransferObject> i = list.iterator();
+					TransferObject first = i.next();
+					if (frm.getType().equals("PRJ") && (frm.getProjectId()==null || frm.getProjectId().equals(""))) {
+						frm.setProjectId(first.getId());
+					} else if (frm.getType().equals("RES") && (frm.getResourceId()==null || frm.getResourceId().equals(""))) {
+						frm.setResourceId(first.getId());	
+					}
+					
+					this.refreshBody(frm, request);
+					this.savePreferences(frm, request);					
+				}				
 				
 			} else {
-				request.getSession().setAttribute("resCapacityList", new Vector());
+				request.getSession().setAttribute("resCapacityList", new Vector<TransferObject>());
 			}
-
-			
 		} catch (Exception e){
 			this.setErrorFormSession(request, "error.generic.showFormError", e);
 		}
-
 		return mapping.findForward(forward);
 	}
 
+	
 	
 	public ActionForward refreshBody(ActionMapping mapping, ActionForm form,
 			HttpServletRequest request, HttpServletResponse response){
 		String forward = "showResCapacityPanel";
 		try {
 			ResCapacityPanelForm frm = (ResCapacityPanelForm)form;
+			hmMaxLimit = new HashMap<String, Integer>();
 			
 			if (frm.getHmProjectlist()==null || frm.getHmProjectlist().size()==0) {
 				this.loadProjectAndResouces(frm, request);				
@@ -127,6 +135,7 @@ public class ResCapacityPanelAction extends GeneralStrutsAction {
 	}
 
 	
+	
 	public ActionForward showEditPanel(ActionMapping mapping, ActionForm form,
 			HttpServletRequest request, HttpServletResponse response){
 		String forward = "showResCapacityPanel";
@@ -135,17 +144,7 @@ public class ResCapacityPanelAction extends GeneralStrutsAction {
 		return mapping.findForward(forward);
 	}
 
-	
-	public ActionForward showChart(ActionMapping mapping, ActionForm form,
-			HttpServletRequest request, HttpServletResponse response){
-		String forward = "showResCapacityPanel";
-		ResCapacityPanelForm frm = (ResCapacityPanelForm)form;
-		frm.setShowEditCapacity("off");
-		return mapping.findForward(forward);
-	}
-
-	
-	
+		
 	public ActionForward navigate(ActionMapping mapping, ActionForm form,
 			HttpServletRequest request, HttpServletResponse response){
 		String forward = "showResCapacityPanel";
@@ -160,25 +159,6 @@ public class ResCapacityPanelAction extends GeneralStrutsAction {
 	}
 
 	
-	public ActionForward renderChart(ActionMapping mapping, ActionForm form,
-			HttpServletRequest request, HttpServletResponse response){
-		try {
-			ResCapacityPanelForm frm = (ResCapacityPanelForm)form;
-			GadgetDelegate del = new GadgetDelegate();
-			
-			Vector<String> params = new Vector<String>();
-			params.addElement(frm.getChartResourceId());
-			params.addElement(frm.getChartProjectId());
-			
-			del.renderContent(request, response, "com.pandora.gui.struts.action.ResourceCapacityChart", params);
-			
-		} catch(Exception e){
-		    this.setErrorFormSession(request, "error.generic.showFormError", e);
-		}
-		
-	    return null;
-	}
-	
 	private void loadProjectAndResouces(ResCapacityPanelForm frm, HttpServletRequest request) throws BusinessException{
 		ProjectDelegate pdel = new ProjectDelegate();
 		UserDelegate udel = new UserDelegate();
@@ -186,11 +166,11 @@ public class ResCapacityPanelAction extends GeneralStrutsAction {
 		UserTO uto = SessionUtil.getCurrentUser(request);
 		this.loadPreferences(frm, request);
 		
-		Vector<ProjectTO> prjlist = pdel.getProjectListForManagement((LeaderTO)uto, true);
+		Vector<ProjectTO> prjlist = pdel.getProjectListForManagement((LeaderTO)uto, false);
 		Iterator<ProjectTO> j = prjlist.iterator();
 		while(j.hasNext()) {
 			ProjectTO to = j.next();
-			Vector<ProjectTO> childProjects = pdel.getProjectListByParent(to, true);
+			Vector<ProjectTO> childProjects = pdel.getProjectListByParent(to, false);
 			Iterator<ProjectTO> k = childProjects.iterator();
 			while(k.hasNext()) {
 				ProjectTO child = k.next();
@@ -202,10 +182,10 @@ public class ResCapacityPanelAction extends GeneralStrutsAction {
 		Iterator<ProjectTO> ip = frm.getHmProjectlist().values().iterator();
 		while(ip.hasNext()) {
 			ProjectTO pto = (ProjectTO)ip.next();
-			Vector userlist = udel.getResourceByProject(pto.getId(), false, true);
-			Iterator i = userlist.iterator();
+			Vector<ResourceTO> userlist = udel.getResourceByProject(pto.getId(), false, true);
+			Iterator<ResourceTO> i = userlist.iterator();
 			while(i.hasNext()) {
-				UserTO res = (UserTO)i.next();
+				ResourceTO res = i.next();
 				if (res!=null && !res.getUsername().equals(RootTO.ROOT_USER)) {
 					if ((frm.getHideDisabledUsers() && res.getFinalDate()==null) || !frm.getHideDisabledUsers()) {
 						frm.addHmUserlist(res.getId(), res);			
@@ -214,7 +194,7 @@ public class ResCapacityPanelAction extends GeneralStrutsAction {
 			}			
 		}
 		
-		Vector<ProjectTO> prjWlist = pdel.getProjectListForWork(uto, true);
+		Vector<ProjectTO> prjWlist = pdel.getProjectListForWork(uto, true, false);
 		Iterator<ProjectTO> k= prjWlist.iterator();
 		while(k.hasNext()) {
 			ProjectTO to = (ProjectTO)k.next();
@@ -232,20 +212,15 @@ public class ResCapacityPanelAction extends GeneralStrutsAction {
 		gran.add(new TransferObject("14", super.getBundleMessage(request, "label.resCapacity.gran.1")));
 		gran.add(new TransferObject("-1", super.getBundleMessage(request, "label.resCapacity.gran.3")));
 		request.getSession().setAttribute("resCapacityGran", gran);
-
-		Vector<TransferObject> unit = new Vector<TransferObject>();
-		unit.add(new TransferObject("1", super.getBundleMessage(request, "title.resCapacity.unit.1")));
-		request.getSession().setAttribute("resCapacityUnit", unit);	
-
-		Vector<TransferObject> limit = new Vector<TransferObject>();
-		limit.add(new TransferObject("480", super.getBundleMessage(request, "label.resCapacity.limit.1")));
-		request.getSession().setAttribute("resCapacityLimit", limit);	
 		
 		Vector<TransferObject> modes = new Vector<TransferObject>();
-		modes.add(new TransferObject(ResCapacityPanelForm.MODE_ALL, super.getBundleMessage(request, "label.resCapacity.viewMode.all")));
+		modes.add(new TransferObject(ResCapacityPanelForm.MODE_CAP_COST, super.getBundleMessage(request, "label.resCapacity.viewMode.all")));
+		modes.add(new TransferObject(ResCapacityPanelForm.MODE_CAP_USED, super.getBundleMessage(request, "label.resCapacity.viewMode.used")));
 		modes.add(new TransferObject(ResCapacityPanelForm.MODE_ONLY_CAP, super.getBundleMessage(request, "label.resCapacity.viewMode.onlycap")));
+		
 		request.getSession().setAttribute("resCapacityModes", modes);		
 	}
+	
 	
 	
 	private void refreshBody(ResCapacityPanelForm frm, HttpServletRequest request) throws BusinessException{
@@ -254,6 +229,7 @@ public class ResCapacityPanelAction extends GeneralStrutsAction {
 		StringBuffer titleSb = new StringBuffer();
 		int[] summCapacity = new int[5000];
 		int[] summCost = new int[5000];
+		int[] summUsed = new int[5000];
 		Vector<TransferObject> elementList = new Vector<TransferObject>();
 		int index = 0;
 		int colNumber = 0;
@@ -261,160 +237,336 @@ public class ResCapacityPanelAction extends GeneralStrutsAction {
 		this.setSubTitle(frm);
 		
 		//get capacity data from DB
-		Vector<ResourceCapacityTO> clist = this.getCapacityData(frm);
+		Vector<ResourceCapacityTO> clist = this.getCapacityData(frm, request);
 		
 		//retrieve the project or resource subset from capacity list
-		HashMap<String,String> elements = this.retrieveElementsFromCapacity(frm, clist);		
-		
+		HashMap<String,String> elements = this.retrieveElementsFromCapacity(frm, clist);
+
 		UserTO uto = SessionUtil.getCurrentUser(request);
 		Timestamp iniDate = DateUtil.getDateTime(frm.getInitialDate(), uto.getCalendarMask(), uto.getLocale());
 		Timestamp finalDate = DateUtil.getDateTime(frm.getFinalDate(), uto.getCalendarMask(), uto.getLocale());
-		String charIconLbl = super.getBundleMessage(request, "title.resCapacity");
 		Locale currencyLoc = udel.getCurrencyLocale();
+
+		String lblRed = super.getBundleMessage(request, "label.resCapacity.viewMode.redbullet");
+		String lblYel = super.getBundleMessage(request, "label.resCapacity.viewMode.yelbullet");
+		String lblGre = super.getBundleMessage(request, "label.resCapacity.viewMode.grebullet");
+				
+		//retrieve used capacity from DB
+		HashMap<String,ResourceTaskAllocTO> alloc = this.getUsedCapacity(elements, frm, iniDate, finalDate);
 		
 		sb.append(this.getTitle(frm, iniDate, finalDate, request, true));
 		titleSb.append(this.getTitle(frm, iniDate, finalDate, request, false));
 			
 		Iterator<String> j = elements.values().iterator();
 		while(j.hasNext()) {
+
+			boolean allZero = true;
+			StringBuffer rowTitle = new StringBuffer();
+			StringBuffer rowBody = new StringBuffer();
+			StringBuffer otherLine = new StringBuffer();
+
 			String elementId = (String)j.next();
 			String label = this.getLabel(frm, frm.getType()==null || frm.getType().equals("PRJ"), elementId);
+			Timestamp projectFinalDate = null;
 			
 			index = 0;
-			Timestamp cursor = iniDate;
-			StringBuffer otherLine = new StringBuffer();
+			Timestamp cursor = new Timestamp(iniDate.getTime());
 			if (label!=null) {
 				elementList.add(new TransferObject(elementId, label));
 
-				titleSb.append("<tr class=\"formBody\">");
-				titleSb.append("<td class=\"capCell\" align=\"center\">");
-				titleSb.append(this.getChartIcon(frm, elementId, charIconLbl));
-				titleSb.append("</td>");
-				titleSb.append("<td class=\"capCell\" align=\"right\">" + label + "&nbsp;&nbsp;</td>");
-				titleSb.append("</tr>");
-				
-				if (frm.getViewMode()!=null && frm.getViewMode().equals(ResCapacityPanelForm.MODE_ALL)) {
-					titleSb.append("<tr height=\"20\">");
-					titleSb.append("<td>&nbsp;</td>");				
-					titleSb.append("<td>&nbsp;</td>");
-					titleSb.append("</tr>");		
+				String resourceId = null;
+				String projectId = null;
+				if (frm.getType()==null || frm.getType().equals("PRJ")) {
+					projectId = frm.getProjectId();
+					resourceId = elementId;
+				} else {
+					projectId = elementId;						
+					resourceId = frm.getResourceId();
 				}
 				
-				sb.append("<tr class=\"formBody\">");
-				otherLine.append("<tr class=\"formBody\">");				
-				while (cursor.before(finalDate)) {
+				String hi = "height=\"24\"";
+				if (frm.getViewMode()!=null && !frm.getViewMode().equals(ResCapacityPanelForm.MODE_ONLY_CAP)) {
+					hi = "height=\"49\"";
+				}
+				rowTitle.append("<tr class=\"formBody\">");
+				rowTitle.append("<td " + hi + " class=\"capCell\" align=\"right\">" + label + "&nbsp;&nbsp;</td>");
+				rowTitle.append("</tr>");
 
-					String resourceId = null;
-					String projectId = null;
-					if (frm.getType()==null || frm.getType().equals("PRJ")) {
-						projectId = frm.getProjectId();
-						resourceId = elementId;
-					} else {
-						projectId = elementId;						
-						resourceId = frm.getResourceId();
-					}
+				projectFinalDate = this.getProjectFinalDate(frm, projectId);
+				
+				rowBody.append("<tr class=\"formBody\">");
+				otherLine.append("<tr class=\"formBody\">");
+				
+				while (cursor.before(finalDate) || cursor.equals(finalDate)) {
+					Timestamp nextCursor = this.nextCursorDate(cursor, frm.getGranularity(), finalDate);
+					ResourceCapacityTO rcto = this.getCapacity(cursor, nextCursor, projectId, resourceId, clist, frm.getGranularity(), finalDate);
 
-					ResourceCapacityTO rcto = this.getCapacity(cursor, projectId, resourceId, clist);
 					if (rcto!=null) {
-
-						int cap = rcto.getCapacity().intValue();
-						int cost = 0;
-						if (rcto.getCostPerHour()!=null) {
-							cost = rcto.getCostPerHour().intValue();
+						
+						int cap = 0, cost = 0, used = 0;
+						boolean nonClosedPrjIntoRange = (projectFinalDate==null || (projectFinalDate!=null && projectFinalDate.after(cursor)));
+						
+						if (nonClosedPrjIntoRange) {
+							cap = rcto.getCapacity().intValue();
+							if (rcto.getCostPerHour()!=null) {
+								cost = rcto.getCostPerHour().intValue();
+							}							
 						}
+						
+						if (frm.getViewMode().equals(ResCapacityPanelForm.MODE_CAP_USED)) {
+							used = this.getCapacityUsed(alloc, cursor, nextCursor, projectId, resourceId, frm.getGranularity());
+						} 
 
-						this.summarize(summCapacity, summCost, index, cap, cost);
-						sb.append(this.renderCell(cap, frm, rcto, cursor));							
-						otherLine.append("<td class=\"capCell\" align=\"center\">" + 
-								StringUtil.getCurrencyValue((float)((float)cost/100), currencyLoc) + "</td>");
+						this.summarize(summCapacity, summCost, summUsed, index, cap, cost, used);
+						rowBody.append(this.renderCell(cap, frm, rcto, cursor, request, uto.getLocale(), finalDate, clist, nonClosedPrjIntoRange));	
+
+						if (frm.getViewMode()!=null) {
+							if (frm.getViewMode().equals(ResCapacityPanelForm.MODE_CAP_COST)) {
+								otherLine.append("<td height=\"24\" class=\"capCell\" align=\"center\">" + StringUtil.getCurrencyValue((float)((float)cost/100), currencyLoc) + "</td>");
+							} else 	if (frm.getViewMode().equals(ResCapacityPanelForm.MODE_CAP_USED)) {
+								otherLine.append("<td height=\"24\" class=\"capCell\" align=\"center\">" + this.formatCapacityUsed(used, uto, cap, lblRed, lblYel, lblGre) + "</td>");
+							} 
+						}
+						
+						if (allZero){
+							allZero = (cap==0 && used==0 && cost==0);	
+						}
+						
 					} else {
-						sb.append("<td class=\"capCell\">&nbsp;</td>");
-						otherLine.append("<td class=\"capCell\" height=\"20\">&nbsp;</td>");
+						rowBody.append("<td height=\"24\" class=\"capCell\">&nbsp;</td>");
+						otherLine.append("<td class=\"capCell\" height=\"24\">&nbsp;</td>");
 					}
 					
-					cursor = this.nextCursorDate(cursor, frm);
+					cursor.setTime(nextCursor.getTime());
 					index++;
 					if (colNumber<index) {
 						colNumber = index;
 					}
 				}
-				sb.append("<td>&nbsp;</td></tr>");
+				
+				rowBody.append("<td>&nbsp;</td></tr>");
 				otherLine.append("<td>&nbsp;</td></tr>");
 				
-				if (frm.getViewMode()!=null && frm.getViewMode().equals(ResCapacityPanelForm.MODE_ALL)) {
-					sb.append(otherLine);		
+				if (frm.getViewMode()!=null && !frm.getViewMode().equals(ResCapacityPanelForm.MODE_ONLY_CAP)) {
+					rowBody.append(otherLine);		
 				}
 			}
+			
+			//check if the current row must be hidden...
+			if ((frm.getHideZeroValues() && !allZero) || !frm.getHideZeroValues()) {
+				titleSb.append(rowTitle);
+				sb.append(rowBody);
+			}
+			
 		}
+		
 		request.getSession().setAttribute("resCapacityElements", elementList);	
-		sb.append(getFooter(frm, summCapacity, summCost, iniDate, finalDate, request, true));
-		titleSb.append(getFooter(frm, summCapacity, summCost, iniDate, finalDate, request, false));
+		sb.append(getFooter(frm, summCapacity, summCost, summUsed, iniDate, finalDate, request, uto, true));
+		titleSb.append(getFooter(frm, summCapacity, summCost, summUsed, iniDate, finalDate, request, uto, false));
 		
 		frm.setCapacityHtmlBody("<table width=\"" + (colNumber * 70) + "\" border=\"0\" cellspacing=\"1\" cellpadding=\"1\">" + sb.toString() + "</table>");
 		frm.setCapacityHtmlTitle("<table width=\"220\" border=\"0\" cellspacing=\"1\" cellpadding=\"1\">" +	titleSb.toString() + "</table>");
 		frm.setShowEditCapacity("off");
 	}
-
 	
-	private StringBuffer getChartIcon(ResCapacityPanelForm frm, String elementId, String charIconLbl){
-		StringBuffer sb = new StringBuffer();
-		String resourceId = null;
-		String projectId = null;
+	private Timestamp getProjectFinalDate(ResCapacityPanelForm frm, String projectId) {
+		Timestamp response = null;
 		
-		if (frm.getType()==null || frm.getType().equals("PRJ")) {
-			projectId = frm.getProjectId();
-			resourceId = elementId;
+		ProjectTO pto = (ProjectTO)frm.getHmProjectlist().get(projectId);
+		if (pto!=null && pto.getFinalDate()!=null) {
+			response = pto.getFinalDate();
 		} else {
-			projectId = elementId;						
-			resourceId = frm.getResourceId();
+			pto = (ProjectTO)frm.getHmProjectWorklist().get(projectId);
+			if (pto!=null && pto.getFinalDate()!=null) {
+				response = pto.getFinalDate();
+			}
 		}
-		
-		sb.append("<a href=\"javascript:showResCapacityChart('" + resourceId + "', '" + projectId + "');\" border=\"0\">"); 
-		sb.append("<img border=\"0\" title=\"" + charIconLbl + "\" alt=\"" + charIconLbl + "\" src=\"../images/linechart.gif\" ></a>");
-		
-		return sb;
+		return response;
 	}
 	
+	private int getCapacityUsed(HashMap<String,ResourceTaskAllocTO> alloc, Timestamp cursor, Timestamp nextCursor, String projectId, String resourceId, int granularity) {
+		Timestamp ref = this.getDateRef(cursor, nextCursor, granularity);
+		int accTime = 0;
+		while(ref.before(nextCursor)) {
+			
+			String key = ResourceTaskAllocTO.getAllocKey(ref, projectId, resourceId);
+			ResourceTaskAllocTO rtato = alloc.get(key);
+			if (rtato!=null) {
+				accTime+=rtato.getAllocTime();
+			}
+			
+			ref = DateUtil.getChangedDate(ref, Calendar.DATE, 1);
+		}
+		return accTime;
+	}			
+			
 	
-	private StringBuffer renderCell(int cap, ResCapacityPanelForm frm, ResourceCapacityTO rcto,	Timestamp cursor){
+	private String formatCapacityUsed(int usedTime, UserTO uto, int cap, String lblRed, String lblYellow, String lblGreen) {
+		String response = "";
+
+		float timeHour = (float)(((float)usedTime)/60);
+		String hourStr = StringUtil.getFloatToString(timeHour, "0.#h", uto.getLocale());
+		
+		if (timeHour>0) {
+			response = "<b>" + hourStr + "</b>";	
+		} else {
+			response = hourStr;
+		}
+
+		String bullet = "redballon.gif";
+		String tip = lblRed;
+		float prop = 0;
+		if (usedTime>0 && usedTime>cap) {
+			prop = (float)((float)cap / (float)usedTime) * 100;
+		} else if (cap>0 && cap>usedTime) {
+			prop = (float)((float)usedTime / (float)cap) * 100;			
+		} else if (cap==0 && usedTime==0) {
+			prop = 100;
+		}
+		
+		if (prop>=95){
+			bullet = "greenballon.gif";
+			tip = lblGreen;
+		} else if (prop>=75 && prop<95){
+			bullet = "yellowballon.gif";
+			tip = lblYellow; 
+		}
+        response = response + "&nbsp;&nbsp;<img border=\"0\" " + HtmlUtil.getHint(tip) + " src=\"../images/" + bullet + "\" >";
+        
+		return response;
+	}
+	
+	private Timestamp getDateRef(Timestamp cursor, Timestamp nextCursor, int granularity){
+		Timestamp ref = cursor;
+		if (granularity == 7) {
+			ref = DateUtil.getChangedDate(nextCursor, Calendar.DATE, -7);
+		} else if (granularity == -1) {
+			ref = DateUtil.getChangedDate(nextCursor, Calendar.MONTH, -1);
+		} else if (granularity == 14) {
+			ref = DateUtil.getChangedDate(nextCursor, Calendar.DATE, -15);
+		}
+		return ref;	
+	}
+
+	private HashMap<String, ResourceTaskAllocTO> getUsedCapacity(HashMap<String, String> elements, ResCapacityPanelForm frm, Timestamp iniDate, Timestamp finalDate) throws BusinessException {
+		ResourceTaskDelegate rtadel = new ResourceTaskDelegate();
+		HashMap<String, ResourceTaskAllocTO> response = new HashMap<String, ResourceTaskAllocTO>();
+
+		if (frm.getViewMode()!=null && frm.getViewMode().equals(ResCapacityPanelForm.MODE_CAP_USED)) {
+			String projectFilter = "'" + frm.getProjectId() + "'";
+			String resourceFilter = "'" + frm.getResourceId()+ "'";
+			
+			if (frm.getType()==null || frm.getType().equals("PRJ")) {
+				resourceFilter = this.getElementsByComma(elements);
+			} else {
+				projectFilter = this.getElementsByComma(elements);						
+			}
+			
+			response = rtadel.getHashAlloc(projectFilter, resourceFilter, iniDate, finalDate);
+		}		
+
+		return response;
+	}
+
+
+	private String getElementsByComma(HashMap<String, String> elements) {
+		String response = "";
+		if (elements!=null) {
+			for (String elementId : elements.values()) {
+				if (!response.equals("")) {
+					response = response + ", ";	
+				}
+				response = response + "'" + elementId + "'";
+			}
+		}
+		return response;
+	}
+
+
+
+	private StringBuffer renderCell(int cap, ResCapacityPanelForm frm, ResourceCapacityTO rcto,	Timestamp cursor, 
+			HttpServletRequest request, Locale loc, Timestamp finalDate, Vector<ResourceCapacityTO> clist, boolean nonClosedPrjIntoRange){
 		StringBuffer sb = new StringBuffer();
 
 		String cssclass = "capCellHighlight";
-		if (cap <= frm.getMaxLimit()) {
+		if (cap <= this.getMaxLimit(cursor, frm.getGranularity(), finalDate)) {
 			cssclass = "capCell";
 		}
 
-		ProjectTO pto = (ProjectTO)frm.getHmProjectlist().get(rcto.getProjectId());
-		if (pto!=null && !pto.getId().equals("0")) {
-			String cellid = DateUtil.getDateTime(cursor, "yyyyMMdd") + "_" + rcto.getProjectId() + "_" + rcto.getResourceId();
-			
-			sb.append("<td class=\"" + cssclass + "\" align=\"center\">");	
+		float capHour = (float)((float)cap / (float)60);
+		BigDecimal bd = new BigDecimal(capHour).setScale(2, RoundingMode.HALF_EVEN);
+		capHour = bd.floatValue();
+		String capHrStr = StringUtil.getFloatToString(capHour, "0.#h", loc);
+		
+		sb.append("<td height=\"24\" class=\"" + cssclass + "\" align=\"center\">");
+		String cellid = DateUtil.getDateTime(cursor, "yyyyMMdd") + "_" + rcto.getProjectId() + "_" + rcto.getResourceId();
+		
+		boolean isCapacityCursor = this.cursorContainCapacity(cursor, rcto.getProjectId(), rcto.getResourceId(), clist);
+		String content = capHrStr;
+		if (isCapacityCursor) {
+			content = "<font color=\"#22B14C\"><b>" + capHrStr + "</b></font>";
+		}
 
-			sb.append("<div onmouseout=\"hideIconEdit('EDIT_" + cellid + "');\" onmouseover=\"showIconEdit('EDIT_" + cellid + "');\">");	
+		ProjectTO pto = (ProjectTO)frm.getHmProjectlist().get(rcto.getProjectId());
+		if (pto!=null && !pto.getId().equals("0") && nonClosedPrjIntoRange) {
+			
+			sb.append("<div onmouseout=\"hideIconEdit('EDIT_" + cellid + "');\" onmouseover=\"showIconEdit('EDIT_" + cellid + "');\">");			
 			sb.append("<table width=\"100%\" height=\"17\" border=\"0\" cellspacing=\"0\" cellpadding=\"0\" style=\"table-layout:fixed; border:none\">");
-			sb.append("<tr><td class=\"tableCell\"><center>" + cap + "</center></td>");
-			sb.append("<td width=\"14\">");
+			sb.append("<tr><td class=\"tableCell\"><center>" + content + "</center></td>");
+			sb.append("<td width=\"14\" class=\"tableCell\">");
 			sb.append("<div id=\"EDIT_" + cellid + "\">");
-			sb.append("<a href=\"javascript:editCap('" + DateUtil.getDateTime(cursor, "yyyyMMdd") + "', '" + rcto.getProjectId() + "', '" + rcto.getResourceId() + "');\">");
-			sb.append("<img src=\"../images/edit.gif\" border=\"0\"></a>");
+			sb.append("<a href=\"javascript:editCap('" + DateUtil.getDateTime(cursor, "yyyyMMdd") + "', '" + rcto.getProjectId() + "', '" + rcto.getResourceId() + "', '" + (isCapacityCursor?"1":"0") + "');\">");
+			sb.append("<img src=\"../images/edit.gif\" border=\"0\" /></a>");
 			sb.append("</div></td></tr></table>");
 			sb.append("<script>hideIconEdit('EDIT_" + cellid + "');</script>");
 			sb.append("</div>");
 			
-			sb.append("</td>");
-			
 		} else {
-			sb.append("<td class=\"" + cssclass + "\" align=\"center\"><center>" + cap + "&nbsp;&nbsp;&nbsp;&nbsp;</center></td>");
+			String tip = super.getBundleMessage(request, "label.resCapacity.blockEdit");
+			if (!nonClosedPrjIntoRange) {
+				tip = super.getBundleMessage(request, "label.resCapacity.blockEditClosedPrj");
+			}
+			sb.append("<div onmouseout=\"hideIconEdit('BLKEDIT_" + cellid + "');\" onmouseover=\"showIconEdit('BLKEDIT_" + cellid + "');\">");			
+			sb.append("<table width=\"100%\" height=\"17\" border=\"0\" cellspacing=\"0\" cellpadding=\"0\" style=\"table-layout:fixed; border:none\">");
+			sb.append("<tr><td class=\"tableCell\"><center>" + content + "</center></td>");
+			sb.append("<td width=\"14\" class=\"tableCell\">");
+			sb.append("<div id=\"BLKEDIT_" + cellid + "\">");
+			sb.append("<img src=\"../images/warn.gif\" border=\"0\" " + HtmlUtil.getHint(tip) + "/>");
+			sb.append("</div></td></tr></table>");
+			sb.append("<script>hideIconEdit('BLKEDIT_" + cellid + "');</script>");
+			sb.append("</div>");
 		}
-
+		sb.append("</td>");
+		
 		return sb;
 	}
 	
 	
-	private void summarize(int[] summCapacity, int[] summCost,	int index, int cap, int cost) {
+	private boolean cursorContainCapacity(Timestamp cursor,	String projectId, String resourceId, Vector<ResourceCapacityTO> clist) {
+		boolean response = false;
+		if (clist!=null) {
+			Timestamp latest = DateUtil.getNow();
+			for (ResourceCapacityTO rcto : clist) {
+				if (cursor.equals(rcto.getDate()) && rcto.getProjectId().equals(projectId) && rcto.getResourceId().equals(resourceId)) {
+					response = true;
+				}
+				if (latest.after(rcto.getDate())) {
+					latest = rcto.getDate();
+				}
+			}
+			if (response == true) {
+				response = latest.before(cursor);
+			}
+		}
+		return response;
+	}
+
+
+	private void summarize(int[] summCapacity, int[] summCost, int[] summUsed, int index, int cap, int cost, int used) {
 		if (summCapacity.length > index) {			
 			summCapacity[index] = summCapacity[index] + cap;
 			summCost[index] = summCost[index] + cost;
+			summUsed[index] = summUsed[index] + used;
 		}
 	}
 
@@ -430,34 +582,43 @@ public class ResCapacityPanelAction extends GeneralStrutsAction {
 	}
 
 	
-	private StringBuffer getFooter(ResCapacityPanelForm frm, int[] sumCap, int[] sumCost, Timestamp iniDate, 
-			Timestamp finalDate, HttpServletRequest request, boolean isBody) throws BusinessException {
+	private StringBuffer getFooter(ResCapacityPanelForm frm, int[] sumCap, int[] sumCost, int[] summUsed, Timestamp iniDate, 
+			Timestamp finalDate, HttpServletRequest request, UserTO uto, boolean isBody) throws BusinessException {
 		StringBuffer sb = new StringBuffer();
 		StringBuffer sbCost = new StringBuffer();
+		StringBuffer sbUsed = new StringBuffer();
 		UserDelegate udel = new UserDelegate();
 		
+		String lblRed = super.getBundleMessage(request, "label.resCapacity.viewMode.redbullet");
+		String lblYel = super.getBundleMessage(request, "label.resCapacity.viewMode.yelbullet");
+		String lblGre = super.getBundleMessage(request, "label.resCapacity.viewMode.grebullet");
+
+		Locale loc = uto.getLocale();
 		int index = 0;		
 		sb.append("<tr class=\"formBody\">");
 		sbCost.append("<tr class=\"formBody\">");
+		sbUsed.append("<tr class=\"formBody\">");
 
 		if (!isBody) {
-			sb.append("<td>&nbsp;</td>");
-			sbCost.append("<td>&nbsp;</td>");
-			
-			sb.append("<td class=\"capCell\" align=\"right\"><b>" + super.getBundleMessage(request, "label.resCapacity.captotal") + "&nbsp;&nbsp;</b></td>");
-			sbCost.append("<td class=\"capCell\" align=\"right\"><b>" + super.getBundleMessage(request, "label.resCapacity.costtotal") + "&nbsp;&nbsp;</b></td>");			
+			sb.append("<td height=\"24\" class=\"capCell\" align=\"right\"><b>" + super.getBundleMessage(request, "label.resCapacity.captotal") + "&nbsp;&nbsp;</b></td>");
+			sbCost.append("<td height=\"24\" class=\"capCell\" align=\"right\"><b>" + super.getBundleMessage(request, "label.resCapacity.costtotal") + "&nbsp;&nbsp;</b></td>");
+			sbUsed.append("<td height=\"24\" class=\"capCell\" align=\"right\"><b>" + super.getBundleMessage(request, "label.resCapacity.actualtotal") + "&nbsp;&nbsp;</b></td>");
 		} else {
-			Timestamp cursor = iniDate;
+			Timestamp cursor = new Timestamp(iniDate.getTime());
 			while (cursor.before(finalDate)) {
 				
-				if (frm.getType()!=null && frm.getType().equals("RES") && sumCap[index] > frm.getMaxLimit()) {
-					sb.append("<td class=\"capCellHighlight\" align=\"center\">");
+				if (frm.getType()!=null && frm.getType().equals("RES") && sumCap[index] > this.getMaxLimit(cursor, frm.getGranularity(), finalDate)) {
+					sb.append("<td height=\"24\" class=\"capCellHighlight\" align=\"center\">");
 				} else {
-					sb.append("<td class=\"capCell\" align=\"center\">");	
+					sb.append("<td height=\"24\" class=\"capCell\" align=\"center\">");	
 				}
 				
 				if (sumCap.length > index) {
-					sb.append(sumCap[index]);	
+					
+					float totalCap = (sumCap[index] / (float)60);
+					String capHrStr = StringUtil.getFloatToString(totalCap, "0.#h", loc);
+					sb.append(capHrStr);	
+					
 				} else {
 					sb.append("&nbsp;");
 				}
@@ -467,40 +628,142 @@ public class ResCapacityPanelAction extends GeneralStrutsAction {
 				
 				if (sumCost.length > index) {
 					float f = Float.parseFloat(sumCost[index]+"");
-					sbCost.append("<td class=\"capCell\" align=\"center\">" + 
+					sbCost.append("<td height=\"24\" class=\"capCell\" align=\"center\">" + 
 							StringUtil.getCurrencyValue((float)(f/100), udel.getCurrencyLocale()) + "</td>");				
 				} else {
-					sbCost.append("<td class=\"capCell\" align=\"center\">&nbsp;</td>");				
+					sbCost.append("<td height=\"24\" class=\"capCell\" align=\"center\">&nbsp;</td>");				
 				}
 				
-				cursor = this.nextCursorDate(cursor, frm);
+				
+				if (summUsed.length > index && sumCap.length>index) {
+					sbUsed.append("<td height=\"24\" class=\"capCell\" align=\"center\">" + 
+							this.formatCapacityUsed(summUsed[index], uto, sumCap[index], lblRed, lblYel, lblGre) + "</td>");				
+				} else {
+					sbUsed.append("&nbsp;");
+				}
+				
+				cursor = this.nextCursorDate(cursor, frm.getGranularity(), finalDate);
 				index++;
 			}
 			sb.append("</tr>");
-			sbCost.append("</tr>");			
+			sbCost.append("</tr>");
+			sbUsed.append("</tr>");
 		}
 		
-		if (frm.getViewMode()!=null && frm.getViewMode().equals(ResCapacityPanelForm.MODE_ALL)) {
-			sb.append(sbCost);		
+		if (frm.getViewMode()!=null) {
+			if (frm.getViewMode().equals(ResCapacityPanelForm.MODE_CAP_COST)) {
+				sb.append(sbCost);
+			} else 	if (frm.getViewMode().equals(ResCapacityPanelForm.MODE_CAP_USED)) {
+				sb.append(sbUsed);
+			} 
 		}
 		
 		return sb;
 	}
 
 	
-	public ResourceCapacityTO getCapacity(Timestamp reference, String projectId, String resourceId, Vector<ResourceCapacityTO> clist) {
-		ResourceCapacityTO response = null;
-		Iterator<ResourceCapacityTO> i = clist.iterator();
-		while(i.hasNext()) {
-			ResourceCapacityTO rcto = (ResourceCapacityTO)i.next();
-			if (rcto.getProjectId().equals(projectId) && rcto.getResourceId().equals(resourceId)) {
-				if (!reference.before(rcto.getDate())) {
-					response = rcto;
+	private int getMaxLimit(Timestamp cursor, int gran, Timestamp finalDate) {
+		int response = 0;
+		
+		Integer maxLimit = hmMaxLimit.get(DateUtil.getDateTime(cursor, "yyyyMMdd"));
+		if (maxLimit==null) {
+			Timestamp nextCursor = this.nextCursorDate(cursor, gran, finalDate);
+			if (nextCursor!=null) {
+				int slots = getNumberSlots(cursor, nextCursor);
+				response = slots * 8 * 60;
+				hmMaxLimit.put(DateUtil.getDateTime(cursor, "yyyyMMdd"), new Integer(response));
+			}
+		} else {
+			response = maxLimit.intValue();
+		}
+		
+		return response;
+	}
+
+	
+	public int getNumberSlots(Timestamp iniInterval, Timestamp finalInteval) {
+		int response = 0;
+		if (iniInterval.before(finalInteval)) {
+			int diff = DateUtil.getSlotBetweenDates(iniInterval, finalInteval);
+		
+			Timestamp cursor = new Timestamp(iniInterval.getTime());
+			while(cursor.before(finalInteval)) {
+				
+				if (diff>1) {
+					int dayweek = DateUtil.get(cursor, Calendar.DAY_OF_WEEK);
+					if (dayweek!=Calendar.SATURDAY && dayweek!=Calendar.SUNDAY) {
+						response++;	
+					}					
 				} else {
-					break;
+					response++;
+				}
+				
+				cursor = DateUtil.getChangedDate(cursor, Calendar.DATE, 1);
+			}
+		} else {
+			response = 1;
+		}
+		return response;
+	}	
+
+
+	public ResourceCapacityTO getCapacity(Timestamp cursor, Timestamp nextCursor, String projectId, String resourceId, Vector<ResourceCapacityTO> clist, int granularity, Timestamp finalDate) {
+		ResourceCapacityTO response = null;
+		Vector<ResourceCapacityTO> accCapacity = new Vector<ResourceCapacityTO>();		
+
+		
+		Timestamp ref = this.getDateRef(cursor, nextCursor, granularity);
+		while(ref.before(nextCursor)) {
+
+			ResourceCapacityTO rescap = null;
+			Iterator<ResourceCapacityTO> i = clist.iterator();
+			while(i.hasNext()) {
+				ResourceCapacityTO rcto = (ResourceCapacityTO)i.next();
+				if (rcto.getProjectId().equals(projectId) && rcto.getResourceId().equals(resourceId)) {
+					if (!ref.before(rcto.getDate())) {
+						rescap = new ResourceCapacityTO(rcto);
+						response = new ResourceCapacityTO(rcto);
+						response.setCapacity(0);
+					} else {
+						break;
+					}
 				}
 			}
+			
+			if (rescap!=null && response!=null){
+				int dayweek = DateUtil.get(ref, Calendar.DAY_OF_WEEK);
+				if ((dayweek!=Calendar.SATURDAY && dayweek!=Calendar.SUNDAY) || (rescap.getDate().equals(cursor) && granularity==1)) {
+					accCapacity.add(rescap);						
+				}
+			}
+			
+			ref = DateUtil.getChangedDate(ref, Calendar.DATE, 1);
+		}					
+		
+		int accCap = -1;
+		int accHour = -1;
+		for (ResourceCapacityTO rcto : accCapacity) {
+			if (rcto.getCapacity()!=null) {
+				if (accCap==-1) accCap = 0;				
+				accCap += rcto.getCapacity().intValue();	
+			}
+			if (rcto.getCostPerHour()!=null) {
+				if (accHour==-1) accHour = 0;
+				accHour = rcto.getCostPerHour().intValue();	
+			}
 		}
+		
+		if (accCap>-1) {
+			response.setCapacity(new Integer(accCap));	
+		}
+		if (accHour>-1) {
+			response.setCostPerHour(new Integer(accHour));	
+		}
+
+		if (response!=null && response.getDate().after(finalDate)){
+			response = null;
+		}
+		
 		return response;
 	}
 	
@@ -511,22 +774,21 @@ public class ResCapacityPanelAction extends GeneralStrutsAction {
 		UserTO uto = SessionUtil.getCurrentUser(request);
 		
 		sb.append("<tr class=\"tableRowEven\" height=\"20\">");
-		if (!isbody) {			
-			sb.append("<td class=\"capCell\" width=\"30\">&nbsp;</td>");		
+		if (!isbody) {				
 			String lbl = "";
 			if (frm.getType()==null || frm.getType().equals("PRJ")) {
 				lbl = super.getBundleMessage(request, "title.resCapacity.grid.2");	
 			} else {
 				lbl = super.getBundleMessage(request, "title.resCapacity.grid.1");
 			}
-			sb.append("<td class=\"capCell\" width=\"200\" valign=\"center\"><b><center>" + lbl + "</center></b></td>");			
+			sb.append("<td height=\"24\" class=\"capCell\" width=\"200\" valign=\"center\"><b><center>" + lbl + "</center></b></td>");			
 		} else {
-			Timestamp cursor = iniDate;
-			while (cursor.before(finalDate)) {
-				sb.append("<td width=\"70\" class=\"capCell\" valign=\"center\"><center>" + 
+			Timestamp cursor = new Timestamp(iniDate.getTime());
+			while (cursor.before(finalDate) || cursor.equals(finalDate)) {
+				sb.append("<td width=\"70\" height=\"24\" class=\"capCell\" valign=\"center\"><center>" + 
 						this.formatDate(cursor, frm, uto.getCalendarMask()) + 
 						"</center></td>");
-				cursor = this.nextCursorDate(cursor, frm);						
+				cursor = this.nextCursorDate(cursor, frm.getGranularity(), finalDate);
 			}
 		}
 		sb.append("</tr>");
@@ -535,11 +797,10 @@ public class ResCapacityPanelAction extends GeneralStrutsAction {
 	}
 	
 	
-	private Timestamp nextCursorDate(Timestamp cursor, ResCapacityPanelForm frm){
+	public Timestamp nextCursorDate(Timestamp cursor, int gran, Timestamp finalDate){
 		Timestamp response = null;
 		int inc = Calendar.DATE; //default: Daily
 		int granularity = 1;     //default: Daily
-		int gran = frm.getGranularity();
 		
 		if (gran==7) { //Weekly
 			if (DateUtil.get(cursor, Calendar.DAY_OF_WEEK)==Calendar.SUNDAY) {
@@ -579,7 +840,11 @@ public class ResCapacityPanelAction extends GeneralStrutsAction {
 		}
 		
 		if (response==null) {
-			response = DateUtil.getChangedDate(cursor, inc, granularity); 
+			response = DateUtil.getChangedDate(cursor, inc, granularity);
+		} else {
+			if (response.after(finalDate) && !response.equals(finalDate)) {
+				response = DateUtil.getChangedDate(finalDate, Calendar.DATE, 1);
+			}			
 		}
 		
 		return response;
@@ -641,9 +906,10 @@ public class ResCapacityPanelAction extends GeneralStrutsAction {
 	}
 
 
-	private Vector<ResourceCapacityTO> getCapacityData(ResCapacityPanelForm frm) throws BusinessException {
+	private Vector<ResourceCapacityTO> getCapacityData(ResCapacityPanelForm frm, HttpServletRequest request) throws BusinessException {
 		ResourceCapacityDelegate rcdel = new ResourceCapacityDelegate();
 		
+		UserTO uto = SessionUtil.getCurrentUser(request);
 		String resId = null;
 		String projId = null;
 		if (frm.getType()==null || frm.getType().equals("PRJ")) {
@@ -652,14 +918,12 @@ public class ResCapacityPanelAction extends GeneralStrutsAction {
 			resId = frm.getResourceId();
 		}
 		
-		return rcdel.getListByResourceProject(resId, projId);
+		return rcdel.getListByResourceProject(resId, projId, uto);
 	}
 	
 	private void loadPreferences(ResCapacityPanelForm frm, HttpServletRequest request){
 		UserTO uto = SessionUtil.getCurrentUser(request);
 		PreferenceTO pto = uto.getPreference();
-		frm.setMaxLimit(Integer.parseInt(pto.getPreference(PreferenceTO.RES_CAP_MAXLIMIT)));
-		frm.setUnitCapacity(pto.getPreference(PreferenceTO.RES_CAP_UNIT));
 		frm.setViewMode(pto.getPreference(PreferenceTO.RES_CAP_VIEWMODE));
 		frm.setGranularity(Integer.parseInt(pto.getPreference(PreferenceTO.RES_CAP_GRANULARITY)));
 		frm.setHideDisabledUsers((pto.getPreference(PreferenceTO.RES_CAP_HIDE_DSBLE_USERS)).equals("on"));
@@ -670,8 +934,6 @@ public class ResCapacityPanelAction extends GeneralStrutsAction {
 		PreferenceBUS pbus = new PreferenceBUS();
 		UserTO uto = SessionUtil.getCurrentUser(request);
 		PreferenceTO pto = uto.getPreference();
-		pto.addPreferences(new PreferenceTO(PreferenceTO.RES_CAP_MAXLIMIT, frm.getMaxLimit()+"", uto));
-		pto.addPreferences(new PreferenceTO(PreferenceTO.RES_CAP_UNIT, frm.getUnitCapacity(), uto));
 		pto.addPreferences(new PreferenceTO(PreferenceTO.RES_CAP_VIEWMODE, frm.getViewMode(), uto));
 		pto.addPreferences(new PreferenceTO(PreferenceTO.RES_CAP_GRANULARITY, frm.getGranularity()+"", uto));
 		pto.addPreferences(new PreferenceTO(PreferenceTO.RES_CAP_HIDE_DSBLE_USERS, (frm.getHideDisabledUsers()?"on":"off"), uto));

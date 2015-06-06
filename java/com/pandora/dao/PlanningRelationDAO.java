@@ -1,12 +1,11 @@
 package com.pandora.dao;
 
-import java.util.Iterator;
-import java.util.Vector;
-
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Iterator;
+import java.util.Vector;
 
 import com.pandora.PlanningRelationTO;
 import com.pandora.PlanningTO;
@@ -17,8 +16,8 @@ import com.pandora.helper.LogUtil;
 
 public class PlanningRelationDAO extends DataAccess {
 
-    public Vector getRelationList(PlanningTO pto) throws DataAccessException { 
-    	Vector response = new Vector();
+    public Vector<PlanningRelationTO> getRelationList(PlanningTO pto) throws DataAccessException { 
+    	Vector<PlanningRelationTO> response = new Vector<PlanningRelationTO>();
         Connection c = null;
 		try {
 			c = getConnection();
@@ -32,8 +31,8 @@ public class PlanningRelationDAO extends DataAccess {
         
     }
 	
-    private Vector getRelationList(PlanningTO pto, Connection c) throws DataAccessException{
-    	Vector response = new Vector();
+    private Vector<PlanningRelationTO> getRelationList(PlanningTO pto, Connection c) throws DataAccessException{
+    	Vector<PlanningRelationTO> response = new Vector<PlanningRelationTO>();
     	ResultSet rs = null;
 		PreparedStatement pstmt = null; 
 		PlanningDAO pdao = new PlanningDAO();
@@ -97,11 +96,11 @@ public class PlanningRelationDAO extends DataAccess {
 				//check if planning is a requirement 
 				RequirementTO req = (RequirementTO)pto;
 				TaskDAO tdao = new TaskDAO();
-				Vector taskList = tdao.getTaskListByRequirement(req, req.getProject(), true);
+				Vector<TaskTO> taskList = tdao.getTaskListByRequirement(req, req.getProject(), true, c);
 
-				Iterator i = taskList.iterator();
+				Iterator<TaskTO> i = taskList.iterator();
 				while(i.hasNext()) {
-					TaskTO tto = (TaskTO)i.next();
+					TaskTO tto = i.next();
 					PlanningRelationTO prto = new PlanningRelationTO();
 				    prto.setPlanning(req);
 				    prto.setRelated(tto);
@@ -115,12 +114,7 @@ public class PlanningRelationDAO extends DataAccess {
 		} catch (SQLException e) {
 			throw new DataAccessException(e);
 		}finally{
-			try {
-				if(rs != null) rs.close();
-				if(pstmt != null) pstmt.close();
-			} catch (SQLException ec) {
-			    LogUtil.log(this, LogUtil.LOG_ERROR, "DB Closing statement error", ec);
-			} 		
+			super.closeStatement(rs, pstmt);
 		}
 		return response;
     }

@@ -35,7 +35,20 @@
 	    var pathWindow ="../do/manageHistRisk?operation=prepareForm&riskId=" + id;
 		window.open(pathWindow, 'riskHist', 'width=470, height=175, location=no, menubar=no, status=no, toolbar=no, scrollbars=no, resizable=no');
     }
-    
+
+	function checkKeyPress(myfield,e){
+		var keycode;
+		if (window.event) keycode = window.event.keyCode;
+		else if (e) keycode = e.which;
+		else return true;
+
+		if (keycode == 13) {
+		   buttonClick('kbForm', 'search')
+		   return false;
+		} else {
+		   return true;
+		}    
+	}
     
 	
 </script>
@@ -44,14 +57,15 @@
 <html:hidden name="kbForm" property="operation"/>
 <html:hidden name="kbForm" property="projectId"/>
 <html:hidden name="kbForm" property="currentPage"/>
+<html:hidden name="kbForm" property="genericTag"/>
 
-<br>
+<plandora-html:shortcut name="kbForm" property="goToKB" fieldList="projectId"/>
 
 <table width="100%" height="80%" border="0" cellspacing="0" cellpadding="0">
 <tr><td width="10">&nbsp;</td><td>
 
 	<display:headerfootergrid width="100%" type="HEADER">
-		<bean:message key="title.viewKb"/> <bean:write name="kbForm" property="projectName" />
+		<bean:message key="title.viewKb"/> <bean:write name="kbForm" property="projectName" filter="false"/>
 	</display:headerfootergrid>
   	
 	<table width="98%" border="0" cellspacing="0" cellpadding="0">
@@ -65,7 +79,7 @@
 	<tr class="formBody">
 		<td>&nbsp;</td>	
         <td class="formTitle"><bean:message key="label.viewKb.subject"/>:&nbsp;</td>
-		<td><html:text name="kbForm" property="subject" styleClass="textBox" size="100" maxlength="200"/></td>
+		<td><html:text name="kbForm" property="subject" styleClass="textBox" size="100" maxlength="200" onkeypress="return checkKeyPress(this,event);"/></td>
         <td>&nbsp;</td>		
 		<td>&nbsp;</td>			
 	</tr> 
@@ -74,7 +88,7 @@
         <td class="formTitle"><bean:message key="label.viewKb.type"/>:&nbsp;</td>
 		<td>
 	  		<html:select name="kbForm" property="type" styleClass="textBox">
-	             <html:options collection="typeList" property="id" labelProperty="genericTag"/>
+	             <html:options collection="typeList" property="id" labelProperty="genericTag" filter="false"/>
 			</html:select>
 		</td>
 		<td>&nbsp;</td>	
@@ -132,6 +146,6 @@
 
 <script> 
    	with(document.forms["kbForm"]){	
-	   subject.focus()
+	   subject.focus();
 	}
 </script>

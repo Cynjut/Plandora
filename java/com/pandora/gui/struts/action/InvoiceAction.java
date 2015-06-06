@@ -26,6 +26,7 @@ import com.pandora.delegate.MetaFieldDelegate;
 import com.pandora.delegate.ProjectDelegate;
 import com.pandora.delegate.UserDelegate;
 import com.pandora.exception.BusinessException;
+import com.pandora.exception.MetaFieldNumericTypeException;
 import com.pandora.gui.struts.form.InvoiceForm;
 import com.pandora.gui.struts.form.SurveyForm;
 import com.pandora.helper.DateUtil;
@@ -128,6 +129,7 @@ public class InvoiceAction extends GeneralStrutsAction {
 	}
 	
 	
+	@SuppressWarnings("unchecked")
 	public ActionForward removeInvoiceItem(ActionMapping mapping, ActionForm form,
 			 HttpServletRequest request, HttpServletResponse response){		
 		String forward = "showInvoice";
@@ -136,7 +138,8 @@ public class InvoiceAction extends GeneralStrutsAction {
 		    InvoiceForm frm = (InvoiceForm)form;
 		    this.reset(form);
 
-		    Vector<InvoiceItemTO> iList = (Vector)request.getSession().getAttribute("invoiceItemList");
+		    @SuppressWarnings("rawtypes")
+			Vector<InvoiceItemTO> iList = (Vector)request.getSession().getAttribute("invoiceItemList");
 		    if (iList!=null && frm.getRemovedInvoiceItemId()!=null){
 		        Iterator<InvoiceItemTO> i = iList.iterator();
 		        while(i.hasNext()){
@@ -194,6 +197,8 @@ public class InvoiceAction extends GeneralStrutsAction {
 			UserTO uto = SessionUtil.getCurrentUser(request);			
 		    frm.setSaveMethod(InvoiceForm.INSERT_METHOD, uto);
 		        			
+		} catch(MetaFieldNumericTypeException e){
+			this.setErrorFormSession(request, e.getMessage(), e.getMetaFieldName(), null, null, null, null, e);
 		} catch(BusinessException e){
 		    this.setErrorFormSession(request, errorMsg, e);
 		} catch(NullPointerException e){
@@ -316,7 +321,8 @@ public class InvoiceAction extends GeneralStrutsAction {
 	}
 	
 	
-	private InvoiceTO getTransferObjectFromActionForm(InvoiceForm frm, HttpServletRequest request){
+	@SuppressWarnings({ "rawtypes", "unchecked" })
+	private InvoiceTO getTransferObjectFromActionForm(InvoiceForm frm, HttpServletRequest request) throws MetaFieldNumericTypeException{
 		InvoiceTO ito = new InvoiceTO();
 		Locale loc = SessionUtil.getCurrentLocale(request);
         ito.setId(frm.getId());
@@ -338,7 +344,7 @@ public class InvoiceAction extends GeneralStrutsAction {
         ito.setItemsToBeRemoved(frm.getInvoiceItemsToBeRemoved());
         ito.setItemsToBeUpdated(frm.getInvoiceItemsToBeUpdated());
         
-        Vector<InvoiceItemTO> iList = (Vector)request.getSession().getAttribute("invoiceItemList");
+		Vector<InvoiceItemTO> iList = (Vector)request.getSession().getAttribute("invoiceItemList");
         ito.setItemsList(iList);
         
 		Vector<MetaFieldTO> metaFieldList = (Vector)request.getSession().getAttribute("metaFieldList");

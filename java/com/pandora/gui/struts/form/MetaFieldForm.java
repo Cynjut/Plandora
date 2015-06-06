@@ -10,7 +10,10 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
 import com.pandora.MetaFieldTO;
+import com.pandora.PreferenceTO;
+import com.pandora.UserTO;
 import com.pandora.delegate.DbQueryDelegate;
+import com.pandora.delegate.UserDelegate;
 import com.pandora.exception.BusinessException;
 import com.pandora.helper.DateUtil;
 import com.pandora.helper.XmlDomParse;
@@ -54,11 +57,17 @@ public class MetaFieldForm extends GeneralStrutsForm {
 
     private String helpContent;
     
+    private String order;
+    
+    private Boolean isMandatory;
+    
+    private Boolean isQualifier;
     
     /**
      * Clear values of Meta Field Form
      */
-    public void clear(){
+    public void clear() {
+    	this.id = null;
         this.name = null;        
         this.type = null;
         this.projectId = null;
@@ -69,6 +78,7 @@ public class MetaFieldForm extends GeneralStrutsForm {
         this.setSaveMethod(null, null);
         this.metaFormId = null;
         this.helpContent = null;
+        this.order = null;
     }    
     
     ///////////////////////////////////////////
@@ -86,6 +96,16 @@ public class MetaFieldForm extends GeneralStrutsForm {
     public void setName(String newValue) {
         this.name = newValue;
     }
+
+    
+    ///////////////////////////////////////////    
+    public String getOrder() {
+        return order;
+    }
+    public void setOrder(String newValue) {
+        this.order = newValue;
+    }
+    
     
     ///////////////////////////////////////////    
     public String getProjectId() {
@@ -161,13 +181,33 @@ public class MetaFieldForm extends GeneralStrutsForm {
 	public void setHelpContent(String newValue) {
 		this.helpContent = newValue;
 	}    
-    
+
+	
+	////////////////////////////////////////////
+	public Boolean getIsMandatory() {
+		return isMandatory;
+	}
+	public void setIsMandatory(Boolean newValue) {
+		this.isMandatory = newValue;
+	}
+
+	
+	////////////////////////////////////////////
+	public Boolean getIsQualifier() {
+		return isQualifier;
+	}
+	public void setIsQualifier(Boolean newValue) {
+		this.isQualifier = newValue;
+	}
+			
+	
 	/**
 	 * Validate the form.
 	 */
 	public ActionErrors validate(ActionMapping arg0, HttpServletRequest request) {
 		ActionErrors errors = new ActionErrors();
 		String[] options = null;
+		UserDelegate udel = new UserDelegate();
 	
 		if (this.operation.equals("saveMetaField")) {
 			int typeNum = Integer.parseInt(this.type);		    
@@ -244,8 +284,17 @@ public class MetaFieldForm extends GeneralStrutsForm {
 			        
 			        //check if SQL has a reasonable performance			        
 			        if (finalTime>0) {
-			            if ((finalTime-initTime)>1000) {
-			                errors.add("Domain", new ActionError("validate.formMetaField.scBoxDomainBadSQL") );    
+			        	
+			        	int maxValue = 1000;
+			        	try {
+			        		UserTO uto = udel.getRoot();
+			        		String val = uto.getPreference().getPreference(PreferenceTO.GENERAL_METAFIELD_TIMEOUT);
+			        		maxValue = Integer.parseInt(val);
+			        	} catch(Exception e) {
+			        		e.printStackTrace();
+			        	}
+			            if ((finalTime-initTime)>maxValue) {
+			                errors.add("Domain", new ActionError("validate.formMetaField.scBoxDomainBadSQL", (maxValue/1000)+"") );    
 			            }
 			        }
 			        
@@ -294,11 +343,25 @@ public class MetaFieldForm extends GeneralStrutsForm {
 			    	if (!isOk) {
 			    		errors.add("Domain", new ActionError("validate.formMetaField.gridDomainInvalid") );
 			    	}
-			    } 
+			    } else if (typeNum==MetaFieldTO.TYPE_TEXT_BOX_NUMERIC) {
+			    	if (numValues % 4 != 0) {
+			            errors.add("Domain", new ActionError("validate.formMetaField.tBoxNumericDomainInvalid") );    
+			        }
+			    }
 		    }
 		}
 		
 		return errors;
 	}
+
+	
+
+	
+    public void reset(ActionMapping mapping, HttpServletRequest request) {
+        this.isMandatory = false;
+        this.isQualifier = false;
+	}
+	
+	
     
 }

@@ -68,6 +68,7 @@ public class HeaderMenu extends TagSupport {
                             	String allInvoLbl = bundle("label.menuTag.invo");
                             	String allReposLbl = bundle("label.menuTag.repo");
                             	String allAgilLbl = bundle("label.menuTag.Agile");
+                            	String allGanttLbl = bundle("label.menuTag.gantt");
                             	String allImpLbl = bundle("label.menuTag.imp");
                             	String allCapLbl = bundle("label.menuTag.cap");
                             	String allCostLbl = bundle("label.menuTag.cost");
@@ -81,8 +82,6 @@ public class HeaderMenu extends TagSupport {
             		            if (eto!=null) {
                 		            buff.append("&nbsp;-&nbsp;<a href=\"../do/showAllTask?operation=prepareForm&projectRelated=" + projectId + "\" class=\"headerMenuContent\" target=\"\">" + allTaskLbl + "</a>\n");
                 		            buff.append("&nbsp;-&nbsp;<a href=\"../do/showAllRequirement?operation=prepareForm&projectRelated=" + projectId + "\" class=\"headerMenuContent\" target=\"\">" + allReqsLbl + "</a>\n");
-                		            buff.append("&nbsp;-&nbsp;<a href=\"../do/manageRisk?operation=prepareForm&projectId=" + projectId + "\" class=\"headerMenuContent\" target=\"\">" + allRiskLbl + "</a>\n");
-                		            buff.append("&nbsp;-&nbsp;<a href=\"../do/manageOccurrence?operation=prepareForm&projectId=" + projectId + "\" class=\"headerMenuContent\" target=\"\">" + allOccuLbl + "</a>\n");
                 		            buff.append("&nbsp;-&nbsp;<a href=\"../do/manageSurvey?operation=prepareForm&projectId=" + projectId + "\" class=\"headerMenuContent\" target=\"\">" + allSurvLbl + "</a>\n");
                 		            buff.append("&nbsp;-&nbsp;<a href=\"../do/viewBSCPanel?operation=prepareForm&projectId=" + projectId + "\" class=\"headerMenuContent\" target=\"\">" + allBscLbl + "</a>\n");
                 		            buff.append("&nbsp;-&nbsp;<a href=\"../do/showResCapacityPanel?operation=prepareForm&projectId=" + projectId + "\" class=\"headerMenuContent\" target=\"\">" + allCapLbl + "</a>\n");                		            
@@ -93,6 +92,9 @@ public class HeaderMenu extends TagSupport {
                                 }
 
             		            if (rto!=null) {
+                		            buff.append("&nbsp;-&nbsp;<a href=\"../do/manageRisk?operation=prepareForm&projectId=" + projectId + "\" class=\"headerMenuContent\" target=\"\">" + allRiskLbl + "</a>\n");
+                		            buff.append("&nbsp;-&nbsp;<a href=\"../do/manageOccurrence?operation=prepareForm&projectId=" + projectId + "\" class=\"headerMenuContent\" target=\"\">" + allOccuLbl + "</a>\n");            		            	
+                		            buff.append("&nbsp;-&nbsp;<a href=\"../do/ganttPanel?operation=prepareForm&projectId=" + projectId + "\" class=\"headerMenuContent\" target=\"\">" + allGanttLbl + "</a>\n");            		            	
                 		            buff.append("&nbsp;-&nbsp;<a href=\"../do/viewReport?operation=prepareForm&projectId=" + projectId + "\" class=\"headerMenuContent\" target=\"\">" + allRepoLbl + "</a>\n");
                 		            buff.append("&nbsp;-&nbsp;<a href=\"../do/viewKb?operation=prepareForm&projectId=" + projectId + "\" class=\"headerMenuContent\" target=\"\">" + allKbasLbl + "</a>\n");
                 		            buff.append("&nbsp;-&nbsp;<a href=\"../do/projectImportExport?operation=prepareForm&projectId=" + projectId + "\" class=\"headerMenuContent\" target=\"\">" + allImpLbl + "</a>\n");
@@ -146,7 +148,7 @@ public class HeaderMenu extends TagSupport {
     
     private String[] getMenuOptions(String servletPath){
     	String[] page = null;
-    	ArrayList pages = new ArrayList();
+    	ArrayList<String[]> pages = new ArrayList<String[]>();
     	pages.add(new String[]{"/jsp/manageProject.jsp", "projectForm", "id"});
     	pages.add(new String[]{"/jsp/manageRisk.jsp", "riskForm", "projectId"});
     	pages.add(new String[]{"/jsp/manageOccurrence.jsp", "occurrenceForm", "projectId"});
@@ -163,7 +165,8 @@ public class HeaderMenu extends TagSupport {
     	pages.add(new String[]{"/jsp/manageInvoice.jsp", "invoiceForm", "projectId"});
     	pages.add(new String[]{"/jsp/costPanel.jsp", "costForm", "projectId"});
     	pages.add(new String[]{"/jsp/projectImportExport.jsp", "projectImportExportForm", "projectId"});
-    	pages.add(new String[]{"/jsp/resCapacityPanel.jsp", "resCapacityPanelForm", "projectId"}); 
+    	pages.add(new String[]{"/jsp/resCapacityPanel.jsp", "resCapacityPanelForm", "projectId"});
+    	pages.add(new String[]{"/jsp/ganttPanel.jsp", "ganttPanelForm", "projectId"});
     	
     	for (int i=0; i<pages.size(); i++) {
     		page = (String[])pages.get(i);

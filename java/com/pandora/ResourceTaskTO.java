@@ -1,19 +1,26 @@
 package com.pandora;
 
 import java.sql.Timestamp;
-import java.util.Iterator;
+import java.util.Calendar;
+import java.util.GregorianCalendar;
 import java.util.StringTokenizer;
+import java.util.TimeZone;
 import java.util.Vector;
 
-import com.pandora.delegate.ResourceTaskDelegate;
+import net.fortuna.ical4j.model.DateTime;
+import net.fortuna.ical4j.model.Dur;
+import net.fortuna.ical4j.model.component.VToDo;
+import net.fortuna.ical4j.model.property.Categories;
+import net.fortuna.ical4j.model.property.Description;
+import net.fortuna.ical4j.model.property.TzId;
+import net.fortuna.ical4j.model.property.Uid;
+
 import com.pandora.delegate.TaskDelegate;
 import com.pandora.delegate.UserDelegate;
 import com.pandora.exception.BusinessException;
 import com.pandora.helper.DateUtil;
 import com.pandora.integration.Integration;
 import com.pandora.integration.ResourceTaskIntegration;
-
-import com.pandora.PreferenceTO;
 
 /**
  * This object it is a bean that represents a ResourceTask entity.
@@ -148,43 +155,13 @@ public class ResourceTaskTO extends TransferObject {
         return "<param name=\"JOB_" + i + "\" value=\"" + this.getId() + "|" + taskId + "| |" + tsto.getName() + "|" + resId + "|" + type + "\" />\n";
     }
     
-    /**
-     * Return the resource task alloc objects information on Applet PARAM format.
-     * @param cursor
-     * @param iniDate
-     * @return
-     */
-    public String getAllocBodyFormat(int cursor, Timestamp iniDate) {
-        String response = "";
-        Vector<ResourceTaskAllocTO> allocList = this.getAllocList();
-        Iterator<ResourceTaskAllocTO> i = allocList.iterator();
-        ResourceTaskDelegate rtdel = new ResourceTaskDelegate();
-
-        //define the decoration of gantt alloc unit
-        int allocUnitType = 0;
-        //TODO soh pode descomentar depois que implmentar corretamente o shape de allocUnit no gantt
-        //Integer state = this.taskStatus.getStateMachineOrder();
-        //if (state.equals(TaskStatusTO.STATE_MACHINE_CLOSE)){
-        //   allocUnitType = 1;
-        //}
-
-        
-        while(i.hasNext()){
-            ResourceTaskAllocTO rtato = (ResourceTaskAllocTO)i.next();
-
-            Timestamp refDate = rtdel.getPreferedDate(this);            
-            int currSlot = DateUtil.getSlotBetweenDates(iniDate, refDate) + rtato.getSequence().intValue();
-            response+=rtato.getAllocBodyFormat(++cursor, currSlot, allocUnitType);
-        }           
-        return response;
-    }
     
     /**
-     * Return the lattest date/time of current ResourceTask. The value returned
+     * Return the latest date/time of current ResourceTask. The value returned
      * is calculated based on: actualDate or startDate + actualTime or estimatedTime.
      * @return
      */
-    public Timestamp getLattestDate(){
+    public Timestamp getLatestDate(){
         Timestamp endResTask = null;
         
         //get the actual date or optionally the start date
@@ -418,6 +395,39 @@ public class ResourceTaskTO extends TransferObject {
 	}
 	public void setBillableStatus(Boolean newValue) {
 		this.billableStatus = newValue;
+	}
+
+	
+	public VToDo toVToDo(TimeZone timezone, TzId timeZoneId) {
+		java.util.Calendar startDate = new GregorianCalendar();
+		startDate.setTimeZone(timezone);
+		startDate.set(Calendar.MONTH, DateUtil.get(this.getInitialDate(), Calendar.MONTH));
+		startDate.set(Calendar.DAY_OF_MONTH, DateUtil.get(this.getInitialDate(), Calendar.DAY_OF_MONTH));
+		startDate.set(Calendar.YEAR, DateUtil.get(this.getInitialDate(), Calendar.YEAR));
+		startDate.set(Calendar.HOUR_OF_DAY, DateUtil.get(this.getInitialDate(), Calendar.HOUR_OF_DAY));
+		startDate.set(Calendar.MINUTE, DateUtil.get(this.getInitialDate(), Calendar.MINUTE));
+		startDate.set(Calendar.SECOND, DateUtil.get(this.getInitialDate(), Calendar.SECOND));			
+
+		Integer durat = getActualTime();
+        if (durat==null){
+        	durat = getEstimatedTime();
+        }
+		Dur duration = new Dur(0, 0, durat, 0);
+		
+		// Create the event
+		DateTime start = new DateTime(startDate.getTime());
+		VToDo todo = new VToDo(start, duration, this.getTask().getName());
+		todo.getProperties().add(new Description(this.getTask().getDescription()));
+		if (this.getTask()!=null && this.getTask().getCategory()!=null && this.getTask().getCategory().getName()!=null) {
+			todo.getProperties().add(new Categories(this.getTask().getCategory().getName()));	
+		}
+		todo.getProperties().add(timeZoneId);
+		
+		// generate unique identifier..
+		Uid uid = new Uid("PLAND_" + this.getId());
+		todo.getProperties().add(uid);
+		
+		return todo;
 	}
 	
     

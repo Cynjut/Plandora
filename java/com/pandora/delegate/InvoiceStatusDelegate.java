@@ -15,7 +15,7 @@ public class InvoiceStatusDelegate extends GeneralDelegate {
     /* (non-Javadoc)
      * @see com.pandora.bus.InvoiceStatusBUS.getList()
      */    
-    public Vector getList() throws BusinessException{
+    public Vector<InvoiceStatusTO> getList() throws BusinessException{
         return bus.getList();
     }
 

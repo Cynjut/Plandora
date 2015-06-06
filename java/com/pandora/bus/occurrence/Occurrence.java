@@ -20,7 +20,7 @@ public class Occurrence extends GenericPlugin {
     public static final String STATE_FINAL_3   = "98";
     
     
-    public Vector getFields(){
+    public Vector<FieldValueTO> getFields(){
         return null;
     }
     
@@ -53,11 +53,11 @@ public class Occurrence extends GenericPlugin {
     
     public String getType(String key){
     	String response = null;
-    	Vector list = getFields();
+    	Vector<FieldValueTO> list = getFields();
         if (list!=null) {
-            Iterator i = list.iterator();
+            Iterator<FieldValueTO> i = list.iterator();
             while(i.hasNext()) {
-            	FieldValueTO to = (FieldValueTO)i.next();
+            	FieldValueTO to = i.next();
                 if (to.getId().equals(key)) {
                     response = to.getType();
                     break;
@@ -66,5 +66,22 @@ public class Occurrence extends GenericPlugin {
         }
         return response;
     }
+    
+    
+    public FieldValueTO getField(String fieldId){
+    	FieldValueTO response = null;
+    	Vector<FieldValueTO> list = getFields();
+        if (list!=null) {
+            Iterator<FieldValueTO> i = list.iterator();
+            while(i.hasNext()) {
+            	FieldValueTO to = i.next();
+                if (to.getId().equals(fieldId)) {
+                    response = to;
+                    break;
+                }
+            }
+        }
+        return response;
+    }    
     
 }

@@ -10,6 +10,7 @@ import org.apache.struts.action.ActionError;
 import org.apache.struts.action.ActionErrors;
 import org.apache.struts.action.ActionMapping;
 
+import com.pandora.SurveyQuestionTO;
 import com.pandora.UserTO;
 import com.pandora.helper.FormValidationUtil;
 import com.pandora.helper.SessionUtil;
@@ -46,12 +47,13 @@ public class SurveyForm extends GeneralStrutsForm {
     
     private String replicationHtmlList;
     
-	private ArrayList questionsToBeUpdated;
+	private ArrayList<String> questionsToBeUpdated;
 	
-	private ArrayList questionsToBeRemoved;
+	private ArrayList<String> questionsToBeRemoved;
 
 	private String editQuestionId;
 	
+	private boolean hideClosedSurveys;
 	
     /**
      * Clear values of Form
@@ -78,6 +80,7 @@ public class SurveyForm extends GeneralStrutsForm {
     public void reset(ActionMapping mapping, HttpServletRequest request) {
         this.isTemplate = false;
         this.isAnonymous = false;
+        this.hideClosedSurveys = false;
     }
 
     
@@ -209,15 +212,24 @@ public class SurveyForm extends GeneralStrutsForm {
 		this.editQuestionId = newValue;
 	}
 
+	
+	///////////////////////////////////	
+	public boolean getHideClosedSurveys() {
+		return hideClosedSurveys;
+	}
+	public void setHideClosedSurveys(boolean newValue) {
+		this.hideClosedSurveys = newValue;
+	}
+
 
 	///////////////////////////////////
-	public ArrayList getQuestionsToBeUpdated() {
+	public ArrayList<String> getQuestionsToBeUpdated() {
 		return questionsToBeUpdated;
 	}
 	public void addQuestionsToBeUpdated(String questionId) {
 		boolean already = false;
 		if (this.questionsToBeUpdated==null) {
-			this.questionsToBeUpdated = new ArrayList();
+			this.questionsToBeUpdated = new ArrayList<String>();
 		} else {
 			Object[] list = this.questionsToBeUpdated.toArray();
 			for (int i=0 ; i<list.length; i++) {
@@ -236,13 +248,13 @@ public class SurveyForm extends GeneralStrutsForm {
 	}
 	
 	///////////////////////////////////
-	public ArrayList getQuestionsToBeRemoved() {
+	public ArrayList<String> getQuestionsToBeRemoved() {
 		return questionsToBeRemoved;
 	}
 	public void addQuestionsToBeRemoved(String questionId) {
 		boolean already = false;
 		if (this.questionsToBeRemoved==null) {
-			this.questionsToBeRemoved = new ArrayList();
+			this.questionsToBeRemoved = new ArrayList<String>();
 		} else {
 			Object[] list = this.questionsToBeRemoved.toArray();
 			for (int i=0 ; i<list.length; i++) {
@@ -279,7 +291,8 @@ public class SurveyForm extends GeneralStrutsForm {
 		    FormValidationUtil.checkDate(errors, "Publishing Date", this.publishingDate, loc, uto.getCalendarMask());
 		    FormValidationUtil.checkDate(errors, "Final Date", this.finalDate, loc, uto.getCalendarMask());
 		    
-		    Vector qList = (Vector)request.getSession().getAttribute("questionList");
+		    @SuppressWarnings("unchecked")
+			Vector<SurveyQuestionTO> qList = (Vector<SurveyQuestionTO>)request.getSession().getAttribute("questionList");
 		    if (qList==null || qList.size()==0) {
 		    	errors.add("Name", new ActionError("validate.formSurvey.blankQuestion") );
 		    }
@@ -288,15 +301,22 @@ public class SurveyForm extends GeneralStrutsForm {
 	}
     
 	
-	public void setPathContext(String newValue) {
-		this.pathContext = newValue;
+	public void setPathContext(String fullUrl, String contextApp) {
+		this.pathContext=null;
+		if (fullUrl!=null && contextApp!=null) {
+			int i = fullUrl.indexOf(contextApp);
+			if (i>0) {
+				this.pathContext = fullUrl.substring(0, i + contextApp.length());	
+			}
+		}
 	}
+
 	
 	
 	public String getAnonymousURI(){
 		String uri = "";
 		if (this.isAnonymous) {
-			uri = "http://[server]:[port]" + this.pathContext + "/do/showSurvey?operation=anonymous&key=" + this.key;
+			uri = this.pathContext + "/do/showSurvey?operation=anonymous&key=" + this.key;
 		}
 		return uri;
 	}

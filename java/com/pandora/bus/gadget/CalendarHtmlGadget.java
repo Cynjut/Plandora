@@ -263,7 +263,7 @@ public final class CalendarHtmlGadget extends HtmlGadget {
 				String mask = super.getI18nMsg("calendar.format", loc);
 
             	Object bus = OccurrenceTO.getClass(allClasses, oto.getSource());
-				if (bus!=null && oto.isVisible()) { //only public events and milestones
+				if (bus!=null && oto.getVisible()) { //only public events and milestones
 					oto = odel.getOccurrenceObject(oto);
 
 					CalendarSyncTO csto = ((CalendarSyncInterface)bus).populateCalendarFields(oto, mask, loc);

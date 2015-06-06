@@ -97,5 +97,19 @@ public class DiscussionTopicTO extends TransferObject {
 	}
 	
 	
+	public DiscussionTopicTO getClone() {
+		DiscussionTopicTO response = new DiscussionTopicTO();
+		response.setContent(this.getContent());
+		response.setCreationDate(this.getCreationDate());
+		response.setGenericTag(response.getGenericTag());
+		response.setGridRowNumber(this.getGridRowNumber());
+		response.setId(this.getId());
+		response.setLastUpd(this.getLastUpd());
+		response.setParentTopic(this.getParentTopic());
+		response.setPlanningId(this.getPlanningId());
+		response.setReplyNumber(this.getReplyNumber());
+		response.setUser(this.getUser());
+		return response;
+	}
 	
 }

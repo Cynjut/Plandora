@@ -15,6 +15,9 @@ public class AttachmentTO extends TransferObject {
     
     public static final String ATTACH_STATUS_RECOVERED = "3";
     
+    public static final String VISIBILITY_RESTRICT = "1";
+    public static final String VISIBILITY_PRIVATE  = "2";
+    public static final String VISIBILITY_PUBLIC   = "3";
     
     private String name;
     
@@ -45,8 +48,8 @@ public class AttachmentTO extends TransferObject {
     protected int fileSize = 0;
     
     
-    public AttachmentTO(String newValue) {
-        super.setId(newValue);
+    public AttachmentTO(String newId) {
+        super.setId(newId);
     }
     
     public AttachmentTO() {

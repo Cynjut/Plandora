@@ -18,8 +18,9 @@ public class ProjectGridShowReqDecorator extends ColumnDecorator {
     public String decorate(Object columnValue) {
 		String image = "";
 		ProjectTO pto = (ProjectTO)this.getObject();
-		if (pto.getRoleIntoProject().equals(LeaderTO.ROLE_LEADER+"") || 
-		    pto.getRoleIntoProject().equals(RootTO.ROLE_ROOT+"")){
+		if (pto!=null && pto.getRoleIntoProject()!=null &&
+			(pto.getRoleIntoProject().equals(LeaderTO.ROLE_LEADER+"") || 
+		    pto.getRoleIntoProject().equals(RootTO.ROLE_ROOT+""))){
 		
 		    String altValue = this.getBundleMessage("label.grid.project.allReq");	
 			image ="<a href=\"javascript:showAllRequirements('" + columnValue + "');\" border=\"0\"> \n";

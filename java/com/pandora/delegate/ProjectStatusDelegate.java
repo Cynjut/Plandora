@@ -19,7 +19,7 @@ public class ProjectStatusDelegate extends GeneralDelegate {
     /* (non-Javadoc)
      * @see com.pandora.bus.ProjectStatusBUS.getProjectStatusListByProject(com.pandora.ProjectTO)
      */
-	public Vector getProjectStatusListByProject(ProjectTO pto) throws BusinessException{
+	public Vector<ProjectStatusTO> getProjectStatusListByProject(ProjectTO pto) throws BusinessException{
         return bus.getProjectStatusListByProject(pto);	    
 	}
 

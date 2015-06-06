@@ -102,6 +102,27 @@ public class ReportBUSTest extends TestCase {
  	   assertTrue(((ReportFieldTO)response7.get(0)).getId().equals("PROJECT_LIST"));
  	   assertTrue(((ReportFieldTO)response7.get(0)).getLabel().equals("0|apple|1|orange|2|lemon"));
  	   
+ 	   //normal content with field names with spaces into it special caracteres
+ 	   String content8 = "select sum((rt.estimated_time/60) * r.cost_per_hour) as value, r.id " +
+		"from resource_task rt, resource r " +
+		"and rt.id = ?#Estes são os meus Récurços(sic){!select id, name from departmenet where project=?#ç5ad % 2 * (){apple;orange;lemon}# and name is not null!}(1)#";
+ 	   response8 = bus.getReportFields(content8); 	   
+ 	   assertTrue(response8.size()==2);
+ 	   assertTrue(((ReportFieldTO)response8.get(1)).getId().equals("Estes são os meus Récurços(sic)"));
+ 	   assertTrue(((ReportFieldTO)response8.get(0)).getId().equals("ç5ad % 2 * ()"));
+
+  	   //NULL content 	    
+  	   response9 = bus.getReportFields(null);
+  	   assertTrue(response9.size()==0);
+  	   
+  	   //Fields equals byt with upper case and lower case 
+ 	   String content10 = "select sum((rt.estimated_time/60)) as value, r.id " +
+							"from resource_task rt, resource r " +
+							"and rt.id = ?#RECURSOS{!select name, id from departmenet!}(1)# " +
+							"rt.id = ?#recursos{}#";
+ 	   response10 = bus.getReportFields(content10);
+ 	   assertTrue(response10.size()==2);
+ 	   
  	   
  	   String content11 = "select sum((rt.estimated_time/60)) as value, r.id " +
 							"from resource_task rt, resource r " +

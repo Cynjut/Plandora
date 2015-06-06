@@ -3,19 +3,20 @@ package com.pandora.bus;
 import java.util.Vector;
 
 import com.pandora.ResourceCapacityTO;
+import com.pandora.UserTO;
 import com.pandora.dao.ResourceCapacityDAO;
 import com.pandora.exception.BusinessException;
 import com.pandora.exception.DataAccessException;
 
 public class ResourceCategoryBUS extends GeneralBusiness {
 
-    /** The Data Acess Object related with current business entity */
+    /** The Data Access Object related with current business entity */
     ResourceCapacityDAO dao = new ResourceCapacityDAO();
 
-	public Vector<ResourceCapacityTO> getListByResourceProject(String resourceId, String projectId) throws BusinessException {
+	public Vector<ResourceCapacityTO> getListByResourceProject(String resourceId, String projectId, UserTO leader) throws BusinessException {
         Vector<ResourceCapacityTO> response = new Vector<ResourceCapacityTO>();
         try {
-            response = dao.getListByResourceProject(resourceId, projectId);
+            response = dao.getListByResourceProject(resourceId, projectId, leader);
         } catch (DataAccessException e) {
             throw new  BusinessException(e);
         }

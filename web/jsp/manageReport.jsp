@@ -2,6 +2,7 @@
 <%@ taglib uri="/WEB-INF/lib/struts-bean" prefix="bean" %>
 <%@ taglib uri="/WEB-INF/lib/display" prefix="display" %>
 <%@ taglib uri="/WEB-INF/lib/struts-logic" prefix="logic" %>
+<%@ taglib uri="/WEB-INF/lib/plandora-html" prefix="plandora-html" %>
 
 <jsp:include page="header.jsp" />
 
@@ -20,7 +21,7 @@
 		}
 	}
 	
-     function changeProject(){
+     function changeCategory(){
 		 buttonClick("reportForm", "refreshCategory");
      }     
 	
@@ -32,9 +33,10 @@
 	<html:hidden name="reportForm" property="operation"/>
 	<html:hidden name="reportForm" property="id"/>
 	<html:hidden name="reportForm" property="lastExecution"/>
-	
-	<br>
-	
+	<logic:equal name="reportForm" property="isKpiForm" value="off">	      
+      	<html:hidden name="reportForm" property="hideClosedReport"/>
+  	</logic:equal>		      
+		
 	<table width="100%" border="0" cellspacing="0" cellpadding="0">
 	<tr><td width="10">&nbsp;</td><td>
 
@@ -64,6 +66,14 @@
 	      </td>
 	      <td>&nbsp;</td>
 	    </tr>
+		<tr class="pagingFormBody">
+		  <td>&nbsp;</td>
+		  <td class="formTitle"><bean:message key="label.manageReport.description"/>:&nbsp;</td>
+	       <td colspan="3" class="formBody">
+	         <html:textarea name="reportForm" property="description" styleClass="textBox" cols="86" rows="3" />
+	       </td>		  
+		  <td>&nbsp;</td>
+		</tr>	    
         <logic:equal name="reportForm" property="isKpiForm" value="on">
 		    <tr class="pagingFormBody">	
 	    	   <td>&nbsp;</td>
@@ -76,9 +86,19 @@
 	       	   <td class="formTitle"><bean:message key="label.manageReport.persp"/>:&nbsp;</td>
 			   <td class="formBody">
 			   		<html:select name="reportForm" property="reportPerspectiveId" styleClass="textBox">
-						<html:options collection="perspectiveList" property="id" labelProperty="genericTag"/>
+						<html:options collection="perspectiveList" property="id" labelProperty="genericTag" filter="false"/>
 					</html:select>
 	       	   </td>       	   
+	           <td>&nbsp;</td>
+		    </tr>
+		    <tr class="pagingFormBody">	
+	    	   <td>&nbsp;</td>
+	       	   <td class="formTitle"><bean:message key="label.manageReport.kpiType"/>:&nbsp;</td>    
+		       <td colspan="3" class="formBody">
+			  		<html:select name="reportForm" property="kpiType" styleClass="textBox">
+			            <html:options collection="kpiTypeList" property="id" labelProperty="genericTag" filter="false"/>		  		
+					</html:select>
+	       	   </td>
 	           <td>&nbsp;</td>
 		    </tr>
         </logic:equal>	    
@@ -90,28 +110,26 @@
 	      </td>
 	      <td>&nbsp;</td>
 	    </tr>
-	    <logic:equal name="reportForm" property="isKpiForm" value="on">
-		    <tr class="formNotes">
-		      <td>&nbsp;</td>
-		      <td>&nbsp;</td>
-		      <td colspan="3"><div>&nbsp;&nbsp;**&nbsp;<bean:message key="label.manageReport.sql.help"/></div></td>
-		      <td>&nbsp;</td>
-		    </tr>
-	    </logic:equal>
+	    <tr class="formNotes">
+	      <td>&nbsp;</td>
+	      <td>&nbsp;</td>
+	      <td colspan="3"><div>&nbsp;&nbsp;**&nbsp;<bean:message key="label.manageReport.sql.help"/></div></td>
+	      <td>&nbsp;</td>
+	    </tr>
 
 	    <tr class="pagingFormBody">	
     	   <td>&nbsp;</td>
        	   <td class="formTitle"><bean:message key="label.manageReport.project"/>:&nbsp;</td>    
 	       <td class="formBody">
 		  		<html:select name="reportForm" property="projectId" styleClass="textBox" onkeypress="javascript:changeCategory();" onchange="javascript:changeCategory();">
-		             <html:options collection="projectList" property="id" labelProperty="name"/>
+		             <html:options collection="projectList" property="id" labelProperty="name" filter="false"/>
 				</html:select>
        	   </td> 
 	       <logic:equal name="reportForm" property="isKpiForm" value="on">
 	       	   <td class="formTitle"><bean:message key="label.manageReport.execHour"/>:&nbsp;</td>    
 		       <td class="formBody">
 			  		<html:select name="reportForm" property="executionHour" styleClass="textBox">
-			             <html:options collection="hoursList" property="id" labelProperty="genericTag"/>		  		
+			             <html:options collection="hoursList" property="id" labelProperty="genericTag" filter="false"/>		  		
 					</html:select>
 	       	   </td>
 	       </logic:equal>
@@ -121,13 +139,20 @@
 	       </logic:equal>       	   
            <td>&nbsp;</td>
 	    </tr>	    
-        <logic:equal name="reportForm" property="isKpiForm" value="on">	    
+        <logic:equal name="reportForm" property="isKpiForm" value="on">
+		    <tr class="pagingFormBody">	
+	    	   <td>&nbsp;</td>
+	       	   <td class="formTitle"><bean:message key="label.manageReport.project.list"/>:&nbsp;</td>    
+		       <td colspan="4" class="formBody">
+		       		<html:text name="reportForm" property="appliedProjectList" styleClass="textBox" size="30" maxlength="300"/>
+	       	   </td>
+		    </tr>	            	    
 		    <tr class="pagingFormBody">	
 	    	   <td>&nbsp;</td>
 	       	   <td class="formTitle"><bean:message key="label.manageReport.dataType"/>:&nbsp;</td>    
 		       <td class="formBody">
 			  		<html:select name="reportForm" property="dataType" styleClass="textBox">
-			             <html:options collection="dataTypeList" property="id" labelProperty="genericTag"/>		  		
+			             <html:options collection="dataTypeList" property="id" labelProperty="genericTag" filter="false"/>		  		
 					</html:select>
 	       	   </td>
 	           <td colspan="3">&nbsp;</td>
@@ -141,13 +166,13 @@
 	       	   <td class="formTitle"><bean:message key="label.manageReport.tolerance"/>:&nbsp;</td>       
 		       <td class="formBody">
 			  		<html:select name="reportForm" property="toleranceScale" styleClass="textBox">
-			             <html:options collection="toleranceScaleList" property="id" labelProperty="genericTag"/>		  		
+			             <html:options collection="toleranceScaleList" property="id" labelProperty="genericTag" filter="false"/>		  		
 					</html:select>
 					&nbsp;
 		       		<html:text name="reportForm" property="tolerance" styleClass="textBox" size="6" maxlength="15"/>
 		       		&nbsp;
 			  		<html:select name="reportForm" property="toleranceUnit" styleClass="textBox">
-			             <html:options collection="toleranceUnitList" property="id" labelProperty="genericTag"/>		  		
+			             <html:options collection="toleranceUnitList" property="id" labelProperty="genericTag" filter="false"/>		  		
 					</html:select>
 	       	   </td>	       	   
 	           <td>&nbsp;</td>
@@ -168,7 +193,7 @@
        	   <td class="formTitle"><bean:message key="label.manageReport.category"/>:&nbsp;</td>    
 	       <td class="formBody">
 		  		<html:select name="reportForm" property="categoryId" styleClass="textBox">
-		             <html:options collection="categoryList" property="id" labelProperty="name"/>
+		             <html:options collection="categoryList" property="id" labelProperty="name" filter="false"/>
 				</html:select>
        	   </td> 
        	   <td colspan="2">&nbsp;</td>
@@ -180,7 +205,7 @@
        	    <td class="formTitle"><bean:message key="label.manageReport.role"/>:&nbsp;</td>
 		    <td class="formBody">
 				<html:select name="reportForm" property="profile" styleClass="textBox">
-			        <html:options collection="profileList" property="id" labelProperty="genericTag"/>		  		
+			        <html:options collection="profileList" property="id" labelProperty="genericTag" filter="false"/>		  		
 				</html:select>
 	       	</td>
        	    <td colspan="2">&nbsp;</td>			
@@ -257,7 +282,7 @@
 			<table width="98%" border="0" cellspacing="0" cellpadding="0"><tr>
 			  <td width="120">
 				  <html:button property="save" styleClass="button" onclick="javascript:buttonClick('reportForm', 'saveReport');">
-					<bean:write name="reportForm" property="saveLabel" />
+					<bean:write name="reportForm" property="saveLabel" filter="false"/>
 				  </html:button>    
 			  </td>
 			  <td width="120">
@@ -288,18 +313,18 @@
 		<table width="98%" border="0" cellspacing="0" cellpadding="0">
 		<tr class="formBody">
 			<td>
-				<display:table border="1" width="100%" name="reportList" scope="session" pagesize="10">
-					  <display:column property="name" likeSearching="true" title="label.manageReport.name" />
-					  <display:column width="15%" likeSearching="true" property="project.name" align="center" title="label.manageReport.project" />
-					  <display:column width="15%" likeSearching="true" property="category.name" align="center" title="label.manageReport.category" />					  
+			    <plandora-html:ptable width="100%" name="reportList" scope="session" pagesize="10"  frm="reportForm">
+					  <plandora-html:pcolumn property="name" likeSearching="true" title="label.manageReport.name" />
+					  <plandora-html:pcolumn width="15%" likeSearching="true" comboFilter="true" property="project.name" align="center" title="label.manageReport.project" />
+					  <plandora-html:pcolumn width="15%" likeSearching="true" comboFilter="true" property="category.name" align="center" title="label.manageReport.category" />					  
 				      <logic:equal name="reportForm" property="isKpiForm" value="on">	      
-   						  <display:column width="10%" property="goal" align="center" title="label.manageReport.goal" />
-						  <display:column width="15%" property="lastExecution" align="center" title="label.manageReport.lastExec" decorator="com.pandora.gui.taglib.decorator.GridDateDecorator" tag="2;2" />
-						  <display:column width="15%" property="finalDate" align="center" title="label.manageReport.disabled" decorator="com.pandora.gui.taglib.decorator.GridDateDecorator" tag="2;2" />
+   						  <plandora-html:pcolumn width="10%" property="goal" align="center" title="label.manageReport.goal" />
+						  <plandora-html:pcolumn width="15%" property="lastExecution" align="center" title="label.manageReport.lastExec" decorator="com.pandora.gui.taglib.decorator.GridDateDecorator" tag="2;2" />
+						  <plandora-html:pcolumn width="15%" property="finalDate" align="center" title="label.manageReport.disabled" decorator="com.pandora.gui.taglib.decorator.GridDateDecorator" tag="2;2" />
 				      </logic:equal>
-					  <display:column width="2%" property="id" align="center" title="grid.title.empty" decorator="com.pandora.gui.taglib.decorator.GridEditDecorator" tag="'reportForm', 'editReport'" />
-					  <display:column width="2%" property="id" align="center" title="grid.title.empty" decorator="com.pandora.gui.taglib.decorator.GridDeleteDecorator" tag="'reportForm', 'closeReport'" />						  
-				</display:table>		
+					  <plandora-html:pcolumn width="2%" property="id" align="center" title="grid.title.empty" decorator="com.pandora.gui.taglib.decorator.GridEditDecorator" tag="'reportForm', 'editReport'" />
+					  <plandora-html:pcolumn width="2%" property="id" align="center" title="grid.title.empty" decorator="com.pandora.gui.taglib.decorator.GridDeleteDecorator" tag="'reportForm', 'closeReport'" />						  
+				</plandora-html:ptable>		
 			</td>
 		</tr> 
 		</table>
@@ -311,6 +336,13 @@
 					<bean:message key="button.refresh"/>
 				  </html:button>    
 			  </td>
+			  <logic:equal name="reportForm" property="isKpiForm" value="on">			  
+				  <td class="textBoxOverTitleArea">
+					  <html:checkbox property="hideClosedReport" name="reportForm" >
+							<bean:message key="label.manageReport.kpi.hideClosed"/>
+					  </html:checkbox>
+				  </td>
+			  </logic:equal>
 			  <td>&nbsp;</td>
 			</tr></table>  	
 		</display:headerfootergrid>

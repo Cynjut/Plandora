@@ -57,9 +57,9 @@ public class InvoiceHistoryDAO extends DataAccess {
 		    pstmt.setString(11, ihto.getDescription());
 		    pstmt.setString(12, ihto.getHandler().getId());
 			if (ihto.getTotalPrice()!=null){
-			    pstmt.setInt(13, ihto.getTotalPrice().intValue());    
+			    pstmt.setLong(13, ihto.getTotalPrice().longValue());    
 			} else {
-			    pstmt.setNull(13, java.sql.Types.DECIMAL);
+			    pstmt.setNull(13, java.sql.Types.BIGINT);
 			}
 			pstmt.executeUpdate();
 												
@@ -115,7 +115,7 @@ public class InvoiceHistoryDAO extends DataAccess {
         uto.setUsername(getString(rs, "USERNAME"));
 
         response.setCategory(cto);
-        response.setContact(getString(rs, "h.contact"));
+        response.setContact(getString(rs, "contact"));
         response.setCreationDate(getTimestamp(rs, "creation_date"));
         response.setDescription(getString(rs, "description"));
         response.setDueDate(getTimestamp(rs, "due_date"));
@@ -126,7 +126,7 @@ public class InvoiceHistoryDAO extends DataAccess {
         response.setInvoiceStatus(isto);
         response.setName(getString(rs, "name"));
         response.setPurchaseOrder(getString(rs, "purchase_order"));
-        response.setTotalPrice(getInteger(rs, "total_price"));
+        response.setTotalPrice(getLong(rs, "total_price"));
 
         return response;
     }    

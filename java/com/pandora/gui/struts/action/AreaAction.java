@@ -2,14 +2,6 @@ package com.pandora.gui.struts.action;
 
 import java.util.Vector;
 
-import com.pandora.AreaTO;
-import com.pandora.delegate.AreaDelegate;
-import com.pandora.exception.AreaNameAlreadyExistsException;
-import com.pandora.exception.BusinessException;
-import com.pandora.gui.struts.form.AreaForm;
-import com.pandora.gui.struts.form.GeneralStrutsForm;
-import com.pandora.helper.SessionUtil;
-
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -17,6 +9,13 @@ import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionForward;
 import org.apache.struts.action.ActionMapping;
 
+import com.pandora.AreaTO;
+import com.pandora.delegate.AreaDelegate;
+import com.pandora.exception.AreaNameAlreadyExistsException;
+import com.pandora.exception.BusinessException;
+import com.pandora.gui.struts.form.AreaForm;
+import com.pandora.gui.struts.form.GeneralStrutsForm;
+import com.pandora.helper.SessionUtil;
 
 /**
  * This class handle the actions performed into Area form
@@ -33,7 +32,7 @@ public class AreaAction extends GeneralStrutsAction{
 		try {
 			AreaDelegate nameAreaDel = new AreaDelegate();
 		
-			Vector areaList = nameAreaDel.getAreaList();			
+			Vector<AreaTO> areaList = nameAreaDel.getAreaList();			
 			request.getSession().setAttribute("areaList", areaList);
 				
 		} catch(BusinessException e){
@@ -48,23 +47,6 @@ public class AreaAction extends GeneralStrutsAction{
 	 * This method prepare the form for updating an user. This method get the 
 	 * information of specific user from data base and put the data into the
 	 * html fields.
-	 * 
-	 * @param mapping
-	 * @param form
-	 * @param request
-	 * @param response
-	 * @return
-	 */
-	/**
-	 * This method prepare the form for updating an user. This method get the 
-	 * information of specific user from data base and put the data into the
-	 * html fields.
-	 * 
-	 * @param mapping
-	 * @param form
-	 * @param request
-	 * @param response
-	 * @return
 	 */
 	public ActionForward editArea(ActionMapping mapping, ActionForm form,
 			 HttpServletRequest request, HttpServletResponse response){
@@ -99,23 +81,15 @@ public class AreaAction extends GeneralStrutsAction{
 	
 	/**
 	 * Refresh grid with list of all users from data base.
-	 * @param request
-	 * @throws BusinessException
 	 */
 	private void refreshAreaList(HttpServletRequest request) throws BusinessException{
 		AreaDelegate udel = new AreaDelegate();
-		Vector areaList = udel.getAreaList();
+		Vector<AreaTO> areaList = udel.getAreaList();
 		request.getSession().setAttribute("areaList", areaList);
 	}
 	
 	/**
 	 * Clear all values of current form.
-	 * 
-	 * @param mapping
-	 * @param form
-	 * @param request
-	 * @param response
-	 * @return
 	 */
 	public ActionForward clear(ActionMapping mapping, ActionForm form,
 			 HttpServletRequest request, HttpServletResponse response){
@@ -128,8 +102,6 @@ public class AreaAction extends GeneralStrutsAction{
 	
 	/**
 	 * Clear all values of current form.
-	 * 
-	 * @param usrfrm
 	 */
 	private void clearForm(ActionForm form, HttpServletRequest request){
 	    AreaForm arfrm = (AreaForm)form;
@@ -138,34 +110,22 @@ public class AreaAction extends GeneralStrutsAction{
 		//set current operation status for Insertion
 		arfrm.setSaveMethod(AreaForm.INSERT_METHOD, SessionUtil.getCurrentUser(request));
 	}
-	
-	/**
-	 * This method redirect to home page of system. 
-	 * @param mapping
-	 * @param form
-	 * @param request
-	 * @param response
-	 * @return
-	 */
-	public ActionForward backward(ActionMapping mapping, ActionForm form,
-			 HttpServletRequest request, HttpServletResponse response){
-		String forward = "home";
 
-		//clear messages of form
-		this.clearMessages(request);
-		
+	
+	public ActionForward refresh(ActionMapping mapping, ActionForm form,
+			 HttpServletRequest request, HttpServletResponse response){
+		String forward = "showArea";
+		try {
+			this.refreshAreaList(request);	
+		} catch(Exception e){
+		    this.setErrorFormSession(request, "error.showAreaForm", e);		    
+		}
 		return mapping.findForward(forward);		
 	}
 
 	/**
 	 * This method is performed after Save button click event.<br>
 	 * Is used to update or insert data of user into data base.
-	 * 
-	 * @param mapping
-	 * @param form
-	 * @param request
-	 * @param response
-	 * @return
 	 */
 	public ActionForward saveArea(ActionMapping mapping, ActionForm form,
 			 HttpServletRequest request, HttpServletResponse response){
@@ -180,16 +140,16 @@ public class AreaAction extends GeneralStrutsAction{
 			//create an AreaTO object based on html fields
 			AreaTO uto = this.getTransferObjectFromActionForm(afrm);
 			
-			//check if username already exists
+			//check if area already exists
 			adel.checkAreaName(uto);
 						
 			if (afrm.getSaveMethod().equals(GeneralStrutsForm.INSERT_METHOD)){			    
-			    errorMsg = "error.insertAreaForm";
+			    errorMsg = "error.generic.insertFormError";
 			    succeMsg = "message.insertArea";
 			    adel.insertArea(uto);
 			    this.clearForm(form, request);
 			} else {
-			    errorMsg = "error.updateAreaForm";
+			    errorMsg = "error.generic.updateFormError";
 			    succeMsg = "message.updateArea";
 			    adel.updateArea(uto);
 			}
@@ -204,7 +164,7 @@ public class AreaAction extends GeneralStrutsAction{
 		    this.setErrorFormSession(request, "error.areanameAlreadyExists", e);
 		} catch(BusinessException e){
 		    this.setErrorFormSession(request, errorMsg, e);
-		} catch(NullPointerException e){
+		} catch(Exception e){
 		    this.setErrorFormSession(request, errorMsg, e);		    
 		}
 		return mapping.findForward(forward);		
@@ -212,12 +172,6 @@ public class AreaAction extends GeneralStrutsAction{
 	
 	/**
 	 * Remove a selected area of data base.
-	 *  
-	 * @param mapping
-	 * @param form
-	 * @param request
-	 * @param response
-	 * @return
 	 */
 	public ActionForward removeArea(ActionMapping mapping, ActionForm form,
 			 HttpServletRequest request, HttpServletResponse response){   
@@ -225,10 +179,6 @@ public class AreaAction extends GeneralStrutsAction{
 		try {
 			AreaForm afrm = (AreaForm)form;
 			AreaDelegate adel = new AreaDelegate();
-			
-			//clear form and messages
-			this.clearMessages(request);
-			this.clearForm(afrm, request);
 			
 			//create an UserTO object based on html fields
 			AreaTO uto = new AreaTO();
@@ -242,9 +192,13 @@ public class AreaAction extends GeneralStrutsAction{
 			
 			//get all users from data base and put into http session (to be displayed by grid)
 			this.refreshAreaList(request);
-		
+
+			//clear form and messages
+			this.clearMessages(request);
+			this.clearForm(afrm, request);
+			
 		} catch(BusinessException e){
-		    this.setErrorFormSession(request, "error.removeAreaForm", e);
+		    this.setErrorFormSession(request, "error.generic.removeFormError", e);
 		}
 		return mapping.findForward(forward);		
 
@@ -252,8 +206,6 @@ public class AreaAction extends GeneralStrutsAction{
 	
 	/**
 	 * Put data of html fields into TransferObject 
-	 * @param frm
-	 * @return
 	 */
 	private AreaTO getTransferObjectFromActionForm(AreaForm frm){
 		AreaTO uto = new AreaTO();
@@ -265,9 +217,6 @@ public class AreaAction extends GeneralStrutsAction{
 	
 	/**
 	 * Put data of TransferObject (from DB) into html fields (ActionForm)
-	 * @param uto
-	 * @param usrfrm
-	 * @return
 	 */
 	private void getActionFormFromTransferObject(AreaTO ato, AreaForm areafrm){
 		areafrm.setId(ato.getId());

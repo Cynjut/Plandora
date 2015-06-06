@@ -1,8 +1,8 @@
 <%@ taglib uri="/WEB-INF/lib/struts-html" prefix="html" %>
 <%@ taglib uri="/WEB-INF/lib/struts-bean" prefix="bean" %>
 <%@ taglib uri="/WEB-INF/lib/display" prefix="display" %>
-<%@ taglib uri="/WEB-INF/lib/plandora-html" prefix="plandora-html" %>
 <%@ taglib uri="/WEB-INF/lib/struts-logic" prefix="logic" %>
+<%@ taglib uri="/WEB-INF/lib/plandora-html" prefix="plandora-html" %>
 
 <%@ page import="com.pandora.PreferenceTO"%>
 <%@ page import="com.pandora.PlanningRelationTO"%>
@@ -22,13 +22,7 @@
     }
         
 	function callResourceTask(tskId, resId, projId){
-		with(document.forms["resTaskForm"]){
-			projectId.value = projId;
-			resourceId.value = resId;
-			taskId.value = tskId;
-		}
-		buttonClick("resTaskForm", "prepareForm");
-		//window.location = "../do/manageResTask?operation=prepareForm&projectId=" + projId + "&resourceId=" + resId + "&taskId=" + tskId;
+		window.location = "../do/manageResTask?operation=prepareForm&projectId=" + projId + "&resourceId=" + resId + "&taskId=" + tskId;
 	}
 
 
@@ -39,6 +33,12 @@
 
     function changeProject() {
 	  	buttonClick("resTaskForm", "refreshProject");    	    
+    }
+    
+    function changeProjectResTask(selectedProjectId) {
+    	with(document.forms["resTaskForm"]){
+			window.location="../do/manageResTask?operation=changeProject&id=" + selectedProjectId;
+		}
     }
 
 	function changeStatus() {
@@ -136,6 +136,17 @@
 	  	buttonClick("resTaskForm", "refreshArtifacts");  
 	}
 
+	function gridComboFilterRefresh(url, param, cbName){
+		javascript:buttonClick('resTaskForm', 'refresh');
+	}
+
+	function gridTextFilterRefresh(url, param, cbName){
+		javascript:buttonClick('resTaskForm', 'refresh');
+	}
+
+	function showProjectPopup(){
+		displayMessage("../do/manageResTask?operation=showProjectPopup", 350, 150);
+	}
 
 </script>
 
@@ -163,7 +174,7 @@
 	<html:hidden name="resTaskForm" property="onlyFolders"/>
 	<html:hidden name="resTaskForm" property="multiple"/>
 	
-	<br>
+	<plandora-html:shortcut name="resTaskForm" property="goToResTaskForm" fieldList="projectId,categoryId"/>
 
 	<table width="100%" height="80%" border="0" cellspacing="0" cellpadding="0">
 	<tr><td width="10">&nbsp;</td><td>
@@ -171,7 +182,7 @@
 	<display:headerfootergrid width="100%" type="HEADER">
 		<bean:message key="title.resTask"/> 
 		<logic:present name="resTaskForm" property="reqCustomerName">
-			&nbsp;&nbsp;&nbsp;-&nbsp;&nbsp;&nbsp; <bean:message key="label.resTaskForm.customername"/>: <bean:write name="resTaskForm" property="reqCustomerName" />
+			&nbsp;&nbsp;&nbsp;-&nbsp;&nbsp;&nbsp; <bean:message key="label.resTaskForm.customername" />: <bean:write name="resTaskForm" property="reqCustomerName" filter="false"/>
 		</logic:present>
 	</display:headerfootergrid>
 
@@ -179,10 +190,10 @@
 		<table width="98%" border="0" cellspacing="0" cellpadding="0">	
 		<tr class="pagingFormBody">
 			<td width="10">&nbsp;</td>
-			<td width="110">&nbsp;</td>
+			<td width="195">&nbsp;</td>
 			<td width="400" class="formBody">
 				<div id="question_text">
-						<br /><b><bean:write name="resTaskForm" property="questionText" /></b><br />
+						<br /><b><bean:write name="resTaskForm" property="questionText" filter="false"/></b><br />
 						<input type="radio" name="questionAnswer" value="1"> <bean:message key="label.yes"/> 
 						&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
 						<input type="radio" name="questionAnswer" value="0"> <bean:message key="label.no"/>
@@ -194,71 +205,74 @@
 		</table>
 	</logic:equal>
 		
-    <logic:equal name="resTaskForm" property="isAdHocTask" value="on">	  
-		<table width="98%" border="0" cellspacing="0" cellpadding="0">
+	  
+	<table width="98%" border="0" cellspacing="0" cellpadding="0">
 	    <tr class="gapFormBody">
 	      <td width="10">&nbsp;</td>
-	      <td width="110">&nbsp;</td>
+	      <td width="195">&nbsp;</td>
 	      <td width="240">&nbsp;</td>
 	      <td width="70">&nbsp;</td>
 	      <td>&nbsp;</td>
 	      <td width="10">&nbsp;</td>
 	    </tr>
-	        	    
 	    <tr class="pagingFormBody">
 	      <td>&nbsp;</td>
 	      <td class="formTitle"><bean:message key="label.manageTask.project"/>:&nbsp;</td>
 	      <td class="formBody">
-				<html:select name="resTaskForm" property="projectId" styleClass="textBox" onkeypress="javascript:changeProject();" onchange="javascript:changeProject();">
-					<html:options collection="projectList" property="id" labelProperty="name"/>
-				</html:select>
+    			<logic:equal name="resTaskForm" property="isAdHocTask" value="on">	      
+					<html:select name="resTaskForm" property="projectId" styleClass="textBox" onkeypress="javascript:refreshProject();" onchange="javascript:changeProject();">
+						<html:options collection="projectList" property="id" labelProperty="name" filter="false"/>
+					</html:select>
+				</logic:equal>	
+    			<logic:equal name="resTaskForm" property="isAdHocTask" value="off">
+    				<table border="0" cellspacing="0" cellpadding="0">
+    					<tr>
+    						<td>
+								<html:select name="resTaskForm" property="projectId" styleClass="textBoxDisabled" disabled="true">
+									<html:options collection="projectList" property="id" labelProperty="name" filter="false"/>
+								</html:select>
+							</td>
+							<logic:equal name="resTaskForm" property="isCurrentTaskCreator" value="on">
+								<td width="10">&nbsp;</td>
+								<td width="20" valign="bottom" align="left" class="tableCellAction">
+									<a href="javascript:showProjectPopup();">
+										<img src="../images/prefresh.png" border="0" title="<bean:message key="label.changeProject"/>" alt="<bean:message key="label.changeProject"/>"/>
+									</a>
+								</td>
+							</logic:equal>
+						</tr>  
+					</table>
+				</logic:equal>				
 	  	  </td>
 	      <td class="formTitle"><bean:message key="label.manageTask.category"/>:&nbsp;</td>
 	      <td class="formBody">
-		  	<html:select name="resTaskForm" property="categoryId" styleClass="textBox" onkeypress="javascript:changeCategory();" onchange="javascript:changeCategory();">
-				<html:options collection="categoryList" property="id" labelProperty="name"/>
-			</html:select>
+    			<logic:equal name="resTaskForm" property="isAdHocTask" value="on">	      
+		  			<html:select name="resTaskForm" property="categoryId" styleClass="textBox" onkeypress="javascript:changeCategory();" onchange="javascript:changeCategory();">
+						<html:options collection="categoryList" property="id" labelProperty="name" filter="false"/>
+					</html:select>
+				</logic:equal>
+    			<logic:equal name="resTaskForm" property="isAdHocTask" value="off">	      
+					<logic:equal name="resTaskForm" property="isCurrentTaskCreator" value="on">
+			  			<html:select name="resTaskForm" property="categoryId" styleClass="textBox" onkeypress="javascript:changeCategory();" onchange="javascript:changeCategory();">
+							<html:options collection="categoryList" property="id" labelProperty="name" filter="false"/>
+						</html:select>					
+					</logic:equal>
+					<logic:equal name="resTaskForm" property="isCurrentTaskCreator" value="off">
+			  			<html:select name="resTaskForm" property="categoryId" styleClass="textBoxDisabled" disabled="true">
+							<html:options collection="categoryList" property="id" labelProperty="name" filter="false"/>
+						</html:select>					
+					</logic:equal>					
+				</logic:equal>									
 	      </td>	      
 	      <td>&nbsp;</td>      	      
 		</tr>	
-		</table>		
-	</logic:equal>
+	</table>		
+	
   	    
-    <logic:equal name="resTaskForm" property="isAdHocTask" value="off">
-    	<logic:equal name="resTaskForm" property="isCurrentTaskCreator" value="on">
-    	
-			<table width="98%" border="0" cellspacing="0" cellpadding="0">
-		    <tr class="gapFormBody">
-		      <td width="10">&nbsp;</td>
-		      <td width="110">&nbsp;</td>
-		      <td width="240">&nbsp;</td>
-		      <td width="70">&nbsp;</td>
-		      <td>&nbsp;</td>
-		    </tr>    
-					
-		    <tr class="pagingFormBody">
-		      <td>&nbsp;</td>
-	      	  <td class="formTitle"><bean:message key="label.manageTask.project"/>:&nbsp;</td>
-	      	  <td class="formBody">
-				 <html:select name="resTaskForm" property="projectId" styleClass="textBox" disabled="true">
-					<html:options collection="projectList" property="id" labelProperty="name"/>
-				 </html:select>
-	  	      </td>
-		      <td class="formTitle"><bean:message key="label.manageTask.category"/>:&nbsp;</td>
-		      <td class="formBody">
-			  	<html:select name="resTaskForm" property="categoryId" styleClass="textBox">
-					<html:options collection="categoryList" property="id" labelProperty="name"/>
-				</html:select>
-		      </td>	      
-			</table>		
-		</logic:equal>
-	</logic:equal>
-
-
 	<table width="98%" border="0" cellspacing="0" cellpadding="0">	
 	<tr class="gapFormBody">
 	  <td width="10">&nbsp;</td>
-	  <td width="110">&nbsp;</td>
+	  <td width="195">&nbsp;</td>
 	  <td>&nbsp;</td>
 	  <td width="10">&nbsp;</td>
 	</tr>
@@ -300,7 +314,7 @@
 		           &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
 		           &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
 		        </option>		  		
-			    <html:options collection="taskAvailable" property="id" labelProperty="name"/>
+			    <html:options collection="taskAvailable" property="id" labelProperty="name" filter="false"/>
 			</html:select>
    	    </td>
         <td>&nbsp;</td>
@@ -311,21 +325,21 @@
 	<table width="98%" border="0" cellspacing="0" cellpadding="0">
 		<tr class="pagingFormBody">
 			<td width="10">&nbsp;</td>
-			<td width="110" class="formTitle"><bean:message key="label.manageTask.grid.iteration"/>:&nbsp;</td>
+			<td width="195" class="formTitle"><bean:message key="label.manageTask.grid.iteration"/>:&nbsp;</td>
 			<td width="240" class="formBody">
 				<html:select name="resTaskForm" property="iterationId" styleClass="textBox">
 					<option value="-1">
 					   &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
 					   &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
 					</option>		  				  	
-					<html:options collection="iterationList" property="id" labelProperty="name"/>
+					<html:options collection="iterationList" property="id" labelProperty="name" filter="false"/>
 				</html:select>
 			</td>
 			<logic:equal name="resTaskForm" property="allowBillable" value="on">
 				<td width="70" class="formTitle"><bean:message key="label.resTaskForm.billable"/>:&nbsp;</td>
 				<td width="150" class="formBody">
 					<html:select name="resTaskForm" property="billableStatus" styleClass="textBox">
-						<html:options collection="billableStatusList" property="id" labelProperty="genericTag"/>
+						<html:options collection="billableStatusList" property="id" labelProperty="genericTag" filter="false"/>
 					</html:select>
 				</td>
 			</logic:equal>
@@ -338,21 +352,21 @@
 	</table>
 
 	
-	<plandora-html:metafield name="resTaskForm" collection="metaFieldList" styleTitle="formTitle" styleBody="formBody" styleForms="textBox" titleWidth="120" forward="manageResTask?operation=navigate"/>    
+	<plandora-html:metafield name="resTaskForm" collection="metaFieldList" styleTitle="formTitle" styleBody="formBody" styleForms="textBox" titleWidth="205" forward="manageResTask?operation=navigate"/>    
 	      
 	<table width="98%" border="0" cellspacing="0" cellpadding="0">
 		<logic:equal name="resTaskForm" property="isAdHocTask" value="off">
 	    	<tr class="pagingFormBody">
 	      		<td width="10">&nbsp;</td>
-	     	 	<td width="110" class="formTitle"><bean:message key="label.resTaskForm.initDate"/>:&nbsp;</td>
+	     	 	<td width="195" class="formTitle"><bean:message key="label.resTaskForm.initDate"/>:&nbsp;</td>
 		      	<td width="100" class="formBody">
-		      		<bean:write name="resTaskForm" property="estimDate" />
+		      		<bean:write name="resTaskForm" property="estimDate" filter="false"/>
 			  	</td>
 		        <td width="30">&nbsp;</td>
           		<td width="80" class="formTitle"><bean:message key="label.manageTask.taskStatus"/>:&nbsp;</td>
       	  		<td width="150" class="formBody">
 					<html:select name="resTaskForm" property="taskStatus" styleClass="textBox" onkeypress="javascript:changeStatus();" onchange="javascript:changeStatus();">
-						<html:options collection="taskStatusList" property="stateMachineOrder" labelProperty="name"/>
+						<html:options collection="taskStatusList" property="stateMachineOrder" labelProperty="name" filter="false"/>
 					</html:select>
 		  		</td>
 	      		<td>&nbsp;</td>
@@ -362,17 +376,17 @@
 	    <tr class="pagingFormBody">
 	      <td width="10">&nbsp;</td>	      
 		  <logic:equal name="resTaskForm" property="isAdHocTask" value="off">
-	      	  		<td width="110" class="formTitle"><bean:message key="label.resTaskForm.actualDate"/>:&nbsp;</td>		  
+	      	  		<td width="195" class="formTitle"><bean:message key="label.resTaskForm.actualDate"/>:&nbsp;</td>		  
 		      		<td width="200" class="formBody">
-		      			<bean:write name="resTaskForm" property="actualDateFormat" />
+		      			<bean:write name="resTaskForm" property="actualDateFormat" filter="false"/>
 			  		</td>
 			  		<td colspan="4">&nbsp;</td>
  		  </logic:equal>
 		  <logic:equal name="resTaskForm" property="isAdHocTask" value="on">
-          	  	<td width="110" class="formTitle"><bean:message key="label.manageTask.taskStatus"/>:&nbsp;</td>
+          	  	<td width="195" class="formTitle"><bean:message key="label.manageTask.taskStatus"/>:&nbsp;</td>
       	  		<td width="200" class="formBody">
 					<html:select name="resTaskForm" property="taskStatus" styleClass="textBox">
-						<html:options collection="taskStatusList" property="stateMachineOrder" labelProperty="name"/>
+						<html:options collection="taskStatusList" property="stateMachineOrder" labelProperty="name" filter="false"/>
 					</html:select>
 		  		</td>
 			  	<td conspan="4">&nbsp;</td>
@@ -387,26 +401,36 @@
 	    </tr>
 	    <tr class="pagingFormBody">
 	      <td width="10">&nbsp;</td>
-	      <td width="110" height="35">&nbsp;</td>
-	      
-	      <logic:equal name="resTaskForm" property="isAdHocTask" value="off">
-			<td class="formBody" rowspan="3" width="550">
+	      <td width="195" height="33">&nbsp;</td>
+		  <logic:equal name="resTaskForm" property="isAdHocTask" value="off">
+			<logic:equal name="resTaskForm" property="containEstimatedValues" value="on">
+				<td class="formBody" rowspan="4" width="580">
+			 </logic:equal>
 		  </logic:equal>
-	      <logic:equal name="resTaskForm" property="isAdHocTask" value="on">
-			<td class="formBody" rowspan="2" width="550">
-	      </logic:equal>
+		  
+	      <logic:equal name="resTaskForm" property="containEstimatedValues" value="off">
+			<logic:equal name="resTaskForm" property="isAdHocTask" value="off">
+				<td class="formBody" rowspan="3" width="580">
+			</logic:equal>
+		  </logic:equal>
+	      
+	      <logic:equal name="resTaskForm" property="containEstimatedValues" value="off">
+			<logic:equal name="resTaskForm" property="isAdHocTask" value="on">
+				<td class="formBody" rowspan="3" width="580">
+			</logic:equal>
+		  </logic:equal>
 	      	
 	      	<table  class="table" width="100%" border="0" cellspacing="1" cellpadding="2">
 	      		<tr class="rowHighlight">
 	      			  <th width="70" align="center" class="tableCellHeader">&nbsp;Total&nbsp;</th>
 	      			  <th width="10" class="pagingFormBody">&nbsp;</th>
-	      		      <th width="75" align="center" class="tableCellHeader"><bean:write name="resTaskForm" property="slotTitle1" /></th>	      			  
-	      		      <th width="75" align="center" class="tableCellHeader"><bean:write name="resTaskForm" property="slotTitle2" /></th>
-	      		      <th width="75" align="center" class="tableCellHeader"><bean:write name="resTaskForm" property="slotTitle3" /></th>
-	      		      <th width="75" align="center" class="tableCellHeader"><bean:write name="resTaskForm" property="slotTitle4" /></th>
-	      		      <th width="75" align="center" class="tableCellHeader"><bean:write name="resTaskForm" property="slotTitle5" /></th>
-	      		      <th width="75" align="center" class="tableCellHeader"><bean:write name="resTaskForm" property="slotTitle6" /></th>
-	      		      <th width="75" align="center" class="tableCellHeader"><bean:write name="resTaskForm" property="slotTitle7" /></th>
+	      		      <th width="75" align="center" class="tableCellHeader"><bean:write name="resTaskForm" property="slotTitle1" filter="false"/></th>	      			  
+	      		      <th width="75" align="center" class="tableCellHeader"><bean:write name="resTaskForm" property="slotTitle2" filter="false"/></th>
+	      		      <th width="75" align="center" class="tableCellHeader"><bean:write name="resTaskForm" property="slotTitle3" filter="false"/></th>
+	      		      <th width="75" align="center" class="tableCellHeader"><bean:write name="resTaskForm" property="slotTitle4" filter="false"/></th>
+	      		      <th width="75" align="center" class="tableCellHeader"><bean:write name="resTaskForm" property="slotTitle5" filter="false"/></th>
+	      		      <th width="75" align="center" class="tableCellHeader"><bean:write name="resTaskForm" property="slotTitle6" filter="false"/></th>
+	      		      <th width="75" align="center" class="tableCellHeader"><bean:write name="resTaskForm" property="slotTitle7" filter="false"/></th>
 				</tr>
 				
       			<logic:equal name="resTaskForm" property="isAdHocTask" value="off">
@@ -416,13 +440,13 @@
 					        	<html:text name="resTaskForm" property="estimTime" styleClass="textBoxDisabled" size="2" disabled="true"/> <bean:message key="label.hour"/>
 		  			  		</td>
 	      		      		<td class="pagingFormBody">&nbsp;</td>
-		  			  		<plandora-html:taskgridcell name="resTaskForm" property="slotTop1" slot="1" isTop="true"/>		  			  
-		  			  		<plandora-html:taskgridcell name="resTaskForm" property="slotTop2" slot="2" isTop="true"/>
-		  			  		<plandora-html:taskgridcell name="resTaskForm" property="slotTop3" slot="3" isTop="true"/>
-		  			  		<plandora-html:taskgridcell name="resTaskForm" property="slotTop4" slot="4" isTop="true"/>
-					  		<plandora-html:taskgridcell name="resTaskForm" property="slotTop5" slot="5" isTop="true"/>
-					  		<plandora-html:taskgridcell name="resTaskForm" property="slotTop6" slot="6" isTop="true"/>
-		  			  		<plandora-html:taskgridcell name="resTaskForm" property="slotTop7" slot="7" isTop="true"/>
+		  			  		<plandora-html:taskgridcell name="resTaskForm" property="slotTop1" slot="1" line="1"/>		  			  
+		  			  		<plandora-html:taskgridcell name="resTaskForm" property="slotTop2" slot="2" line="1"/>
+		  			  		<plandora-html:taskgridcell name="resTaskForm" property="slotTop3" slot="3" line="1"/>
+		  			  		<plandora-html:taskgridcell name="resTaskForm" property="slotTop4" slot="4" line="1"/>
+					  		<plandora-html:taskgridcell name="resTaskForm" property="slotTop5" slot="5" line="1"/>
+					  		<plandora-html:taskgridcell name="resTaskForm" property="slotTop6" slot="6" line="1"/>
+		  			  		<plandora-html:taskgridcell name="resTaskForm" property="slotTop7" slot="7" line="1"/>
 				   		</tr>
 				   	</logic:equal>
 				</logic:equal>
@@ -432,37 +456,65 @@
 	        			<html:text name="resTaskForm" property="actualTime" styleClass="textBoxDisabled" size="2" disabled="true"/> <bean:message key="label.hour"/>
 		  			  </td>
 		  			  <td class="pagingFormBody">&nbsp;</td>
+		  			  <plandora-html:taskgridcell name="resTaskForm" property="slotBotton1" slot="1" line="2"/>
+		  			  <plandora-html:taskgridcell name="resTaskForm" property="slotBotton2" slot="2" line="2"/>
+		  			  <plandora-html:taskgridcell name="resTaskForm" property="slotBotton3" slot="3" line="2"/>
+		  			  <plandora-html:taskgridcell name="resTaskForm" property="slotBotton4" slot="4" line="2"/>
+		  			  <plandora-html:taskgridcell name="resTaskForm" property="slotBotton5" slot="5" line="2"/>
+		  			  <plandora-html:taskgridcell name="resTaskForm" property="slotBotton6" slot="6" line="2"/>
+		  			  <plandora-html:taskgridcell name="resTaskForm" property="slotBotton7" slot="7" line="2"/>		  			  		  			  
+	      		</tr>	
+	      		
+	      		<tr class="pagingFormBody">	  			  
+				      <td class="pagingFormBody">&nbsp;</td>
+		  			  <td class="pagingFormBody">&nbsp;</td>
 
-		  			  <plandora-html:taskgridcell name="resTaskForm" property="slotBotton1" slot="1" isTop="false"/>
-		  			  <plandora-html:taskgridcell name="resTaskForm" property="slotBotton2" slot="2" isTop="false"/>
-		  			  <plandora-html:taskgridcell name="resTaskForm" property="slotBotton3" slot="3" isTop="false"/>
-		  			  <plandora-html:taskgridcell name="resTaskForm" property="slotBotton4" slot="4" isTop="false"/>
-		  			  <plandora-html:taskgridcell name="resTaskForm" property="slotBotton5" slot="5" isTop="false"/>
-		  			  <plandora-html:taskgridcell name="resTaskForm" property="slotBotton6" slot="6" isTop="false"/>
-		  			  <plandora-html:taskgridcell name="resTaskForm" property="slotBotton7" slot="7" isTop="false"/>		  			  		  			  
+		  			  <plandora-html:taskgridcell name="resTaskForm" property="slotBotton1" slot="1" line="3"/>
+		  			  <plandora-html:taskgridcell name="resTaskForm" property="slotBotton2" slot="2" line="3"/>
+		  			  <plandora-html:taskgridcell name="resTaskForm" property="slotBotton3" slot="3" line="3"/>
+		  			  <plandora-html:taskgridcell name="resTaskForm" property="slotBotton4" slot="4" line="3"/>
+		  			  <plandora-html:taskgridcell name="resTaskForm" property="slotBotton5" slot="5" line="3"/>
+		  			  <plandora-html:taskgridcell name="resTaskForm" property="slotBotton6" slot="6" line="3"/>
+		  			  <plandora-html:taskgridcell name="resTaskForm" property="slotBotton7" slot="7" line="3"/>		  			  		  			  
 	      		</tr>				
 	      	</table>
 	      </td>
 	      <td>&nbsp;</td>
 		</tr>
+		<logic:equal name="resTaskForm" property="containEstimatedValues" value="on">
+			<tr class="pagingFormBody" height="25">
+				<td>&nbsp;</td>		
+				<td class="formTitle">
+					<bean:message key="label.resTaskForm.estTime"/>:&nbsp;
+				</td>					
+				<td>&nbsp;</td>
+			</tr>
+		</logic:equal>
 		
-		<tr class="pagingFormBody">
-   			<td>&nbsp;</td>		
-   			<td class="formTitle">
-				    <logic:equal name="resTaskForm" property="containEstimatedValues" value="on">
-						<bean:message key="label.resTaskForm.estTime"/>:
-					</logic:equal>
-					&nbsp;
-			</td>					
-   			<td>&nbsp;</td>
-   		</tr>
+		<logic:equal name="resTaskForm" property="containEstimatedValues" value="off">
+			<logic:equal name="resTaskForm" property="isAdHocTask" value="on">
+				<tr class="pagingFormBody" height="25">
+					<td>&nbsp;</td>		
+					<td class="formTitle">
+						<bean:message key="label.resTaskForm.estTime"/>:&nbsp;
+					</td>					
+					<td>&nbsp;</td>
+				</tr>
+			</logic:equal>
+		</logic:equal>
+		
 	    <logic:equal name="resTaskForm" property="isAdHocTask" value="off">			
-		    <tr class="pagingFormBody">
+		    <tr class="pagingFormBody" height="25">
 		    	<td>&nbsp;</td>
 		    	<td class="formTitle"><bean:message key="label.resTaskForm.actualTime"/>:&nbsp;</td>
 		      	<td>&nbsp;</td>
 		    </tr>  
-		</logic:equal>	    
+		</logic:equal>
+		<tr class="pagingFormBody" height="25">
+	    	<td>&nbsp;</td>
+	    	<td class="formTitle"><bean:message key="label.resTaskForm.allocTime"/>:&nbsp;</td>
+	      	<td>&nbsp;</td>
+	    </tr>  	    
 	    <tr class="pagingFormBody">
 	    	<td>&nbsp;</td>
 	    	<td>&nbsp;</td>
@@ -532,24 +584,42 @@
 	    <tr class="pagingFormBody">
 	      <td width="10">&nbsp;</td>
 		  <logic:equal name="resTaskForm" property="isAdHocTask" value="off">	      
-		      <td width="110"class="formTitle"><bean:write name="resTaskForm" property="commentLabel" filter="true"/>:&nbsp;</td>
+		      <td width="195"class="formTitle"><bean:write name="resTaskForm" property="commentLabel" filter="false"/>:&nbsp;</td>
 		      <td class="formBody">
 			  	<html:textarea name="resTaskForm" property="comment" styleClass="textBox" cols="80" rows="4" />
 			  </td>
 		  </logic:equal>
 		  <logic:equal name="resTaskForm" property="isAdHocTask" value="on">
-		      <td width="110">&nbsp;</td>
+		      <td width="195">&nbsp;</td>
 		      <td><html:hidden name="resTaskForm" property="comment" value=""/></td>
 		  </logic:equal>		  			  
 	      <td width="10">&nbsp;</td>
 		</tr>	
     </table>
+    
+    <logic:notEqual name="resTaskForm" property="taskId" value="">
+    	<table width="98%" border="0" cellspacing="0" cellpadding="0">    
+			<tr class="pagingFormBody">
+				<td width="10">&nbsp;</td>
+				<td width="195" class="formTitle">&nbsp;</td>
+				<td>
+					<table width="55%" border="0" cellspacing="0" cellpadding="0">
+						<tr class="gapFormBody">
+							<td colspan="4">&nbsp;</td>
+						</tr>		
+			  			<plandora-html:attachment name="resTaskForm" collection="taskAttachmentList" removedForward="refreshTaskAfterAttach"/> 	
+					</table> 
+				</td>
+				<td width="10">&nbsp;</td>
+			</tr>
+		</table>    
+    </logic:notEqual>
 
     <logic:notEqual name="resTaskForm" property="taskId" value="">
 		<table width="98%" border="0" cellspacing="0" cellpadding="0">
 		<tr class="pagingFormBody">
     	    <td width="10">&nbsp;</td>
-        	<td width="110" class="formTitle">&nbsp;</td>
+        	<td width="195" class="formTitle">&nbsp;</td>
 			<td>
 				<table width="55%" border="0" cellspacing="0" cellpadding="0">
 					<tr class="gapFormBody">
@@ -562,7 +632,7 @@
 		</tr>		
 		<tr class="pagingFormBody">
     	    <td width="10">&nbsp;</td>
-        	<td width="110" class="formTitle">&nbsp;</td>
+        	<td width="195" class="formTitle">&nbsp;</td>
 			<td>
 				<table width="55%" border="0" cellspacing="0" cellpadding="0">
 					<tr class="gapFormBody">
@@ -573,7 +643,23 @@
 			</td>
 			<td width="10">&nbsp;</td>
 		</tr>		
+		</table>
 	</logic:notEqual>
+	    	
+	<logic:equal name="resTaskForm" property="canSeeDiscussion" value="on">
+	<table width="98%" border="0" cellspacing="0" cellpadding="0">	    
+		<tr class="pagingFormBody">
+			<td width="20">&nbsp;</td>
+			<td>
+				<logic:notEqual name="resTaskForm" property="taskId" value="">
+					<plandora-html:discussiontopic name="resTaskForm" entityId="taskId" collection="discussionTopicList" action="manageResTask" forward="manageResTask?operation=refreshAfterTopicDiscussion" />
+				</logic:notEqual>
+			</td>
+			<td width="10">&nbsp;</td>
+		</tr>
+	</table>		
+	</logic:equal>   
+ 	
 	
     <logic:equal name="resTaskForm" property="showAllocatedDays" value="on">
 		<table width="98%" border="0" cellspacing="0" cellpadding="0">
@@ -582,7 +668,7 @@
 		    </tr>		
 		    <tr class="pagingFormBody">
 		      <td width="10">&nbsp;</td>
-		      <td width="110"class="formTitle"><bean:message key="label.resTaskForm.allocDays"/>:&nbsp;</td>
+		      <td width="195"class="formTitle"><bean:message key="label.resTaskForm.allocDays"/>:&nbsp;</td>
 		      <td class="formBody">
 		      
 		      		<table width="190" border="1" cellspacing="0" cellpadding="0">
@@ -627,7 +713,7 @@
 		<table width="98%" border="0" cellspacing="0" cellpadding="0"><tr>
 		  <td width="150">
 			  <html:button property="save" styleClass="button" onclick="javascript:saveResTask();">
-				<bean:write name="resTaskForm" property="saveLabel" />
+				<bean:write name="resTaskForm" property="saveLabel" filter="false"/>
 			  </html:button>    
 		  </td>					
 		  <td>&nbsp;</td>
@@ -659,31 +745,31 @@
  	
 	<table width="98%" border="0" cellspacing="0" cellpadding="0">
 	<tr class="formBody">
-		<td>
-			<display:table border="1" width="100%" name="taskList" scope="session" pagesize="<%=PreferenceTO.HOME_TASKLIST_NUMLINE%>" requestURI="../do/manageResTask?operation=navigate">
-			      <display:column width="2%" property="id" align="center" title="grid.title.empty" decorator="com.pandora.gui.taglib.decorator.TaskGridStatusDecorator" />
-			      <display:column width="2%" property="task.id" align="center" title="grid.title.empty" decorator="com.pandora.gui.taglib.decorator.GridMindMapLinkDecorator" />			      
-				  <display:column property="task.name" likeSearching="true" maxWords="<%=PreferenceTO.LIST_NUMWORDS%>" title="label.manageTask.name" />
-				  <display:column sort="true" width="12%" align="center" comboFilter="true" property="task.project.name" title="label.manageTask.project" description="label.manageTask.project" visibleProperty="<%=PreferenceTO.HOME_TASKLIST_SW_PROJECT%>" />				  
-				  <display:column width="6%" property="id" align="center" title="label.resTaskForm.billable" description="label.showAllTaskForm.billable.desc" visibleProperty="<%=PreferenceTO.HOME_TASKLIST_SW_BILLABLE%>" decorator="com.pandora.gui.taglib.decorator.TaskBillableDecorator"/>
-				  <display:column width="8%" property="actualDate" align="center" title="label.manageTask.grid.acualDate" description="label.manageTask.grid.acualDate.desc" visibleProperty="<%=PreferenceTO.HOME_TASKLIST_SW_ACT_DATE%>" decorator="com.pandora.gui.taglib.decorator.GridDateDecorator" tag="2;0" />
-				  <display:column width="5%" property="actualTimeInHours" align="center" title="label.manageTask.grid.actualTime" description="label.manageTask.grid.actualTime.desc" visibleProperty="<%=PreferenceTO.HOME_TASKLIST_SW_ACT_TIME%>" decorator="com.pandora.gui.taglib.decorator.GridFloatDecorator" tag="h"/>				  
-				  <display:column width="8%" property="startDate" align="center" title="label.manageTask.grid.initDate" description="label.manageTask.grid.initDate.desc" visibleProperty="<%=PreferenceTO.HOME_TASKLIST_SW_EST_DATE%>" decorator="com.pandora.gui.taglib.decorator.GridDateDecorator" tag="2;0" />
-				  <display:column width="5%" property="estimatedTimeInHours" align="center" title="label.manageTask.grid.estTime" description="label.manageTask.grid.estTime.desc" visibleProperty="<%=PreferenceTO.HOME_TASKLIST_SW_EST_TIME%>" decorator="com.pandora.gui.taglib.decorator.GridFloatDecorator" tag="h"/>
-				  <display:column width="5%" align="center" property="id" title="label.gridParent" description="label.gridParent.desc" visibleProperty="<%=PreferenceTO.HOME_TASKLIST_SW_TSK_PARENT%>" decorator="com.pandora.gui.taglib.decorator.GridMindMapLinkDecorator" tag="PARENT_ID"/>				  
-				  <display:column width="10%" sort="true" property="taskStatus.name" align="center" title="label.manageTask.taskStatus" description="label.manageTask.taskStatus" visibleProperty="<%=PreferenceTO.HOME_TASKLIST_SW_TSK_STATUS%>" />
-				  <display:column width="10%" sort="true" property="task.category.name" align="center" title="label.manageTask.category" description="label.manageTask.category" visibleProperty="<%=PreferenceTO.HOME_TASKLIST_SW_TSK_CATEG%>" />
-				  <display:column width="10%" sort="true" property="id" align="center" title="label.manageTask.grid.iteration" description="label.manageTask.grid.iteration.desc" visibleProperty="<%=PreferenceTO.HOME_TASKLIST_SW_TSK_ITERAT%>" decorator="com.pandora.gui.taglib.decorator.IterationLinkDecorator" />
-				  <display:column width="5%" sort="true" likeSearching="true" align="center" property="task.requirement.id" title="label.gridReqNum" description="label.gridReqNum.desc" visibleProperty="<%=PreferenceTO.HOME_TASKLIST_SW_REL_REQ%>" decorator="com.pandora.gui.taglib.decorator.GridMindMapLinkDecorator" tag="REQ_ID"/>
-				  <display:column width="5%" align="center" property="id" title="label.blockers" description="label.blockers.desc" visibleProperty="<%=PreferenceTO.HOME_TASKLIST_SW_BLOCKERS%>" decorator="com.pandora.gui.taglib.decorator.TaskBlockedByDecorator" />				  				  
-				  <display:column width="2%" property="id" align="center" title="grid.title.empty" decorator="com.pandora.gui.taglib.decorator.TaskGridDeleteDecorator" />
-  				  <display:column width="2%" property="id" align="center" title="grid.title.empty" decorator="com.pandora.gui.taglib.decorator.ResourceTaskLinkDecorator" />
-				  <display:column width="2%" property="task.id" title="grid.title.empty" decorator="com.pandora.gui.taglib.decorator.GridDetailDecorator" tag="'TSK'" />
-			</display:table>
+		<td>		
+			<plandora-html:ptable width="100%" name="taskList" scope="session" pagesize="<%=PreferenceTO.HOME_TASKLIST_NUMLINE%>" frm="resTaskForm">
+			      <plandora-html:pcolumn width="2%" property="id" align="center" title="grid.title.empty" decorator="com.pandora.gui.taglib.decorator.TaskGridStatusDecorator" />
+			      <plandora-html:pcolumn width="2%" likeSearching="true" property="task.id" align="center" title="grid.title.empty" decorator="com.pandora.gui.taglib.decorator.GridMindMapLinkDecorator" />			      
+				  <plandora-html:pcolumn property="task.name" likeSearching="true" maxWords="<%=PreferenceTO.LIST_NUMWORDS%>" title="label.manageTask.name" />
+				  <plandora-html:pcolumn sort="true" width="12%" align="center" comboFilter="true" property="task.project.name" title="label.manageTask.project" description="label.manageTask.project" visibleProperty="<%=PreferenceTO.HOME_TASKLIST_SW_PROJECT%>" />				  
+				  <plandora-html:pcolumn width="6%" property="id" align="center" title="label.resTaskForm.billable" description="label.showAllTaskForm.billable.desc" visibleProperty="<%=PreferenceTO.HOME_TASKLIST_SW_BILLABLE%>" decorator="com.pandora.gui.taglib.decorator.TaskBillableDecorator"/>
+				  <plandora-html:pcolumn width="8%" property="actualDate" align="center" title="label.manageTask.grid.acualDate" description="label.manageTask.grid.acualDate.desc" visibleProperty="<%=PreferenceTO.HOME_TASKLIST_SW_ACT_DATE%>" decorator="com.pandora.gui.taglib.decorator.GridDateDecorator" tag="2;0" />
+				  <plandora-html:pcolumn width="5%" property="actualTimeInHours" align="center" title="label.manageTask.grid.actualTime" description="label.manageTask.grid.actualTime.desc" visibleProperty="<%=PreferenceTO.HOME_TASKLIST_SW_ACT_TIME%>" decorator="com.pandora.gui.taglib.decorator.GridFloatDecorator" tag="h"/>				  
+				  <plandora-html:pcolumn width="8%" property="startDate" align="center" title="label.manageTask.grid.initDate" description="label.manageTask.grid.initDate.desc" visibleProperty="<%=PreferenceTO.HOME_TASKLIST_SW_EST_DATE%>" decorator="com.pandora.gui.taglib.decorator.GridDateDecorator" tag="2;0" />
+				  <plandora-html:pcolumn width="5%" property="estimatedTimeInHours" align="center" title="label.manageTask.grid.estTime" description="label.manageTask.grid.estTime.desc" visibleProperty="<%=PreferenceTO.HOME_TASKLIST_SW_EST_TIME%>" decorator="com.pandora.gui.taglib.decorator.GridFloatDecorator" tag="h"/>
+				  <plandora-html:pcolumn width="5%" align="center" property="id" title="label.gridParent" description="label.gridParent.desc" visibleProperty="<%=PreferenceTO.HOME_TASKLIST_SW_TSK_PARENT%>" decorator="com.pandora.gui.taglib.decorator.GridMindMapLinkDecorator" tag="PARENT_ID"/>				  
+				  <plandora-html:pcolumn width="10%" sort="true" property="taskStatus.name" comboFilter="true" align="center" title="label.manageTask.taskStatus" description="label.manageTask.taskStatus" visibleProperty="<%=PreferenceTO.HOME_TASKLIST_SW_TSK_STATUS%>" />
+				  <plandora-html:pcolumn width="10%" sort="true" property="task.category.name" align="center" title="label.manageTask.category" description="label.manageTask.category" visibleProperty="<%=PreferenceTO.HOME_TASKLIST_SW_TSK_CATEG%>" />
+				  <plandora-html:pcolumn width="10%" sort="true" property="id" align="center" title="label.manageTask.grid.iteration" description="label.manageTask.grid.iteration.desc" visibleProperty="<%=PreferenceTO.HOME_TASKLIST_SW_TSK_ITERAT%>" decorator="com.pandora.gui.taglib.decorator.IterationLinkDecorator" />
+				  <plandora-html:pcolumn width="5%" sort="true" likeSearching="true" align="center" property="task.requirement.id" title="label.gridReqNum" description="label.gridReqNum.desc" visibleProperty="<%=PreferenceTO.HOME_TASKLIST_SW_REL_REQ%>" decorator="com.pandora.gui.taglib.decorator.GridMindMapLinkDecorator" tag="REQ_ID"/>
+				  <plandora-html:pcolumn width="5%" align="center" property="id" title="label.blockers" description="label.blockers.desc" visibleProperty="<%=PreferenceTO.HOME_TASKLIST_SW_BLOCKERS%>" decorator="com.pandora.gui.taglib.decorator.TaskBlockedByDecorator" />				  				  
+				  <plandora-html:pcolumn width="2%" property="id" align="center" title="grid.title.empty" decorator="com.pandora.gui.taglib.decorator.TaskGridDeleteDecorator" />
+  				  <plandora-html:pcolumn width="2%" property="id" align="center" title="grid.title.empty" decorator="com.pandora.gui.taglib.decorator.ResourceTaskLinkDecorator" />
+				  <plandora-html:pcolumn width="2%" property="task.id" title="grid.title.empty" decorator="com.pandora.gui.taglib.decorator.GridDetailDecorator" tag="'TSK'" />
+				  <plandora-html:pcolumn width="2%" property="id" title="grid.title.empty" decorator="com.pandora.gui.taglib.decorator.AttachmentGridDecorator" tag="TSK" />
+			</plandora-html:ptable>
 		</td>
 	</tr> 
 	</table>
-	<a name="taskList"></a>
 	
 	<display:headerfootergrid type="FOOTER">
 		<table width="98%" border="0" cellspacing="0" cellpadding="0"><tr>
@@ -733,18 +819,9 @@
 			displayMessage("../do/manageResTask?operation=showMTConfirmation", 480, 130);
 
 		} else if (showWorkflowDiagram.value=='on') {
-			displayMessage("../do/showAllTask?operation=prepareWorkflow", 450, 450);
-			setTimeout('centralizeDiagram()', 500);
+			displayMessage("../do/showAllTask?operation=prepareWorkflow", 800, 450);
 			showWorkflowDiagram.value = 'off';
-		}		
-		
+		}				
 				
 	}	
-	
-<%
-	String anchor = request.getParameter("anchor");
-	if (anchor!=null) {
-		out.println("goToAnchor('" + anchor + "');");
-	}
-%>		
 </script>

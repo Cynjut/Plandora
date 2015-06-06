@@ -1,7 +1,7 @@
 package com.pandora.exception;
 
 /**
- * This exception is thown when a acceptance task cannot be inserted into data base.
+ * This exception is thrown when a acceptance task cannot be inserted into data base.
  */
 public class AcceptTaskInsertionException extends DataAccessException {
 

@@ -12,7 +12,7 @@ public class PlanningRelationDelegate extends GeneralDelegate {
     /** The Business object related with current delegate */    
 	PlanningRelationBUS bus = new PlanningRelationBUS();
 
-    public Vector getRelationList(PlanningTO pto) throws BusinessException {
+    public Vector<PlanningRelationTO> getRelationList(PlanningTO pto) throws BusinessException {
     	return bus.getRelationList(pto);
     }
 	

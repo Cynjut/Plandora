@@ -14,7 +14,9 @@ public class GadgetBUS extends GeneralBusiness {
 	public void renderContent(HttpServletRequest request, HttpServletResponse response, 
 			String gclass, Vector<String> overrideParam) throws BusinessException{
 		Gadget gag = getGadgetClass(gclass);
-		gag.perform(request, response, overrideParam);
+		if (gag!=null) {
+			gag.perform(request, response, overrideParam);	
+		}
 	}
 
 	public static Gadget getGadgetClassByTokenizerString(String classList, String gedgetId, UserTO handler) {
@@ -56,7 +58,8 @@ public class GadgetBUS extends GeneralBusiness {
 	public static Gadget getGadgetClass(String className){
 		Gadget response = null;
         try {
-            Class klass = Class.forName(className);
+            @SuppressWarnings("rawtypes")
+			Class klass = Class.forName(className);
             response = (Gadget)klass.newInstance();
         } catch (Exception e) {
             response = null;

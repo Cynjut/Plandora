@@ -9,17 +9,17 @@ import org.apache.struts.action.ActionError;
 import org.apache.struts.action.ActionErrors;
 import org.apache.struts.action.ActionMapping;
 
-import com.pandora.UserTO;
 import com.pandora.ProjectTO;
+import com.pandora.UserTO;
 import com.pandora.helper.DateUtil;
 import com.pandora.helper.SessionUtil;
 import com.pandora.helper.StringUtil;
-import com.pandora.delegate.UserDelegate;
 
 /**
  * This class handle the data of Customer Request Form
  */
 public class CustReqForm extends HosterRepositoryForm {
+
 
 	private static final long serialVersionUID = 1L;
 	
@@ -71,6 +71,9 @@ public class CustReqForm extends HosterRepositoryForm {
     /** show or hide the discussion topic feature depending the settings of user/project.*/
     private String canSeeDiscussion = "off";
 
+    private String showTechComments = "off";
+    
+    
     /** show or hide the artifacts grid depending the user/project setting. 
      * A customer is not allow to see this grid. Resources/Leader will see this 
      * grid always but will edit only under permission.*/
@@ -144,6 +147,7 @@ public class CustReqForm extends HosterRepositoryForm {
         this.canChangeRequester = "off"; 
         this.readOnlyMode = "off";
         this.isRequesterLeader = "off";
+        this.showTechComments = "off";
         this.setSaveMethod(null, null);
         this.estimTime = null;
         this.selectedResource = "-1";
@@ -151,6 +155,7 @@ public class CustReqForm extends HosterRepositoryForm {
         this.iteration = null;
         this.previousPriority = null;
         this.priority = null;
+        this.setAdditionalFields(null);
     }    
 
 
@@ -380,6 +385,16 @@ public class CustReqForm extends HosterRepositoryForm {
 		this.readOnlyMode = newValue;
 	}
 
+	
+	//////////////////////////////////////// 	
+	public String getShowTechComments() {
+		return showTechComments;
+	}
+	public void setShowTechComments(String newValue) {
+		this.showTechComments = newValue;
+	}
+
+	
 
 	//////////////////////////////////////// 	
     public String getIsRequesterLeader() {
@@ -399,7 +414,11 @@ public class CustReqForm extends HosterRepositoryForm {
 		if (this.operation.equals("saveRequirement")){
 		    Locale loc = SessionUtil.getCurrentLocale(request);
 		    UserTO uto = SessionUtil.getCurrentUser(request);
-		    
+
+		    if (this.requester==null || this.requester.trim().equals("")){
+		    	errors.add("id", new ActionError("validate.requestForm.requester"));
+		    }
+
 		    if (this.readOnlyMode.equals("on")){
 		    	errors.add("id", new ActionError("validate.requestForm.readonlyMode"));
 		    }
@@ -460,8 +479,7 @@ public class CustReqForm extends HosterRepositoryForm {
 			//is form is a requirement adjustment, check if current user is a leader
 			if (this.isAdjustment!=null && this.isAdjustment.equals("on")){
 			    			    
-			    UserDelegate udel = new UserDelegate();
-			    boolean isLeader = udel.userIsLeader(uto, new ProjectTO(this.projectRelated));
+			    boolean isLeader = uto.isLeader(new ProjectTO(this.projectRelated));
 			    if (!uto.getUsername().equals(this.requester) && !isLeader) {
 			        errors.add("Role", new ActionError("validate.requestForm.adjustRole"));
                 }
